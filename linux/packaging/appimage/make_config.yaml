@@ -1,0 +1,8 @@
+app_id: com.example.one_player
+display_name: OnePlayer
+icon: assets/icon.png
+categories:
+  - AudioVideo
+  - Audio
+  - Music
+  - Player

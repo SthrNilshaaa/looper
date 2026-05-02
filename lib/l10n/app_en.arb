@@ -1,0 +1,23 @@
+{
+  "@@locale": "en",
+  "appTitle": "Aspen",
+  "songs": "Songs",
+  "albums": "Albums",
+  "artists": "Artists",
+  "playlists": "Playlists",
+  "search": "Search",
+  "settings": "Settings",
+  "nowPlaying": "Now Playing",
+  "playQueue": "Play Queue",
+  "lyrics": "Lyrics",
+  "noLyrics": "No Lyrics Found",
+  "scanLibrary": "Scan Library",
+  "addFolder": "Add Folder",
+  "resetLibrary": "Reset & Rescan",
+  "language": "Language",
+  "theme": "Theme",
+  "accentColor": "Accent Color",
+  "about": "About",
+  "unknownArtist": "Unknown Artist",
+  "unknownAlbum": "Unknown Album"
+}

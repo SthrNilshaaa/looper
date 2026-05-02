@@ -1,0 +1,16 @@
+output: dist/
+targets:
+  linux:
+    app_name: OnePlayer
+    bundle_name: one_player
+    executable_name: one_player
+    icon: assets/icon.png
+    build_args:
+      --release:
+    makers:
+      - deb:
+          make_config: linux/packaging/deb/make_config.yaml
+      - rpm:
+          make_config: linux/packaging/rpm/make_config.yaml
+      - appimage:
+          make_config: linux/packaging/appimage/make_config.yaml

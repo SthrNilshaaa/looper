@@ -1,0 +1,23 @@
+{
+  "@@locale": "hi",
+  "appTitle": "ऐस्पन",
+  "songs": "गाने",
+  "albums": "एल्बम",
+  "artists": "कलाकार",
+  "playlists": "प्लेलिस्ट",
+  "search": "खोज",
+  "settings": "सेटिंग्स",
+  "nowPlaying": "अभी चल रहा है",
+  "playQueue": "प्ले कतार",
+  "lyrics": "बोल",
+  "noLyrics": "कोई बोल नहीं मिले",
+  "scanLibrary": "लाइब्रेरी स्कैन करें",
+  "addFolder": "फोल्डर जोड़ें",
+  "resetLibrary": "रीसेट और रीस्कैन",
+  "language": "भाषा",
+  "theme": "थीम",
+  "accentColor": "एक्सेंट रंग",
+  "about": "के बारे में",
+  "unknownArtist": "अज्ञात कलाकार",
+  "unknownAlbum": "अज्ञात एल्बम"
+}

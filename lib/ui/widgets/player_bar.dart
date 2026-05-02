@@ -1,0 +1,499 @@
+import 'dart:io';
+import 'dart:ui';
+import 'package:flutter/material.dart' hide RepeatMode;
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+import 'package:one_player/core/navigation_provider.dart';
+import 'package:squiggly_slider/slider.dart';
+import '../../features/playback/presentation/playback_notifier.dart';
+import 'package:one_player/l10n/app_localizations.dart';
+import 'dart:math' as math;
+import 'package:flutter/services.dart';
+
+class PlayerBar extends ConsumerWidget {
+  const PlayerBar({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playback = ref.watch(playbackProvider);
+    final song = playback.currentSong;
+    if (song == null) return const SizedBox.shrink();
+
+    return _PremiumPlayerBar(
+      title: song.title,
+      artist: song.artist ?? AppLocalizations.of(context)!.unknownArtist,
+      artPath: song.artPath,
+      position: playback.position,
+      duration: playback.duration,
+      isPlaying: playback.isPlaying,
+      isShuffle: playback.isShuffle,
+      repeatMode: playback.repeatMode,
+      volume: playback.volume,
+      onPlayPause: () => ref.read(playbackProvider.notifier).togglePlay(),
+      onNext: () => ref.read(playbackProvider.notifier).skipNext(),
+      onPrevious: () => ref.read(playbackProvider.notifier).skipPrevious(),
+      onShuffle: () => ref.read(playbackProvider.notifier).toggleShuffle(),
+      onRepeat: () => ref.read(playbackProvider.notifier).nextRepeatMode(),
+      onSeek: (pos) => ref.read(playbackProvider.notifier).seek(pos),
+      onVolumeChanged: (vol) =>
+          ref.read(playbackProvider.notifier).setVolume(vol),
+      onLyricsToggle: () =>
+          ref.read(appNavigationProvider.notifier).toggleItem(NavItem.lyrics),
+      onQueueToggle: () =>
+          ref.read(appNavigationProvider.notifier).toggleItem(NavItem.queue),
+      onFavoriteToggle: () =>
+          ref.read(playbackProvider.notifier).toggleFavorite(),
+      isFavorite: song.isFavorite,
+      isLyricsActive:
+          ref.watch(appNavigationProvider).activeItem == NavItem.lyrics,
+      isQueueActive:
+          ref.watch(appNavigationProvider).activeItem == NavItem.queue,
+    );
+  }
+}
+
+class _PremiumPlayerBar extends StatelessWidget {
+  final String title;
+  final String artist;
+  final String? artPath;
+  final Duration position;
+  final Duration duration;
+  final bool isPlaying;
+  final bool isShuffle;
+  final bool isFavorite;
+  final RepeatMode repeatMode;
+  final double volume;
+  final VoidCallback onPlayPause;
+  final VoidCallback onNext;
+  final VoidCallback onPrevious;
+  final VoidCallback onShuffle;
+  final VoidCallback onRepeat;
+  final VoidCallback onFavoriteToggle;
+  final ValueChanged<Duration> onSeek;
+  final ValueChanged<double> onVolumeChanged;
+  final VoidCallback onLyricsToggle;
+  final VoidCallback onQueueToggle;
+  final bool isLyricsActive;
+  final bool isQueueActive;
+
+  const _PremiumPlayerBar({
+    required this.title,
+    required this.artist,
+    this.artPath,
+    required this.position,
+    required this.duration,
+    required this.isPlaying,
+    required this.isShuffle,
+    required this.isFavorite,
+    required this.repeatMode,
+    required this.volume,
+    required this.onPlayPause,
+    required this.onNext,
+    required this.onPrevious,
+    required this.onShuffle,
+    required this.onRepeat,
+    required this.onFavoriteToggle,
+    required this.onSeek,
+    required this.onVolumeChanged,
+    required this.onLyricsToggle,
+    required this.onQueueToggle,
+    this.isLyricsActive = false,
+    this.isQueueActive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isNarrow = constraints.maxWidth < 900;
+        final bool isVeryNarrow = constraints.maxWidth < 600;
+
+        return Container(
+          height: 80, // Slightly more height for better spacing
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                colorScheme.surface.withOpacity(0.5),
+                colorScheme.primary.withOpacity(0.08),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: colorScheme.primary.withOpacity(0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.primary.withOpacity(0.1),
+                blurRadius: 24,
+                spreadRadius: -4,
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 36),
+                child: Row(
+                  children: [
+                    // Left: Album Art + Info
+                    Flexible(
+                      flex: isVeryNarrow
+                          ? 3
+                          : 4, // Increased flex to prevent squeeze
+                      child: _buildSongInfo(context, isVeryNarrow),
+                    ),
+
+                    if (!isVeryNarrow)
+                      Container(
+                        height: 40,
+                        width: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        color: Colors.white10,
+                      ),
+
+                    // Center: Playback Controls
+                    _buildControls(context, colorScheme, isVeryNarrow),
+
+                    const SizedBox(width: 12),
+
+                    // Middle-Right: Animated Progress Bar
+                    Expanded(
+                      flex: isNarrow
+                          ? 4
+                          : 8, // Adjusted to balance with song info
+                      child: _ExpressiveSlider(
+                        position: position,
+                        duration: duration,
+                        isPlaying: isPlaying,
+                        onSeek: onSeek,
+                        color: colorScheme.primary,
+                      ),
+                    ),
+
+                    if (!isNarrow) ...[
+                      const SizedBox(width: 12),
+                      // Right: Volume
+                      Flexible(flex: 3, child: _buildVolumeControl(context)),
+                    ],
+
+                    const SizedBox(width: 8),
+
+                    // Far Right: Actions
+                    _buildActions(context, colorScheme, isVeryNarrow),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSongInfo(BuildContext context, bool isVeryNarrow) {
+    return ClipRect(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: isVeryNarrow ? 150 : 250),
+        child: Row(
+          children: [
+            Container(
+              width: isVeryNarrow ? 40 : 56,
+              height: isVeryNarrow ? 40 : 56,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                color: Colors.white.withOpacity(0.05),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: artPath != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(File(artPath!), fit: BoxFit.cover),
+                    )
+                  : Icon(
+                      LucideIcons.music,
+                      color: Colors.white24,
+                      size: isVeryNarrow ? 16 : 24,
+                    ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: isVeryNarrow ? 12 : 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    artist,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: isVeryNarrow ? 10 : 12,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildControls(
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool isVeryNarrow,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (!isVeryNarrow)
+          IconButton(
+            onPressed: onShuffle,
+            icon: Icon(
+              LucideIcons.shuffle,
+              size: 18,
+              color: isShuffle ? colorScheme.primary : Colors.white54,
+            ),
+            tooltip: 'Shuffle',
+          ),
+        IconButton(
+          onPressed: onPrevious,
+          icon: Icon(
+            LucideIcons.skipBack,
+            size: isVeryNarrow ? 18 : 20,
+            color: Colors.white,
+          ),
+          tooltip: 'Previous',
+        ),
+        const SizedBox(width: 4),
+        GestureDetector(
+          onTap: onPlayPause,
+          child: Container(
+            width: isVeryNarrow ? 36 : 44,
+            height: isVeryNarrow ? 36 : 44,
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: colorScheme.primary.withOpacity(0.3),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Icon(
+              isPlaying ? LucideIcons.pause : LucideIcons.play,
+              color: Colors.black,
+              size: isVeryNarrow ? 18 : 22,
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        IconButton(
+          onPressed: onNext,
+          icon: Icon(
+            LucideIcons.skipForward,
+            size: isVeryNarrow ? 18 : 20,
+            color: Colors.white,
+          ),
+          tooltip: 'Next',
+        ),
+        if (!isVeryNarrow)
+          IconButton(
+            onPressed: onRepeat,
+            icon: Icon(
+              repeatMode == RepeatMode.one
+                  ? LucideIcons.repeat1
+                  : LucideIcons.repeat,
+              size: 18,
+              color: repeatMode != RepeatMode.off
+                  ? colorScheme.primary
+                  : Colors.white54,
+            ),
+            tooltip: 'Repeat',
+          ),
+      ],
+    );
+  }
+
+  Widget _buildVolumeControl(BuildContext context) {
+    return ClipRect(
+      child: Row(
+        children: [
+          Icon(
+            volume == 0
+                ? LucideIcons.volumeX
+                : volume < 0.5
+                ? LucideIcons.volume1
+                : LucideIcons.volume2,
+            size: 18,
+            color: Colors.white54,
+          ),
+          Flexible(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 120),
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 4,
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 7,
+                  ),
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 14,
+                  ),
+                  activeTrackColor: Theme.of(context).colorScheme.primary,
+                  inactiveTrackColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withOpacity(0.1),
+                  thumbColor: Colors.white,
+                ),
+                child: Slider(value: volume, onChanged: onVolumeChanged),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActions(
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool isVeryNarrow,
+  ) {
+    return Row(
+      children: [
+        if (!isVeryNarrow)
+          IconButton(
+            icon: Icon(
+              isFavorite ? LucideIcons.heart : LucideIcons.heart,
+              size: 18,
+              color: isFavorite ? Colors.red : Colors.white54,
+            ),
+            onPressed: onFavoriteToggle,
+            tooltip: 'Favorite',
+          ),
+        IconButton(
+          icon: Icon(
+            LucideIcons.mic2,
+            size: 18,
+            color: isLyricsActive ? colorScheme.primary : Colors.white54,
+          ),
+          onPressed: onLyricsToggle,
+          tooltip: 'Lyrics',
+        ),
+        IconButton(
+          icon: Icon(
+            LucideIcons.listMusic,
+            size: 18,
+            color: isQueueActive ? colorScheme.primary : Colors.white54,
+          ),
+          onPressed: onQueueToggle,
+          tooltip: 'Queue',
+        ),
+      ],
+    );
+  }
+}
+
+class _ExpressiveSlider extends StatelessWidget {
+  final Duration position;
+  final Duration duration;
+  final bool isPlaying;
+  final ValueChanged<Duration> onSeek;
+  final Color color;
+
+  const _ExpressiveSlider({
+    required this.position,
+    required this.duration,
+    required this.isPlaying,
+    required this.onSeek,
+    required this.color,
+  });
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, "0");
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double progress = duration.inMilliseconds > 0
+        ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
+        : 0.0;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool showTimestamps = constraints.maxWidth > 150;
+
+        return Row(
+          children: [
+            if (showTimestamps) ...[
+              Text(
+                _formatDuration(position),
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: SquigglySlider(
+                value: progress,
+                onChanged: (val) {
+                  onSeek(duration * val);
+                  if (val == 0.0 || val == 1.0) {
+                    HapticFeedback.lightImpact();
+                  }
+                },
+                activeColor: color,
+                inactiveColor: Colors.white10,
+                squiggleAmplitude: isPlaying ? 4.0 : 0.0,
+                squiggleWavelength: 5.0,
+                squiggleSpeed: 0.1,
+              ),
+            ),
+            if (showTimestamps) ...[
+              const SizedBox(width: 12),
+              Text(
+                _formatDuration(duration),
+                style: const TextStyle(
+                  color: Colors.white54,
+                  fontSize: 11,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}

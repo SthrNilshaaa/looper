@@ -1,0 +1,22 @@
+display_name: OnePlayer
+name: one-player
+version: 1.0.0
+release: 1
+summary: A modern, high-fidelity music player for Linux.
+description: A modern, high-fidelity music player for Linux.
+license: MIT
+group: Applications/Multimedia
+url: https://github.com/nilshaaa/one_player
+vendor: nilshaaa
+packager: nilshaaa
+packagerEmail: nilshaaa@example.com
+icon: assets/icon.png
+categories:
+  - AudioVideo
+  - Audio
+  - Music
+  - Player
+requires:
+  - gtk3
+  - vlc
+  - mpv

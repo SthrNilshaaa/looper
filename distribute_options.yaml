@@ -1,0 +1,22 @@
+output: dist/
+publish:
+  # You can add publishing options here (e.g. github)
+  
+releases:
+  - name: dev
+    package_name: one_player
+    display_name: OnePlayer
+    executable_name: one_player
+    targets:
+      - deb
+      - rpm
+    build_args:
+      --release: 
+
+    deb_options:
+      # Optional: custom postinst/prerm scripts
+      # postinst: linux/deb/postinst
+      
+    rpm_options:
+      # Optional: custom spec template
+      # spec_template: linux/rpm/project.spec

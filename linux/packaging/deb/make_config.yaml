@@ -1,0 +1,24 @@
+app_name: OnePlayer
+package_name: one-player
+executable_name: one_player
+display_name: OnePlayer
+generic_name: Music Player
+version: 1.0.0
+architecture: amd64
+maintainer:
+  name: nilshaaa
+  email: nilshaaa@example.com
+installed_size: 25000
+description: A modern, high-fidelity music player for Linux.
+section: utils
+priority: optional
+icon: assets/icon.png
+categories:
+  - AudioVideo
+  - Audio
+  - Music
+  - Player
+depends:
+  - libgtk-3-0
+  - libvlc5
+  - libmpv2

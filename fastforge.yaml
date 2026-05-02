@@ -1,0 +1,25 @@
+app:
+  name: one_player
+  version: 1.0.0
+  executable: one_player
+
+build:
+  linux:
+    arch: x64
+
+linux:
+  deb:
+    package_name: one-player
+    maintainer: "Nilshaaa <nilshaaa@example.com>"
+    description: "OnePlayer Flutter Music Player"
+    section: sound
+    priority: optional
+    architecture: amd64
+
+  rpm:
+    name: one_player
+    summary: "OnePlayer Flutter Music Player"
+    license: "MIT"
+
+  appimage:
+    name: one_player
