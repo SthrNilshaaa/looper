@@ -29,16 +29,34 @@ class LyricsService {
     required int durationSeconds,
   }) async {
     try {
-      final url = Uri.parse('$baseUrl/get').replace(queryParameters: {
+      // First try the exact /get endpoint
+      final getParams = {
         'track_name': trackName,
         'artist_name': artistName,
-        'album_name': albumName,
-        'duration': durationSeconds.toString(),
-      });
+        if (albumName.isNotEmpty) 'album_name': albumName,
+        if (durationSeconds > 0) 'duration': durationSeconds.toString(),
+      };
 
-      final response = await http.get(url);
+      var url = Uri.parse('$baseUrl/get').replace(queryParameters: getParams);
+      var response = await http.get(url);
+
       if (response.statusCode == 200) {
         return LyricsResponse.fromJson(jsonDecode(response.body));
+      }
+
+      // If exact match fails, try the /search endpoint and take the first valid result
+      final searchParams = {
+        'q': '$trackName $artistName',
+      };
+
+      url = Uri.parse('$baseUrl/search').replace(queryParameters: searchParams);
+      response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final list = jsonDecode(response.body) as List;
+        if (list.isNotEmpty) {
+           return LyricsResponse.fromJson(list.first);
+        }
       }
     } catch (e) {
       print('Error fetching lyrics: $e');
