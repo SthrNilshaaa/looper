@@ -55,11 +55,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       }
 
       if (settings.libraryFolders.isEmpty) {
-        // First time opening: ask for directory
-        final String? path = await FilePicker.platform.getDirectoryPath();
-        if (path != null) {
-          ref.read(libraryProvider.notifier).scanLibrary(path);
-        }
+        // First time opening: silently scan default folders (like xdg MUSIC) instead of prompting
+        ref.read(libraryProvider.notifier).scanSavedFolders();
       } else {
         ref.read(libraryProvider.notifier).scanSavedFolders();
       }
@@ -74,7 +71,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final settings = ref.watch(settingsProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    final bool isFirstTime = settings.libraryFolders.isEmpty;
+    final bool isFirstTime = settings.libraryFolders.isEmpty && library.songs.isEmpty && !library.isScanning;
 
     final bool isNarrow = MediaQuery.of(context).size.width < 800;
 
@@ -192,21 +189,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               shape: BoxShape.circle,
             ),
             child: Padding(
-                        padding: const EdgeInsets.only(left: 5, right: 5),
-                        child: Row(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/music_icon.svg',
-                              height: 40,
-                            ),
-                            const SizedBox(width: 5),
-                            SvgPicture.asset(
-                              'assets/logo_text_icon.svg',
-                              height: 40,
-                            ),
-                          ],
-                        ),
-                      ),
+              padding: const EdgeInsets.only(left: 5, right: 5),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SvgPicture.asset(
+                    'assets/music_icon.svg',
+                    height: 40,
+                  ),
+                  const SizedBox(width: 10),
+                  SvgPicture.asset(
+                    'assets/logo_text_icon.svg',
+                    height: 40,
+                  ),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 32),
           Text(
