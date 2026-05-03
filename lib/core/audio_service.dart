@@ -59,7 +59,7 @@ class AudioService {
 
     if (_mprisPlayer != null && metadata != null) {
       final mprisMetadata = <String, DBusValue>{};
-      mprisMetadata['mpris:trackid'] = DBusObjectPath('/org/mpris/MediaPlayer2/TrackList/NoTrack');
+      mprisMetadata['mpris:trackid'] = DBusString('/org/mpris/MediaPlayer2/TrackList/NoTrack');
 
       if (metadata['title'] != null) {
         mprisMetadata['xesam:title'] = DBusString(metadata['title'].toString());
