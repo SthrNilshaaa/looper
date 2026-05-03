@@ -64,6 +64,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   PlaybackNotifier(this.ref) : super(PlaybackState()) {
     player = ref.read(audioServiceProvider).player;
+    ref.read(audioServiceProvider).onNext = skipNext;
+    ref.read(audioServiceProvider).onPrevious = skipPrevious;
     _init();
   }
 
@@ -127,6 +129,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       'artist': song.artist ?? 'Unknown Artist',
       'album': song.album ?? 'Unknown Album',
       if (song.artPath != null) 'artPath': song.artPath!,
+      if (song.duration != null) 'duration': song.duration!,
     };
     await ref.read(audioServiceProvider).play(song.path, metadata: metadata);
     
