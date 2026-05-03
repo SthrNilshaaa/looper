@@ -8,6 +8,8 @@ import 'package:one_player/core/db_service.dart';
 import 'package:one_player/features/settings/presentation/settings_notifier.dart';
 import 'package:metadata_god/metadata_god.dart';
 import 'package:isar/isar.dart';
+import 'package:local_notifier/local_notifier.dart';
+import 'dart:io';
 
 enum RepeatMode { off, all, one }
 
@@ -134,6 +136,15 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     await ref.read(audioServiceProvider).play(song.path, metadata: metadata);
     
     await windowManager.setTitle('OnePlayer - ${song.title} - ${song.artist ?? 'Unknown Artist'}');
+
+    // Broadcast notification on Linux
+    if (Platform.isLinux) {
+      final notification = LocalNotification(
+        title: song.title,
+        body: '${song.artist ?? 'Unknown Artist'}\n${song.album ?? 'Unknown Album'}',
+      );
+      await notification.show();
+    }
     await ref.read(settingsProvider.notifier).updateLastPlayedSong(song.id);
 
     await DbService.isar.writeTxn(() async {

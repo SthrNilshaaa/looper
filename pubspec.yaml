@@ -73,6 +73,7 @@ dependencies:
   cached_network_image: ^3.3.1
   scrollable_positioned_list: ^0.3.8
   dbus: ^0.7.12
+  local_notifier: ^0.1.6
 
 dev_dependencies:
   flutter_test:
