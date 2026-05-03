@@ -96,8 +96,11 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
   Widget build(BuildContext context) {
     return ListView.builder(
       controller: _scrollController,
+      physics: const BouncingScrollPhysics(),
       itemCount: widget.lines.length,
-      padding: const EdgeInsets.symmetric(vertical: 300, horizontal: 48), // More padding for better centering
+      padding: EdgeInsets.symmetric(
+          vertical: MediaQuery.of(context).size.height / 2.5,
+          horizontal: 64),
       itemBuilder: (context, index) {
         final line = widget.lines[index];
         final isActive = index == _currentLineIndex;
