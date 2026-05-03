@@ -56,7 +56,18 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     final folders = _ref.read(settingsProvider).libraryFolders;
     if (folders.isEmpty) {
       // If no folders saved, try default Music dir
-      final defaultPath = '${Platform.environment['HOME']}/Music';
+      String defaultPath = '${Platform.environment['HOME']}/Music';
+      if (Platform.isLinux) {
+        try {
+          final result = await Process.run('xdg-user-dir', ['MUSIC']);
+          if (result.exitCode == 0 && result.stdout.toString().trim().isNotEmpty) {
+            defaultPath = result.stdout.toString().trim();
+          }
+        } catch (_) {
+          // Fallback to ~/Music if xdg-user-dir fails
+        }
+      }
+
       if (Directory(defaultPath).existsSync()) {
         await scanLibrary(defaultPath);
       }

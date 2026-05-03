@@ -53,9 +53,9 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     setState(() => _isLoading = true);
     final service = LyricsService();
     final response = await service.getLyrics(
-      trackName: currentSong.title,
-      artistName: currentSong.artist ?? '',
-      albumName: currentSong.album ?? '',
+      trackName: currentSong.title.trim(),
+      artistName: (currentSong.artist ?? '').trim(),
+      albumName: (currentSong.album ?? '').trim(),
       durationSeconds: (currentSong.duration ?? 0) ~/ 1000,
     );
     

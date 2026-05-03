@@ -15,7 +15,7 @@ class LibraryScanner {
     final dir = Directory(path);
     if (!await dir.exists()) return;
 
-    await for (final entity in dir.list(recursive: true, followLinks: false)) {
+    await for (final entity in dir.list(recursive: true, followLinks: true)) {
       if (entity is File) {
         final ext = p.extension(entity.path).toLowerCase();
         if (supportedExtensions.contains(ext)) {
@@ -87,7 +87,7 @@ class LibraryScanner {
 
   Future<String?> saveAlbumArt(String albumName, List<int> data) async {
     try {
-      final appDir = await getApplicationDocumentsDirectory();
+      final appDir = await getApplicationSupportDirectory();
       final artDir = Directory(p.join(appDir.path, 'album_art'));
       if (!await artDir.exists()) await artDir.create(recursive: true);
       

@@ -14,11 +14,15 @@ import 'package:metadata_god/metadata_god.dart';
 import 'package:one_player/core/theme_provider.dart';
 import 'package:one_player/ui/widgets/keyboard_handler.dart';
 import 'package:one_player/core/providers.dart';
+import 'package:local_notifier/local_notifier.dart';
 
 void main(List<String> args) async {
   final String? initialFile = args.isNotEmpty ? args.first : null;
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Initialize LocalNotifier
+  await localNotifier.setup(appName: 'Aspen');
+
   // Initialize MetadataGod
   MetadataGod.initialize();
   
