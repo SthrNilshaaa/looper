@@ -20,6 +20,7 @@ dist/
 *.iml
 *.ipr
 *.iws
+*.spec
 .idea/
 
 # The .vscode folder contains launch configuration and tasks you configure in

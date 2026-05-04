@@ -114,19 +114,20 @@ class _PremiumPlayerBar extends StatelessWidget {
           height: 80, // Slightly more height for better spacing
           margin: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                colorScheme.surface.withOpacity(0.5),
-                colorScheme.primary.withOpacity(0.08),
-              ],
-            ),
+            color:  colorScheme.primary.withOpacity(0.08),
+            // gradient: LinearGradient(
+            //   begin: Alignment.topLeft,
+            //   end: Alignment.bottomRight,
+            //   colors: [
+            //     colorScheme.surface.withOpacity(0.5),
+            //     colorScheme.primary.withOpacity(0.08),
+            //   ],
+            // ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: colorScheme.primary.withOpacity(0.15)),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.primary.withOpacity(0.1),
+                color: colorScheme.primary.withOpacity(0.05),
                 blurRadius: 24,
                 spreadRadius: -4,
               ),
@@ -475,8 +476,8 @@ class _ExpressiveSlider extends StatelessWidget {
                 },
                 activeColor: color,
                 inactiveColor: Colors.white10,
-                squiggleAmplitude: isPlaying ? 4.0 : 0.0,
-                squiggleWavelength: 5.0,
+                squiggleAmplitude: isPlaying ? 2.0 : 0.0,
+                squiggleWavelength: 3.0,
                 squiggleSpeed: 0.1,
               ),
             ),
