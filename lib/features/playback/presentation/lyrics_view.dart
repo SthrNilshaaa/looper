@@ -9,6 +9,7 @@ import 'package:flutter_lyric/flutter_lyric.dart';
 import '../domain/lyric_models.dart';
 import 'widgets/advanced_lyric_renderer.dart';
 import 'package:one_player/l10n/app_localizations.dart';
+import 'package:animate_gradient/animate_gradient.dart';
 
 enum LyricsSyncMode { line, word, char }
 
@@ -94,27 +95,51 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       }
     });
 
-    return Container(
-      color: Colors.transparent,
-      child: Column(
-        children: [
-          // _buildHeader(currentSong),
-          if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
-          Expanded(
-            child: _isLoading 
-              ? const Center(child: CircularProgressIndicator())
-              : _rawLrc == null 
-                ? const Center(child: Text('Lyrics not available.', style: TextStyle(color: Colors.grey)))
-                : Consumer(
-                    builder: (context, ref, child) {
-                      // Only watch position here to avoid rebuilding the entire screen
-                      final position = ref.watch(playbackProvider.select((s) => s.position));
-                      return _buildContent(position);
-                    },
-                  ),
+    final primaryColor = Theme.of(context).colorScheme.primary;
+    final secondaryColor = Theme.of(context).colorScheme.tertiary;
+
+    return Stack(
+      children: [
+        // Motion Gradient Background
+        Positioned.fill(
+          child: AnimateGradient(
+            primaryBegin: Alignment.topLeft,
+            primaryEnd: Alignment.bottomLeft,
+            secondaryBegin: Alignment.bottomLeft,
+            secondaryEnd: Alignment.topRight,
+            primaryColors: [
+              primaryColor.withOpacity(0.15),
+              secondaryColor.withOpacity(0.1),
+              Colors.transparent,
+            ],
+            secondaryColors: [
+              Colors.transparent,
+              primaryColor.withOpacity(0.1),
+              secondaryColor.withOpacity(0.15),
+            ],
           ),
-        ],
-      ),
+        ),
+        // Content
+        Column(
+          children: [
+            // _buildHeader(currentSong),
+            if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
+            Expanded(
+              child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _rawLrc == null
+                  ? const Center(child: Text('Lyrics not available.', style: TextStyle(color: Colors.grey)))
+                  : Consumer(
+                      builder: (context, ref, child) {
+                        // Only watch position here to avoid rebuilding the entire screen
+                        final position = ref.watch(playbackProvider.select((s) => s.position));
+                        return _buildContent(position);
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

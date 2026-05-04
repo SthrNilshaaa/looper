@@ -59,8 +59,8 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
       if (key?.currentContext != null) {
         Scrollable.ensureVisible(
           key!.currentContext!,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeInOutCubic,
+          duration: const Duration(milliseconds: 800),
+          curve: Curves.fastLinearToSlowEaseIn,
           alignment: 0.5, // Center the active line
         );
       } else {
@@ -68,15 +68,15 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
             (index * 70.0), // rough estimate to get it in view
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.fastOutSlowIn,
           ).then((_) {
             // Try again once it's likely built
             if (mounted && _lineKeys[index]?.currentContext != null) {
               Scrollable.ensureVisible(
                 _lineKeys[index]!.currentContext!,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.fastLinearToSlowEaseIn,
                 alignment: 0.5,
               );
             }

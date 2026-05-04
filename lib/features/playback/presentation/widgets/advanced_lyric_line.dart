@@ -39,15 +39,20 @@ class AdvancedLyricLine extends StatelessWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          padding: EdgeInsets.symmetric(vertical: isActive ? 24 : 12, horizontal: 16),
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 300),
+        child: AnimatedPadding(
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.fastLinearToSlowEaseIn,
+          padding: EdgeInsets.symmetric(vertical: isActive ? 32 : 16, horizontal: 16),
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCubic,
-            style: baseStyle,
-            child: _buildModeContent(context, progress, isPast, baseStyle, activeColor),
+            opacity: isActive ? 1.0 : (isPast ? 0.3 : 0.6),
+            child: AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+              style: baseStyle,
+              child: _buildModeContent(context, progress, isPast, baseStyle, activeColor),
+            ),
           ),
         ),
       ),
@@ -69,7 +74,7 @@ class AdvancedLyricLine extends StatelessWidget {
     if (!isActive && !isPast) {
       return Text(
         isInstrumental ? '♫' : text,
-        style: baseStyle, 
+        style: baseStyle.copyWith(color: Colors.white),
         textAlign: TextAlign.start
       );
     }
@@ -77,7 +82,7 @@ class AdvancedLyricLine extends StatelessWidget {
     if (isPast) {
       return Text(
         isInstrumental ? '♫' : text,
-        style: baseStyle.copyWith(color: Colors.white.withOpacity(0.3)),
+        style: baseStyle.copyWith(color: Colors.white),
         textAlign: TextAlign.start
       );
     }
