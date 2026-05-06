@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Looper Player
+Comment=A modern, high-fidelity music player for Linux.
+Exec=looper_player
+Icon=looper_player
+Terminal=false
+Type=Application
+StartupWMClass=looper_player
+Categories=AudioVideo;Audio;Music;Player;
+Keywords=Music;Player;Audio;Looper Player;
