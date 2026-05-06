@@ -1,7 +1,7 @@
-app_name: OnePlayer
-package_name: one-player
-executable_name: one_player
-display_name: OnePlayer
+app_name: Looper Player
+package_name: looper-player
+executable_name: looper_player
+display_name: Looper Player
 generic_name: Music Player
 version: 1.0.0
 architecture: amd64
@@ -12,7 +12,7 @@ installed_size: 25000
 description: A modern, high-fidelity music player for Linux.
 section: utils
 priority: optional
-icon: assets/icon.png
+icon: assets/logo_linux.png
 categories:
   - AudioVideo
   - Audio

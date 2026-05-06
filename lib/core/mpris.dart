@@ -107,8 +107,8 @@ class MPRISPlayer extends DBusObject {
         case 'CanQuit': return DBusMethodSuccessResponse([DBusBoolean(false)]);
         case 'CanRaise': return DBusMethodSuccessResponse([DBusBoolean(false)]);
         case 'HasTrackList': return DBusMethodSuccessResponse([DBusBoolean(false)]);
-        case 'Identity': return DBusMethodSuccessResponse([DBusString('OnePlayer')]);
-        case 'DesktopEntry': return DBusMethodSuccessResponse([DBusString('one_player')]);
+        case 'Identity': return DBusMethodSuccessResponse([DBusString('Looper Player')]);
+        case 'DesktopEntry': return DBusMethodSuccessResponse([DBusString('looper_player')]);
         case 'SupportedUriSchemes': return DBusMethodSuccessResponse([DBusArray.string([])]);
         case 'SupportedMimeTypes': return DBusMethodSuccessResponse([DBusArray.string([])]);
       }

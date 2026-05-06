@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
 
 enum NavItem { home, songs, albums, artists, playlists, search, favorites, recentlyPlayed, lyrics, settings, collectionDetail, queue }
 

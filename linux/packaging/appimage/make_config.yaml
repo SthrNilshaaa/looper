@@ -1,5 +1,5 @@
-app_id: com.example.one_player
-display_name: OnePlayer
+app_id: com.example.looper_player
+display_name: Looper Player
 icon: assets/icon.png
 categories:
   - AudioVideo

@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Configuration
-APP_NAME="one-player"
-DISPLAY_NAME="OnePlayer"
+APP_NAME="looper_player"
+DISPLAY_NAME="Looper Player"
 VERSION="1.0.0"
 MAINTAINER="Nils Haaa <nilshaaa@example.com>"
 DESCRIPTION="A modern, high-fidelity music player for Linux."
@@ -30,13 +30,13 @@ mkdir -p "$DEB_ROOT/usr/share/pixmaps"
 mkdir -p "$DEB_ROOT/usr/lib/$APP_NAME"
 
 # Copy Icon
-if [ -f "assets/icon.png" ]; then
-    cp "assets/icon.png" "$DEB_ROOT/usr/share/pixmaps/$APP_NAME.png"
-fi
+    if [ -f "assets/Logo_launcher.png" ]; then
+        cp "assets/Logo_launcher.png" "$DEB_ROOT/usr/share/pixmaps/$APP_NAME.png"
+    fi
 
 # Create control file
 cat <<EOF > "$DEB_ROOT/DEBIAN/control"
-Package: $APP_NAME
+Package: ${APP_NAME//_/-}
 Version: $VERSION
 Section: utils
 Priority: optional
@@ -54,7 +54,7 @@ cat <<EOF > "$DEB_ROOT/usr/bin/$APP_NAME"
 #!/bin/bash
 # Force native Wayland backend on systems that support it
 export GDK_BACKEND=wayland,x11
-/usr/lib/$APP_NAME/one_player "\$@"
+/usr/lib/$APP_NAME/looper_player "\$@"
 EOF
 chmod +x "$DEB_ROOT/usr/bin/$APP_NAME"
 
@@ -86,14 +86,14 @@ if command -v rpmbuild &> /dev/null; then
 
     # Create the .spec file with Fedora/RPM dependencies
     cat <<EOF > "$RPM_TOPDIR/SPECS/$APP_NAME.spec"
-Name:           $APP_NAME
+Name:           ${APP_NAME//_/-}
 Version:        $VERSION
 Release:        1%{?dist}
 Summary:        $DESCRIPTION
 License:        MIT
 BuildArch:      x86_64
 # Essential rendering and audio dependencies for Fedora
-Requires:       gtk3, libmpv, libappindicator-gtk3
+Requires:       gtk3, mpv-libs, vlc-libs, libappindicator-gtk3
 
 %description
 $DESCRIPTION
@@ -106,15 +106,15 @@ mkdir -p %{buildroot}/usr/share/pixmaps
 
 # Copy files using absolute paths from the project directory
 cp -r $(pwd)/$BUILD_DIR/* %{buildroot}/usr/lib/%{name}/
-if [ -f "$(pwd)/assets/icon.png" ]; then
-    cp $(pwd)/assets/icon.png %{buildroot}/usr/share/pixmaps/%{name}.png
+if [ -f "$(pwd)/assets/Logo_launcher.png" ]; then
+    cp $(pwd)/assets/Logo_launcher.png %{buildroot}/usr/share/pixmaps/%{name}.png
 fi
 
 # Create launcher with Wayland environment fix
 cat <<BIN > %{buildroot}/usr/bin/%{name}
 #!/bin/bash
 export GDK_BACKEND=wayland,x11
-/usr/lib/%{name}/one_player "\\\$@"
+/usr/lib/%{name}/looper_player "\\\$@"
 BIN
 chmod +x %{buildroot}/usr/bin/%{name}
 
@@ -162,10 +162,11 @@ fi
 # --- AppImage Packaging ---
 echo "📦 Building universal .AppImage..."
 
-# 1. Download appimagetool if not present
-if [ ! -f "appimagetool" ]; then
+# 1. Download appimagetool if not present or if it's invalid
+if [ ! -f "appimagetool" ] || ! grep -q "ELF" "appimagetool" 2>/dev/null; then
     echo "Downloading appimagetool..."
-    wget -q https://github.com -O appimagetool
+    rm -f appimagetool
+    wget -q https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage -O appimagetool
     chmod +x appimagetool
 fi
 
@@ -185,7 +186,7 @@ cat <<EOF > "$APPIMAGE_ROOT/AppRun"
 HERE="\$(dirname "\$(readlink -f "\${0}")")"
 export LD_LIBRARY_PATH="\$HERE/usr/lib/lib:\$LD_LIBRARY_PATH"
 export GDK_BACKEND=wayland,x11
-"\$HERE/usr/lib/one_player" "\$@"
+"\$HERE/usr/lib/looper_player" "\$@"
 EOF
 chmod +x "$APPIMAGE_ROOT/AppRun"
 
@@ -199,9 +200,9 @@ Icon=$APP_NAME
 Categories=$CATEGORIES
 EOF
 
-if [ -f "assets/icon.png" ]; then
-    cp "assets/icon.png" "$APPIMAGE_ROOT/$APP_NAME.png"
-    cp "assets/icon.png" "$APPIMAGE_ROOT/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
+if [ -f "assets/Logo_launcher.png" ]; then
+    cp "assets/Logo_launcher.png" "$APPIMAGE_ROOT/$APP_NAME.png"
+    cp "assets/Logo_launcher.png" "$APPIMAGE_ROOT/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
 fi
 
 # 6. Build the final AppImage
@@ -222,8 +223,8 @@ echo "🚀 All packaging tasks finished."
 ##!/bin/bash
 #
 ## Configuration
-#APP_NAME="one-player"
-#DISPLAY_NAME="OnePlayer"
+#APP_NAME="looper-player"
+#DISPLAY_NAME="Looper Player"
 #VERSION="1.0.0"
 #MAINTAINER="Nils Haaa <nilshaaa@example.com>"
 #DESCRIPTION="A modern, high-fidelity music player for Linux."
@@ -251,8 +252,8 @@ echo "🚀 All packaging tasks finished."
 #mkdir -p "$DEB_ROOT/usr/lib/$APP_NAME"
 #
 ## Copy Icon
-#if [ -f "assets/icon.png" ]; then
-#    cp "assets/icon.png" "$DEB_ROOT/usr/share/pixmaps/$APP_NAME.png"
+#if [ -f "assets/logo_linux.png" ]; then
+#    cp "assets/logo_linux.png" "$DEB_ROOT/usr/share/pixmaps/$APP_NAME.png"
 #fi
 #
 ## Create control file
@@ -272,7 +273,7 @@ echo "🚀 All packaging tasks finished."
 ## Create launcher script
 #cat <<EOF > "$DEB_ROOT/usr/bin/$APP_NAME"
 ##!/bin/bash
-#/usr/lib/$APP_NAME/one_player "\$@"
+#/usr/lib/$APP_NAME/looper_player "\$@"
 #EOF
 #chmod +x "$DEB_ROOT/usr/bin/$APP_NAME"
 #
@@ -322,14 +323,14 @@ echo "🚀 All packaging tasks finished."
 #
 ## Copy files using absolute paths from the project directory
 #cp -r $(pwd)/$BUILD_DIR/* %{buildroot}/usr/lib/%{name}/
-#if [ -f "$(pwd)/assets/icon.png" ]; then
-#    cp $(pwd)/assets/icon.png %{buildroot}/usr/share/pixmaps/%{name}.png
+#if [ -f "$(pwd)/assets/logo_linux.png" ]; then
+#    cp $(pwd)/assets/logo_linux.png %{buildroot}/usr/share/pixmaps/%{name}.png
 #fi
 #
 ## Create launcher
 #cat <<BIN > %{buildroot}/usr/bin/%{name}
 ##!/bin/bash
-#/usr/lib/%{name}/one_player "\\\$@"
+#/usr/lib/%{name}/looper_player "\\\$@"
 #BIN
 #chmod +x %{buildroot}/usr/bin/%{name}
 #
@@ -379,8 +380,8 @@ echo "🚀 All packaging tasks finished."
 #echo "🚀 All packaging tasks finished."
 ##
 ### Configuration
-##APP_NAME="one-player"
-##DISPLAY_NAME="OnePlayer"
+##APP_NAME="looper-player"
+##DISPLAY_NAME="Looper Player"
 ##VERSION="1.0.0"
 ##MAINTAINER="Nils Haaa <nilshaaa@example.com>"
 ##DESCRIPTION="A modern, high-fidelity music player for Linux."
@@ -409,8 +410,8 @@ echo "🚀 All packaging tasks finished."
 ##mkdir -p "$DEB_ROOT/usr/lib/$APP_NAME"
 ##
 ### Copy Icon
-##if [ -f "assets/icon.png" ]; then
-##    cp "assets/icon.png" "$DEB_ROOT/usr/share/pixmaps/$APP_NAME.png"
+##if [ -f "assets/logo_linux.png" ]; then
+##    cp "assets/logo_linux.png" "$DEB_ROOT/usr/share/pixmaps/$APP_NAME.png"
 ##fi
 ##
 ### Create control file
@@ -430,7 +431,7 @@ echo "🚀 All packaging tasks finished."
 ### Create launcher script
 ##cat <<EOF > "$DEB_ROOT/usr/bin/$APP_NAME"
 ###!/bin/bash
-##/usr/lib/$APP_NAME/one_player "\$@"
+##/usr/lib/$APP_NAME/looper_player "\$@"
 ##EOF
 ##chmod +x "$DEB_ROOT/usr/bin/$APP_NAME"
 ##
@@ -462,15 +463,20 @@ echo "🚀 All packaging tasks finished."
 ##
 ##    # Copy files to SOURCES
 ##    cp -r "$BUILD_DIR" "$RPM_TOPDIR/SOURCES/bundle"
-##    if [ -f "assets/icon.png" ]; then
-##        cp "assets/icon.png" "$RPM_TOPDIR/SOURCES/icon.png"
+##    if [ -f "assets/Logo_launcher.png" ]; then
+##        cp "assets/Logo_launcher.png" "$RPM_TOPDIR/SOURCES/icon.png"
 ##    fi
 ##
-##    # Build RPM
-##    rpmbuild -bb --define "_topdir $RPM_TOPDIR" one-player.spec
+##    # Update AppImageTool download
+##    if [ ! -f "appimagetool" ]; then
+##        wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+##        chmod +x appimagetool
+##    fi
+##
+##    rpmbuild -bb --define "_topdir $RPM_TOPDIR" looper-player.spec
 ##
 ##    # Move result to dist
-##    cp "$RPM_TOPDIR"/RPMS/x86_64/${APP_NAME}-${VERSION}-*.rpm "$OUTPUT_DIR/"
+##    cp "$RPM_TOPDIR"/RPMS/x86_64/${APP_NAME//_/-}-${VERSION}-*.rpm "$OUTPUT_DIR/"
 ##    echo "✅ Native RPM build complete: $OUTPUT_DIR/"
 ##elif command -v alien &> /dev/null; then
 ##    echo "📦 Building .rpm package using alien (fallback)..."

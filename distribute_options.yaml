@@ -4,9 +4,9 @@ publish:
   
 releases:
   - name: dev
-    package_name: one_player
-    display_name: OnePlayer
-    executable_name: one_player
+    package_name: looper_player
+    display_name: Looper Player
+    executable_name: looper_player
     targets:
       - deb
       - rpm

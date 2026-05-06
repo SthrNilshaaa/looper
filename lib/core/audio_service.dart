@@ -13,7 +13,7 @@ class AudioService {
   void Function()? onPrevious;
 
   AudioService() {
-    player = Player(configuration: const PlayerConfiguration(title: 'OnePlayer'));
+    player = Player(configuration: const PlayerConfiguration(title: 'Looper Player'));
     _initMpris();
   }
 
@@ -37,8 +37,11 @@ class AudioService {
         if (onPrevious != null) onPrevious!();
       };
 
-      await _dBusClient!.requestName('org.mpris.MediaPlayer2.one_player');
+      await _dBusClient!.requestName('org.mpris.MediaPlayer2.looper_player');
       await _dBusClient!.registerObject(_mprisPlayer!);
+
+      // Set initial status
+      _mprisPlayer!.updatePlaybackStatus(player.state.playing ? 'Playing' : 'Paused');
 
       player.stream.playing.listen((playing) {
         _mprisPlayer!.updatePlaybackStatus(playing ? 'Playing' : 'Paused');
@@ -48,9 +51,18 @@ class AudioService {
         _mprisPlayer!.position = position.inMicroseconds;
       });
 
+      player.stream.duration.listen((duration) {
+        _updateMprisMetadata(player.state.playlist.index);
+      });
+
     } catch (e) {
       print('Failed to initialize MPRIS: $e');
     }
+  }
+
+  void _updateMprisMetadata(int index) {
+    if (_mprisPlayer == null) return;
+    // We update metadata when song changes or duration is loaded
   }
 
   Future<void> play(String path, {Map<String, dynamic>? metadata}) async {
@@ -59,7 +71,9 @@ class AudioService {
 
     if (_mprisPlayer != null && metadata != null) {
       final mprisMetadata = <String, DBusValue>{};
-      mprisMetadata['mpris:trackid'] = DBusObjectPath('/org/mpris/MediaPlayer2/TrackList/NoTrack');
+      // Use a proper track ID instead of NoTrack to help some shells
+      final trackId = '/org/mpris/MediaPlayer2/Track/${path.hashCode.abs()}';
+      mprisMetadata['mpris:trackid'] = DBusObjectPath(trackId);
 
       if (metadata['title'] != null) {
         mprisMetadata['xesam:title'] = DBusString(metadata['title'].toString());
@@ -74,7 +88,6 @@ class AudioService {
         mprisMetadata['mpris:artUrl'] = DBusString('file://${metadata['artPath']}');
       }
       if (metadata['duration'] != null) {
-        // duration is in milliseconds, MPRIS wants microseconds
         final durationMs = int.tryParse(metadata['duration'].toString()) ?? 0;
         if (durationMs > 0) {
           mprisMetadata['mpris:length'] = DBusInt64(durationMs * 1000);

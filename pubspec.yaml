@@ -1,5 +1,5 @@
-name: one_player
-description: "A new Flutter project."
+name: looper_player
+description: "Looper Player - A powerful music player."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -40,6 +40,7 @@ dependencies:
   google_fonts: ^6.2.1
   squiggly_slider: ^1.0.5
   flutter_lyric: ^3.0.3
+  dynamic_color: ^1.7.0
 
   # State Management
   flutter_riverpod: ^2.5.1
@@ -94,6 +95,8 @@ flutter:
   uses-material-design: true
   assets:
     - assets/
+    - assets/music_bar_Icons/
+    - assets/side_bar/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

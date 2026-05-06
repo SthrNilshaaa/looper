@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:one_player/features/library/presentation/library_notifier.dart';
+import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:one_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -75,7 +75,7 @@ class SettingsView extends ConsumerWidget {
         const Divider(height: 48),
         _SectionHeader(title: 'About'),
         const ListTile(
-          title: Text('OnePlayer'),
+          title: Text('Looper Player'),
           subtitle: Text('Version 1.0.0'),
         ),
         ListTile(

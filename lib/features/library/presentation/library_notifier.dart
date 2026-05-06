@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:one_player/features/library/data/scanner.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
-import 'package:one_player/core/db_service.dart';
-import 'package:one_player/features/library/data/artist_image_service.dart';
+import 'package:looper_player/features/library/data/scanner.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/core/db_service.dart';
+import 'package:looper_player/features/library/data/artist_image_service.dart';
 import 'package:isar/isar.dart';
-import 'package:one_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 
 class LibraryState {
   final bool isScanning;
@@ -126,4 +126,14 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
 
 final libraryProvider = StateNotifierProvider<LibraryNotifier, LibraryState>((ref) {
   return LibraryNotifier(ref);
+});
+
+final recentlyPlayedProvider = StreamProvider<List<Song>>((ref) {
+  return DbService.isar.songs
+      .where()
+      .filter()
+      .lastPlayedIsNotNull()
+      .sortByLastPlayedDesc()
+      .limit(10)
+      .watch(fireImmediately: true);
 });

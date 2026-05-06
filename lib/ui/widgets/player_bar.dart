@@ -3,12 +3,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:one_player/core/navigation_provider.dart';
+import 'package:looper_player/core/navigation_provider.dart';
 import 'package:squiggly_slider/slider.dart';
 import '../../features/playback/presentation/playback_notifier.dart';
-import 'package:one_player/l10n/app_localizations.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'dart:math' as math;
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class PlayerBar extends ConsumerWidget {
   const PlayerBar({super.key});
@@ -115,14 +116,6 @@ class _PremiumPlayerBar extends StatelessWidget {
           margin: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color:  colorScheme.primary.withOpacity(0.08),
-            // gradient: LinearGradient(
-            //   begin: Alignment.topLeft,
-            //   end: Alignment.bottomRight,
-            //   colors: [
-            //     colorScheme.surface.withOpacity(0.5),
-            //     colorScheme.primary.withOpacity(0.08),
-            //   ],
-            // ),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: colorScheme.primary.withOpacity(0.15)),
             boxShadow: [
@@ -138,9 +131,10 @@ class _PremiumPlayerBar extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 36),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
                 child: Row(
                   children: [
+                    //Container(color:Colors.red,width: 30,height: 30),
                     // Left: Album Art + Info
                     Flexible(
                       flex: isVeryNarrow
@@ -166,7 +160,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                     Expanded(
                       flex: isNarrow
                           ? 4
-                          : 8, // Adjusted to balance with song info
+                          : 6, // Adjusted to balance with song info
                       child: _ExpressiveSlider(
                         position: position,
                         duration: duration,
@@ -175,15 +169,23 @@ class _PremiumPlayerBar extends StatelessWidget {
                         color: colorScheme.primary,
                       ),
                     ),
-
+                    
+                    if (!isVeryNarrow)...[
+                     SizedBox(width: 24),
+                      Container(
+                        height: 40,
+                        width: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        color: Colors.white10,
+                      ),
+                    SizedBox(width: 12),],
                     if (!isNarrow) ...[
-                      const SizedBox(width: 12),
+                      Flexible(flex: 1, child: SizedBox(width: 24)),
                       // Right: Volume
-                      Flexible(flex: 3, child: _buildVolumeControl(context)),
+                      Flexible(flex: 2, child: _buildVolumeControl(context)),
+                       SizedBox(width: 24),
                     ],
-
-                    const SizedBox(width: 8),
-
+                   
                     // Far Right: Actions
                     _buildActions(context, colorScheme, isVeryNarrow),
                   ],
@@ -272,23 +274,29 @@ class _PremiumPlayerBar extends StatelessWidget {
         if (!isVeryNarrow)
           IconButton(
             onPressed: onShuffle,
-            icon: Icon(
-              LucideIcons.shuffle,
-              size: 18,
-              color: isShuffle ? colorScheme.primary : Colors.white54,
+            icon: SvgPicture.asset(
+              'assets/music_bar_Icons/shuffle.svg',
+              width: 18,
+              height: 18,
+              colorFilter: ColorFilter.mode(
+                isShuffle ? colorScheme.primary : Colors.white54,
+                BlendMode.srcIn
+              ),
             ),
             tooltip: 'Shuffle',
           ),
+           const SizedBox(width: 16),
         IconButton(
           onPressed: onPrevious,
-          icon: Icon(
-            LucideIcons.skipBack,
-            size: isVeryNarrow ? 18 : 20,
-            color: Colors.white,
+          icon: SvgPicture.asset(
+            'assets/music_bar_Icons/prev_track.svg',
+            width: isVeryNarrow ? 18 : 20,
+            height: isVeryNarrow ? 18 : 20,
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
           tooltip: 'Previous',
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 16),
         GestureDetector(
           onTap: onPlayPause,
           child: Container(
@@ -297,45 +305,62 @@ class _PremiumPlayerBar extends StatelessWidget {
             decoration: BoxDecoration(
               color: colorScheme.primary,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: colorScheme.primary.withOpacity(0.3),
-                  blurRadius: 12,
-                  spreadRadius: 2,
+              // boxShadow: [
+              //   BoxShadow(
+              //     color: colorScheme.primary.withOpacity(0.3),
+              //     blurRadius: 12,
+              //     spreadRadius: 2,
+              //   ),
+              // ],
+            ),
+            child: isPlaying 
+              ? Icon(
+                  // LucideIcons.pause,
+                  Icons.pause,
+                  color: Colors.white,
+                  size: isVeryNarrow ? 18 : 24,
+                )
+              //  SvgPicture.asset(
+              //     'assets/music_bar_Icons/pause.svg',
+              //     width: isVeryNarrow ? 18 : 22,
+              //     height: isVeryNarrow ? 18 : 22,
+              //     colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              //   )
+              : Icon(
+                  // LucideIcons.play,
+                  Icons.play_arrow_sharp,
+                  color: Colors.white,
+                  size: isVeryNarrow ? 18 : 24,
                 ),
-              ],
-            ),
-            child: Icon(
-              isPlaying ? LucideIcons.pause : LucideIcons.play,
-              color: Colors.black,
-              size: isVeryNarrow ? 18 : 22,
-            ),
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 16),
         IconButton(
           onPressed: onNext,
-          icon: Icon(
-            LucideIcons.skipForward,
-            size: isVeryNarrow ? 18 : 20,
-            color: Colors.white,
+          icon: SvgPicture.asset(
+            'assets/music_bar_Icons/next_track.svg',
+            width: isVeryNarrow ? 18 : 20,
+            height: isVeryNarrow ? 18 : 20,
+            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
           tooltip: 'Next',
         ),
         if (!isVeryNarrow)
+        SizedBox(width: 16),
           IconButton(
             onPressed: onRepeat,
-            icon: Icon(
-              repeatMode == RepeatMode.one
-                  ? LucideIcons.repeat1
-                  : LucideIcons.repeat,
-              size: 18,
-              color: repeatMode != RepeatMode.off
-                  ? colorScheme.primary
-                  : Colors.white54,
+            icon: SvgPicture.asset(
+              'assets/music_bar_Icons/repeat.svg',
+              width: 18,
+              height: 18,
+              colorFilter: ColorFilter.mode(
+                repeatMode != RepeatMode.off ? colorScheme.primary : Colors.white54,
+                BlendMode.srcIn
+              ),
             ),
             tooltip: 'Repeat',
           ),
+          
       ],
     );
   }
@@ -344,21 +369,18 @@ class _PremiumPlayerBar extends StatelessWidget {
     return ClipRect(
       child: Row(
         children: [
-          Icon(
-            volume == 0
-                ? LucideIcons.volumeX
-                : volume < 0.5
-                ? LucideIcons.volume1
-                : LucideIcons.volume2,
-            size: 18,
-            color: Colors.white54,
+          SvgPicture.asset(
+            'assets/music_bar_Icons/volume.svg',
+            width: 18,
+            height: 18,
+            colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
           ),
           Flexible(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 120),
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  trackHeight: 4,
+                  trackHeight: 2,
                   thumbShape: const RoundSliderThumbShape(
                     enabledThumbRadius: 7,
                   ),
@@ -389,23 +411,33 @@ class _PremiumPlayerBar extends StatelessWidget {
       children: [
         if (!isVeryNarrow)
           IconButton(
-            icon: Icon(
-              isFavorite ? LucideIcons.heart : LucideIcons.heart,
-              size: 18,
-              color: isFavorite ? Colors.red : Colors.white54,
+            icon: SvgPicture.asset(
+              isFavorite ? 'assets/music_bar_Icons/liked.svg' : 'assets/music_bar_Icons/like.svg',
+              width: 18,
+              height: 18,
+              colorFilter: ColorFilter.mode(
+                isFavorite ? Colors.red : Colors.white54,
+                BlendMode.srcIn
+              ),
             ),
             onPressed: onFavoriteToggle,
             tooltip: 'Favorite',
           ),
+          SizedBox(width: 8),
         IconButton(
-          icon: Icon(
-            LucideIcons.mic2,
-            size: 18,
-            color: isLyricsActive ? colorScheme.primary : Colors.white54,
+          icon: SvgPicture.asset(
+            'assets/music_bar_Icons/lyrics.svg',
+            width: 18,
+            height: 18,
+            colorFilter: ColorFilter.mode(
+              isLyricsActive ? colorScheme.primary : Colors.white54,
+              BlendMode.srcIn
+            ),
           ),
           onPressed: onLyricsToggle,
           tooltip: 'Lyrics',
         ),
+        SizedBox(width: 8),
         IconButton(
           icon: Icon(
             LucideIcons.listMusic,
@@ -455,6 +487,7 @@ class _ExpressiveSlider extends StatelessWidget {
         return Row(
           children: [
             if (showTimestamps) ...[
+              // const SizedBox(width: 4),
               Text(
                 _formatDuration(position),
                 style: const TextStyle(
@@ -463,26 +496,37 @@ class _ExpressiveSlider extends StatelessWidget {
                   fontFamily: 'monospace',
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 4),
             ],
             Expanded(
-              child: SquigglySlider(
-                value: progress,
-                onChanged: (val) {
-                  onSeek(duration * val);
-                  if (val == 0.0 || val == 1.0) {
-                    HapticFeedback.lightImpact();
-                  }
-                },
-                activeColor: color,
-                inactiveColor: Colors.white10,
-                squiggleAmplitude: isPlaying ? 2.0 : 0.0,
-                squiggleWavelength: 3.0,
-                squiggleSpeed: 0.1,
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 2,
+                  activeTrackColor: color,
+                  inactiveTrackColor: Colors.white10,
+                  thumbShape: SliderComponentShape.noThumb,
+                  overlayShape: SliderComponentShape.noOverlay,
+                ),
+                child: SquigglySlider(
+                  value: progress,
+                  onChanged: (val) {
+                    onSeek(duration * val);
+                    if (val == 0.0 || val == 1.0) {
+                      HapticFeedback.lightImpact();
+                    }
+                  },
+                  activeColor: color,
+                  inactiveColor: Colors.white10,
+                  squiggleAmplitude: isPlaying ? 2.0 : 0.0,
+                  squiggleWavelength: 3.0,
+                  squiggleSpeed: 0.1,
+                  useLineThumb: true,
+
+                ),
               ),
             ),
             if (showTimestamps) ...[
-              const SizedBox(width: 12),
+          const SizedBox(width: 4),
               Text(
                 _formatDuration(duration),
                 style: const TextStyle(
@@ -491,6 +535,7 @@ class _ExpressiveSlider extends StatelessWidget {
                   fontFamily: 'monospace',
                 ),
               ),
+              
             ],
           ],
         );

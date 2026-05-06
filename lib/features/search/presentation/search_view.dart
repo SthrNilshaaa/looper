@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
-import 'package:one_player/core/db_service.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
-import 'package:one_player/features/library/presentation/songs_list.dart';
-import 'package:one_player/core/navigation_provider.dart';
+import 'package:looper_player/features/library/presentation/songs_list.dart';
+import 'package:looper_player/core/navigation_provider.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -47,19 +47,6 @@ class SearchView extends ConsumerWidget {
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(24),
-          child: TextField(
-            onChanged: (val) => ref.read(searchQueryProvider.notifier).state = val,
-            decoration: InputDecoration(
-              hintText: 'Search songs, albums, artists...',
-              prefixIcon: const Icon(LucideIcons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
-            ),
-          ),
-        ),
         Expanded(
           child: query.isEmpty
               ? _buildRecentSearches(context)

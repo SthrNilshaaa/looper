@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
-import 'package:one_player/core/db_service.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
+import 'package:looper_player/core/db_service.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
 
 class PlaylistService {
   static Future<void> addSongToPlaylist(Playlist playlist, Song song) async {

@@ -2,9 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
-import 'package:one_player/core/db_service.dart';
-import 'package:one_player/core/navigation_provider.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/core/db_service.dart';
+import 'package:looper_player/core/navigation_provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:isar/isar.dart';
 

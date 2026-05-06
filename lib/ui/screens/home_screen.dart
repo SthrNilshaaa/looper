@@ -7,24 +7,25 @@ import 'package:animations/animations.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import '../widgets/player_bar.dart';
-import 'package:one_player/features/library/presentation/library_notifier.dart';
-import 'package:one_player/features/library/presentation/songs_list.dart';
-import 'package:one_player/features/library/presentation/library_grids.dart';
-import 'package:one_player/ui/screens/home_dashboard.dart';
-import 'package:one_player/features/playlists/presentation/playlist_view.dart';
-import 'package:one_player/features/search/presentation/search_view.dart';
-import 'package:one_player/core/navigation_provider.dart';
-import 'package:one_player/features/library/presentation/smart_views.dart';
-import 'package:one_player/ui/screens/settings_view.dart';
+import 'package:looper_player/features/library/presentation/library_notifier.dart';
+import 'package:looper_player/features/library/presentation/songs_list.dart';
+import 'package:looper_player/features/library/presentation/library_grids.dart';
+import 'package:looper_player/ui/screens/home_dashboard.dart';
+import 'package:looper_player/features/playlists/presentation/playlist_view.dart';
+import 'package:looper_player/features/search/presentation/search_view.dart';
+import 'package:looper_player/core/navigation_provider.dart';
+import 'package:looper_player/features/library/presentation/smart_views.dart';
+import 'package:looper_player/ui/screens/settings_view.dart';
 
-import 'package:one_player/ui/widgets/collection_detail_view.dart';
-import 'package:one_player/features/playback/presentation/lyrics_view.dart';
-import 'package:one_player/features/playback/presentation/playback_notifier.dart';
-import 'package:one_player/features/library/presentation/queue_view.dart';
-import 'package:one_player/features/settings/presentation/settings_notifier.dart';
-import 'package:one_player/core/providers.dart';
+import 'package:looper_player/ui/widgets/collection_detail_view.dart';
+import 'package:looper_player/features/playback/presentation/lyrics_view.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/library/presentation/queue_view.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/core/providers.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:one_player/l10n/app_localizations.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
+import '../widgets/global_search_bar.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -71,8 +72,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final settings = ref.watch(settingsProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    final bool isFirstTime = settings.libraryFolders.isEmpty && library.songs.isEmpty && !library.isScanning;
-
+    final bool showWelcome = library.songs.isEmpty && !library.isScanning;
     final bool isNarrow = MediaQuery.of(context).size.width < 800;
 
     return Scaffold(
@@ -86,86 +86,77 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Global Background Art
-            if (!isFirstTime && playback.currentSong?.artPath != null)
+            // Global Background Art (Conditional)
+            if (!showWelcome && settings.enableDynamicTheming && playback.currentSong?.artPath != null) ...[
               Positioned.fill(
                 child: Image.file(
                   File(playback.currentSong!.artPath!),
                   fit: BoxFit.cover,
                 ),
               ),
-            Positioned.fill(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Theme.of(context).colorScheme.background.withOpacity(0.8),
-                        Theme.of(context).colorScheme.background.withOpacity(0.6),
-                      ],
-                    ),
+              Positioned.fill(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
+                  child: Container(
+                    color: Colors.black.withOpacity(0.8),
                   ),
                 ),
               ),
-            ),
+            ],
+
             
-            if (isFirstTime)
-              _buildWelcomeView(context, l10n)
-            else
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  final bool isNarrowLayout = constraints.maxWidth < 800;
-                  
-                  return Column(
-                    children: [
-                      // Custom Title Bar with explicit height
-                      
-                      SizedBox(
-                        height: 40,
-                        child: CustomTitleBar(showMenu: isNarrowLayout),
-                      ),
-                      Expanded(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Sidebar - hidden on narrow screens
-                            if (!isNarrowLayout)
-                              Container(
-                                width: 260,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.1),
-                                  border: Border(
-                                    right: BorderSide(
-                                      color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.2),
-                                      width: 1,
+            Column(
+              children: [
+                // Custom Title Bar always at the top
+                SizedBox(
+                  height: 40,
+                  child: CustomTitleBar(showMenu: isNarrow),
+                ),
+                Expanded(
+                  child: showWelcome
+                    ? _buildWelcomeView(context, l10n)
+                    : LayoutBuilder(
+                        builder: (context, constraints) {
+                          final bool isNarrowLayout = constraints.maxWidth < 800;
+                          
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // Sidebar - hidden on narrow screens
+                              if (!isNarrowLayout)
+                                Container(
+                                  width: 260,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.01),
+                                    border: Border(
+                                      right: BorderSide(
+                                        color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.2),
+                                        width: 1.5,
+                                      ),
                                     ),
                                   ),
+                                  child: Sidebar(l10n: l10n),
                                 ),
-                                child: Sidebar(l10n: l10n),
+                              
+                              // Main Content Area
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const GlobalSearchBar(),
+                                    Expanded(child: _buildMainContent(nav, library, context, l10n)),
+                                  ],
+                                ),
                               ),
-                      
-                            // Main Content
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  Expanded(child: _buildMainContent(nav, library, context, l10n)),
-                                  // Bottom Player Bar
-                                  PlayerBar(),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          );
+                        },
                       ),
-                      // Bottom Player Bar
-                      // PlayerBar(),
-                    ],
-                  );
-                },
-              ),
+                ),
+                // Global Player Bar always at the bottom
+                PlayerBar(),
+              ],
+            ),
           ],
         ),
       ),
@@ -177,33 +168,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const SizedBox(
-            height: 32,
-            child: CustomTitleBar(),
-          ),
           const Spacer(),
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(left: 5, right: 5),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SvgPicture.asset(
-                    'assets/music_icon.svg',
-                    height: 40,
-                  ),
-                  const SizedBox(width: 10),
-                  SvgPicture.asset(
-                    'assets/logo_text_icon.svg',
-                    height: 40,
-                  ),
-                ],
+            height: 120,
+            alignment: Alignment.center,
+            child: SvgPicture.asset(
+              'assets/main_logo_app.svg',
+              height: 100,
+              fit: BoxFit.contain,
+              placeholderBuilder: (context) => const Text(
+                'Looper Player',
+                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white),
               ),
             ),
           ),
@@ -304,27 +279,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(LucideIcons.music, size: 64, color: Theme.of(context).colorScheme.primary.withOpacity(0.2)),
-          const SizedBox(height: 16),
-          const Text('Your library is empty'),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () async {
-              final String? path = await FilePicker.platform.getDirectoryPath();
-              if (path != null) {
-                ref.read(libraryProvider.notifier).scanLibrary(path);
-              }
-            },
-            icon: const Icon(LucideIcons.folderSearch),
-            label: Text(l10n.scanLibrary),
-          ),
-        ],
-      ),
-    );
+    return _buildWelcomeView(context, l10n);
   }
 }
 
@@ -383,15 +338,13 @@ class Sidebar extends ConsumerWidget {
                   child: 
                   Row(
                     children: [
-                       SvgPicture.asset(
-                    'assets/music_icon.svg',
-                    height: 32,
-                  ),
-                  SizedBox(width: 5),
-                   SvgPicture.asset(
-                    'assets/logo_text_icon.svg',
-                    height: 32,
-                  ),
+                      SizedBox(
+                        height: 50,
+                        child: SvgPicture.asset(
+                          'assets/main_logo_app.svg',
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ],
                   ),
                 
@@ -399,19 +352,14 @@ class Sidebar extends ConsumerWidget {
                 ),
                 SizedBox(height: 10),
                     _SidebarItem(
-                      icon: LucideIcons.home,
+                      customIcon: 'assets/side_bar/home_active.svg',
                       label: 'Home',
                       isSelected: activeItem == NavItem.home,
                       onTap: () => navigateTo(NavItem.home),
                     ),
+
                     _SidebarItem(
-                      icon: LucideIcons.search,
-                      label: l10n.search,
-                      isSelected: activeItem == NavItem.search,
-                      onTap: () => navigateTo(NavItem.search),
-                    ),
-                    _SidebarItem(
-                      icon: LucideIcons.music,
+                      customIcon: 'assets/side_bar/my_music.svg',
                       label: l10n.songs,
                       isSelected: activeItem == NavItem.songs,
                       onTap: () => navigateTo(NavItem.songs),
@@ -432,7 +380,7 @@ class Sidebar extends ConsumerWidget {
                     Text(l10n.playlists.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2)),
                     const SizedBox(height: 8),
                     _SidebarItem(
-                      icon: LucideIcons.listMusic,
+                      customIcon: 'assets/side_bar/library.svg',
                       label: l10n.playlists,
                       isSelected: activeItem == NavItem.playlists,
                       onTap: () => navigateTo(NavItem.playlists),
@@ -444,7 +392,7 @@ class Sidebar extends ConsumerWidget {
                       onTap: () => navigateTo(NavItem.recentlyPlayed),
                     ),
                     _SidebarItem(
-                      icon: LucideIcons.heart,
+                      customIcon: 'assets/side_bar/favourites.svg',
                       label: 'Favorites',
                       isSelected: activeItem == NavItem.favorites,
                       onTap: () => navigateTo(NavItem.favorites),
@@ -475,13 +423,15 @@ class Sidebar extends ConsumerWidget {
 }
 
 class _SidebarItem extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final String? customIcon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _SidebarItem({
-    required this.icon,
+    this.icon,
+    this.customIcon,
     required this.label,
     required this.onTap,
     this.isSelected = false,
@@ -496,7 +446,17 @@ class _SidebarItem extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: ListTile(
-        leading: Icon(icon, size: 18, color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey),
+        leading: customIcon != null 
+            ? SvgPicture.asset(
+                customIcon!, 
+                width: 18, 
+                height: 18, 
+                colorFilter: ColorFilter.mode(
+                  isSelected ? Theme.of(context).colorScheme.primary : Colors.grey, 
+                  BlendMode.srcIn
+                ),
+              )
+            : Icon(icon, size: 18, color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey),
         title: Text(
           label,
           style: TextStyle(

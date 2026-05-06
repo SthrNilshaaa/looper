@@ -1,16 +1,16 @@
-display_name: OnePlayer
-name: one-player
+display_name: Looper Player
+name: looper-player
 version: 1.0.0
 release: 1
 summary: A modern, high-fidelity music player for Linux.
 description: A modern, high-fidelity music player for Linux.
 license: MIT
 group: Applications/Multimedia
-url: https://github.com/nilshaaa/one_player
+url: https://github.com/nilshaaa/looper_player
 vendor: nilshaaa
 packager: nilshaaa
 packagerEmail: nilshaaa@example.com
-icon: assets/icon.png
+icon: assets/logo_linux.png
 categories:
   - AudioVideo
   - Audio
@@ -18,5 +18,5 @@ categories:
   - Player
 requires:
   - gtk3
-  - vlc
-  - mpv
+  - vlc-libs
+  - mpv-libs

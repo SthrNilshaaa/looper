@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:one_player/features/library/presentation/library_notifier.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
-import 'package:one_player/core/db_service.dart';
+import 'package:looper_player/features/library/presentation/library_notifier.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:one_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:one_player/l10n/app_localizations.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -23,6 +23,20 @@ class SettingsView extends ConsumerWidget {
       children: [
         Text(l10n.settings, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
         const SizedBox(height: 32),
+        _Section(
+          title: 'Appearance',
+          children: [
+            SwitchListTile(
+              secondary: const Icon(LucideIcons.palette),
+              title: const Text('Dynamic Theming'),
+              subtitle: const Text('Enable album-based colors and dynamic effects'),
+              value: settings.enableDynamicTheming,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).updateDynamicTheming(value);
+              },
+            ),
+          ],
+        ),
         _Section(
           title: l10n.language,
           children: [
@@ -79,11 +93,11 @@ class SettingsView extends ConsumerWidget {
           children: [
             ListTile(
               leading: SvgPicture.asset(
-                'assets/Vector (1).svg',
+                'assets/main_logo_app.svg',
                 height: 24,
                 colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
               ),
-              title: const Text('Aspen'),
+              title: const Text('Looper Player'),
               subtitle: const Text('Version 1.0.0'),
             ),
             ListTile(

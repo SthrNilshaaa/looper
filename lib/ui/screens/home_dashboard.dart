@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
-import 'package:one_player/features/library/presentation/library_notifier.dart';
-import 'package:one_player/features/playback/presentation/playback_notifier.dart';
-import 'package:one_player/core/navigation_provider.dart';
-import 'package:one_player/core/db_service.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/features/library/presentation/library_notifier.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/core/navigation_provider.dart';
+import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 
 import 'package:file_picker/file_picker.dart';
@@ -23,32 +23,25 @@ class HomeDashboard extends ConsumerWidget {
       builder: (context, constraints) {
         final bool isNarrow = constraints.maxWidth < 600;
         final bool isMedium = constraints.maxWidth < 1000;
-        final bool showLogo = constraints.maxWidth < 800;
+        final bool showLogo = MediaQuery.of(context).size.width < 800;
         
         return ListView(
           padding: EdgeInsets.all(isNarrow ? 16 : 32),
           children: [
             if (showLogo)
                   Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 5, right: 5),
-                        child: Row(
-                          children: [
-                            SvgPicture.asset(
-                              'assets/music_icon.svg',
-                              height: 40,
-                            ),
-                            const SizedBox(width: 5),
-                            SvgPicture.asset(
-                              'assets/logo_text_icon.svg',
-                              height: 40,
-                            ),
-                          ],
+                       SizedBox(
+                        height: 50,
+                        child: SvgPicture.asset(
+                          'assets/main_logo_app.svg',
+                          fit: BoxFit.contain,
                         ),
                       ),
-                        SizedBox(height: 16),
-                    ],
+                      SizedBox(height: 20),
+                       ],
                   ),
                 
             Row(
@@ -94,10 +87,7 @@ class HomeDashboard extends ConsumerWidget {
   }
 
   Widget _buildRecentlyPlayed(WidgetRef ref, bool isNarrow) {
-    final recentSongs = ref.watch(libraryProvider).songs
-        .where((s) => s.lastPlayed != null)
-        .toList()
-      ..sort((a, b) => b.lastPlayed!.compareTo(a.lastPlayed!));
+    final recentSongs = ref.watch(recentlyPlayedProvider).value ?? [];
       
     if (recentSongs.isEmpty) return const SizedBox.shrink();
 
@@ -156,8 +146,11 @@ class HomeDashboard extends ConsumerWidget {
     if (songs.isEmpty) return const SizedBox.shrink();
 
     int crossAxisCount = 4;
-    if (isNarrow) crossAxisCount = 1;
-    else if (isMedium) crossAxisCount = 2;
+    if (isNarrow) {
+      crossAxisCount = 2;
+    } else if (isMedium) {
+      crossAxisCount = 3;
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

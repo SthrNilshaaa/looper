@@ -1,11 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
-import 'package:one_player/core/providers.dart';
-import 'package:one_player/features/library/data/scanner.dart';
+import 'package:looper_player/core/providers.dart';
+import 'package:looper_player/features/library/data/scanner.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
-import 'package:one_player/core/db_service.dart';
-import 'package:one_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/core/db_service.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:metadata_god/metadata_god.dart';
 import 'package:isar/isar.dart';
 import 'package:local_notifier/local_notifier.dart';
@@ -135,7 +135,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     };
     await ref.read(audioServiceProvider).play(song.path, metadata: metadata);
     
-    await windowManager.setTitle('OnePlayer - ${song.title} - ${song.artist ?? 'Unknown Artist'}');
+    await windowManager.setTitle('Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}');
 
     // Broadcast notification on Linux
     if (Platform.isLinux) {

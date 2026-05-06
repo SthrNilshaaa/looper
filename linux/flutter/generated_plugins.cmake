@@ -3,6 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  dynamic_color
   isar_flutter_libs
   local_notifier
   media_kit_libs_linux

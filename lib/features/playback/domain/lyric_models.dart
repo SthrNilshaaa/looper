@@ -47,9 +47,7 @@ class LrcParser {
           milliseconds: milliseconds,
         );
         final text = match.group(4)!.trim();
-        if (text.isNotEmpty) {
-          rawLines.add({'start': startTime, 'text': text});
-        }
+        rawLines.add({'start': startTime, 'text': text});
       }
     }
 
@@ -64,15 +62,36 @@ class LrcParser {
       final text = rawLines[i]['text'] as String;
       
       // End time is the start time of the next line, or total duration for the last line
-      final endTime = i < rawLines.length - 1 
+      final nextStartTime = i < rawLines.length - 1 
           ? rawLines[i + 1]['start'] as Duration 
           : totalDuration;
 
-      result.add(LyricLine(
-        startTime: startTime,
-        endTime: endTime,
-        text: text,
-      ));
+      // If there's a long gap (> 15s) between this line and the next, 
+      // we assume the singing ends after a reasonable time and show a music icon.
+      if (i < rawLines.length - 1 && (nextStartTime - startTime).inSeconds > 15 && text.isNotEmpty) {
+        final singingDuration = const Duration(seconds: 10);
+        final breakStartTime = startTime + singingDuration;
+        
+        // Add the singing part
+        result.add(LyricLine(
+          startTime: startTime,
+          endTime: breakStartTime,
+          text: text,
+        ));
+        
+        // Add the instrumental part
+        result.add(LyricLine(
+          startTime: breakStartTime,
+          endTime: nextStartTime,
+          text: "", // Empty string triggers music icon
+        ));
+      } else {
+        result.add(LyricLine(
+          startTime: startTime,
+          endTime: nextStartTime,
+          text: text,
+        ));
+      }
     }
 
     return result;

@@ -1,8 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:palette_generator/palette_generator.dart';
-import 'package:one_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 
 class ThemeState {
   final ColorScheme colorScheme;
@@ -89,11 +90,23 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
 
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeState>((ref) {
   final notifier = ThemeNotifier();
+  final settings = ref.watch(settingsProvider);
   
-  // Watch current song and update theme
+  // Watch current song and update theme only if dynamic theming is enabled
   ref.listen(playbackProvider, (previous, next) {
-    if (next.currentSong?.artPath != previous?.currentSong?.artPath) {
+    if (settings.enableDynamicTheming && 
+        next.currentSong?.artPath != previous?.currentSong?.artPath) {
       notifier.updateFromImage(next.currentSong?.artPath);
+    }
+  });
+
+  // Watch the flag itself to reset if disabled
+  ref.listen(settingsProvider, (previous, next) {
+    if (previous?.enableDynamicTheming == true && next.enableDynamicTheming == false) {
+      notifier._resetTheme();
+    } else if (previous?.enableDynamicTheming == false && next.enableDynamicTheming == true) {
+      final playback = ref.read(playbackProvider);
+      notifier.updateFromImage(playback.currentSong?.artPath);
     }
   });
 

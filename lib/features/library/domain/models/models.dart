@@ -27,6 +27,7 @@ class Song {
   late DateTime dateAdded;
   
   int playCount = 0;
+  @Index()
   DateTime? lastPlayed;
   bool isFavorite = false;
 
@@ -87,4 +88,5 @@ class AppSettings {
   bool shuffle = false;
   int repeatMode = 0; // 0: off, 1: one, 2: all
   String language = 'en';
+  bool enableDynamicTheming = false;
 }

@@ -1,9 +1,9 @@
 output: dist/
 targets:
   linux:
-    app_name: OnePlayer
-    bundle_name: one_player
-    executable_name: one_player
+    app_name: Looper Player
+    bundle_name: looper_player
+    executable_name: looper_player
     icon: assets/icon.png
     build_args:
       --release:

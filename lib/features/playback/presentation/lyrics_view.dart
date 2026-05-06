@@ -1,15 +1,16 @@
 import 'dart:io';
-
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:one_player/features/library/domain/models/models.dart';
-import 'package:one_player/features/playback/presentation/playback_notifier.dart';
-import 'package:one_player/features/playback/data/lyrics_service.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/playback/data/lyrics_service.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
 import '../domain/lyric_models.dart';
 import 'widgets/advanced_lyric_renderer.dart';
-import 'package:one_player/l10n/app_localizations.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:animate_gradient/animate_gradient.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 enum LyricsSyncMode { line, word, char }
 
@@ -98,24 +99,27 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     final primaryColor = Theme.of(context).colorScheme.primary;
     final secondaryColor = Theme.of(context).colorScheme.tertiary;
 
+    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
+
     return Stack(
       children: [
         // Motion Gradient Background
         Positioned.fill(
           child: AnimateGradient(
+            duration: isPlaying ? const Duration(seconds: 6) : const Duration(days: 365),
             primaryBegin: Alignment.topLeft,
             primaryEnd: Alignment.bottomLeft,
             secondaryBegin: Alignment.bottomLeft,
             secondaryEnd: Alignment.topRight,
             primaryColors: [
-              primaryColor.withOpacity(0.15),
-              secondaryColor.withOpacity(0.1),
-              Colors.transparent,
+              primaryColor.withOpacity(0.2),
+              secondaryColor.withOpacity(0.15),
+              primaryColor.withOpacity(0.05),
             ],
             secondaryColors: [
-              Colors.transparent,
-              primaryColor.withOpacity(0.1),
-              secondaryColor.withOpacity(0.15),
+              secondaryColor.withOpacity(0.05),
+              primaryColor.withOpacity(0.15),
+              secondaryColor.withOpacity(0.2),
             ],
           ),
         ),
@@ -128,7 +132,27 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
               child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _rawLrc == null
-                  ? const Center(child: Text('Lyrics not available.', style: TextStyle(color: Colors.grey)))
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.music_note,
+                            size: 80,
+                            color: primaryColor.withOpacity(0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Lyrics not available.',
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.white.withOpacity(0.4),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : Consumer(
                       builder: (context, ref, child) {
                         // Only watch position here to avoid rebuilding the entire screen
@@ -153,12 +177,16 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(Icons.info_outline, size: 12, color: Colors.orange),
-          SizedBox(width: 6),
+        children: [
+          const Icon(Icons.info_outline, size: 12, color: Colors.orange),
+          const SizedBox(width: 6),
           Text(
             'Approximated Sync (No Word Timings)',
-            style: TextStyle(fontSize: 10, color: Colors.orange, fontWeight: FontWeight.bold),
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 10, 
+              color: Colors.orange, 
+              fontWeight: FontWeight.bold
+            ),
           ),
         ],
       ),
@@ -240,13 +268,13 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       children: [
         Text(
           currentSong.title, 
-          style: TextStyle(fontSize: isShort ? 20 : 28, fontWeight: FontWeight.bold), 
+          style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 20 : 28, fontWeight: FontWeight.bold), 
           maxLines: 1, 
           overflow: TextOverflow.ellipsis
         ),
         Text(
           currentSong.artist ?? 'Unknown Artist', 
-          style: TextStyle(fontSize: isShort ? 14 : 18, color: Colors.grey[400])
+          style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 14 : 18, color: Colors.grey[400])
         ),
       ],
     );
@@ -281,13 +309,13 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             children: [
               Text(
                 currentSong.title, 
-                style: TextStyle(fontSize: isShort ? 14 : 18, fontWeight: FontWeight.bold), 
+                style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 14 : 18, fontWeight: FontWeight.bold), 
                 maxLines: 1, 
                 overflow: TextOverflow.ellipsis
               ),
               Text(
                 currentSong.artist ?? 'Unknown Artist', 
-                style: TextStyle(fontSize: isShort ? 12 : 14, color: Colors.grey[400]),
+                style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 12 : 14, color: Colors.grey[400]),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../domain/lyric_models.dart';
 import '../lyrics_view.dart';
 
@@ -24,7 +25,7 @@ class AdvancedLyricLine extends StatelessWidget {
     final isPast = currentPosition > line.endTime;
     
     // Base style for all text
-    final baseStyle = TextStyle(
+    final baseStyle = GoogleFonts.spaceGrotesk(
       fontSize: isActive ? 48 : 36,
       fontWeight: FontWeight.w800, // Thicker font
       letterSpacing: 0.5,
@@ -67,24 +68,29 @@ class AdvancedLyricLine extends StatelessWidget {
     Color activeColor
   ) {
     final String text = line.text;
-    final bool isInstrumental = text.toLowerCase().contains('instrumental') || 
+    final bool isInstrumental = text.isEmpty ||
+                               text.toLowerCase().contains('instrumental') || 
                                text.toLowerCase().contains('[music]') ||
                                text.trim() == '♪';
 
     if (!isActive && !isPast) {
-      return Text(
-        isInstrumental ? '♫' : text,
-        style: baseStyle.copyWith(color: Colors.white),
-        textAlign: TextAlign.start
-      );
+      return isInstrumental 
+        ? const Center(child: Icon(Icons.music_note, color: Colors.white24, size: 30))
+        : Text(
+            text,
+            style: baseStyle.copyWith(color: Colors.white),
+            textAlign: TextAlign.start
+          );
     }
 
     if (isPast) {
-      return Text(
-        isInstrumental ? '♫' : text,
-        style: baseStyle.copyWith(color: Colors.white),
-        textAlign: TextAlign.start
-      );
+      return isInstrumental 
+        ? const Center(child: Icon(Icons.music_note, color: Colors.white10, size: 30))
+        : Text(
+            text,
+            style: baseStyle.copyWith(color: Colors.white),
+            textAlign: TextAlign.start
+          );
     }
 
     // For active line, add music symbols if it's instrumental or just for style
@@ -95,11 +101,13 @@ class AdvancedLyricLine extends StatelessWidget {
         return Row(
           children: [
             Expanded(
-              child: Text(
-                displayText, 
-                style: baseStyle.copyWith(color: Colors.white), // Very bright white for active line
-                textAlign: TextAlign.start
-              ),
+              child: isInstrumental 
+                ? const Center(child: Icon(Icons.music_note, color: Colors.white, size: 40))
+                : Text(
+                    displayText, 
+                    style: baseStyle.copyWith(color: Colors.white), // Very bright white for active line
+                    textAlign: TextAlign.start
+                  ),
             ),
           ],
         );

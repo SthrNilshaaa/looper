@@ -146,6 +146,19 @@ const SongSchema = CollectionSchema(
         )
       ],
     ),
+    r'lastPlayed': IndexSchema(
+      id: -8420677377986255979,
+      name: r'lastPlayed',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'lastPlayed',
+          type: IndexType.value,
+          caseSensitive: false,
+        )
+      ],
+    ),
     r'searchTerms': IndexSchema(
       id: 255720506161592250,
       name: r'searchTerms',
@@ -373,6 +386,14 @@ extension SongQueryWhereSort on QueryBuilder<Song, Song, QWhere> {
     return QueryBuilder.apply(this, (query) {
       return query.addWhereClause(
         const IndexWhereClause.any(indexName: r'dateAdded'),
+      );
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterWhere> anyLastPlayed() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        const IndexWhereClause.any(indexName: r'lastPlayed'),
       );
     });
   }
@@ -706,6 +727,116 @@ extension SongQueryWhere on QueryBuilder<Song, Song, QWhereClause> {
         lower: [lowerDateAdded],
         includeLower: includeLower,
         upper: [upperDateAdded],
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterWhereClause> lastPlayedIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'lastPlayed',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterWhereClause> lastPlayedIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'lastPlayed',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterWhereClause> lastPlayedEqualTo(
+      DateTime? lastPlayed) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'lastPlayed',
+        value: [lastPlayed],
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterWhereClause> lastPlayedNotEqualTo(
+      DateTime? lastPlayed) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'lastPlayed',
+              lower: [],
+              upper: [lastPlayed],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'lastPlayed',
+              lower: [lastPlayed],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'lastPlayed',
+              lower: [lastPlayed],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'lastPlayed',
+              lower: [],
+              upper: [lastPlayed],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterWhereClause> lastPlayedGreaterThan(
+    DateTime? lastPlayed, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'lastPlayed',
+        lower: [lastPlayed],
+        includeLower: include,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterWhereClause> lastPlayedLessThan(
+    DateTime? lastPlayed, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'lastPlayed',
+        lower: [],
+        upper: [lastPlayed],
+        includeUpper: include,
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterWhereClause> lastPlayedBetween(
+    DateTime? lowerLastPlayed,
+    DateTime? upperLastPlayed, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'lastPlayed',
+        lower: [lowerLastPlayed],
+        includeLower: includeLower,
+        upper: [upperLastPlayed],
         includeUpper: includeUpper,
       ));
     });
@@ -6010,28 +6141,38 @@ const AppSettingsSchema = CollectionSchema(
   name: r'AppSettings',
   id: -5633561779022347008,
   properties: {
-    r'lastPlayedSongId': PropertySchema(
+    r'enableDynamicTheming': PropertySchema(
       id: 0,
+      name: r'enableDynamicTheming',
+      type: IsarType.bool,
+    ),
+    r'language': PropertySchema(
+      id: 1,
+      name: r'language',
+      type: IsarType.string,
+    ),
+    r'lastPlayedSongId': PropertySchema(
+      id: 2,
       name: r'lastPlayedSongId',
       type: IsarType.long,
     ),
     r'libraryFolders': PropertySchema(
-      id: 1,
+      id: 3,
       name: r'libraryFolders',
       type: IsarType.stringList,
     ),
     r'repeatMode': PropertySchema(
-      id: 2,
+      id: 4,
       name: r'repeatMode',
       type: IsarType.long,
     ),
     r'shuffle': PropertySchema(
-      id: 3,
+      id: 5,
       name: r'shuffle',
       type: IsarType.bool,
     ),
     r'volume': PropertySchema(
-      id: 4,
+      id: 6,
       name: r'volume',
       type: IsarType.double,
     )
@@ -6056,6 +6197,7 @@ int _appSettingsEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.language.length * 3;
   bytesCount += 3 + object.libraryFolders.length * 3;
   {
     for (var i = 0; i < object.libraryFolders.length; i++) {
@@ -6072,11 +6214,13 @@ void _appSettingsSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeLong(offsets[0], object.lastPlayedSongId);
-  writer.writeStringList(offsets[1], object.libraryFolders);
-  writer.writeLong(offsets[2], object.repeatMode);
-  writer.writeBool(offsets[3], object.shuffle);
-  writer.writeDouble(offsets[4], object.volume);
+  writer.writeBool(offsets[0], object.enableDynamicTheming);
+  writer.writeString(offsets[1], object.language);
+  writer.writeLong(offsets[2], object.lastPlayedSongId);
+  writer.writeStringList(offsets[3], object.libraryFolders);
+  writer.writeLong(offsets[4], object.repeatMode);
+  writer.writeBool(offsets[5], object.shuffle);
+  writer.writeDouble(offsets[6], object.volume);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -6086,12 +6230,14 @@ AppSettings _appSettingsDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = AppSettings();
+  object.enableDynamicTheming = reader.readBool(offsets[0]);
   object.id = id;
-  object.lastPlayedSongId = reader.readLongOrNull(offsets[0]);
-  object.libraryFolders = reader.readStringList(offsets[1]) ?? [];
-  object.repeatMode = reader.readLong(offsets[2]);
-  object.shuffle = reader.readBool(offsets[3]);
-  object.volume = reader.readDouble(offsets[4]);
+  object.language = reader.readString(offsets[1]);
+  object.lastPlayedSongId = reader.readLongOrNull(offsets[2]);
+  object.libraryFolders = reader.readStringList(offsets[3]) ?? [];
+  object.repeatMode = reader.readLong(offsets[4]);
+  object.shuffle = reader.readBool(offsets[5]);
+  object.volume = reader.readDouble(offsets[6]);
   return object;
 }
 
@@ -6103,14 +6249,18 @@ P _appSettingsDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readLongOrNull(offset)) as P;
-    case 1:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 2:
-      return (reader.readLong(offset)) as P;
-    case 3:
       return (reader.readBool(offset)) as P;
+    case 1:
+      return (reader.readString(offset)) as P;
+    case 2:
+      return (reader.readLongOrNull(offset)) as P;
+    case 3:
+      return (reader.readStringList(offset) ?? []) as P;
     case 4:
+      return (reader.readLong(offset)) as P;
+    case 5:
+      return (reader.readBool(offset)) as P;
+    case 6:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -6210,6 +6360,16 @@ extension AppSettingsQueryWhere
 
 extension AppSettingsQueryFilter
     on QueryBuilder<AppSettings, AppSettings, QFilterCondition> {
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      enableDynamicThemingEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'enableDynamicTheming',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> idEqualTo(
       Id value) {
     return QueryBuilder.apply(this, (query) {
@@ -6259,6 +6419,141 @@ extension AppSettingsQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> languageEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      languageGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      languageLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> languageBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'language',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      languageStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      languageEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      languageContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'language',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> languageMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'language',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      languageIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'language',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      languageIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'language',
+        value: '',
       ));
     });
   }
@@ -6702,6 +6997,32 @@ extension AppSettingsQueryLinks
 extension AppSettingsQuerySortBy
     on QueryBuilder<AppSettings, AppSettings, QSortBy> {
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByEnableDynamicTheming() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableDynamicTheming', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByEnableDynamicThemingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableDynamicTheming', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByLanguage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'language', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByLanguageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'language', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
       sortByLastPlayedSongId() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'lastPlayedSongId', Sort.asc);
@@ -6754,6 +7075,20 @@ extension AppSettingsQuerySortBy
 
 extension AppSettingsQuerySortThenBy
     on QueryBuilder<AppSettings, AppSettings, QSortThenBy> {
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByEnableDynamicTheming() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableDynamicTheming', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByEnableDynamicThemingDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableDynamicTheming', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -6763,6 +7098,18 @@ extension AppSettingsQuerySortThenBy
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByIdDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByLanguage() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'language', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByLanguageDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'language', Sort.desc);
     });
   }
 
@@ -6820,6 +7167,20 @@ extension AppSettingsQuerySortThenBy
 extension AppSettingsQueryWhereDistinct
     on QueryBuilder<AppSettings, AppSettings, QDistinct> {
   QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByEnableDynamicTheming() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'enableDynamicTheming');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByLanguage(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'language', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
       distinctByLastPlayedSongId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastPlayedSongId');
@@ -6856,6 +7217,19 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+      enableDynamicThemingProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'enableDynamicTheming');
+    });
+  }
+
+  QueryBuilder<AppSettings, String, QQueryOperations> languageProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'language');
     });
   }
 

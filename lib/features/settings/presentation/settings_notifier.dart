@@ -17,6 +17,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> _loadSettings() async {
     final settings = await DbService.isar.appSettings.get(0);
     if (settings != null) {
+      if (settings.language.isEmpty) {
+        settings.language = 'en';
+      }
       state = settings;
     } else {
       // Initialize default settings
@@ -52,7 +55,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..volume = s.volume
       ..shuffle = s.shuffle
       ..repeatMode = s.repeatMode
-      ..language = s.language;
+      ..language = s.language
+      ..enableDynamicTheming = s.enableDynamicTheming;
+  }
+
+  Future<void> updateDynamicTheming(bool enabled) async {
+    await DbService.isar.writeTxn(() async {
+      state.enableDynamicTheming = enabled;
+      await DbService.isar.appSettings.put(state);
+    });
+    state = _clone(state);
   }
 
   Future<void> updateLastPlayedSong(int? songId) async {

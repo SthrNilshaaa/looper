@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:one_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 
 class QueueView extends ConsumerWidget {
   const QueueView({super.key});

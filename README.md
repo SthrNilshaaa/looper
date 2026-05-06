@@ -1,4 +1,4 @@
-# OnePlayer 🎵
+# Looper Player 🎵
 
 A full-featured, modern Linux desktop music player built with Flutter and Rust.
 
