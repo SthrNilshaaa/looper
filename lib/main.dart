@@ -77,6 +77,8 @@ class MyApp extends ConsumerWidget {
             ThemeData.dark().textTheme,
           ),
         ),
+        themeAnimationDuration: const Duration(milliseconds: 500),
+        themeAnimationCurve: Curves.easeInOut,
         locale: Locale(settings.language.isEmpty ? 'en' : settings.language),
         localizationsDelegates: const [
           AppLocalizations.delegate,

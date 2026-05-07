@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 
@@ -17,7 +18,7 @@ class QueueView extends ConsumerWidget {
           padding: const EdgeInsets.all(24),
           child: Row(
             children: [
-              const Text('Play Queue', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+              const Text('Play Queue', style: TextStyle(fontSize: 32, fontWeight: FontWeight.normal)),
               const Spacer(),
               if (playback.queue.isNotEmpty)
                 TextButton.icon(
@@ -54,11 +55,14 @@ class QueueView extends ConsumerWidget {
                       color: Colors.red.withOpacity(0.1),
                       child: const Icon(LucideIcons.x, color: Colors.red),
                     ),
-                    child: Container(
+                    child: AnimatedContainer(
                       key: ValueKey('tile_${song.id}'),
+                      duration: const Duration(milliseconds: 300),
                       margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
-                        color: isCurrent ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Colors.white.withOpacity(0.05),
+                        color: isCurrent 
+                          ? Theme.of(context).colorScheme.primary.withOpacity(0.5) 
+                          : Colors.white.withOpacity(0.02),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: ListTile(
@@ -76,12 +80,22 @@ class QueueView extends ConsumerWidget {
                         title: Text(
                           song.title,
                           style: TextStyle(
-                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                            fontWeight: isCurrent ? FontWeight.normal : FontWeight.normal,
                             color: isCurrent ? Theme.of(context).colorScheme.primary : null,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        subtitle: Text(song.artist ?? 'Unknown Artist', style: const TextStyle(fontSize: 12)),
-                        trailing: const Icon(LucideIcons.gripVertical, size: 18, color: Colors.grey),
+                        subtitle: Text(
+                          song.artist ?? 'Unknown Artist', 
+                          style: const TextStyle(fontSize: 12),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: Padding(
+                          padding: const EdgeInsets.only(right: 20.0),
+                          child: const Icon(LucideIcons.gripVertical, size: 24, color: Colors.grey),
+                        ),
                         onTap: () => ref.read(playbackProvider.notifier).play(song),
                       ),
                     ),

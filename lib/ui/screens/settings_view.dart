@@ -21,7 +21,7 @@ class SettingsView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(l10n.settings, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+        Text(l10n.settings, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.normal)),
         const SizedBox(height: 32),
         _Section(
           title: 'Appearance',
@@ -93,7 +93,7 @@ class SettingsView extends ConsumerWidget {
           children: [
             ListTile(
               leading: SvgPicture.asset(
-                'assets/main_logo_app.svg',
+                'assets/main_logo.svg',
                 height: 24,
                 colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
               ),
@@ -175,7 +175,7 @@ class _Section extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold)),
+          child: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.normal)),
         ),
         Card(
           child: Column(children: children),

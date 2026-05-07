@@ -91,18 +91,22 @@ class CollectionDetailView extends ConsumerWidget {
           title, 
           style: TextStyle(
             fontSize: isNarrow ? 32 : 48, 
-            fontWeight: FontWeight.bold
+            fontWeight: FontWeight.normal
           ),
           textAlign: isNarrow ? TextAlign.center : TextAlign.start,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         if (subtitle != null)
           Text(
             subtitle!, 
             style: TextStyle(fontSize: isNarrow ? 18 : 24, color: Colors.grey[400]),
             textAlign: isNarrow ? TextAlign.center : TextAlign.start,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-        const SizedBox(height: 16),
-        Text('${songs.length} songs', style: const TextStyle(color: Colors.grey)),
+        // const SizedBox(height: 16),
+        // Text('${songs.length} songs', style: const TextStyle(color: Colors.grey)),
         const SizedBox(height: 24),
         Row(
           mainAxisAlignment: isNarrow ? MainAxisAlignment.center : MainAxisAlignment.start,
@@ -111,12 +115,12 @@ class CollectionDetailView extends ConsumerWidget {
               onPressed: () {
                 ref.read(playbackProvider.notifier).setPlaylist(songs);
               },
-              icon: const Icon(LucideIcons.play),
+              icon:  Icon(Icons.play_arrow_sharp),
               label: const Text('Play All'),
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isNarrow ? 24 : 32, 
-                  vertical: isNarrow ? 12 : 16
+                  horizontal: isNarrow ? 12 : 18, 
+                  vertical: isNarrow ? 12 : 18
                 ),
               ),
             ),
@@ -126,7 +130,7 @@ class CollectionDetailView extends ConsumerWidget {
                 ref.read(playbackProvider.notifier).toggleShuffle();
                 ref.read(playbackProvider.notifier).setPlaylist(songs);
               },
-              icon: const Icon(LucideIcons.shuffle),
+              icon: const Icon(LucideIcons.shuffle ,size : 8),
             ),
           ],
         ),

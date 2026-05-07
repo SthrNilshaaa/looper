@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
 import 'package:looper_player/features/playback/data/lyrics_service.dart';
 import 'package:flutter_lyric/flutter_lyric.dart';
 import '../domain/lyric_models.dart';
@@ -22,146 +23,56 @@ class LyricsView extends ConsumerStatefulWidget {
 }
 
 class _LyricsViewState extends ConsumerState<LyricsView> {
-  String? _rawLrc;
-  bool _isLoading = false;
   LyricsSyncMode _syncMode = LyricsSyncMode.line;
-  List<LyricLine> _parsedLines = [];
-  
-  // Keep the old controller for LINE mode if we still want to use flutter_lyric package
-  // But for consistency we might use the new renderer for everything.
-  // The user asked to keep using existing LyricView for line mode.
-  late LyricController _lyricController;
 
-  @override
-  void initState() {
-    super.initState();
-    _lyricController = LyricController();
-    _lyricController.setOnTapLineCallback((position) {
-      ref.read(playbackProvider.notifier).seek(position);
-    });
-    _fetchLyrics();
-  }
 
-  @override
-  void dispose() {
-    _lyricController.dispose();
-    super.dispose();
-  }
 
-  Future<void> _fetchLyrics() async {
-    final currentSong = ref.read(playbackProvider).currentSong;
-    if (currentSong == null) return;
 
-    setState(() => _isLoading = true);
-    final service = LyricsService();
-    final response = await service.getLyrics(
-      trackName: currentSong.title.trim(),
-      artistName: (currentSong.artist ?? '').trim(),
-      albumName: (currentSong.album ?? '').trim(),
-      durationSeconds: (currentSong.duration ?? 0) ~/ 1000,
-    );
-    
-    if (mounted) {
-      setState(() {
-        _rawLrc = response?.syncedLyrics ?? response?.plainLyrics;
-        _updateParsedLines();
-        if (_rawLrc != null) {
-          _lyricController.loadLyric(_rawLrc!);
-        }
-        _isLoading = false;
-      });
-    }
-  }
-
-  void _updateParsedLines() {
-    if (_rawLrc == null) return;
-    
-    final currentSong = ref.read(playbackProvider).currentSong;
-    final totalDuration = currentSong?.duration != null 
-        ? Duration(milliseconds: currentSong!.duration!) 
-        : const Duration(minutes: 5);
-        
-    _parsedLines = LrcParser.parse(_rawLrc!, totalDuration);
-  }
 
   @override
   Widget build(BuildContext context) {
-    // Only watch currentSong for the main layout
-    final currentSong = ref.watch(playbackProvider.select((s) => s.currentSong));
-    
-    // Listen for song changes to fetch new lyrics
-    ref.listen(playbackProvider.select((s) => s.currentSong?.id), (previous, next) {
-      if (next != previous) {
-        _fetchLyrics();
-      }
-    });
-
+    final lyricsState = ref.watch(lyricsProvider);
     final primaryColor = Theme.of(context).colorScheme.primary;
-    final secondaryColor = Theme.of(context).colorScheme.tertiary;
 
-    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
-
-    return Stack(
+    return Column(
       children: [
-        // Motion Gradient Background
-        Positioned.fill(
-          child: AnimateGradient(
-            duration: isPlaying ? const Duration(seconds: 6) : const Duration(days: 365),
-            primaryBegin: Alignment.topLeft,
-            primaryEnd: Alignment.bottomLeft,
-            secondaryBegin: Alignment.bottomLeft,
-            secondaryEnd: Alignment.topRight,
-            primaryColors: [
-              primaryColor.withOpacity(0.2),
-              secondaryColor.withOpacity(0.15),
-              primaryColor.withOpacity(0.05),
-            ],
-            secondaryColors: [
-              secondaryColor.withOpacity(0.05),
-              primaryColor.withOpacity(0.15),
-              secondaryColor.withOpacity(0.2),
-            ],
-          ),
-        ),
-        // Content
-        Column(
-          children: [
-            // _buildHeader(currentSong),
-            if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
-            Expanded(
-              child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _rawLrc == null
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.music_note,
-                            size: 80,
-                            color: primaryColor.withOpacity(0.3),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Lyrics not available.',
-                            style: GoogleFonts.spaceGrotesk(
-                              color: Colors.white.withOpacity(0.4),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+        if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
+        Expanded(
+          child: lyricsState.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : lyricsState.rawLrc == null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.music_note,
+                        size: 80,
+                        color: primaryColor.withOpacity(0.3),
                       ),
-                    )
-                  : Consumer(
-                      builder: (context, ref, child) {
-                        // Only watch position here to avoid rebuilding the entire screen
-                        final position = ref.watch(playbackProvider.select((s) => s.position));
-                        return _buildContent(position);
-                      },
-                    ),
-            ),
-          ],
+                      const SizedBox(height: 16),
+                      Text(
+                        'Lyrics not available.',
+                        style: GoogleFonts.spaceGrotesk(
+                          color: Colors.white.withOpacity(0.4),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : Consumer(
+                  builder: (context, ref, child) {
+                    final position = ref.watch(playbackProvider.select((s) => s.position));
+                    return AdvancedLyricRenderer(
+                      lines: lyricsState.parsedLines,
+                      currentPosition: position,
+                      mode: _syncMode,
+                      onSeek: (pos) => ref.read(playbackProvider.notifier).seek(pos),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -185,7 +96,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             style: GoogleFonts.spaceGrotesk(
               fontSize: 10, 
               color: Colors.orange, 
-              fontWeight: FontWeight.bold
+              fontWeight: FontWeight.normal
             ),
           ),
         ],
@@ -193,14 +104,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     );
   }
 
-  Widget _buildContent(Duration position) {
-    return AdvancedLyricRenderer(
-      lines: _parsedLines,
-      currentPosition: position,
-      mode: _syncMode,
-      onSeek: (pos) => ref.read(playbackProvider.notifier).seek(pos),
-    );
-  }
+
 
   Widget _buildHeader(Song? currentSong) {
     return LayoutBuilder(
@@ -268,7 +172,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       children: [
         Text(
           currentSong.title, 
-          style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 20 : 28, fontWeight: FontWeight.bold), 
+          style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 20 : 28, fontWeight: FontWeight.normal), 
           maxLines: 1, 
           overflow: TextOverflow.ellipsis
         ),
@@ -309,7 +213,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             children: [
               Text(
                 currentSong.title, 
-                style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 14 : 18, fontWeight: FontWeight.bold), 
+                style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 14 : 18, fontWeight: FontWeight.normal), 
                 maxLines: 1, 
                 overflow: TextOverflow.ellipsis
               ),
@@ -396,7 +300,7 @@ class _ModeButton extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: isShort ? 10 : 11,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.normal,
             color: isSelected ? Theme.of(context).colorScheme.onPrimary : Colors.grey[400],
             letterSpacing: 1.2,
           ),

@@ -22,8 +22,9 @@ class ThemeState {
 class ThemeNotifier extends StateNotifier<ThemeState> {
   ThemeNotifier() : super(ThemeState(
     colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF00FF00),
-      primary: const Color(0xFF00FF00),
+      seedColor: const Color(0xFF41C25E),
+      primary: const Color(0xFF41C25E),
+      surface: const Color(0xFF070707),
       brightness: Brightness.dark,
     ),
   ));
@@ -42,8 +43,8 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
       }
 
       final palette = await PaletteGenerator.fromImageProvider(
-        FileImage(file),
-        maximumColorCount: 20,
+        ResizeImage(FileImage(file), width: 100, height: 100),
+        maximumColorCount: 8,
       );
 
       final Color? color = palette.vibrantColor?.color ?? 
@@ -80,8 +81,9 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
   void _resetTheme() {
     state = state.copyWith(
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF00FF00),
-        primary: const Color(0xFF00FF00),
+        seedColor: const Color(0xFF41C25E),
+        primary: const Color(0xFF41C25E),
+        surface: const Color(0xFF070707),
         brightness: Brightness.dark,
       ),
     );

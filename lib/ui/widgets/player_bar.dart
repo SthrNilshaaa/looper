@@ -42,6 +42,7 @@ class PlayerBar extends ConsumerWidget {
           ref.read(appNavigationProvider.notifier).toggleItem(NavItem.lyrics),
       onQueueToggle: () =>
           ref.read(appNavigationProvider.notifier).toggleItem(NavItem.queue),
+      onMuteToggle: () => ref.read(playbackProvider.notifier).toggleMute(),
       onFavoriteToggle: () =>
           ref.read(playbackProvider.notifier).toggleFavorite(),
       isFavorite: song.isFavorite,
@@ -74,6 +75,7 @@ class _PremiumPlayerBar extends StatelessWidget {
   final ValueChanged<double> onVolumeChanged;
   final VoidCallback onLyricsToggle;
   final VoidCallback onQueueToggle;
+  final VoidCallback onMuteToggle;
   final bool isLyricsActive;
   final bool isQueueActive;
 
@@ -98,6 +100,7 @@ class _PremiumPlayerBar extends StatelessWidget {
     required this.onVolumeChanged,
     required this.onLyricsToggle,
     required this.onQueueToggle,
+    required this.onMuteToggle,
     this.isLyricsActive = false,
     this.isQueueActive = false,
   });
@@ -108,19 +111,20 @@ class _PremiumPlayerBar extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final bool isLarge = constraints.maxWidth < 1100;
         final bool isNarrow = constraints.maxWidth < 900;
         final bool isVeryNarrow = constraints.maxWidth < 600;
 
         return Container(
-          height: 80, // Slightly more height for better spacing
-          margin: const EdgeInsets.all(16),
+          height: 80,
+          margin: const EdgeInsets.only(left: 48, right: 48, bottom: 32, top: 0),
           decoration: BoxDecoration(
-            color:  colorScheme.primary.withOpacity(0.08),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: colorScheme.primary.withOpacity(0.15)),
+            color: colorScheme.primary.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(6),
+           // border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.primary.withOpacity(0.05),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 24,
                 spreadRadius: -4,
               ),
@@ -131,15 +135,13 @@ class _PremiumPlayerBar extends StatelessWidget {
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.only(left: 14),
                 child: Row(
                   children: [
                     //Container(color:Colors.red,width: 30,height: 30),
                     // Left: Album Art + Info
-                    Flexible(
-                      flex: isVeryNarrow
-                          ? 3
-                          : 4, // Increased flex to prevent squeeze
+                    Expanded(
+                      flex: isVeryNarrow ? 3 : 4,
                       child: _buildSongInfo(context, isVeryNarrow),
                     ),
 
@@ -187,7 +189,15 @@ class _PremiumPlayerBar extends StatelessWidget {
                     ],
                    
                     // Far Right: Actions
+                    
+                    if (!isNarrow)
+                      Spacer(),
+                      if (isLarge)
+                       Spacer(),
+                       
+                        
                     _buildActions(context, colorScheme, isVeryNarrow),
+                   // Container(color:Colors.red,height: 100,width: 50,)
                   ],
                 ),
               ),
@@ -199,28 +209,26 @@ class _PremiumPlayerBar extends StatelessWidget {
   }
 
   Widget _buildSongInfo(BuildContext context, bool isVeryNarrow) {
-    return ClipRect(
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: isVeryNarrow ? 150 : 250),
-        child: Row(
-          children: [
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
             Container(
               width: isVeryNarrow ? 40 : 56,
               height: isVeryNarrow ? 40 : 56,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Colors.white.withOpacity(0.05),
+                //color: Colors.white.withOpacity(0.05),
                 boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
+                  // BoxShadow(
+                  //   color: Colors.black.withOpacity(0.2),
+                  //   blurRadius: 8,
+                  //   offset: const Offset(0, 4),
+                  // ),
                 ],
               ),
               child: artPath != null
                   ? ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(6),
                       child: Image.file(File(artPath!), fit: BoxFit.cover),
                     )
                   : Icon(
@@ -239,7 +247,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                     title,
                     style: TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.normal,
                       fontSize: isVeryNarrow ? 12 : 14,
                     ),
                     maxLines: 1,
@@ -258,8 +266,8 @@ class _PremiumPlayerBar extends StatelessWidget {
               ),
             ),
           ],
-        ),
-      ),
+      
+     
     );
   }
 
@@ -271,90 +279,90 @@ class _PremiumPlayerBar extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (!isVeryNarrow)
-          IconButton(
-            onPressed: onShuffle,
-            icon: SvgPicture.asset(
-              'assets/music_bar_Icons/shuffle.svg',
-              width: 18,
-              height: 18,
-              colorFilter: ColorFilter.mode(
-                isShuffle ? colorScheme.primary : Colors.white54,
-                BlendMode.srcIn
-              ),
-            ),
-            tooltip: 'Shuffle',
-          ),
-           const SizedBox(width: 16),
+        
         IconButton(
           onPressed: onPrevious,
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/prev_track.svg',
-            width: isVeryNarrow ? 18 : 20,
-            height: isVeryNarrow ? 18 : 20,
+            width: isVeryNarrow ? 12 : 12,
+            height: isVeryNarrow ? 12 : 12,
             colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
           tooltip: 'Previous',
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 4),
         GestureDetector(
           onTap: onPlayPause,
           child: Container(
-            width: isVeryNarrow ? 36 : 44,
-            height: isVeryNarrow ? 36 : 44,
+            width: isVeryNarrow ? 28 : 36,
+            height: isVeryNarrow ? 28 : 36,
             decoration: BoxDecoration(
-              color: colorScheme.primary,
+              color: colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
-              // boxShadow: [
-              //   BoxShadow(
-              //     color: colorScheme.primary.withOpacity(0.3),
-              //     blurRadius: 12,
-              //     spreadRadius: 2,
-              //   ),
-              // ],
+             
             ),
             child: isPlaying 
               ? Icon(
                   // LucideIcons.pause,
                   Icons.pause,
                   color: Colors.white,
-                  size: isVeryNarrow ? 18 : 24,
+                  size: isVeryNarrow ? 12 : 18,
                 )
-              //  SvgPicture.asset(
-              //     'assets/music_bar_Icons/pause.svg',
-              //     width: isVeryNarrow ? 18 : 22,
-              //     height: isVeryNarrow ? 18 : 22,
-              //     colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-              //   )
+              
               : Icon(
                   // LucideIcons.play,
                   Icons.play_arrow_sharp,
                   color: Colors.white,
-                  size: isVeryNarrow ? 18 : 24,
+                  size: isVeryNarrow ? 12 : 18,
                 ),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 4),
         IconButton(
           onPressed: onNext,
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/next_track.svg',
-            width: isVeryNarrow ? 18 : 20,
-            height: isVeryNarrow ? 18 : 20,
+            width: isVeryNarrow ? 12 : 12,
+            height: isVeryNarrow ? 12 : 12,
             colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
           tooltip: 'Next',
         ),
         if (!isVeryNarrow)
-        SizedBox(width: 16),
+                      Container(
+                        height: 40,
+                        width: 1,
+                        margin: const EdgeInsets.symmetric(horizontal: 12),
+                        color: Colors.white10,
+                      ),
+
+        if (!isVeryNarrow)...[
+        const SizedBox(width: 12),
+          IconButton(
+            onPressed: onShuffle,
+            icon: SvgPicture.asset(
+              'assets/music_bar_Icons/shuffle.svg',
+              width: 12,
+              height: 12,
+              colorFilter: ColorFilter.mode(
+                isShuffle ? colorScheme.primary : Colors.white38,
+                BlendMode.srcIn
+              ),
+            ),
+            tooltip: 'Shuffle',
+          ),
+        ],
+           //const SizedBox(width: 8),
+        if (!isVeryNarrow)
+        // SizedBox(width: 8),
           IconButton(
             onPressed: onRepeat,
             icon: SvgPicture.asset(
               'assets/music_bar_Icons/repeat.svg',
-              width: 18,
-              height: 18,
+              width: 12,
+              height: 12,
               colorFilter: ColorFilter.mode(
-                repeatMode != RepeatMode.off ? colorScheme.primary : Colors.white54,
+                repeatMode != RepeatMode.off ? colorScheme.primary : Colors.white38,
                 BlendMode.srcIn
               ),
             ),
@@ -369,11 +377,21 @@ class _PremiumPlayerBar extends StatelessWidget {
     return ClipRect(
       child: Row(
         children: [
-          SvgPicture.asset(
-            'assets/music_bar_Icons/volume.svg',
-            width: 18,
-            height: 18,
-            colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+          IconButton(
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            onPressed: onMuteToggle,
+            icon: SvgPicture.asset(
+              volume == 0 
+                ? 'assets/music_bar_Icons/mute.svg' 
+                : 'assets/music_bar_Icons/volume.svg',
+              width: 12,
+              height: 12,
+              colorFilter: ColorFilter.mode(
+                volume == 0 ? Colors.white38 : Colors.white, 
+                BlendMode.srcIn
+              ),
+            ),
           ),
           Flexible(
             child: ConstrainedBox(
@@ -381,9 +399,11 @@ class _PremiumPlayerBar extends StatelessWidget {
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   trackHeight: 2,
-                  thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: 7,
-                  ),
+                  trackShape: const RoundedRectSliderTrackShape(),
+                  //  RectangularSliderTrackShape(
+                    
+                  // ),
+                  thumbShape: const _LineThumbShape(thumbHeight: 0, thumbWidth: 3),
                   overlayShape: const RoundSliderOverlayShape(
                     overlayRadius: 14,
                   ),
@@ -392,6 +412,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                     context,
                   ).colorScheme.primary.withOpacity(0.1),
                   thumbColor: Colors.white,
+                  
                 ),
                 child: Slider(value: volume, onChanged: onVolumeChanged),
               ),
@@ -413,8 +434,8 @@ class _PremiumPlayerBar extends StatelessWidget {
           IconButton(
             icon: SvgPicture.asset(
               isFavorite ? 'assets/music_bar_Icons/liked.svg' : 'assets/music_bar_Icons/like.svg',
-              width: 18,
-              height: 18,
+              width: 16,
+              height: 16,
               colorFilter: ColorFilter.mode(
                 isFavorite ? Colors.red : Colors.white54,
                 BlendMode.srcIn
@@ -423,12 +444,12 @@ class _PremiumPlayerBar extends StatelessWidget {
             onPressed: onFavoriteToggle,
             tooltip: 'Favorite',
           ),
-          SizedBox(width: 8),
+          SizedBox(width: 4),
         IconButton(
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/lyrics.svg',
-            width: 18,
-            height: 18,
+            width: 16,
+            height: 16,
             colorFilter: ColorFilter.mode(
               isLyricsActive ? colorScheme.primary : Colors.white54,
               BlendMode.srcIn
@@ -437,11 +458,11 @@ class _PremiumPlayerBar extends StatelessWidget {
           onPressed: onLyricsToggle,
           tooltip: 'Lyrics',
         ),
-        SizedBox(width: 8),
+        SizedBox(width: 4),
         IconButton(
           icon: Icon(
             LucideIcons.listMusic,
-            size: 18,
+            size: 16,
             color: isQueueActive ? colorScheme.primary : Colors.white54,
           ),
           onPressed: onQueueToggle,
@@ -491,12 +512,12 @@ class _ExpressiveSlider extends StatelessWidget {
               Text(
                 _formatDuration(position),
                 style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 11,
-                  fontFamily: 'monospace',
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontFamily: 'DMSans Regular',
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 12),
             ],
             Expanded(
               child: SliderTheme(
@@ -504,7 +525,8 @@ class _ExpressiveSlider extends StatelessWidget {
                   trackHeight: 2,
                   activeTrackColor: color,
                   inactiveTrackColor: Colors.white10,
-                  thumbShape: SliderComponentShape.noThumb,
+                  //thumbShape: SliderComponentShape.noThumb,
+                   thumbShape: const _LineThumbShape(thumbHeight: 12, thumbWidth: 3),
                   overlayShape: SliderComponentShape.noOverlay,
                 ),
                 child: SquigglySlider(
@@ -520,19 +542,20 @@ class _ExpressiveSlider extends StatelessWidget {
                   squiggleAmplitude: isPlaying ? 2.0 : 0.0,
                   squiggleWavelength: 3.0,
                   squiggleSpeed: 0.1,
-                  useLineThumb: true,
+                  useLineThumb: false,
+                 
 
                 ),
               ),
             ),
             if (showTimestamps) ...[
-          const SizedBox(width: 4),
+              const SizedBox(width: 12),
               Text(
                 _formatDuration(duration),
                 style: const TextStyle(
-                  color: Colors.white54,
-                  fontSize: 11,
-                  fontFamily: 'monospace',
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontFamily: 'DMSans Regular',
                 ),
               ),
               
@@ -540,6 +563,47 @@ class _ExpressiveSlider extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _LineThumbShape extends SliderComponentShape {
+  final double thumbHeight;
+  final double thumbWidth;
+
+  const _LineThumbShape({this.thumbHeight = 12, this.thumbWidth = 2});
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
+    return Size(thumbWidth, thumbHeight);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final Canvas canvas = context.canvas;
+    final Paint paint = Paint()
+      ..color = sliderTheme.thumbColor ?? Colors.white
+      ..style = PaintingStyle.fill;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: center, width: thumbWidth, height: thumbHeight),
+        Radius.circular(thumbWidth / 2),
+      ),
+      paint,
     );
   }
 }

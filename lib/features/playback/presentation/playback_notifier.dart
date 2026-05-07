@@ -145,12 +145,25 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       );
       await notification.show();
     }
-    await ref.read(settingsProvider.notifier).updateLastPlayedSong(song.id);
-
+    // Update play history in DB
     await DbService.isar.writeTxn(() async {
-      song.lastPlayed = DateTime.now();
-      song.playCount++;
-      await DbService.isar.songs.put(song);
+      // Find the song in DB by path to ensure we have the correct ID and preserve favorites/history
+      final dbSong = await DbService.isar.songs.filter().pathEqualTo(song.path).findFirst();
+      
+      final songToUpdate = dbSong ?? song;
+      songToUpdate.lastPlayed = DateTime.now();
+      songToUpdate.playCount++;
+      
+      // Update the song object in our state to reflect the latest DB state (especially the ID)
+      if (dbSong != null) {
+        // If it exists, copy properties to our current song object
+        song.id = dbSong.id;
+        song.isFavorite = dbSong.isFavorite;
+        song.playCount = dbSong.playCount;
+        song.lastPlayed = dbSong.lastPlayed;
+      }
+      
+      await DbService.isar.songs.put(songToUpdate);
     });
 
     final idx = _playlist.indexWhere((s) => s.id == song.id);
@@ -280,13 +293,17 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
     state = state.copyWith(queue: _playlist);
     if (state.currentSong != null) {
-      _currentIndex = _playlist.indexWhere((s) => s.id == state.currentSong!.id);
+      _currentIndex = _playlist.indexWhere((s) => s.id == songId(state.currentSong!));
     }
+    ref.read(settingsProvider.notifier).updateShuffle(newState);
   }
+
+  int songId(Song s) => s.id;
 
   void nextRepeatMode() {
     final nextMode = RepeatMode.values[(state.repeatMode.index + 1) % RepeatMode.values.length];
     state = state.copyWith(repeatMode: nextMode);
+    ref.read(settingsProvider.notifier).updateRepeatMode(nextMode.index);
   }
 
   void setVolume(double volume) {
@@ -338,6 +355,17 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     
     // Refresh the state to trigger UI updates
     state = state.copyWith(currentSong: song);
+  }
+
+  double _lastVolume = 1.0;
+
+  void toggleMute() {
+    if (state.volume > 0) {
+      _lastVolume = state.volume;
+      setVolume(0);
+    } else {
+      setVolume(_lastVolume > 0 ? _lastVolume : 1.0);
+    }
   }
 }
 

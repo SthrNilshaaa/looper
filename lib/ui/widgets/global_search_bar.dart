@@ -1,34 +1,73 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/core/providers.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/search/presentation/search_view.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 
-class GlobalSearchBar extends ConsumerWidget {
+class GlobalSearchBar extends ConsumerStatefulWidget {
   const GlobalSearchBar({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GlobalSearchBar> createState() => _GlobalSearchBarState();
+}
+
+class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
+  late TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: ref.read(searchQueryProvider));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _clearSearch() {
+    _controller.clear();
+    ref.read(searchQueryProvider.notifier).state = '';
+    // Unfocus the search bar to return to music control mode
+    FocusManager.instance.primaryFocus?.unfocus();
+    
+    // If we are currently in the search view, exit to home
+    if (ref.read(appNavigationProvider).activeItem == NavItem.search) {
+      ref.read(appNavigationProvider.notifier).setItem(NavItem.home);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
     final isDynamic = settings.enableDynamicTheming;
     final nav = ref.watch(appNavigationProvider);
+    final query = ref.watch(searchQueryProvider);
+
+    // Sync controller if provider changes from elsewhere (though unlikely)
+    if (_controller.text != query) {
+      _controller.text = query;
+    }
 
     if (nav.activeItem == NavItem.lyrics) {
       return const SizedBox.shrink();
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(vertical: 12),
       child: Container(
-        height: 52,
-        width:MediaQuery.of(context).size.width/2.5,
+        height: 55,
+        //width: MediaQuery.of(context).size.width*0.1,
+        
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(30),
           color: const Color.fromARGB(255, 53, 53, 53).withOpacity(isDynamic ? 0.3 : 0.1),
           border: Border.all(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white10.withOpacity(0.1),
             width: 1,
           ),
           boxShadow: [
@@ -41,49 +80,63 @@ class GlobalSearchBar extends ConsumerWidget {
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(25),
+          borderRadius: BorderRadius.circular(30),
           child: BackdropFilter(
             filter: ImageFilter.blur(
               sigmaX: isDynamic ? 10 : 0,
               sigmaY: isDynamic ? 10 : 0,
             ),
-            child: TextField(
-              onChanged: (val) {
-                ref.read(searchQueryProvider.notifier).state = val;
-                if (val.isNotEmpty) {
-                  ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
-                }
-              },
-              decoration: InputDecoration(
-                hintText: 'Search songs',
-                hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 14,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              child: TextField(
+                focusNode: ref.watch(searchFocusNodeProvider),
+                controller: _controller,
+                onChanged: (val) {
+                  ref.read(searchQueryProvider.notifier).state = val;
+                  if (val.isNotEmpty && nav.activeItem != NavItem.search) {
+                    ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search songs',
+                  hintStyle: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 14,
+                  ),
+                  prefixIcon: SizedBox(
+                    width: 80,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          LucideIcons.search,
+                          size: 20,
+                          color: Colors.white,
+                        ),
+                        Container(
+                          height: 30,
+                          width: 1,
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          color: Colors.white10,
+                        ),
+                      ],
+                    ),
+                  ),
+                  suffixIcon: query.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            LucideIcons.x,
+                            size: 18,
+                            color: Colors.white70,
+                          ),
+                          onPressed: _clearSearch,
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-              
-         prefixIcon: SizedBox(
-  width: 60, // give enough space
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      Icon(
-        LucideIcons.search,
-        size: 20,
-        color: Colors.white.withOpacity(0.7),
-      ),
-      SizedBox(width: 8),
-      Container(
-        width: 1,
-        height: 20,
-        color: Colors.white.withOpacity(0.3),
-      ),
-    ],
-  ),
-),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
               ),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
             ),
           ),
         ),

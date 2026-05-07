@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
@@ -149,7 +150,7 @@ void _showSongOptions(BuildContext context, WidgetRef ref, Song song, AppLocaliz
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(song.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(song.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal), maxLines: 1, overflow: TextOverflow.ellipsis),
                       Text(song.artist ?? l10n.unknownArtist, style: const TextStyle(fontSize: 13, color: Colors.grey)),
                     ],
                   ),
@@ -256,13 +257,19 @@ class _SongTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final bool isDynamic = settings.enableDynamicTheming;
     final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
+    return AnimatedContainer(
+      key: ValueKey('tile_${song.id}'),
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isCurrent ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
+        color: isCurrent 
+          ? Theme.of(context).colorScheme.primary.withOpacity(0.5) 
+          : Colors.white.withOpacity(0.02),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
         leading: Container(
@@ -291,7 +298,7 @@ class _SongTile extends ConsumerWidget {
         title: Text(
           song.title,
           style: TextStyle(
-            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+            fontWeight: isCurrent ? FontWeight.normal : FontWeight.normal,
             color: isCurrent ? Theme.of(context).colorScheme.primary : null,
           ),
           overflow: TextOverflow.ellipsis,
@@ -310,6 +317,7 @@ class _SongTile extends ConsumerWidget {
           child: Text(
             song.artist ?? l10n.unknownArtist,
             style: const TextStyle(fontSize: 12),
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),

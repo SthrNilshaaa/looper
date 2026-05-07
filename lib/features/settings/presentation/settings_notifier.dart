@@ -47,6 +47,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = _clone(state);
   }
 
+  Future<void> updateShuffle(bool shuffle) async {
+    state.shuffle = shuffle;
+    await _save();
+  }
+
+  Future<void> updateRepeatMode(int mode) async {
+    state.repeatMode = mode;
+    await _save();
+  }
+
   AppSettings _clone(AppSettings s) {
     return AppSettings()
       ..id = s.id

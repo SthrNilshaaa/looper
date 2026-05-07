@@ -13,7 +13,7 @@ class SettingsView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Text('Settings', style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold)),
+        const Text('Settings', style: TextStyle(fontSize: 32, fontWeight: FontWeight.normal)),
         const SizedBox(height: 32),
         
         _SectionHeader(title: 'Library'),
@@ -45,9 +45,9 @@ class SettingsView extends ConsumerWidget {
           secondary: const Icon(LucideIcons.palette),
           title: const Text('Dynamic Themes'),
           subtitle: const Text('Adapt app colors to album artwork'),
-          value: true, // TODO: Persist setting
+          value: ref.watch(settingsProvider).enableDynamicTheming,
           onChanged: (val) {
-            // TODO: Toggle dynamic theme
+             ref.read(settingsProvider.notifier).updateDynamicTheming(val);
           },
         ),
         ListTile(
@@ -127,7 +127,7 @@ class _SectionHeader extends StatelessWidget {
         title.toUpperCase(),
         style: TextStyle(
           fontSize: 12,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.normal,
           color: Theme.of(context).colorScheme.primary,
           letterSpacing: 1.5,
         ),

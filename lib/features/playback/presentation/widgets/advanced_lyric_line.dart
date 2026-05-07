@@ -26,11 +26,11 @@ class AdvancedLyricLine extends StatelessWidget {
     
     // Base style for all text
     final baseStyle = GoogleFonts.spaceGrotesk(
-      fontSize: isActive ? 48 : 36,
-      fontWeight: FontWeight.w800, // Thicker font
-      letterSpacing: 0.5,
-      height: 1.3, // More breathing room
-      color: Colors.white.withOpacity(isActive ? 0.9 : 0.2), // Dimmer inactive, brighter active
+      fontSize: isActive ? 36 : 32,
+      fontWeight: FontWeight.w600,
+      letterSpacing: -0.5,
+      height: 1.2,
+      color: Colors.white.withOpacity(isActive ? 1.0 : 0.01),
     );
 
     // Active color (Theme Primary)
@@ -43,7 +43,7 @@ class AdvancedLyricLine extends StatelessWidget {
         child: AnimatedPadding(
           duration: const Duration(milliseconds: 600),
           curve: Curves.fastLinearToSlowEaseIn,
-          padding: EdgeInsets.symmetric(vertical: isActive ? 32 : 16, horizontal: 16),
+          padding: EdgeInsets.symmetric(vertical: isActive ? 24 : 12, horizontal: 16),
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCubic,

@@ -118,8 +118,16 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
 
   Future<void> toggleFavorite(Song song) async {
     await DbService.isar.writeTxn(() async {
-      song.isFavorite = !song.isFavorite;
-      await DbService.isar.songs.put(song);
+      // Direct ID lookup is safer to ensure we're updating the correct record
+      final dbSong = await DbService.isar.songs.get(song.id);
+      if (dbSong != null) {
+        dbSong.isFavorite = !dbSong.isFavorite;
+        await DbService.isar.songs.put(dbSong);
+      } else {
+        // Fallback for songs not yet in DB (e.g. played from file)
+        song.isFavorite = !song.isFavorite;
+        await DbService.isar.songs.put(song);
+      }
     });
   }
 }

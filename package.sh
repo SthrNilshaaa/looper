@@ -30,8 +30,8 @@ mkdir -p "$DEB_ROOT/usr/share/pixmaps"
 mkdir -p "$DEB_ROOT/usr/lib/$APP_NAME"
 
 # Copy Icon
-    if [ -f "assets/Logo_launcher.png" ]; then
-        cp "assets/Logo_launcher.png" "$DEB_ROOT/usr/share/pixmaps/$APP_NAME.png"
+    if [ -f "assets/launcher_logo.png" ]; then
+        cp "assets/launcher_logo.png" "$DEB_ROOT/usr/share/pixmaps/$APP_NAME.png"
     fi
 
 # Create control file
@@ -159,50 +159,50 @@ else
     echo "⚠️ Packaging tools not found."
 fi
 
-# --- AppImage Packaging ---
-echo "📦 Building universal .AppImage..."
+# # --- AppImage Packaging ---
+# echo "📦 Building universal .AppImage..."
 
-# 1. Download appimagetool if not present or if it's invalid
-if [ ! -f "appimagetool" ] || ! grep -q "ELF" "appimagetool" 2>/dev/null; then
-    echo "Downloading appimagetool..."
-    rm -f appimagetool
-    wget -q https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage -O appimagetool
-    chmod +x appimagetool
-fi
+# # 1. Download appimagetool if not present or if it's invalid
+# if [ ! -f "appimagetool" ] || ! grep -q "ELF" "appimagetool" 2>/dev/null; then
+#     echo "Downloading appimagetool..."
+#     rm -f appimagetool
+#     wget -q https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage -O appimagetool
+#     chmod +x appimagetool
+# fi
 
-# 2. Prepare AppDir structure
-rm -rf "$APPIMAGE_ROOT"
-mkdir -p "$APPIMAGE_ROOT/usr/bin"
-mkdir -p "$APPIMAGE_ROOT/usr/lib"
-mkdir -p "$APPIMAGE_ROOT/usr/share/applications"
-mkdir -p "$APPIMAGE_ROOT/usr/share/icons/hicolor/256x256/apps"
+# # 2. Prepare AppDir structure
+# rm -rf "$APPIMAGE_ROOT"
+# mkdir -p "$APPIMAGE_ROOT/usr/bin"
+# mkdir -p "$APPIMAGE_ROOT/usr/lib"
+# mkdir -p "$APPIMAGE_ROOT/usr/share/applications"
+# mkdir -p "$APPIMAGE_ROOT/usr/share/icons/hicolor/256x256/apps"
 
-# 3. Copy Flutter bundle
-cp -r "$BUILD_DIR/"* "$APPIMAGE_ROOT/usr/lib/"
+# # 3. Copy Flutter bundle
+# cp -r "$BUILD_DIR/"* "$APPIMAGE_ROOT/usr/lib/"
 
-# 4. Create AppRun (The entry point)
-cat <<EOF > "$APPIMAGE_ROOT/AppRun"
-#!/bin/bash
-HERE="\$(dirname "\$(readlink -f "\${0}")")"
-export LD_LIBRARY_PATH="\$HERE/usr/lib/lib:\$LD_LIBRARY_PATH"
-export GDK_BACKEND=wayland,x11
-"\$HERE/usr/lib/looper_player" "\$@"
-EOF
-chmod +x "$APPIMAGE_ROOT/AppRun"
+# # 4. Create AppRun (The entry point)
+# cat <<EOF > "$APPIMAGE_ROOT/AppRun"
+# #!/bin/bash
+# HERE="\$(dirname "\$(readlink -f "\${0}")")"
+# export LD_LIBRARY_PATH="\$HERE/usr/lib/lib:\$LD_LIBRARY_PATH"
+# export GDK_BACKEND=wayland,x11
+# "\$HERE/usr/lib/looper_player" "\$@"
+# EOF
+# chmod +x "$APPIMAGE_ROOT/AppRun"
 
-# 5. Create .desktop file and Icon for AppImage
-cat <<EOF > "$APPIMAGE_ROOT/$APP_NAME.desktop"
-[Desktop Entry]
-Type=Application
-Name=$DISPLAY_NAME
-Exec=$APP_NAME
-Icon=$APP_NAME
-Categories=$CATEGORIES
-EOF
+# # 5. Create .desktop file and Icon for AppImage
+# cat <<EOF > "$APPIMAGE_ROOT/$APP_NAME.desktop"
+# [Desktop Entry]
+# Type=Application
+# Name=$DISPLAY_NAME
+# Exec=$APP_NAME
+# Icon=$APP_NAME
+# Categories=$CATEGORIES
+# EOF
 
-if [ -f "assets/Logo_launcher.png" ]; then
-    cp "assets/Logo_launcher.png" "$APPIMAGE_ROOT/$APP_NAME.png"
-    cp "assets/Logo_launcher.png" "$APPIMAGE_ROOT/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
+if [ -f "assets/launcher_logo.png" ]; then
+    cp "assets/launcher_logo.png" "$APPIMAGE_ROOT/$APP_NAME.png"
+    cp "assets/launcher_logo.png" "$APPIMAGE_ROOT/usr/share/icons/hicolor/256x256/apps/$APP_NAME.png"
 fi
 
 # 6. Build the final AppImage

@@ -59,9 +59,9 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
       if (key?.currentContext != null) {
         Scrollable.ensureVisible(
           key!.currentContext!,
-          duration: const Duration(milliseconds: 800),
+          duration: const Duration(milliseconds: 1000),
           curve: Curves.fastLinearToSlowEaseIn,
-          alignment: 0.5, // Center the active line
+          alignment: 0.15, // Perfect 2nd position from top
         );
       } else {
         // Fallback for off-screen items
@@ -75,9 +75,9 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
             if (mounted && _lineKeys[index]?.currentContext != null) {
               Scrollable.ensureVisible(
                 _lineKeys[index]!.currentContext!,
-                duration: const Duration(milliseconds: 800),
+                duration: const Duration(milliseconds: 1000),
                 curve: Curves.fastLinearToSlowEaseIn,
-                alignment: 0.5,
+                alignment: 0.15,
               );
             }
           });
@@ -98,9 +98,11 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       itemCount: widget.lines.length,
-      padding: EdgeInsets.symmetric(
-          vertical: MediaQuery.of(context).size.height / 2.5,
-          horizontal: 64),
+      padding: const EdgeInsets.only(
+          top: 100,
+          bottom: 400,
+          left: 48,
+          right: 32),
       itemBuilder: (context, index) {
         final line = widget.lines[index];
         final isActive = index == _currentLineIndex;

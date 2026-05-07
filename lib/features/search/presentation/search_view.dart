@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
@@ -81,8 +83,10 @@ class SearchView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       children: [
+        _buildTopResult(results, ref, context),
+        const SizedBox(height: 16),
         if (results.artists.isNotEmpty) ...[
-          const Text('Artists', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Artists', style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
           const SizedBox(height: 12),
           SizedBox(
             height: 140,
@@ -95,7 +99,7 @@ class SearchView extends ConsumerWidget {
           const SizedBox(height: 24),
         ],
         if (results.albums.isNotEmpty) ...[
-          const Text('Albums', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          const Text('Albums', style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
           const SizedBox(height: 12),
           SizedBox(
             height: 180,
@@ -107,20 +111,95 @@ class SearchView extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
         ],
-        if (results.songs.isNotEmpty) ...[
-          const Text('Songs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        if (results.songs.length > 1) ...[
+          const Text('Songs', style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
           const SizedBox(height: 12),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: results.songs.length,
-            itemBuilder: (context, index) {
-              final song = results.songs[index];
-              return SongsList(songs: [song]); // This is a bit inefficient, but reusing SongsList
-            },
-          ),
+          SongsList(songs: results.songs.sublist(1), shrinkWrap: true, physics: const NeverScrollableScrollPhysics()),
         ],
       ],
+    );
+  }
+
+  Widget _buildTopResult(SearchResults results, WidgetRef ref, BuildContext context) {
+    if (results.songs.isEmpty) return const SizedBox.shrink();
+    final topSong = results.songs.first;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Top Result', style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
+        const SizedBox(height: 12),
+        _SongResultCard(song: topSong),
+      ],
+    );
+  }
+}
+
+class _SongResultCard extends ConsumerWidget {
+  final Song song;
+  const _SongResultCard({required this.song});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
+    
+    return InkWell(
+      onTap: () => ref.read(playbackProvider.notifier).play(song),
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isCurrent 
+            ? colorScheme.primary.withOpacity(0.5)
+            : Colors.white.withOpacity(0.02),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isCurrent 
+              ? colorScheme.primary.withOpacity(0.2)
+              : Colors.white10.withOpacity(0.05)
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                image: song.artPath != null 
+                  ? DecorationImage(image: FileImage(File(song.artPath!)), fit: BoxFit.cover)
+                  : null,
+                color: Colors.white10,
+              ),
+              child: song.artPath == null ? const Icon(LucideIcons.music, size: 32) : null,
+            ),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(song.title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.normal), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  const SizedBox(height: 4),
+                  Text(song.artist ?? 'Unknown Artist', style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                  const SizedBox(height: 2),
+                  Text(song.album ?? 'Unknown Album', style: TextStyle(fontSize: 12, color: Colors.grey.withOpacity(0.7))),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: colorScheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.play_arrow, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -190,12 +269,12 @@ class _AlbumResultCard extends ConsumerWidget {
                 image: album.artPath != null 
                   ? DecorationImage(image: FileImage(File(album.artPath!)), fit: BoxFit.cover)
                   : null,
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withOpacity(ref.watch(settingsProvider).enableDynamicTheming ? 0.8 : 0.1),
               ),
               child: album.artPath == null ? const Center(child: Icon(LucideIcons.music)) : null,
             ),
             const SizedBox(height: 8),
-            Text(album.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+            Text(album.name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 13)),
             Text(album.artist ?? 'Unknown Artist', maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.grey, fontSize: 11)),
           ],
         ),

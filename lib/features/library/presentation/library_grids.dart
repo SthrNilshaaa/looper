@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
@@ -29,7 +30,7 @@ class AlbumsGrid extends ConsumerWidget {
         padding: const EdgeInsets.all(24),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 200,
-          childAspectRatio: 0.8,
+          childAspectRatio: 0.72,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
         ),
@@ -48,10 +49,24 @@ class _AlbumCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final nav = ref.watch(appNavigationProvider);
+    final isSelected = nav.activeItem == NavItem.collectionDetail && nav.collectionTitle == album.name;
+    final isDynamic = ref.watch(settingsProvider).enableDynamicTheming;
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          color: isSelected 
+              ? const Color.fromARGB(255, 53, 53, 53).withOpacity(isDynamic ? 0.3 : 0.1)
+              : Colors.transparent,
+          border: isSelected
+              ? Border.all(color: Colors.white10.withOpacity(0.1), width: 1)
+              : null,
+        ),
         child: InkWell(
           onTap: () async {
             final songs = await DbService.isar.songs.filter().albumEqualTo(album.name).findAll();
@@ -62,7 +77,7 @@ class _AlbumCard extends ConsumerWidget {
               songs: songs,
             );
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -77,7 +92,7 @@ class _AlbumCard extends ConsumerWidget {
                         offset: const Offset(0, 8),
                       ),
                     ],
-                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                    color: Colors.white.withOpacity(0.05),
                   ),
                   child: album.artPath != null 
                     ? ClipRRect(
@@ -100,7 +115,7 @@ class _AlbumCard extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(album.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(album.name, style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
                     Text(album.artist ?? 'Unknown Artist', style: TextStyle(color: Colors.grey[400], fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ),
@@ -125,7 +140,7 @@ class ArtistsGrid extends ConsumerWidget {
         padding: const EdgeInsets.all(24),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 180,
-          childAspectRatio: 0.9,
+          childAspectRatio: 0.8,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
         ),
@@ -144,18 +159,34 @@ class _ArtistCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final nav = ref.watch(appNavigationProvider);
+    final isSelected = nav.activeItem == NavItem.collectionDetail && nav.collectionTitle == artist.name;
+    final isDynamic = ref.watch(settingsProvider).enableDynamicTheming;
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      child: InkWell(
-        onTap: () async {
-          final songs = await DbService.isar.songs.filter().artistEqualTo(artist.name).findAll();
-          ref.read(appNavigationProvider.notifier).showCollection(
-            title: artist.name,
-            art: artist.artPath,
-            songs: songs,
-          );
-        },
-        borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          color: isSelected 
+              ? const Color.fromARGB(255, 53, 53, 53).withOpacity(isDynamic ? 0.3 : 0.1)
+              : Colors.transparent,
+          border: isSelected
+              ? Border.all(color: Colors.white10.withOpacity(0.1), width: 1)
+              : null,
+        ),
+        child: InkWell(
+          onTap: () async {
+            final songs = await DbService.isar.songs.filter().artistEqualTo(artist.name).findAll();
+            ref.read(appNavigationProvider.notifier).showCollection(
+              title: artist.name,
+              art: artist.artPath,
+              songs: songs,
+            );
+          },
+          borderRadius: BorderRadius.circular(20),
         child: Column(
           children: [
             Expanded(
@@ -169,7 +200,7 @@ class _ArtistCard extends ConsumerWidget {
                       offset: const Offset(0, 10),
                     ),
                   ],
-                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  color: Colors.white.withOpacity(0.05),
                   image: artist.artistImageUrl != null 
                     ? DecorationImage(image: CachedNetworkImageProvider(artist.artistImageUrl!), fit: BoxFit.cover)
                     : (artist.artPath != null 
@@ -184,13 +215,13 @@ class _ArtistCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               artist.name, 
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14), 
+              style: const TextStyle(fontWeight: FontWeight.normal, fontSize: 14), 
               maxLines: 1, 
               overflow: TextOverflow.ellipsis
             ),
           ],
         ),
       ),
-    );
+    ),);
   }
 }

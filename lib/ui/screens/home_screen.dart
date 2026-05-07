@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/widgets/color_maper.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:animations/animations.dart';
 import 'package:window_manager/window_manager.dart';
@@ -16,14 +17,17 @@ import 'package:looper_player/features/search/presentation/search_view.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/presentation/smart_views.dart';
 import 'package:looper_player/ui/screens/settings_view.dart';
+import 'package:looper_player/ui/screens/welcome_screen.dart';
 
 import 'package:looper_player/ui/widgets/collection_detail_view.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_view.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
 import 'package:looper_player/features/library/presentation/queue_view.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/providers.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:looper_player/features/library/presentation/library_grids.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import '../widgets/global_search_bar.dart';
 
@@ -43,14 +47,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // Wait for settings to load from DB
       await ref.read(settingsProvider.notifier).initialization;
       final settings = ref.read(settingsProvider);
-      
+
       // Handle file passed via CLI arguments
       final initialFile = ref.read(startupFileProvider);
       if (initialFile != null) {
         ref.read(playbackProvider.notifier).playFromFile(initialFile);
         // If playing from file, maybe skip the folder prompt for now
         if (settings.libraryFolders.isNotEmpty) {
-           ref.read(libraryProvider.notifier).scanSavedFolders();
+          ref.read(libraryProvider.notifier).scanSavedFolders();
         }
         return;
       }
@@ -70,24 +74,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final nav = ref.watch(appNavigationProvider);
     final playback = ref.watch(playbackProvider);
     final settings = ref.watch(settingsProvider);
+    final isDynamic = settings.enableDynamicTheming;
     final l10n = AppLocalizations.of(context)!;
+
+    // Ensure lyrics pre-fetching is active
+    ref.watch(lyricsProvider);
 
     final bool showWelcome = library.songs.isEmpty && !library.isScanning;
     final bool isNarrow = MediaQuery.of(context).size.width < 800;
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
-      drawer: isNarrow ? Drawer(
-        child: Container(
-          color: Theme.of(context).colorScheme.background,
-          child: Sidebar(l10n: l10n),
-        ),
-      ) : null,
+      drawer: isNarrow
+          ? Drawer(
+              child: Container(
+                color: Theme.of(context).colorScheme.background,
+                child: Sidebar(l10n: l10n),
+              ),
+            )
+          : null,
       body: SafeArea(
         child: Stack(
           children: [
             // Global Background Art (Conditional)
-            if (!showWelcome && settings.enableDynamicTheming && playback.currentSong?.artPath != null) ...[
+            if (!showWelcome &&
+                settings.enableDynamicTheming &&
+                playback.currentSong?.artPath != null) ...[
               Positioned.fill(
                 child: Image.file(
                   File(playback.currentSong!.artPath!),
@@ -96,62 +108,102 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               Positioned.fill(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.8),
-                  ),
+                  filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                  child: Container(color: Colors.black.withOpacity(0.8)),
                 ),
               ),
             ],
 
-            
             Column(
               children: [
                 // Custom Title Bar always at the top
-                SizedBox(
-                  height: 40,
-                  child: CustomTitleBar(showMenu: isNarrow),
-                ),
+                SizedBox(height: 30, child: CustomTitleBar(showMenu: isNarrow)),
                 Expanded(
                   child: showWelcome
-                    ? _buildWelcomeView(context, l10n)
-                    : LayoutBuilder(
-                        builder: (context, constraints) {
-                          final bool isNarrowLayout = constraints.maxWidth < 800;
-                          
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Sidebar - hidden on narrow screens
-                              if (!isNarrowLayout)
-                                Container(
-                                  width: 260,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.01),
-                                    border: Border(
-                                      right: BorderSide(
-                                        color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.2),
-                                        width: 1.5,
+                      ? const WelcomeScreen()
+                      : LayoutBuilder(
+                          builder: (context, constraints) {
+                            final bool isNarrowLayout =
+                                constraints.maxWidth < 800;
+
+                            return Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                // Sidebar - hidden on narrow screens
+                                if (!isNarrowLayout)
+                                  Container(
+                                    width: 240,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .surfaceVariant
+                                          .withOpacity(0.01),
+                                      border: Border(
+                                        right: BorderSide(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .outlineVariant
+                                              .withOpacity(0.2),
+                                          width: 1.5,
+                                        ),
                                       ),
                                     ),
+                                    child: Sidebar(l10n: l10n),
                                   ),
-                                  child: Sidebar(l10n: l10n),
+
+                                // Main Content Area
+                                Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(left: 20),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (nav.activeItem != NavItem.lyrics)
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                                            child: Row(
+                                              children: [
+                                                _HeaderButton(
+                                                  onTap: () => ref.read(appNavigationProvider.notifier).setItem(NavItem.home),
+                                                  icon: LucideIcons.arrowLeft,
+                                                  label: 'Back',
+                                                  isDynamic: isDynamic,
+                                                ),
+                                                const SizedBox(width: 16),
+                                                const Expanded(child: GlobalSearchBar()),
+                                                // const SizedBox(width: 48),
+                                                Spacer(),
+                                                _HeaderButton(
+                                                  onTap: () async {
+                                                    final String? path = await FilePicker.platform.getDirectoryPath();
+                                                    if (path != null) {
+                                                      ref.read(libraryProvider.notifier).scanLibrary(path);
+                                                    }
+                                                  },
+                                                  icon: LucideIcons.plus,
+                                                  label: 'Add Folder',
+                                                  isDynamic: isDynamic,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        Expanded(
+                                          child: _buildMainContent(
+                                            nav,
+                                            library,
+                                            context,
+                                            l10n,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              
-                              // Main Content Area
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const GlobalSearchBar(),
-                                    Expanded(child: _buildMainContent(nav, library, context, l10n)),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
+                              ],
+                            );
+                          },
+                        ),
                 ),
                 // Global Player Bar always at the bottom
                 PlayerBar(),
@@ -163,63 +215,79 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _buildWelcomeView(BuildContext context, AppLocalizations l10n) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Spacer(),
-          Container(
-            height: 120,
-            alignment: Alignment.center,
-            child: SvgPicture.asset(
-              'assets/main_logo_app.svg',
-              height: 100,
-              fit: BoxFit.contain,
-              placeholderBuilder: (context) => const Text(
-                'Looper Player',
-                style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-          Text(
-            'Welcome to ${l10n.appTitle}',
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            l10n.scanLibrary,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-          const SizedBox(height: 48),
-          ElevatedButton.icon(
-            onPressed: () async {
-              final String? path = await FilePicker.platform.getDirectoryPath();
-              if (path != null) {
-                ref.read(libraryProvider.notifier).scanLibrary(path);
-              }
-            },
-            icon: const Icon(LucideIcons.folderSearch),
-            label: Text(l10n.addFolder),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-              textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          const Spacer(),
-          const Text(
-            'High-Fidelity Audio • Modern Experience',
-            style: TextStyle(fontSize: 12, color: Colors.grey, letterSpacing: 1.5),
-          ),
-          const SizedBox(height: 32),
-        ],
-      ),
-    );
-  }
+  // Widget _buildWelcomeView(BuildContext context, AppLocalizations l10n) {
+  //   return Center(
+  //     child: Column(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: [
+  //         const Spacer(),
+  //         Container(
+  //           height: 120,
+  //           alignment: Alignment.center,
+  //           child: SvgPicture.asset(
+  //             'assets/main_logo.svg',
+  //             height: 100,
+  //             fit: BoxFit.contain,
+  //             placeholderBuilder: (context) => const Text(
+  //               'Looper Player',
+  //               style: TextStyle(
+  //                 fontSize: 48,
+  //                 fontWeight: FontWeight.normal,
+  //                 color: Colors.white,
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         const SizedBox(height: 32),
+  //         Text(
+  //           'Welcome to ${l10n.appTitle}',
+  //           style: const TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
+  //         ),
+  //         const SizedBox(height: 16),
+  //         Text(
+  //           l10n.scanLibrary,
+  //           textAlign: TextAlign.center,
+  //           style: const TextStyle(fontSize: 16, color: Colors.grey),
+  //         ),
+  //         const SizedBox(height: 48),
+  //         ElevatedButton.icon(
+  //           onPressed: () async {
+  //             final String? path = await FilePicker.platform.getDirectoryPath();
+  //             if (path != null) {
+  //               ref.read(libraryProvider.notifier).scanLibrary(path);
+  //             }
+  //           },
+  //           icon: const Icon(LucideIcons.folderSearch),
+  //           label: Text(l10n.addFolder),
+  //           style: ElevatedButton.styleFrom(
+  //             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+  //             textStyle: const TextStyle(
+  //               fontSize: 18,
+  //               fontWeight: FontWeight.normal,
+  //             ),
+  //           ),
+  //         ),
+  //         const Spacer(),
+  //         const Text(
+  //           'High-Fidelity Audio • Modern Experience',
+  //           style: TextStyle(
+  //             fontSize: 12,
+  //             color: Colors.grey,
+  //             letterSpacing: 1.5,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 32),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  Widget _buildMainContent(NavigationState nav, LibraryState library, BuildContext context, AppLocalizations l10n) {
+  Widget _buildMainContent(
+    NavigationState nav,
+    LibraryState library,
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
     if (library.isScanning) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -238,7 +306,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Widget _getWidgetForNavItem(NavigationState nav, LibraryState library, BuildContext context, AppLocalizations l10n) {
+  Widget _getWidgetForNavItem(
+    NavigationState nav,
+    LibraryState library,
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
     switch (nav.activeItem) {
       case NavItem.search:
         return const SearchView(key: ValueKey('search'));
@@ -279,7 +352,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
-    return _buildWelcomeView(context, l10n);
+    return const WelcomeScreen();
   }
 }
 
@@ -289,19 +362,18 @@ class CustomTitleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  WindowCaption(
-        brightness: Brightness.dark,
-        backgroundColor: Colors.transparent,
-        title: Row(
-          children: [
-            if (showMenu)
-              IconButton(
-                icon: const Icon(LucideIcons.menu, color: Colors.white),
-                onPressed: () => Scaffold.of(context).openDrawer(),
-              ),
-            
-          ],
-        ),
+    return WindowCaption(
+      brightness: Brightness.dark,
+      backgroundColor: Colors.transparent,
+      title: Row(
+        children: [
+          if (showMenu)
+            IconButton(
+              icon: const Icon(LucideIcons.menu, color: Colors.white),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -323,62 +395,59 @@ class Sidebar extends ConsumerWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
             child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight - 32), // -32 for padding
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - 32,
+              ), // -32 for padding
               child: IntrinsicHeight(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                  padding: const EdgeInsets.only(left: 15,right: 5),
-                  child: 
-                  Row(
-                    children: [
-                      SizedBox(
-                        height: 50,
-                        child: SvgPicture.asset(
-                          'assets/main_logo_app.svg',
-                          fit: BoxFit.contain,
-                        ),
+                      padding: const EdgeInsets.only(left: 15, right: 5),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            height: 42,
+                            child: SvgPicture.asset(
+                              'assets/main_logo.svg',
+                              fit: BoxFit.contain,
+                              colorMapper: AccentColorMapper(Theme.of(context).colorScheme.primary),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                
-                 
-                ),
-                SizedBox(height: 10),
+                    ),
+                    SizedBox(height: 24),
                     _SidebarItem(
                       customIcon: 'assets/side_bar/home_active.svg',
                       label: 'Home',
                       isSelected: activeItem == NavItem.home,
                       onTap: () => navigateTo(NavItem.home),
                     ),
-
                     _SidebarItem(
                       customIcon: 'assets/side_bar/my_music.svg',
                       label: l10n.songs,
                       isSelected: activeItem == NavItem.songs,
                       onTap: () => navigateTo(NavItem.songs),
                     ),
-                    _SidebarItem(
-                      icon: LucideIcons.disc,
-                      label: l10n.albums,
-                      isSelected: activeItem == NavItem.albums,
-                      onTap: () => navigateTo(NavItem.albums),
-                    ),
+                    if ((ref.watch(albumsProvider).value?.length ?? 0) >= 6)
+                      _SidebarItem(
+                        icon: LucideIcons.disc,
+                        label: l10n.albums,
+                        isSelected: activeItem == NavItem.albums,
+                        onTap: () => navigateTo(NavItem.albums),
+                      ),
                     _SidebarItem(
                       icon: LucideIcons.mic2,
                       label: l10n.artists,
                       isSelected: activeItem == NavItem.artists,
                       onTap: () => navigateTo(NavItem.artists),
                     ),
-                    const SizedBox(height: 24),
-                    Text(l10n.playlists.toUpperCase(), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2)),
-                    const SizedBox(height: 8),
                     _SidebarItem(
                       customIcon: 'assets/side_bar/library.svg',
                       label: l10n.playlists,
@@ -403,13 +472,18 @@ class Sidebar extends ConsumerWidget {
                       isSelected: activeItem == NavItem.queue,
                       onTap: () => navigateTo(NavItem.queue),
                     ),
-                    const Spacer(),
-                    const SizedBox(height: 16),
                     _SidebarItem(
                       icon: LucideIcons.settings,
                       label: l10n.settings,
                       isSelected: activeItem == NavItem.settings,
                       onTap: () => navigateTo(NavItem.settings),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 1,
+                      width: double.infinity,
+                      margin: const EdgeInsets.symmetric(horizontal: 12),
+                      color: Colors.white10,
                     ),
                   ],
                 ),
@@ -417,6 +491,55 @@ class Sidebar extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _HeaderButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final IconData icon;
+  final String label;
+  final bool isDynamic;
+
+  const _HeaderButton({
+    required this.onTap,
+    required this.icon,
+    required this.label,
+    required this.isDynamic,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        height: 55,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(30),
+          color: const Color.fromARGB(255, 53, 53, 53).withOpacity(isDynamic ? 0.3 : 0.1),
+          border: Border.all(
+            color: Colors.white10.withOpacity(0.1),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: Colors.white),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -439,36 +562,46 @@ class _SidebarItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final Color selectedColor = colorScheme.primary;
+    final Color unselectedColor = Colors.white.withOpacity(0.4);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.2) : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: ListTile(
-        leading: customIcon != null 
+        leading: customIcon != null
             ? SvgPicture.asset(
-                customIcon!, 
-                width: 18, 
-                height: 18, 
+                customIcon!,
+                width: 17,
+                height: 17,
                 colorFilter: ColorFilter.mode(
-                  isSelected ? Theme.of(context).colorScheme.primary : Colors.grey, 
-                  BlendMode.srcIn
+                  isSelected ? selectedColor : unselectedColor,
+                  BlendMode.srcIn,
                 ),
               )
-            : Icon(icon, size: 18, color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey),
+            : Icon(
+                icon,
+                size: 17,
+                color: isSelected ? selectedColor : unselectedColor,
+              ),
         title: Text(
           label,
           style: TextStyle(
             fontSize: 14,
-            color: isSelected ? Theme.of(context).colorScheme.primary : null,
-            fontWeight: isSelected ? FontWeight.bold : null,
+            color: isSelected ? selectedColor : unselectedColor,
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         dense: true,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        visualDensity: VisualDensity.compact,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         onTap: onTap,
       ),
     );
   }
 }
+
+
