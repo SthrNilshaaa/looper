@@ -1,0 +1,126 @@
+Analyzing app...
+
+warning • 'getByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:294:12 • experimental_member_use
+warning • 'getByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:298:12 • experimental_member_use
+warning • 'deleteByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:302:12 • experimental_member_use
+warning • 'deleteByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:306:12 • experimental_member_use
+warning • 'getAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:311:12 • experimental_member_use
+warning • 'getAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:316:12 • experimental_member_use
+warning • 'deleteAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:321:12 • experimental_member_use
+warning • 'deleteAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:326:12 • experimental_member_use
+warning • 'putByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:330:12 • experimental_member_use
+warning • 'putByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:334:12 • experimental_member_use
+warning • 'putAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:338:12 • experimental_member_use
+warning • 'putAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:342:12 • experimental_member_use
+warning • 'getByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3323:12 • experimental_member_use
+warning • 'getByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3327:12 • experimental_member_use
+warning • 'deleteByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3331:12 • experimental_member_use
+warning • 'deleteByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3335:12 • experimental_member_use
+warning • 'getAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3340:12 • experimental_member_use
+warning • 'getAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3345:12 • experimental_member_use
+warning • 'deleteAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3350:12 • experimental_member_use
+warning • 'deleteAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3355:12 • experimental_member_use
+warning • 'putByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3359:12 • experimental_member_use
+warning • 'putByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3363:12 • experimental_member_use
+warning • 'putAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3367:12 • experimental_member_use
+warning • 'putAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:3371:12 • experimental_member_use
+warning • 'getByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4619:12 • experimental_member_use
+warning • 'getByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4623:12 • experimental_member_use
+warning • 'deleteByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4627:12 • experimental_member_use
+warning • 'deleteByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4631:12 • experimental_member_use
+warning • 'getAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4636:12 • experimental_member_use
+warning • 'getAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4641:12 • experimental_member_use
+warning • 'deleteAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4646:12 • experimental_member_use
+warning • 'deleteAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4651:12 • experimental_member_use
+warning • 'putByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4655:12 • experimental_member_use
+warning • 'putByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4659:12 • experimental_member_use
+warning • 'putAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4663:12 • experimental_member_use
+warning • 'putAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:4667:12 • experimental_member_use
+warning • 'getByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5611:12 • experimental_member_use
+warning • 'getByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5615:12 • experimental_member_use
+warning • 'deleteByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5619:12 • experimental_member_use
+warning • 'deleteByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5623:12 • experimental_member_use
+warning • 'getAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5628:12 • experimental_member_use
+warning • 'getAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5633:12 • experimental_member_use
+warning • 'deleteAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5638:12 • experimental_member_use
+warning • 'deleteAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5643:12 • experimental_member_use
+warning • 'putByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5647:12 • experimental_member_use
+warning • 'putByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5651:12 • experimental_member_use
+warning • 'putAllByIndex' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5655:12 • experimental_member_use
+warning • 'putAllByIndexSync' is experimental and could be removed or changed at any time • lib/features/library/domain/models/models.g.dart:5659:12 • experimental_member_use
+warning • The value of the local variable 'isDynamic' isn't used • lib/features/library/presentation/library_grids.dart:29:11 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/library_grids.dart:75:19 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/library_grids.dart:78:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/library_grids.dart:106:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/library_grids.dart:111:41 • deprecated_member_use
+warning • The value of the local variable 'isDynamic' isn't used • lib/features/library/presentation/library_grids.dart:174:11 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/library_grids.dart:220:19 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/library_grids.dart:223:50 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/library_grids.dart:249:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/library_grids.dart:254:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/queue_view.dart:65:43 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/queue_view.dart:76:55 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/queue_view.dart:77:46 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/smart_views.dart:47:51 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/smart_views.dart:77:51 • deprecated_member_use
+   info • The import of 'package:flutter/foundation.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' • lib/features/library/presentation/songs_list.dart:1:8 • unnecessary_import
+   info • Don't use 'BuildContext's across async gaps • lib/features/library/presentation/songs_list.dart:311:37 • use_build_context_synchronously
+   info • Don't use 'BuildContext's across async gaps • lib/features/library/presentation/songs_list.dart:312:44 • use_build_context_synchronously
+warning • The value of the local variable 'isDynamic' isn't used • lib/features/library/presentation/songs_list.dart:339:16 • unused_local_variable
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/songs_list.dart:348:53 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/songs_list.dart:349:28 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/library/presentation/songs_list.dart:358:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/lyrics_view.dart:41:45 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/lyrics_view.dart:47:47 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/lyrics_view.dart:79:30 • deprecated_member_use
+warning • The declaration '_buildHeader' isn't referenced • lib/features/playback/presentation/lyrics_view.dart:100:10 • unused_element
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/lyrics_view.dart:143:29 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/lyrics_view.dart:191:33 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/lyrics_view.dart:242:29 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/widgets/advanced_lyric_line.dart:33:27 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/widgets/advanced_lyric_line.dart:174:49 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playback/presentation/widgets/advanced_lyric_line.dart:212:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playlists/presentation/playlist_view.dart:62:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/playlists/presentation/playlist_view.dart:155:22 • deprecated_member_use
+   info • Statements in an if should be enclosed in a block • lib/features/search/presentation/search_view.dart:30:5 • curly_braces_in_flow_control_structures
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/search/presentation/search_view.dart:85:32 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/search/presentation/search_view.dart:203:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/search/presentation/search_view.dart:204:30 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/search/presentation/search_view.dart:208:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/search/presentation/search_view.dart:209:34 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/search/presentation/search_view.dart:255:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/search/presentation/search_view.dart:304:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/features/search/presentation/search_view.dart:364:36 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_dashboard.dart:135:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_dashboard.dart:206:48 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_dashboard.dart:288:63 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_dashboard.dart:289:38 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_dashboard.dart:391:54 • deprecated_member_use
+warning • Duplicate import • lib/ui/screens/home_screen.dart:30:8 • duplicate_import
+   info • 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre • lib/ui/screens/home_screen.dart:87:54 • deprecated_member_use
+   info • 'background' is deprecated and shouldn't be used. Use surface instead. This feature was deprecated after v3.18.0-0.1.pre • lib/ui/screens/home_screen.dart:91:54 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_screen.dart:112:56 • deprecated_member_use
+   info • 'surfaceVariant' is deprecated and shouldn't be used. Use surfaceContainerHighest instead. This feature was deprecated after v3.18.0-0.1.pre • lib/ui/screens/home_screen.dart:139:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_screen.dart:140:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_screen.dart:146:48 • deprecated_member_use
+warning • This default clause is covered by the previous cases • lib/ui/screens/home_screen.dart:347:7 • unreachable_switch_default
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_screen.dart:522:56 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_screen.dart:524:35 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/home_screen.dart:567:48 • deprecated_member_use
+   info • Don't use 'BuildContext's across async gaps • lib/ui/screens/settings_view.dart:148:29 • use_build_context_synchronously
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/screens/welcome_screen.dart:67:45 • deprecated_member_use
+   info • 'green' is deprecated and shouldn't be used. Use (*.g * 255.0).round().clamp(0, 255) • lib/ui/widgets/color_maper.dart:17:15 • deprecated_member_use
+   info • 'red' is deprecated and shouldn't be used. Use (*.r * 255.0).round().clamp(0, 255) • lib/ui/widgets/color_maper.dart:17:29 • deprecated_member_use
+   info • 'green' is deprecated and shouldn't be used. Use (*.g * 255.0).round().clamp(0, 255) • lib/ui/widgets/color_maper.dart:17:48 • deprecated_member_use
+   info • 'blue' is deprecated and shouldn't be used. Use (*.b * 255.0).round().clamp(0, 255) • lib/ui/widgets/color_maper.dart:17:62 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/color_maper.dart:18:26 • deprecated_member_use
+   info • 'opacity' is deprecated and shouldn't be used. Use .a • lib/ui/widgets/color_maper.dart:18:44 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/global_search_bar.dart:73:13 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/global_search_bar.dart:74:52 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/global_search_bar.dart:78:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/global_search_bar.dart:107:41 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/player_bar.dart:126:40 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/player_bar.dart:131:37 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/player_bar.dart:260:39 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/player_bar.dart:298:42 • deprecated_member_use
+   info • 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss • lib/ui/widgets/player_bar.dart:413:41 • deprecated_member_use

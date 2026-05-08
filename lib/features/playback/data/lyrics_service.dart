@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -7,7 +8,12 @@ class LyricsResponse {
   final String? plainLyrics;
   final String? syncedLyrics;
 
-  LyricsResponse({this.lyrics, this.instrumental, this.plainLyrics, this.syncedLyrics});
+  LyricsResponse({
+    this.lyrics,
+    this.instrumental,
+    this.plainLyrics,
+    this.syncedLyrics,
+  });
 
   factory LyricsResponse.fromJson(Map<String, dynamic> json) {
     return LyricsResponse(
@@ -45,9 +51,7 @@ class LyricsService {
       }
 
       // If exact match fails, try the /search endpoint and take the first valid result
-      final searchParams = {
-        'q': '$trackName $artistName',
-      };
+      final searchParams = {'q': '$trackName $artistName'};
 
       url = Uri.parse('$baseUrl/search').replace(queryParameters: searchParams);
       response = await http.get(url);
@@ -55,11 +59,11 @@ class LyricsService {
       if (response.statusCode == 200) {
         final list = jsonDecode(response.body) as List;
         if (list.isNotEmpty) {
-           return LyricsResponse.fromJson(list.first);
+          return LyricsResponse.fromJson(list.first);
         }
       }
     } catch (e) {
-      print('Error fetching lyrics: $e');
+      debugPrint('Error fetching lyrics: $e');
     }
     return null;
   }

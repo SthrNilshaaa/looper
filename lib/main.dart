@@ -20,19 +20,19 @@ import 'package:local_notifier/local_notifier.dart';
 void main(List<String> args) async {
   final String? initialFile = args.isNotEmpty ? args.first : null;
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize LocalNotifier
   await localNotifier.setup(appName: 'Looper Player');
 
   // Initialize MetadataGod
   MetadataGod.initialize();
-  
+
   // Initialize MediaKit
   MediaKit.ensureInitialized();
-  
+
   // Initialize Database
   await DbService.init();
-  
+
   // Initialize Window Manager
   await windowManager.ensureInitialized();
   WindowOptions windowOptions = const WindowOptions(
@@ -42,7 +42,7 @@ void main(List<String> args) async {
     titleBarStyle: TitleBarStyle.hidden,
     title: 'Looper Player',
   );
-  
+
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
     await windowManager.show();
     await windowManager.focus();
@@ -50,9 +50,7 @@ void main(List<String> args) async {
 
   runApp(
     ProviderScope(
-      overrides: [
-        startupFileProvider.overrideWithValue(initialFile),
-      ],
+      overrides: [startupFileProvider.overrideWithValue(initialFile)],
       child: const MyApp(),
     ),
   );
@@ -73,11 +71,9 @@ class MyApp extends ConsumerWidget {
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: colorScheme,
-          textTheme: GoogleFonts.dmSansTextTheme(
-            ThemeData.dark().textTheme,
-          ),
+          textTheme: GoogleFonts.dmSansTextTheme(ThemeData.dark().textTheme),
         ),
-        themeAnimationDuration: const Duration(milliseconds: 500),
+        themeAnimationDuration: const Duration(milliseconds: 1000),
         themeAnimationCurve: Curves.easeInOut,
         locale: Locale(settings.language.isEmpty ? 'en' : settings.language),
         localizationsDelegates: const [
@@ -86,10 +82,7 @@ class MyApp extends ConsumerWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [
-          Locale('en'),
-          Locale('hi'),
-        ],
+        supportedLocales: const [Locale('en'), Locale('hi')],
         home: const KeyboardHandler(child: HomeScreen()),
       );
     }

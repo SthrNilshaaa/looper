@@ -10,22 +10,22 @@ class Song {
   late String path;
 
   late String title;
-  
+
   @Index()
   String? artist;
-  
+
   @Index()
   String? album;
-  
+
   String? genre;
   int? duration; // In milliseconds
   int? trackNumber;
   int? year;
   String? artPath;
-  
+
   @Index()
   late DateTime dateAdded;
-  
+
   int playCount = 0;
   @Index()
   DateTime? lastPlayed;
@@ -33,11 +33,7 @@ class Song {
 
   // Metadata for search
   @Index(type: IndexType.value, caseSensitive: false)
-  List<String> get searchTerms => [
-    title,
-    if (artist != null) artist!,
-    if (album != null) album!,
-  ];
+  List<String> get searchTerms => [title, ?artist, ?album];
 }
 
 @collection
@@ -46,11 +42,11 @@ class Album {
 
   @Index(unique: true)
   late String name;
-  
+
   String? artist;
   String? artPath;
   int? year;
-  
+
   @Index()
   late DateTime dateAdded;
 }
@@ -61,7 +57,7 @@ class Artist {
 
   @Index(unique: true)
   late String name;
-  
+
   String? artPath;
   String? artistImageUrl;
 }
@@ -72,7 +68,7 @@ class Playlist {
 
   @Index(unique: true)
   late String name;
-  
+
   late List<String> songPaths;
   late DateTime dateCreated;
   late DateTime dateModified;

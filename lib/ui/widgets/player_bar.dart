@@ -1,13 +1,12 @@
-import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:squiggly_slider/slider.dart';
 import '../../features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
-import 'dart:math' as math;
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -117,11 +116,16 @@ class _PremiumPlayerBar extends StatelessWidget {
 
         return Container(
           height: 80,
-          margin: const EdgeInsets.only(left: 48, right: 48, bottom: 32, top: 0),
+          margin: const EdgeInsets.only(
+            left: 48,
+            right: 48,
+            bottom: 32,
+            top: 0,
+          ),
           decoration: BoxDecoration(
             color: colorScheme.primary.withOpacity(0.04),
             borderRadius: BorderRadius.circular(6),
-           // border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
+            // border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -171,33 +175,30 @@ class _PremiumPlayerBar extends StatelessWidget {
                         color: colorScheme.primary,
                       ),
                     ),
-                    
-                    if (!isVeryNarrow)...[
-                     SizedBox(width: 24),
+
+                    if (!isVeryNarrow) ...[
+                      SizedBox(width: 24),
                       Container(
                         height: 40,
                         width: 1,
                         margin: const EdgeInsets.symmetric(horizontal: 12),
                         color: Colors.white10,
                       ),
-                    SizedBox(width: 12),],
+                      SizedBox(width: 12),
+                    ],
                     if (!isNarrow) ...[
                       Flexible(flex: 1, child: SizedBox(width: 24)),
                       // Right: Volume
                       Flexible(flex: 2, child: _buildVolumeControl(context)),
-                       SizedBox(width: 24),
+                      SizedBox(width: 24),
                     ],
-                   
+
                     // Far Right: Actions
-                    
-                    if (!isNarrow)
-                      Spacer(),
-                      if (isLarge)
-                       Spacer(),
-                       
-                        
+                    if (!isNarrow) Spacer(),
+                    if (isLarge) Spacer(),
+
                     _buildActions(context, colorScheme, isVeryNarrow),
-                   // Container(color:Colors.red,height: 100,width: 50,)
+                    // Container(color:Colors.red,height: 100,width: 50,)
                   ],
                 ),
               ),
@@ -212,62 +213,60 @@ class _PremiumPlayerBar extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-            Container(
-              width: isVeryNarrow ? 40 : 56,
-              height: isVeryNarrow ? 40 : 56,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                //color: Colors.white.withOpacity(0.05),
-                boxShadow: [
-                  // BoxShadow(
-                  //   color: Colors.black.withOpacity(0.2),
-                  //   blurRadius: 8,
-                  //   offset: const Offset(0, 4),
-                  // ),
-                ],
-              ),
-              child: artPath != null
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
-                      child: Image.file(File(artPath!), fit: BoxFit.cover),
-                    )
-                  : Icon(
-                      LucideIcons.music,
-                      color: Colors.white24,
-                      size: isVeryNarrow ? 16 : 24,
-                    ),
+        Container(
+          width: isVeryNarrow ? 40 : 56,
+          height: isVeryNarrow ? 40 : 56,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            //color: Colors.white.withOpacity(0.05),
+            boxShadow: [
+              // BoxShadow(
+              //   color: Colors.black.withOpacity(0.2),
+              //   blurRadius: 8,
+              //   offset: const Offset(0, 4),
+              // ),
+            ],
+          ),
+          child: OptimizedImage(
+            imagePath: artPath,
+            borderRadius: BorderRadius.circular(6),
+            fit: BoxFit.cover,
+            placeholder: Icon(
+              LucideIcons.music,
+              color: Colors.white24,
+              size: isVeryNarrow ? 16 : 24,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.normal,
-                      fontSize: isVeryNarrow ? 12 : 14,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  Text(
-                    artist,
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: isVeryNarrow ? 10 : 12,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.normal,
+                  fontSize: isVeryNarrow ? 12 : 14,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
-      
-     
+              Text(
+                artist,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: isVeryNarrow ? 10 : 12,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -279,7 +278,6 @@ class _PremiumPlayerBar extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        
         IconButton(
           onPressed: onPrevious,
           icon: SvgPicture.asset(
@@ -299,22 +297,20 @@ class _PremiumPlayerBar extends StatelessWidget {
             decoration: BoxDecoration(
               color: colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
-             
             ),
-            child: isPlaying 
-              ? Icon(
-                  // LucideIcons.pause,
-                  Icons.pause,
-                  color: Colors.white,
-                  size: isVeryNarrow ? 12 : 18,
-                )
-              
-              : Icon(
-                  // LucideIcons.play,
-                  Icons.play_arrow_sharp,
-                  color: Colors.white,
-                  size: isVeryNarrow ? 12 : 18,
-                ),
+            child: isPlaying
+                ? Icon(
+                    // LucideIcons.pause,
+                    Icons.pause,
+                    color: Colors.white,
+                    size: isVeryNarrow ? 12 : 18,
+                  )
+                : Icon(
+                    // LucideIcons.play,
+                    Icons.play_arrow_sharp,
+                    color: Colors.white,
+                    size: isVeryNarrow ? 12 : 18,
+                  ),
           ),
         ),
         const SizedBox(width: 4),
@@ -329,15 +325,15 @@ class _PremiumPlayerBar extends StatelessWidget {
           tooltip: 'Next',
         ),
         if (!isVeryNarrow)
-                      Container(
-                        height: 40,
-                        width: 1,
-                        margin: const EdgeInsets.symmetric(horizontal: 12),
-                        color: Colors.white10,
-                      ),
+          Container(
+            height: 40,
+            width: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            color: Colors.white10,
+          ),
 
-        if (!isVeryNarrow)...[
-        const SizedBox(width: 12),
+        if (!isVeryNarrow) ...[
+          const SizedBox(width: 12),
           IconButton(
             onPressed: onShuffle,
             icon: SvgPicture.asset(
@@ -346,15 +342,15 @@ class _PremiumPlayerBar extends StatelessWidget {
               height: 12,
               colorFilter: ColorFilter.mode(
                 isShuffle ? colorScheme.primary : Colors.white38,
-                BlendMode.srcIn
+                BlendMode.srcIn,
               ),
             ),
             tooltip: 'Shuffle',
           ),
         ],
-           //const SizedBox(width: 8),
+        //const SizedBox(width: 8),
         if (!isVeryNarrow)
-        // SizedBox(width: 8),
+          // SizedBox(width: 8),
           IconButton(
             onPressed: onRepeat,
             icon: SvgPicture.asset(
@@ -362,13 +358,14 @@ class _PremiumPlayerBar extends StatelessWidget {
               width: 12,
               height: 12,
               colorFilter: ColorFilter.mode(
-                repeatMode != RepeatMode.off ? colorScheme.primary : Colors.white38,
-                BlendMode.srcIn
+                repeatMode != RepeatMode.off
+                    ? colorScheme.primary
+                    : Colors.white38,
+                BlendMode.srcIn,
               ),
             ),
             tooltip: 'Repeat',
           ),
-          
       ],
     );
   }
@@ -382,14 +379,14 @@ class _PremiumPlayerBar extends StatelessWidget {
             constraints: const BoxConstraints(),
             onPressed: onMuteToggle,
             icon: SvgPicture.asset(
-              volume == 0 
-                ? 'assets/music_bar_Icons/mute.svg' 
-                : 'assets/music_bar_Icons/volume.svg',
+              volume == 0
+                  ? 'assets/music_bar_Icons/mute.svg'
+                  : 'assets/music_bar_Icons/volume.svg',
               width: 12,
               height: 12,
               colorFilter: ColorFilter.mode(
-                volume == 0 ? Colors.white38 : Colors.white, 
-                BlendMode.srcIn
+                volume == 0 ? Colors.white38 : Colors.white,
+                BlendMode.srcIn,
               ),
             ),
           ),
@@ -401,9 +398,12 @@ class _PremiumPlayerBar extends StatelessWidget {
                   trackHeight: 2,
                   trackShape: const RoundedRectSliderTrackShape(),
                   //  RectangularSliderTrackShape(
-                    
+
                   // ),
-                  thumbShape: const _LineThumbShape(thumbHeight: 0, thumbWidth: 3),
+                  thumbShape: const _LineThumbShape(
+                    thumbHeight: 0,
+                    thumbWidth: 3,
+                  ),
                   overlayShape: const RoundSliderOverlayShape(
                     overlayRadius: 14,
                   ),
@@ -412,7 +412,6 @@ class _PremiumPlayerBar extends StatelessWidget {
                     context,
                   ).colorScheme.primary.withOpacity(0.1),
                   thumbColor: Colors.white,
-                  
                 ),
                 child: Slider(value: volume, onChanged: onVolumeChanged),
               ),
@@ -433,18 +432,20 @@ class _PremiumPlayerBar extends StatelessWidget {
         if (!isVeryNarrow)
           IconButton(
             icon: SvgPicture.asset(
-              isFavorite ? 'assets/music_bar_Icons/liked.svg' : 'assets/music_bar_Icons/like.svg',
+              isFavorite
+                  ? 'assets/music_bar_Icons/liked.svg'
+                  : 'assets/music_bar_Icons/like.svg',
               width: 16,
               height: 16,
               colorFilter: ColorFilter.mode(
                 isFavorite ? Colors.red : Colors.white54,
-                BlendMode.srcIn
+                BlendMode.srcIn,
               ),
             ),
             onPressed: onFavoriteToggle,
             tooltip: 'Favorite',
           ),
-          SizedBox(width: 4),
+        SizedBox(width: 4),
         IconButton(
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/lyrics.svg',
@@ -452,7 +453,7 @@ class _PremiumPlayerBar extends StatelessWidget {
             height: 16,
             colorFilter: ColorFilter.mode(
               isLyricsActive ? colorScheme.primary : Colors.white54,
-              BlendMode.srcIn
+              BlendMode.srcIn,
             ),
           ),
           onPressed: onLyricsToggle,
@@ -526,7 +527,10 @@ class _ExpressiveSlider extends StatelessWidget {
                   activeTrackColor: color,
                   inactiveTrackColor: Colors.white10,
                   //thumbShape: SliderComponentShape.noThumb,
-                   thumbShape: const _LineThumbShape(thumbHeight: 12, thumbWidth: 3),
+                  thumbShape: const _LineThumbShape(
+                    thumbHeight: 12,
+                    thumbWidth: 3,
+                  ),
                   overlayShape: SliderComponentShape.noOverlay,
                 ),
                 child: SquigglySlider(
@@ -543,8 +547,6 @@ class _ExpressiveSlider extends StatelessWidget {
                   squiggleWavelength: 3.0,
                   squiggleSpeed: 0.1,
                   useLineThumb: false,
-                 
-
                 ),
               ),
             ),
@@ -558,7 +560,6 @@ class _ExpressiveSlider extends StatelessWidget {
                   fontFamily: 'DMSans Regular',
                 ),
               ),
-              
             ],
           ],
         );

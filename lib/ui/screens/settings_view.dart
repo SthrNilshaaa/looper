@@ -4,7 +4,6 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
-import 'package:isar/isar.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -21,7 +20,10 @@ class SettingsView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        Text(l10n.settings, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.normal)),
+        Text(
+          l10n.settings,
+          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
+        ),
         const SizedBox(height: 32),
         _Section(
           title: 'Appearance',
@@ -29,7 +31,9 @@ class SettingsView extends ConsumerWidget {
             SwitchListTile(
               secondary: const Icon(LucideIcons.palette),
               title: const Text('Dynamic Theming'),
-              subtitle: const Text('Enable album-based colors and dynamic effects'),
+              subtitle: const Text(
+                'Enable album-based colors and dynamic effects',
+              ),
               value: settings.enableDynamicTheming,
               onChanged: (value) {
                 ref.read(settingsProvider.notifier).updateDynamicTheming(value);
@@ -67,7 +71,8 @@ class SettingsView extends ConsumerWidget {
               leading: const Icon(LucideIcons.plus),
               title: Text(l10n.addFolder),
               onTap: () async {
-                final String? path = await FilePicker.platform.getDirectoryPath();
+                final String? path = await FilePicker.platform
+                    .getDirectoryPath();
                 if (path != null) {
                   ref.read(libraryProvider.notifier).scanLibrary(path);
                 }
@@ -78,12 +83,17 @@ class SettingsView extends ConsumerWidget {
               title: const Text('Rescan Library'),
               onTap: () {
                 ref.read(libraryProvider.notifier).scanSavedFolders();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Scanning library...')));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Scanning library...')),
+                );
               },
             ),
             ListTile(
               leading: const Icon(LucideIcons.trash2, color: Colors.red),
-              title: Text(l10n.resetLibrary, style: const TextStyle(color: Colors.red)),
+              title: Text(
+                l10n.resetLibrary,
+                style: const TextStyle(color: Colors.red),
+              ),
               onTap: () => _showClearDialog(context, l10n),
             ),
           ],
@@ -95,7 +105,10 @@ class SettingsView extends ConsumerWidget {
               leading: SvgPicture.asset(
                 'assets/main_logo.svg',
                 height: 24,
-                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                colorFilter: const ColorFilter.mode(
+                  Colors.white,
+                  BlendMode.srcIn,
+                ),
               ),
               title: const Text('Looper Player'),
               subtitle: const Text('Version 1.0.0'),
@@ -117,9 +130,14 @@ class SettingsView extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(l10n.resetLibrary),
-        content: const Text('This will remove all songs from your library. Your music files will not be deleted.'),
+        content: const Text(
+          'This will remove all songs from your library. Your music files will not be deleted.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () async {
               await DbService.isar.writeTxn(() async {
@@ -143,22 +161,28 @@ class _LibraryFoldersList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final folders = ref.watch(settingsProvider).libraryFolders;
-    
+
     if (folders.isEmpty) return const SizedBox.shrink();
 
     return Column(
-      children: folders.map((path) => ListTile(
-        leading: const Icon(LucideIcons.folder),
-        title: Text(path.split('/').last),
-        subtitle: Text(path),
-        trailing: IconButton(
-          icon: const Icon(LucideIcons.x, size: 18),
-          onPressed: () {
-            final newFolders = List<String>.from(folders)..remove(path);
-            ref.read(settingsProvider.notifier).updateLibraryFolders(newFolders);
-          },
-        ),
-      )).toList(),
+      children: folders
+          .map(
+            (path) => ListTile(
+              leading: const Icon(LucideIcons.folder),
+              title: Text(path.split('/').last),
+              subtitle: Text(path),
+              trailing: IconButton(
+                icon: const Icon(LucideIcons.x, size: 18),
+                onPressed: () {
+                  final newFolders = List<String>.from(folders)..remove(path);
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateLibraryFolders(newFolders);
+                },
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }
@@ -175,11 +199,15 @@ class _Section extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Text(title, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.normal)),
+          child: Text(
+            title,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.normal,
+            ),
+          ),
         ),
-        Card(
-          child: Column(children: children),
-        ),
+        Card(child: Column(children: children)),
         const SizedBox(height: 16),
       ],
     );

@@ -75,11 +75,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     player.stream.playing.listen((playing) {
       state = state.copyWith(isPlaying: playing);
     });
-    
+
     player.stream.position.listen((position) {
       state = state.copyWith(position: position);
     });
-    
+
     player.stream.duration.listen((duration) {
       state = state.copyWith(duration: duration);
     });
@@ -97,7 +97,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
     // Load last settings
     final settings = ref.read(settingsProvider);
-    state = state.copyWith(volume: settings.volume, isShuffle: settings.shuffle, repeatMode: RepeatMode.values[settings.repeatMode]);
+    state = state.copyWith(
+      volume: settings.volume,
+      isShuffle: settings.shuffle,
+      repeatMode: RepeatMode.values[settings.repeatMode],
+    );
     player.setVolume(settings.volume * 100);
 
     if (settings.lastPlayedSongId != null) {
@@ -114,7 +118,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _playlist = List.from(songs);
     if (state.isShuffle) {
       _playlist.shuffle();
-      _currentIndex = _playlist.indexWhere((s) => s.id == songs[initialIndex].id);
+      _currentIndex = _playlist.indexWhere(
+        (s) => s.id == songs[initialIndex].id,
+      );
     } else {
       _currentIndex = initialIndex;
     }
@@ -134,26 +140,32 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       if (song.duration != null) 'duration': song.duration!,
     };
     await ref.read(audioServiceProvider).play(song.path, metadata: metadata);
-    
-    await windowManager.setTitle('Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}');
+
+    await windowManager.setTitle(
+      'Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}',
+    );
 
     // Broadcast notification on Linux
     if (Platform.isLinux) {
       final notification = LocalNotification(
         title: song.title,
-        body: '${song.artist ?? 'Unknown Artist'}\n${song.album ?? 'Unknown Album'}',
+        body:
+            '${song.artist ?? 'Unknown Artist'}\n${song.album ?? 'Unknown Album'}',
       );
       await notification.show();
     }
     // Update play history in DB
     await DbService.isar.writeTxn(() async {
       // Find the song in DB by path to ensure we have the correct ID and preserve favorites/history
-      final dbSong = await DbService.isar.songs.filter().pathEqualTo(song.path).findFirst();
-      
+      final dbSong = await DbService.isar.songs
+          .filter()
+          .pathEqualTo(song.path)
+          .findFirst();
+
       final songToUpdate = dbSong ?? song;
       songToUpdate.lastPlayed = DateTime.now();
       songToUpdate.playCount++;
-      
+
       // Update the song object in our state to reflect the latest DB state (especially the ID)
       if (dbSong != null) {
         // If it exists, copy properties to our current song object
@@ -162,7 +174,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         song.playCount = dbSong.playCount;
         song.lastPlayed = dbSong.lastPlayed;
       }
-      
+
       await DbService.isar.songs.put(songToUpdate);
     });
 
@@ -191,41 +203,48 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   void addNext(Song song) {
     // Remove if already in queue to avoid duplicates/unexpected behavior
     _playlist.removeWhere((s) => s.id == song.id);
-    
+
     final insertIndex = _currentIndex + 1;
     if (insertIndex >= _playlist.length) {
       _playlist.add(song);
     } else {
       _playlist.insert(insertIndex, song);
     }
-    
+
     state = state.copyWith(queue: List.from(_playlist));
   }
 
   Future<void> playFromFile(String path) async {
     // Check if song exists in DB
-    final songs = await DbService.isar.songs.filter().pathEqualTo(path).findAll();
+    final songs = await DbService.isar.songs
+        .filter()
+        .pathEqualTo(path)
+        .findAll();
     Song? song = songs.isEmpty ? null : songs.first;
-    
+
     if (song == null) {
       // Create a temporary song object from metadata
       final metadata = await MetadataGod.readMetadata(file: path);
       // Extract and save artwork
       String? artPath;
-      if (metadata?.picture != null) {
-        final scanner = LibraryScanner(); // Need to save it using the same logic
-        artPath = await scanner.saveAlbumArt(metadata?.album ?? 'unknown', metadata!.picture!.data);
+      if (metadata.picture != null) {
+        final scanner =
+            LibraryScanner(); // Need to save it using the same logic
+        artPath = await scanner.saveAlbumArt(
+          metadata.album ?? 'unknown',
+          metadata.picture!.data,
+        );
       }
 
       song = Song()
         ..path = path
-        ..title = metadata?.title ?? path.split('/').last
-        ..artist = metadata?.artist
-        ..album = metadata?.album
-        ..duration = metadata?.durationMs?.toInt()
+        ..title = metadata.title ?? path.split('/').last
+        ..artist = metadata.artist
+        ..album = metadata.album
+        ..duration = metadata.durationMs?.toInt()
         ..artPath = artPath;
     }
-    
+
     await play(song);
   }
 
@@ -234,9 +253,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       await player.pause();
     } else {
       if (player.state.playlist.medias.isEmpty && state.currentSong != null) {
-         await play(state.currentSong!);
+        await play(state.currentSong!);
       } else {
-         await player.play();
+        await player.play();
       }
     }
   }
@@ -293,7 +312,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
     state = state.copyWith(queue: _playlist);
     if (state.currentSong != null) {
-      _currentIndex = _playlist.indexWhere((s) => s.id == songId(state.currentSong!));
+      _currentIndex = _playlist.indexWhere(
+        (s) => s.id == songId(state.currentSong!),
+      );
     }
     ref.read(settingsProvider.notifier).updateShuffle(newState);
   }
@@ -301,7 +322,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   int songId(Song s) => s.id;
 
   void nextRepeatMode() {
-    final nextMode = RepeatMode.values[(state.repeatMode.index + 1) % RepeatMode.values.length];
+    final nextMode = RepeatMode
+        .values[(state.repeatMode.index + 1) % RepeatMode.values.length];
     state = state.copyWith(repeatMode: nextMode);
     ref.read(settingsProvider.notifier).updateRepeatMode(nextMode.index);
   }
@@ -352,7 +374,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       song.isFavorite = !song.isFavorite;
       await DbService.isar.songs.put(song);
     });
-    
+
     // Refresh the state to trigger UI updates
     state = state.copyWith(currentSong: song);
   }
@@ -369,6 +391,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 }
 
-final playbackProvider = StateNotifierProvider<PlaybackNotifier, PlaybackState>((ref) {
-  return PlaybackNotifier(ref);
-});
+final playbackProvider = StateNotifierProvider<PlaybackNotifier, PlaybackState>(
+  (ref) {
+    return PlaybackNotifier(ref);
+  },
+);

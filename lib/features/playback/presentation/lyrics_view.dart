@@ -1,16 +1,10 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
-import 'package:looper_player/features/playback/data/lyrics_service.dart';
-import 'package:flutter_lyric/flutter_lyric.dart';
-import '../domain/lyric_models.dart';
 import 'widgets/advanced_lyric_renderer.dart';
-import 'package:looper_player/l10n/app_localizations.dart';
-import 'package:animate_gradient/animate_gradient.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 enum LyricsSyncMode { line, word, char }
@@ -25,10 +19,6 @@ class LyricsView extends ConsumerStatefulWidget {
 class _LyricsViewState extends ConsumerState<LyricsView> {
   LyricsSyncMode _syncMode = LyricsSyncMode.line;
 
-
-
-
-
   @override
   Widget build(BuildContext context) {
     final lyricsState = ref.watch(lyricsProvider);
@@ -39,8 +29,8 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
         if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
         Expanded(
           child: lyricsState.isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : lyricsState.rawLrc == null
+              ? const Center(child: CircularProgressIndicator())
+              : lyricsState.rawLrc == null
               ? Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -64,12 +54,15 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                 )
               : Consumer(
                   builder: (context, ref, child) {
-                    final position = ref.watch(playbackProvider.select((s) => s.position));
+                    final position = ref.watch(
+                      playbackProvider.select((s) => s.position),
+                    );
                     return AdvancedLyricRenderer(
                       lines: lyricsState.parsedLines,
                       currentPosition: position,
                       mode: _syncMode,
-                      onSeek: (pos) => ref.read(playbackProvider.notifier).seek(pos),
+                      onSeek: (pos) =>
+                          ref.read(playbackProvider.notifier).seek(pos),
                     );
                   },
                 ),
@@ -94,9 +87,9 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
           Text(
             'Approximated Sync (No Word Timings)',
             style: GoogleFonts.spaceGrotesk(
-              fontSize: 10, 
-              color: Colors.orange, 
-              fontWeight: FontWeight.normal
+              fontSize: 10,
+              color: Colors.orange,
+              fontWeight: FontWeight.normal,
             ),
           ),
         ],
@@ -104,42 +97,38 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     );
   }
 
-
-
   Widget _buildHeader(Song? currentSong) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isNarrow = constraints.maxWidth < 600;
         final bool isShort = MediaQuery.of(context).size.height < 500;
-        
+
         return Padding(
           padding: EdgeInsets.symmetric(
-            vertical: isNarrow || isShort ? 8 : 24, 
-            horizontal: isNarrow ? 16 : 32
+            vertical: isNarrow || isShort ? 8 : 24,
+            horizontal: isNarrow ? 16 : 32,
           ),
-          child: isNarrow 
-            ? Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (currentSong != null) ...[
-                    _buildSongInfoCompact(currentSong, isShort),
-                    SizedBox(height: isShort ? 8 : 16),
+          child: isNarrow
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (currentSong != null) ...[
+                      _buildSongInfoCompact(currentSong, isShort),
+                      SizedBox(height: isShort ? 8 : 16),
+                    ],
+                    _buildModeSelector(isShort),
                   ],
-                  _buildModeSelector(isShort),
-                ],
-              )
-            : Row(
-                children: [
-                  if (currentSong != null) ...[
-                    _buildArt(currentSong, isShort ? 60 : 80),
-                    const SizedBox(width: 24),
-                    Expanded(
-                      child: _buildSongText(currentSong, isShort),
-                    ),
+                )
+              : Row(
+                  children: [
+                    if (currentSong != null) ...[
+                      _buildArt(currentSong, isShort ? 60 : 80),
+                      const SizedBox(width: 24),
+                      Expanded(child: _buildSongText(currentSong, isShort)),
+                    ],
+                    _buildModeSelector(isShort),
                   ],
-                  _buildModeSelector(isShort),
-                ],
-              ),
+                ),
         );
       },
     );
@@ -152,16 +141,16 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white.withOpacity(0.05),
-        image: currentSong.artPath != null 
-          ? DecorationImage(
-              image: FileImage(File(currentSong.artPath!)),
-              fit: BoxFit.cover,
-            )
-          : null,
+        image: currentSong.artPath != null
+            ? DecorationImage(
+                image: FileImage(File(currentSong.artPath!)),
+                fit: BoxFit.cover,
+              )
+            : null,
       ),
-      child: currentSong.artPath == null 
-        ? Icon(Icons.music_note, color: Colors.grey[600], size: size / 2)
-        : null,
+      child: currentSong.artPath == null
+          ? Icon(Icons.music_note, color: Colors.grey[600], size: size / 2)
+          : null,
     );
   }
 
@@ -171,14 +160,20 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          currentSong.title, 
-          style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 20 : 28, fontWeight: FontWeight.normal), 
-          maxLines: 1, 
-          overflow: TextOverflow.ellipsis
+          currentSong.title,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: isShort ? 20 : 28,
+            fontWeight: FontWeight.normal,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
         Text(
-          currentSong.artist ?? 'Unknown Artist', 
-          style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 14 : 18, color: Colors.grey[400])
+          currentSong.artist ?? 'Unknown Artist',
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: isShort ? 14 : 18,
+            color: Colors.grey[400],
+          ),
         ),
       ],
     );
@@ -194,16 +189,20 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             color: Colors.white.withOpacity(0.05),
-            image: currentSong.artPath != null 
-              ? DecorationImage(
-                  image: FileImage(File(currentSong.artPath!)),
-                  fit: BoxFit.cover,
+            image: currentSong.artPath != null
+                ? DecorationImage(
+                    image: FileImage(File(currentSong.artPath!)),
+                    fit: BoxFit.cover,
+                  )
+                : null,
+          ),
+          child: currentSong.artPath == null
+              ? Icon(
+                  Icons.music_note,
+                  color: Colors.grey[600],
+                  size: isShort ? 20 : 24,
                 )
               : null,
-          ),
-          child: currentSong.artPath == null 
-            ? Icon(Icons.music_note, color: Colors.grey[600], size: isShort ? 20 : 24)
-            : null,
         ),
         const SizedBox(width: 12),
         Flexible(
@@ -212,14 +211,20 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                currentSong.title, 
-                style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 14 : 18, fontWeight: FontWeight.normal), 
-                maxLines: 1, 
-                overflow: TextOverflow.ellipsis
+                currentSong.title,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: isShort ? 14 : 18,
+                  fontWeight: FontWeight.normal,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               Text(
-                currentSong.artist ?? 'Unknown Artist', 
-                style: GoogleFonts.spaceGrotesk(fontSize: isShort ? 12 : 14, color: Colors.grey[400]),
+                currentSong.artist ?? 'Unknown Artist',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: isShort ? 12 : 14,
+                  color: Colors.grey[400],
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -234,35 +239,35 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05), 
-        borderRadius: BorderRadius.circular(32)
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(32),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           _ModeButton(
-            label: 'LINE', 
-            isSelected: _syncMode == LyricsSyncMode.line, 
+            label: 'LINE',
+            isSelected: _syncMode == LyricsSyncMode.line,
             isShort: isShort,
             onTap: () {
               setState(() => _syncMode = LyricsSyncMode.line);
-            }
+            },
           ),
           _ModeButton(
-            label: 'WORD', 
-            isSelected: _syncMode == LyricsSyncMode.word, 
+            label: 'WORD',
+            isSelected: _syncMode == LyricsSyncMode.word,
             isShort: isShort,
             onTap: () {
               setState(() => _syncMode = LyricsSyncMode.word);
-            }
+            },
           ),
           _ModeButton(
-            label: 'CHAR', 
-            isSelected: _syncMode == LyricsSyncMode.char, 
+            label: 'CHAR',
+            isSelected: _syncMode == LyricsSyncMode.char,
             isShort: isShort,
             onTap: () {
               setState(() => _syncMode = LyricsSyncMode.char);
-            }
+            },
           ),
         ],
       ),
@@ -277,8 +282,8 @@ class _ModeButton extends StatelessWidget {
   final VoidCallback onTap;
 
   const _ModeButton({
-    required this.label, 
-    required this.isSelected, 
+    required this.label,
+    required this.isSelected,
     required this.onTap,
     this.isShort = false,
   });
@@ -289,11 +294,13 @@ class _ModeButton extends StatelessWidget {
       onTap: onTap,
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: isShort ? 12 : 20, 
-          vertical: isShort ? 6 : 10
+          horizontal: isShort ? 12 : 20,
+          vertical: isShort ? 6 : 10,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(28),
         ),
         child: Text(
@@ -301,7 +308,9 @@ class _ModeButton extends StatelessWidget {
           style: TextStyle(
             fontSize: isShort ? 10 : 11,
             fontWeight: FontWeight.normal,
-            color: isSelected ? Theme.of(context).colorScheme.onPrimary : Colors.grey[400],
+            color: isSelected
+                ? Theme.of(context).colorScheme.onPrimary
+                : Colors.grey[400],
             letterSpacing: 1.2,
           ),
         ),

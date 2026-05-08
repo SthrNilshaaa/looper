@@ -48,8 +48,13 @@ class LyricsNotifier extends StateNotifier<LyricsState> {
     // Check if already in cache (simple in-memory cache for now)
     if (state.songId == song.id && state.rawLrc != null) return;
 
-    state = state.copyWith(isLoading: true, songId: song.id, rawLrc: null, parsedLines: []);
-    
+    state = state.copyWith(
+      isLoading: true,
+      songId: song.id,
+      rawLrc: null,
+      parsedLines: [],
+    );
+
     final response = await _service.getLyrics(
       trackName: song.title.trim(),
       artistName: (song.artist ?? '').trim(),
@@ -59,15 +64,17 @@ class LyricsNotifier extends StateNotifier<LyricsState> {
 
     // Only update if we're still on the same song
     if (state.songId == song.id) {
-       final lrc = response?.syncedLyrics ?? response?.plainLyrics;
-       final lines = lrc != null 
-          ? LrcParser.parse(lrc, Duration(milliseconds: song.duration ?? 0)) 
+      final lrc = response?.syncedLyrics ?? response?.plainLyrics;
+      final lines = lrc != null
+          ? LrcParser.parse(lrc, Duration(milliseconds: song.duration ?? 0))
           : <LyricLine>[];
-       state = state.copyWith(rawLrc: lrc, isLoading: false, parsedLines: lines);
+      state = state.copyWith(rawLrc: lrc, isLoading: false, parsedLines: lines);
     }
   }
 }
 
-final lyricsProvider = StateNotifierProvider<LyricsNotifier, LyricsState>((ref) {
+final lyricsProvider = StateNotifierProvider<LyricsNotifier, LyricsState>((
+  ref,
+) {
   return LyricsNotifier(ref);
 });

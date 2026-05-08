@@ -7,9 +7,12 @@ class DbService {
 
   static Future<void> init() async {
     final dir = await getApplicationSupportDirectory();
-    isar = await Isar.open(
-      [SongSchema, AlbumSchema, ArtistSchema, PlaylistSchema, AppSettingsSchema],
-      directory: dir.path,
-    );
+    isar = await Isar.open([
+      SongSchema,
+      AlbumSchema,
+      ArtistSchema,
+      PlaylistSchema,
+      AppSettingsSchema,
+    ], directory: dir.path);
   }
 }

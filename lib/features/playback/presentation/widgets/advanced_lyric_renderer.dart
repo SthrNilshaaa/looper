@@ -41,9 +41,10 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
   }
 
   void _updateActiveLine({bool forceScroll = false}) {
-    final index = widget.lines.indexWhere((line) => 
-      widget.currentPosition >= line.startTime && 
-      widget.currentPosition < line.endTime
+    final index = widget.lines.indexWhere(
+      (line) =>
+          widget.currentPosition >= line.startTime &&
+          widget.currentPosition < line.endTime,
     );
 
     if (index != -1 && (index != _currentLineIndex || forceScroll)) {
@@ -66,21 +67,23 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
       } else {
         // Fallback for off-screen items
         if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            (index * 70.0), // rough estimate to get it in view
-            duration: const Duration(milliseconds: 400),
-            curve: Curves.fastOutSlowIn,
-          ).then((_) {
-            // Try again once it's likely built
-            if (mounted && _lineKeys[index]?.currentContext != null) {
-              Scrollable.ensureVisible(
-                _lineKeys[index]!.currentContext!,
-                duration: const Duration(milliseconds: 1000),
-                curve: Curves.fastLinearToSlowEaseIn,
-                alignment: 0.15,
-              );
-            }
-          });
+          _scrollController
+              .animateTo(
+                (index * 70.0), // rough estimate to get it in view
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.fastOutSlowIn,
+              )
+              .then((_) {
+                // Try again once it's likely built
+                if (mounted && _lineKeys[index]?.currentContext != null) {
+                  Scrollable.ensureVisible(
+                    _lineKeys[index]!.currentContext!,
+                    duration: const Duration(milliseconds: 1000),
+                    curve: Curves.fastLinearToSlowEaseIn,
+                    alignment: 0.15,
+                  );
+                }
+              });
         }
       }
     });
@@ -99,14 +102,15 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
       physics: const BouncingScrollPhysics(),
       itemCount: widget.lines.length,
       padding: const EdgeInsets.only(
-          top: 100,
-          bottom: 400,
-          left: 48,
-          right: 32),
+        top: 100,
+        bottom: 400,
+        left: 48,
+        right: 32,
+      ),
       itemBuilder: (context, index) {
         final line = widget.lines[index];
         final isActive = index == _currentLineIndex;
-        
+
         // Assign or retrieve key for this line
         final key = _lineKeys.putIfAbsent(index, () => GlobalKey());
 

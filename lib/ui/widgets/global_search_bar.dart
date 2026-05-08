@@ -34,7 +34,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
     ref.read(searchQueryProvider.notifier).state = '';
     // Unfocus the search bar to return to music control mode
     FocusManager.instance.primaryFocus?.unfocus();
-    
+
     // If we are currently in the search view, exit to home
     if (ref.read(appNavigationProvider).activeItem == NavItem.search) {
       ref.read(appNavigationProvider.notifier).setItem(NavItem.home);
@@ -61,15 +61,17 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Container(
         height: 55,
+
         //width: MediaQuery.of(context).size.width*0.1,
-        
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: const Color.fromARGB(255, 53, 53, 53).withOpacity(isDynamic ? 0.3 : 0.1),
-          border: Border.all(
-            color: Colors.white10.withOpacity(0.1),
-            width: 1,
-          ),
+          color: const Color.fromARGB(
+            255,
+            53,
+            53,
+            53,
+          ).withOpacity(isDynamic ? 0.3 : 0.1),
+          border: Border.all(color: Colors.white10.withOpacity(0.1), width: 1),
           boxShadow: [
             if (!isDynamic)
               BoxShadow(
@@ -94,7 +96,9 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                 onChanged: (val) {
                   ref.read(searchQueryProvider.notifier).state = val;
                   if (val.isNotEmpty && nav.activeItem != NavItem.search) {
-                    ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
+                    ref
+                        .read(appNavigationProvider.notifier)
+                        .setItem(NavItem.search);
                   }
                 },
                 decoration: InputDecoration(

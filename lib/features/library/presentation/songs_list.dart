@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
@@ -21,7 +23,7 @@ class SongsList extends ConsumerWidget {
   final ScrollPhysics? physics;
 
   const SongsList({
-    super.key, 
+    super.key,
     required this.songs,
     this.shrinkWrap = false,
     this.physics,
@@ -37,18 +39,25 @@ class SongsList extends ConsumerWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('${songs.length} ${l10n.songs}', style: const TextStyle(color: Colors.grey, fontSize: 13)),
+              Text(
+                '${songs.length} ${l10n.songs}',
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              ),
               Row(
                 children: [
                   TextButton.icon(
                     onPressed: () async {
-                      final String? path = await FilePicker.platform.getDirectoryPath();
+                      final String? path = await FilePicker.platform
+                          .getDirectoryPath();
                       if (path != null) {
                         ref.read(libraryProvider.notifier).scanLibrary(path);
                       }
                     },
                     icon: const Icon(LucideIcons.plus, size: 16),
-                    label: Text(l10n.addFolder, style: const TextStyle(fontSize: 13)),
+                    label: Text(
+                      l10n.addFolder,
+                      style: const TextStyle(fontSize: 13),
+                    ),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       foregroundColor: Theme.of(context).colorScheme.primary,
@@ -61,22 +70,35 @@ class SongsList extends ConsumerWidget {
                         context: context,
                         builder: (context) => AlertDialog(
                           title: Text(l10n.resetLibrary),
-                          content: const Text('This will clear all songs, albums, and artists and perform a full rescan of your folders.'),
+                          content: const Text(
+                            'This will clear all songs, albums, and artists and perform a full rescan of your folders.',
+                          ),
                           actions: [
-                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
                             TextButton(
-                              onPressed: () => Navigator.pop(context, true), 
-                              child: const Text('Reset', style: TextStyle(color: Colors.red))
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text(
+                                'Reset',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ),
                           ],
                         ),
                       );
                       if (confirm == true) {
-                        await ref.read(libraryProvider.notifier).resetAndRescan();
+                        await ref
+                            .read(libraryProvider.notifier)
+                            .resetAndRescan();
                       }
                     },
                     icon: const Icon(LucideIcons.refreshCw, size: 16),
-                    label: Text(l10n.resetLibrary, style: const TextStyle(fontSize: 13)),
+                    label: Text(
+                      l10n.resetLibrary,
+                      style: const TextStyle(fontSize: 13),
+                    ),
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       foregroundColor: Colors.red[300],
@@ -116,7 +138,12 @@ class SongsList extends ConsumerWidget {
   }
 }
 
-void _showSongOptions(BuildContext context, WidgetRef ref, Song song, AppLocalizations l10n) {
+void _showSongOptions(
+  BuildContext context,
+  WidgetRef ref,
+  Song song,
+  AppLocalizations l10n,
+) {
   showModalBottomSheet(
     context: context,
     backgroundColor: const Color(0xFF1A1A1A),
@@ -133,25 +160,40 @@ void _showSongOptions(BuildContext context, WidgetRef ref, Song song, AppLocaliz
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
             child: Row(
               children: [
-                Container(
+                OptimizedImage(
+                  imagePath: song.artPath,
                   width: 50,
                   height: 50,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    image: song.artPath != null 
-                      ? DecorationImage(image: FileImage(File(song.artPath!)), fit: BoxFit.cover)
-                      : null,
-                    color: Colors.white10,
+                  borderRadius: BorderRadius.circular(8),
+                  placeholder: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white10,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(LucideIcons.music),
                   ),
-                  child: song.artPath == null ? const Icon(LucideIcons.music) : null,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(song.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.normal), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text(song.artist ?? l10n.unknownArtist, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                      Text(
+                        song.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        song.artist ?? l10n.unknownArtist,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -160,31 +202,55 @@ void _showSongOptions(BuildContext context, WidgetRef ref, Song song, AppLocaliz
           ),
           const Divider(color: Colors.white10, height: 32),
           ListTile(
-            leading: const Icon(LucideIcons.playCircle, color: Colors.blueAccent),
-            title: const Text('Play Next', style: TextStyle(fontWeight: FontWeight.w500)),
+            leading: const Icon(
+              LucideIcons.playCircle,
+              color: Colors.blueAccent,
+            ),
+            title: const Text(
+              'Play Next',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
             onTap: () {
               ref.read(playbackProvider.notifier).addNext(song);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Will play next'), behavior: SnackBarBehavior.floating),
+                const SnackBar(
+                  content: Text('Will play next'),
+                  behavior: SnackBarBehavior.floating,
+                ),
               );
             },
           ),
           ListTile(
-            leading: const Icon(LucideIcons.listPlus, color: Colors.greenAccent),
-            title: const Text('Add to Queue', style: TextStyle(fontWeight: FontWeight.w500)),
+            leading: const Icon(
+              LucideIcons.listPlus,
+              color: Colors.greenAccent,
+            ),
+            title: const Text(
+              'Add to Queue',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
             onTap: () {
               ref.read(playbackProvider.notifier).addToQueue(song);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Added to queue'), behavior: SnackBarBehavior.floating),
+                const SnackBar(
+                  content: Text('Added to queue'),
+                  behavior: SnackBarBehavior.floating,
+                ),
               );
             },
           ),
           const Divider(color: Colors.white10),
           ListTile(
-            leading: const Icon(LucideIcons.listMusic, color: Colors.orangeAccent),
-            title: Text('Add to ${l10n.playlists}', style: const TextStyle(fontWeight: FontWeight.w500)),
+            leading: const Icon(
+              LucideIcons.listMusic,
+              color: Colors.orangeAccent,
+            ),
+            title: Text(
+              'Add to ${l10n.playlists}',
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
             onTap: () {
               Navigator.pop(context);
               _showPlaylistSelector(context, ref, song, l10n);
@@ -195,7 +261,9 @@ void _showSongOptions(BuildContext context, WidgetRef ref, Song song, AppLocaliz
               song.isFavorite ? Icons.favorite : Icons.favorite_border,
               color: song.isFavorite ? Colors.red : Colors.white70,
             ),
-            title: Text(song.isFavorite ? 'Remove from Favorites' : 'Add to Favorites'),
+            title: Text(
+              song.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+            ),
             onTap: () {
               ref.read(libraryProvider.notifier).toggleFavorite(song);
               Navigator.pop(context);
@@ -207,43 +275,53 @@ void _showSongOptions(BuildContext context, WidgetRef ref, Song song, AppLocaliz
   );
 }
 
-void _showPlaylistSelector(BuildContext context, WidgetRef ref, Song song, AppLocalizations l10n) {
+void _showPlaylistSelector(
+  BuildContext context,
+  WidgetRef ref,
+  Song song,
+  AppLocalizations l10n,
+) {
   final playlists = ref.watch(playlistProvider);
-  
+
   showDialog(
     context: context,
     builder: (context) => AlertDialog(
       backgroundColor: const Color(0xFF1A1A1A),
       title: Text('Add to ${l10n.playlists}'),
-      content: playlists.isEmpty 
-        ? const Text('No playlists created yet.')
-        : SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: playlists.length,
-              itemBuilder: (context, index) {
-                final playlist = playlists[index];
-                return ListTile(
-                  leading: const Icon(LucideIcons.listMusic),
-                  title: Text(playlist.name),
-                  onTap: () async {
-                    if (!playlist.songPaths.contains(song.path)) {
-                      playlist.songPaths = [...playlist.songPaths, song.path];
-                      playlist.dateModified = DateTime.now();
-                      await DbService.isar.writeTxn(() => DbService.isar.playlists.put(playlist));
-                    }
-                    Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Added to ${playlist.name}')),
-                    );
-                  },
-                );
-              },
+      content: playlists.isEmpty
+          ? const Text('No playlists created yet.')
+          : SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: playlists.length,
+                itemBuilder: (context, index) {
+                  final playlist = playlists[index];
+                  return ListTile(
+                    leading: const Icon(LucideIcons.listMusic),
+                    title: Text(playlist.name),
+                    onTap: () async {
+                      if (!playlist.songPaths.contains(song.path)) {
+                        playlist.songPaths = [...playlist.songPaths, song.path];
+                        playlist.dateModified = DateTime.now();
+                        await DbService.isar.writeTxn(
+                          () => DbService.isar.playlists.put(playlist),
+                        );
+                      }
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Added to ${playlist.name}')),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
       ],
     ),
   );
@@ -266,9 +344,9 @@ class _SongTile extends ConsumerWidget {
       duration: const Duration(milliseconds: 300),
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: isCurrent 
-          ? Theme.of(context).colorScheme.primary.withOpacity(0.5) 
-          : Colors.white.withOpacity(0.02),
+        color: isCurrent
+            ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+            : Colors.white.withOpacity(0.02),
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
@@ -279,21 +357,23 @@ class _SongTile extends ConsumerWidget {
             borderRadius: BorderRadius.circular(4),
             color: Colors.grey.withOpacity(0.1),
           ),
-          child: song.artPath != null 
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Image.file(
-                  File(song.artPath!),
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    print('❌ List Image error: $error for path: ${song.artPath}');
-                    return const Icon(LucideIcons.music, size: 20);
-                  },
-                ),
-              )
-            : (isCurrent && ref.watch(playbackProvider).isPlaying
-                ? const Icon(LucideIcons.volume2, size: 20)
-                : const Icon(LucideIcons.music, size: 20)),
+          child: song.artPath != null
+              ? ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: Image.file(
+                    File(song.artPath!),
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      debugPrint(
+                        '❌ List Image error: $error for path: ${song.artPath}',
+                      );
+                      return const Icon(LucideIcons.music, size: 20);
+                    },
+                  ),
+                )
+              : (isCurrent && ref.watch(playbackProvider).isPlaying
+                    ? const Icon(LucideIcons.volume2, size: 20)
+                    : const Icon(LucideIcons.music, size: 20)),
         ),
         title: Text(
           song.title,
@@ -306,12 +386,17 @@ class _SongTile extends ConsumerWidget {
         subtitle: InkWell(
           onTap: () async {
             if (song.artist != null) {
-              final artistSongs = await DbService.isar.songs.filter().artistEqualTo(song.artist!).findAll();
-              ref.read(appNavigationProvider.notifier).showCollection(
-                title: song.artist!,
-                subtitle: l10n.artists,
-                songs: artistSongs,
-              );
+              final artistSongs = await DbService.isar.songs
+                  .filter()
+                  .artistEqualTo(song.artist!)
+                  .findAll();
+              ref
+                  .read(appNavigationProvider.notifier)
+                  .showCollection(
+                    title: song.artist!,
+                    subtitle: l10n.artists,
+                    songs: artistSongs,
+                  );
             }
           },
           child: Text(
@@ -325,7 +410,11 @@ class _SongTile extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(LucideIcons.moreVertical, size: 18, color: Colors.grey),
+              icon: const Icon(
+                LucideIcons.moreVertical,
+                size: 18,
+                color: Colors.grey,
+              ),
               onPressed: () => _showSongOptions(context, ref, song, l10n),
             ),
             IconButton(
@@ -334,7 +423,8 @@ class _SongTile extends ConsumerWidget {
                 color: song.isFavorite ? Colors.red : Colors.grey,
                 size: 18,
               ),
-              onPressed: () => ref.read(libraryProvider.notifier).toggleFavorite(song),
+              onPressed: () =>
+                  ref.read(libraryProvider.notifier).toggleFavorite(song),
             ),
             const SizedBox(width: 8),
             Text(

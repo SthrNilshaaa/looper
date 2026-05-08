@@ -13,9 +13,13 @@ class PlaylistNotifier extends StateNotifier<List<Playlist>> {
   }
 
   void _loadPlaylists() {
-    DbService.isar.playlists.where().sortByDateModifiedDesc().watch(fireImmediately: true).listen((playlists) {
-      state = playlists;
-    });
+    DbService.isar.playlists
+        .where()
+        .sortByDateModifiedDesc()
+        .watch(fireImmediately: true)
+        .listen((playlists) {
+          state = playlists;
+        });
   }
 
   Future<void> createPlaylist(String name) async {
@@ -24,7 +28,7 @@ class PlaylistNotifier extends StateNotifier<List<Playlist>> {
       ..songPaths = []
       ..dateCreated = DateTime.now()
       ..dateModified = DateTime.now();
-    
+
     await DbService.isar.writeTxn(() => DbService.isar.playlists.put(playlist));
   }
 
@@ -33,9 +37,10 @@ class PlaylistNotifier extends StateNotifier<List<Playlist>> {
   }
 }
 
-final playlistProvider = StateNotifierProvider<PlaylistNotifier, List<Playlist>>((ref) {
-  return PlaylistNotifier();
-});
+final playlistProvider =
+    StateNotifierProvider<PlaylistNotifier, List<Playlist>>((ref) {
+      return PlaylistNotifier();
+    });
 
 class PlaylistView extends ConsumerWidget {
   const PlaylistView({super.key});
@@ -51,7 +56,11 @@ class PlaylistView extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideIcons.listMusic, size: 64, color: Colors.grey.withOpacity(0.2)),
+                  Icon(
+                    LucideIcons.listMusic,
+                    size: 64,
+                    color: Colors.grey.withOpacity(0.2),
+                  ),
                   const SizedBox(height: 16),
                   const Text('No playlists yet'),
                   const SizedBox(height: 16),
@@ -71,7 +80,8 @@ class PlaylistView extends ConsumerWidget {
                 mainAxisSpacing: 20,
               ),
               itemCount: playlists.length,
-              itemBuilder: (context, index) => _PlaylistCard(playlist: playlists[index]),
+              itemBuilder: (context, index) =>
+                  _PlaylistCard(playlist: playlists[index]),
             ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreateDialog(context, ref),
@@ -86,13 +96,22 @@ class PlaylistView extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('New Playlist'),
-        content: TextField(controller: controller, decoration: const InputDecoration(hintText: 'Playlist name'), autofocus: true),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: 'Playlist name'),
+          autofocus: true,
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () {
               if (controller.text.isNotEmpty) {
-                ref.read(playlistProvider.notifier).createPlaylist(controller.text);
+                ref
+                    .read(playlistProvider.notifier)
+                    .createPlaylist(controller.text);
                 Navigator.pop(context);
               }
             },
@@ -104,7 +123,6 @@ class PlaylistView extends ConsumerWidget {
   }
 }
 
-
 class _PlaylistCard extends ConsumerWidget {
   final Playlist playlist;
   const _PlaylistCard({required this.playlist});
@@ -113,12 +131,17 @@ class _PlaylistCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: () async {
-        final songs = await DbService.isar.songs.filter().anyOf(playlist.songPaths, (q, path) => q.pathEqualTo(path)).findAll();
-        ref.read(appNavigationProvider.notifier).showCollection(
-          title: playlist.name,
-          subtitle: 'Playlist',
-          songs: songs,
-        );
+        final songs = await DbService.isar.songs
+            .filter()
+            .anyOf(playlist.songPaths, (q, path) => q.pathEqualTo(path))
+            .findAll();
+        ref
+            .read(appNavigationProvider.notifier)
+            .showCollection(
+              title: playlist.name,
+              subtitle: 'Playlist',
+              songs: songs,
+            );
       },
       borderRadius: BorderRadius.circular(12),
       child: Column(
@@ -128,14 +151,27 @@ class _PlaylistCard extends ConsumerWidget {
             child: Container(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                color: Theme.of(context).colorScheme.primaryContainer.withOpacity(ref.watch(settingsProvider).enableDynamicTheming ? 0.8 : 0.3),
+                color: Theme.of(context).colorScheme.primaryContainer
+                    .withOpacity(
+                      ref.watch(settingsProvider).enableDynamicTheming
+                          ? 0.8
+                          : 0.3,
+                    ),
               ),
               child: const Center(child: Icon(LucideIcons.listMusic, size: 48)),
             ),
           ),
           const SizedBox(height: 8),
-          Text(playlist.name, style: const TextStyle(fontWeight: FontWeight.normal), maxLines: 1, overflow: TextOverflow.ellipsis),
-          Text('${playlist.songPaths.length} songs', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text(
+            playlist.name,
+            style: const TextStyle(fontWeight: FontWeight.normal),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          Text(
+            '${playlist.songPaths.length} songs',
+            style: const TextStyle(color: Colors.grey, fontSize: 12),
+          ),
         ],
       ),
     );

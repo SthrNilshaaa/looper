@@ -23,7 +23,7 @@ class AdvancedLyricLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final progress = line.getProgress(currentPosition);
     final isPast = currentPosition > line.endTime;
-    
+
     // Base style for all text
     final baseStyle = GoogleFonts.spaceGrotesk(
       fontSize: isActive ? 36 : 32,
@@ -43,7 +43,10 @@ class AdvancedLyricLine extends StatelessWidget {
         child: AnimatedPadding(
           duration: const Duration(milliseconds: 600),
           curve: Curves.fastLinearToSlowEaseIn,
-          padding: EdgeInsets.symmetric(vertical: isActive ? 24 : 12, horizontal: 16),
+          padding: EdgeInsets.symmetric(
+            vertical: isActive ? 24 : 12,
+            horizontal: 16,
+          ),
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCubic,
@@ -52,7 +55,13 @@ class AdvancedLyricLine extends StatelessWidget {
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOutCubic,
               style: baseStyle,
-              child: _buildModeContent(context, progress, isPast, baseStyle, activeColor),
+              child: _buildModeContent(
+                context,
+                progress,
+                isPast,
+                baseStyle,
+                activeColor,
+              ),
             ),
           ),
         ),
@@ -61,36 +70,41 @@ class AdvancedLyricLine extends StatelessWidget {
   }
 
   Widget _buildModeContent(
-    BuildContext context, 
-    double progress, 
-    bool isPast, 
-    TextStyle baseStyle, 
-    Color activeColor
+    BuildContext context,
+    double progress,
+    bool isPast,
+    TextStyle baseStyle,
+    Color activeColor,
   ) {
     final String text = line.text;
-    final bool isInstrumental = text.isEmpty ||
-                               text.toLowerCase().contains('instrumental') || 
-                               text.toLowerCase().contains('[music]') ||
-                               text.trim() == '♪';
+    final bool isInstrumental =
+        text.isEmpty ||
+        text.toLowerCase().contains('instrumental') ||
+        text.toLowerCase().contains('[music]') ||
+        text.trim() == '♪';
 
     if (!isActive && !isPast) {
-      return isInstrumental 
-        ? const Center(child: Icon(Icons.music_note, color: Colors.white24, size: 30))
-        : Text(
-            text,
-            style: baseStyle.copyWith(color: Colors.white),
-            textAlign: TextAlign.start
-          );
+      return isInstrumental
+          ? const Center(
+              child: Icon(Icons.music_note, color: Colors.white24, size: 30),
+            )
+          : Text(
+              text,
+              style: baseStyle.copyWith(color: Colors.white),
+              textAlign: TextAlign.start,
+            );
     }
 
     if (isPast) {
-      return isInstrumental 
-        ? const Center(child: Icon(Icons.music_note, color: Colors.white10, size: 30))
-        : Text(
-            text,
-            style: baseStyle.copyWith(color: Colors.white),
-            textAlign: TextAlign.start
-          );
+      return isInstrumental
+          ? const Center(
+              child: Icon(Icons.music_note, color: Colors.white10, size: 30),
+            )
+          : Text(
+              text,
+              style: baseStyle.copyWith(color: Colors.white),
+              textAlign: TextAlign.start,
+            );
     }
 
     // For active line, add music symbols if it's instrumental or just for style
@@ -101,26 +115,39 @@ class AdvancedLyricLine extends StatelessWidget {
         return Row(
           children: [
             Expanded(
-              child: isInstrumental 
-                ? const Center(child: Icon(Icons.music_note, color: Colors.white, size: 40))
-                : Text(
-                    displayText, 
-                    style: baseStyle.copyWith(color: Colors.white), // Very bright white for active line
-                    textAlign: TextAlign.start
-                  ),
+              child: isInstrumental
+                  ? const Center(
+                      child: Icon(
+                        Icons.music_note,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                    )
+                  : Text(
+                      displayText,
+                      style: baseStyle.copyWith(
+                        color: Colors.white,
+                      ), // Very bright white for active line
+                      textAlign: TextAlign.start,
+                    ),
             ),
           ],
         );
-      
+
       case LyricsSyncMode.word:
         return _buildWordMode(displayText, progress, baseStyle, activeColor);
-      
+
       case LyricsSyncMode.char:
         return _buildCharMode(displayText, progress, baseStyle, activeColor);
     }
   }
 
-  Widget _buildWordMode(String text, double progress, TextStyle baseStyle, Color activeColor) {
+  Widget _buildWordMode(
+    String text,
+    double progress,
+    TextStyle baseStyle,
+    Color activeColor,
+  ) {
     final words = text.split(' ');
     if (words.isEmpty) return const SizedBox.shrink();
 
@@ -141,9 +168,14 @@ class AdvancedLyricLine extends StatelessWidget {
                 duration: const Duration(milliseconds: 150),
                 style: baseStyle.copyWith(
                   color: isWordActive ? Colors.white : baseStyle.color,
-                  shadows: isWordActive ? [
-                    Shadow(color: Colors.white.withOpacity(0.5), blurRadius: 16)
-                  ] : null,
+                  shadows: isWordActive
+                      ? [
+                          Shadow(
+                            color: Colors.white.withOpacity(0.5),
+                            blurRadius: 16,
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Text(words[index]),
               );
@@ -154,7 +186,12 @@ class AdvancedLyricLine extends StatelessWidget {
     );
   }
 
-  Widget _buildCharMode(String text, double progress, TextStyle baseStyle, Color activeColor) {
+  Widget _buildCharMode(
+    String text,
+    double progress,
+    TextStyle baseStyle,
+    Color activeColor,
+  ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -166,7 +203,7 @@ class AdvancedLyricLine extends StatelessWidget {
               const gradientWidth = 0.01;
               final start = (progress - gradientWidth).clamp(0.0, 1.0);
               final end = (progress + gradientWidth).clamp(0.0, 1.0);
-              
+
               return LinearGradient(
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,

@@ -7,11 +7,20 @@ import 'package:isar/isar.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 
 final favoritesProvider = StreamProvider<List<Song>>((ref) {
-  return DbService.isar.songs.filter().isFavoriteEqualTo(true).watch(fireImmediately: true);
+  return DbService.isar.songs
+      .filter()
+      .isFavoriteEqualTo(true)
+      .watch(fireImmediately: true);
 });
 
 final recentlyPlayedProvider = StreamProvider<List<Song>>((ref) {
-  return DbService.isar.songs.where().filter().lastPlayedIsNotNull().sortByLastPlayedDesc().limit(50).watch(fireImmediately: true);
+  return DbService.isar.songs
+      .where()
+      .filter()
+      .lastPlayedIsNotNull()
+      .sortByLastPlayedDesc()
+      .limit(50)
+      .watch(fireImmediately: true);
 });
 
 class FavoritesView extends ConsumerWidget {
