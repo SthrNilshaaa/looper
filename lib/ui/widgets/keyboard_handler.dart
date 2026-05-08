@@ -29,16 +29,16 @@ class _KeyboardHandlerState extends ConsumerState<KeyboardHandler> {
   bool _isEditing() {
     final focus = FocusManager.instance.primaryFocus;
     if (focus == null) return false;
-    
+
     // Direct check against our search focus node
     if (focus == ref.read(searchFocusNodeProvider)) return true;
-    
+
     // Robust check for whether the current focus is within an editable text field
     final label = focus.debugLabel?.toLowerCase() ?? '';
-    return label.contains('editabletext') || 
-           label.contains('textfield') || 
-           label.contains('searchfocusnode') ||
-           focus.context?.widget is EditableText;
+    return label.contains('editabletext') ||
+        label.contains('textfield') ||
+        label.contains('searchfocusnode') ||
+        focus.context?.widget is EditableText;
   }
 
   bool _handleKeyEvent(KeyEvent event) {
@@ -48,7 +48,8 @@ class _KeyboardHandlerState extends ConsumerState<KeyboardHandler> {
     if (_isEditing()) {
       // Exception: Escape key should still work to unfocus
       if (event.logicalKey == LogicalKeyboardKey.escape) {
-        if (FocusManager.instance.primaryFocus == ref.read(searchFocusNodeProvider)) {
+        if (FocusManager.instance.primaryFocus ==
+            ref.read(searchFocusNodeProvider)) {
           FocusManager.instance.primaryFocus?.unfocus();
           return true;
         }
@@ -99,7 +100,8 @@ class _KeyboardHandlerState extends ConsumerState<KeyboardHandler> {
       ref.read(searchFocusNodeProvider).requestFocus();
       return true;
     }
-    if (key == LogicalKeyboardKey.keyF && HardwareKeyboard.instance.isControlPressed) {
+    if (key == LogicalKeyboardKey.keyF &&
+        HardwareKeyboard.instance.isControlPressed) {
       ref.read(searchFocusNodeProvider).requestFocus();
       return true;
     }

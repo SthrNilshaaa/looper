@@ -29,17 +29,21 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   }
 
   void _loadSongs() {
-    DbService.isar.songs.where().sortByDateAddedDesc().watch(fireImmediately: true).listen((songs) {
-      state = state.copyWith(songs: songs);
-      _fetchMissingArtistImages();
-    });
+    DbService.isar.songs
+        .where()
+        .sortByDateAddedDesc()
+        .watch(fireImmediately: true)
+        .listen((songs) {
+          state = state.copyWith(songs: songs);
+          _fetchMissingArtistImages();
+        });
   }
 
   Future<void> _fetchMissingArtistImages() async {
     final allArtists = await DbService.isar.artists.where().findAll();
     final artists = allArtists.where((a) => a.artistImageUrl == null).toList();
     final service = ArtistImageService();
-    
+
     for (final artist in artists) {
       if (artist.name == 'Unknown Artist') continue;
       final imageUrl = await service.getArtistImage(artist.name);
@@ -60,7 +64,8 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       if (Platform.isLinux) {
         try {
           final result = await Process.run('xdg-user-dir', ['MUSIC']);
-          if (result.exitCode == 0 && result.stdout.toString().trim().isNotEmpty) {
+          if (result.exitCode == 0 &&
+              result.stdout.toString().trim().isNotEmpty) {
             defaultPath = result.stdout.toString().trim();
           }
         } catch (_) {
@@ -90,7 +95,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       await DbService.isar.albums.clear();
       await DbService.isar.artists.clear();
     });
-    
+
     final folders = _ref.read(settingsProvider).libraryFolders;
     for (final folder in folders) {
       if (Directory(folder).existsSync()) {
@@ -102,15 +107,18 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
 
   Future<void> scanLibrary(String path) async {
     state = state.copyWith(isScanning: true);
-    
+
     if (Directory(path).existsSync()) {
       // Add to saved folders if not already there
       final settings = _ref.read(settingsProvider);
       if (!settings.libraryFolders.contains(path)) {
-        final newFolders = List<String>.from(settings.libraryFolders)..add(path);
-        await _ref.read(settingsProvider.notifier).updateLibraryFolders(newFolders);
+        final newFolders = List<String>.from(settings.libraryFolders)
+          ..add(path);
+        await _ref
+            .read(settingsProvider.notifier)
+            .updateLibraryFolders(newFolders);
       }
-      
+
       await LibraryScanner().scanDirectory(path);
     }
     state = state.copyWith(isScanning: false);
@@ -132,7 +140,9 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   }
 }
 
-final libraryProvider = StateNotifierProvider<LibraryNotifier, LibraryState>((ref) {
+final libraryProvider = StateNotifierProvider<LibraryNotifier, LibraryState>((
+  ref,
+) {
   return LibraryNotifier(ref);
 });
 

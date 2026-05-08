@@ -5,9 +5,9 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 class PlaylistService {
   static Future<void> addSongToPlaylist(Playlist playlist, Song song) async {
     if (playlist.songPaths.contains(song.path)) return;
-    
+
     final updatedPaths = List<String>.from(playlist.songPaths)..add(song.path);
-    
+
     await DbService.isar.writeTxn(() async {
       playlist.songPaths = updatedPaths;
       playlist.dateModified = DateTime.now();
@@ -15,9 +15,13 @@ class PlaylistService {
     });
   }
 
-  static Future<void> removeSongFromPlaylist(Playlist playlist, Song song) async {
-    final updatedPaths = List<String>.from(playlist.songPaths)..remove(song.path);
-    
+  static Future<void> removeSongFromPlaylist(
+    Playlist playlist,
+    Song song,
+  ) async {
+    final updatedPaths = List<String>.from(playlist.songPaths)
+      ..remove(song.path);
+
     await DbService.isar.writeTxn(() async {
       playlist.songPaths = updatedPaths;
       playlist.dateModified = DateTime.now();
@@ -26,6 +30,9 @@ class PlaylistService {
   }
 
   static Future<List<Playlist>> getAllPlaylists() async {
-    return await DbService.isar.playlists.where().sortByDateModifiedDesc().findAll();
+    return await DbService.isar.playlists
+        .where()
+        .sortByDateModifiedDesc()
+        .findAll();
   }
 }

@@ -20,14 +20,17 @@ class ThemeState {
 }
 
 class ThemeNotifier extends StateNotifier<ThemeState> {
-  ThemeNotifier() : super(ThemeState(
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: const Color(0xFF41C25E),
-      primary: const Color(0xFF41C25E),
-      surface: const Color(0xFF070707),
-      brightness: Brightness.dark,
-    ),
-  ));
+  ThemeNotifier()
+    : super(
+        ThemeState(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF41C25E),
+            primary: const Color(0xFF41C25E),
+            surface: const Color(0xFF070707),
+            brightness: Brightness.dark,
+          ),
+        ),
+      );
 
   Future<void> updateFromImage(String? imagePath) async {
     if (imagePath == null) {
@@ -47,10 +50,11 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
         maximumColorCount: 8,
       );
 
-      final Color? color = palette.vibrantColor?.color ?? 
-                           palette.lightVibrantColor?.color ??
-                           palette.darkVibrantColor?.color ??
-                           palette.dominantColor?.color;
+      final Color? color =
+          palette.vibrantColor?.color ??
+          palette.lightVibrantColor?.color ??
+          palette.darkVibrantColor?.color ??
+          palette.dominantColor?.color;
 
       if (color != null) {
         // Boost saturation and value to make it "pop" or "vibrate" as requested
@@ -60,7 +64,9 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
             .withValue((hsv.value * 1.1).clamp(0.8, 1.0))
             .toColor();
 
-        debugPrint('🎨 Updating theme color to: $vibrantColor (Original: $color)');
+        debugPrint(
+          '🎨 Updating theme color to: $vibrantColor (Original: $color)',
+        );
         state = state.copyWith(
           colorScheme: ColorScheme.fromSeed(
             seedColor: vibrantColor,
@@ -93,10 +99,10 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
 final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeState>((ref) {
   final notifier = ThemeNotifier();
   final settings = ref.watch(settingsProvider);
-  
+
   // Watch current song and update theme only if dynamic theming is enabled
   ref.listen(playbackProvider, (previous, next) {
-    if (settings.enableDynamicTheming && 
+    if (settings.enableDynamicTheming &&
         next.currentSong?.artPath != previous?.currentSong?.artPath) {
       notifier.updateFromImage(next.currentSong?.artPath);
     }
@@ -104,9 +110,11 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeState>((ref) {
 
   // Watch the flag itself to reset if disabled
   ref.listen(settingsProvider, (previous, next) {
-    if (previous?.enableDynamicTheming == true && next.enableDynamicTheming == false) {
+    if (previous?.enableDynamicTheming == true &&
+        next.enableDynamicTheming == false) {
       notifier._resetTheme();
-    } else if (previous?.enableDynamicTheming == false && next.enableDynamicTheming == true) {
+    } else if (previous?.enableDynamicTheming == false &&
+        next.enableDynamicTheming == true) {
       final playback = ref.read(playbackProvider);
       notifier.updateFromImage(playback.currentSong?.artPath);
     }

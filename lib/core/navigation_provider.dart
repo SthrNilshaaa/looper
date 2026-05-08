@@ -1,7 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 
-enum NavItem { home, songs, albums, artists, playlists, search, favorites, recentlyPlayed, lyrics, settings, collectionDetail, queue }
+enum NavItem {
+  home,
+  songs,
+  albums,
+  artists,
+  playlists,
+  search,
+  favorites,
+  recentlyPlayed,
+  lyrics,
+  settings,
+  collectionDetail,
+  queue,
+}
 
 class NavigationState {
   final NavItem activeItem;
@@ -66,6 +79,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   }
 }
 
-final appNavigationProvider = StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
-  return NavigationNotifier();
-});
+final appNavigationProvider =
+    StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
+      return NavigationNotifier();
+    });

@@ -126,3 +126,14 @@ if(NOT CMAKE_BUILD_TYPE MATCHES "Debug")
   install(FILES "${AOT_LIBRARY}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
     COMPONENT Runtime)
 endif()
+
+# Install the .desktop file
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/packaging/looper_player.desktop"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/applications"
+  COMPONENT Runtime)
+
+# Install the icon
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/one_player.png"
+  DESTINATION "${CMAKE_INSTALL_PREFIX}/share/icons/hicolor/128x128/apps"
+  RENAME "looper_player.png"
+  COMPONENT Runtime)

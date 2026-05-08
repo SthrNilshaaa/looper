@@ -8,7 +8,15 @@ import 'package:isar/isar.dart';
 
 class LibraryScanner {
   final List<String> supportedExtensions = [
-    '.mp3', '.flac', '.opus', '.aac', '.m4a', '.wav', '.ogg', '.aiff', '.alac'
+    '.mp3',
+    '.flac',
+    '.opus',
+    '.aac',
+    '.m4a',
+    '.wav',
+    '.ogg',
+    '.aiff',
+    '.alac',
   ];
 
   Future<void> scanDirectory(String path) async {
@@ -30,11 +38,13 @@ class LibraryScanner {
     // Process in batches to avoid overwhelming the system
     const int batchSize = 20;
     for (int i = 0; i < filesToProcess.length; i += batchSize) {
-      final end = (i + batchSize < filesToProcess.length) ? i + batchSize : filesToProcess.length;
+      final end = (i + batchSize < filesToProcess.length)
+          ? i + batchSize
+          : filesToProcess.length;
       final batch = filesToProcess.sublist(i, end);
-      
+
       final results = await Future.wait(batch.map((f) => _extractMetadata(f)));
-      
+
       await DbService.isar.writeTxn(() async {
         for (final data in results) {
           if (data == null) continue;
@@ -43,7 +53,10 @@ class LibraryScanner {
           final artPath = data['artPath'] as String?;
 
           // Merge with existing song to preserve user data (history, favorites, etc.)
-          final existingSong = await DbService.isar.songs.filter().pathEqualTo(song.path).findFirst();
+          final existingSong = await DbService.isar.songs
+              .filter()
+              .pathEqualTo(song.path)
+              .findFirst();
           if (existingSong != null) {
             // Update metadata only
             existingSong.title = song.title;
@@ -59,9 +72,12 @@ class LibraryScanner {
           } else {
             await DbService.isar.songs.put(song);
           }
-          
+
           if (metadata.album != null) {
-            final existingAlbum = await DbService.isar.albums.filter().nameEqualTo(metadata.album!).findFirst();
+            final existingAlbum = await DbService.isar.albums
+                .filter()
+                .nameEqualTo(metadata.album!)
+                .findFirst();
             if (existingAlbum == null) {
               final album = Album()
                 ..name = metadata.album!
@@ -76,10 +92,12 @@ class LibraryScanner {
           }
 
           if (metadata.artist != null) {
-            final existingArtist = await DbService.isar.artists.filter().nameEqualTo(metadata.artist!).findFirst();
+            final existingArtist = await DbService.isar.artists
+                .filter()
+                .nameEqualTo(metadata.artist!)
+                .findFirst();
             if (existingArtist == null) {
-              final artist = Artist()
-                ..name = metadata.artist!;
+              final artist = Artist()..name = metadata.artist!;
               await DbService.isar.artists.put(artist);
             }
           }
@@ -93,7 +111,10 @@ class LibraryScanner {
       final metadata = await MetadataGod.readMetadata(file: file.path);
       String? artPath;
       if (metadata.picture != null) {
-        artPath = await saveAlbumArt(metadata.album ?? 'unknown', metadata.picture!.data);
+        artPath = await saveAlbumArt(
+          metadata.album ?? 'unknown',
+          metadata.picture!.data,
+        );
       }
 
       final song = Song()
@@ -108,11 +129,7 @@ class LibraryScanner {
         ..artPath = artPath
         ..dateAdded = DateTime.now();
 
-      return {
-        'song': song,
-        'metadata': metadata,
-        'artPath': artPath,
-      };
+      return {'song': song, 'metadata': metadata, 'artPath': artPath};
     } catch (e) {
       return null;
     }
@@ -123,10 +140,14 @@ class LibraryScanner {
       final appDir = await getApplicationSupportDirectory();
       final artDir = Directory(p.join(appDir.path, 'album_art'));
       if (!await artDir.exists()) await artDir.create(recursive: true);
-      
-      final hash = data.length.toString() + data.take(10).join() + data.reversed.take(10).join();
-      final fileName = '${albumName.replaceAll(RegExp(r'[^\w\s]+'), '')}_${hash.hashCode}.jpg';
-      
+
+      final hash =
+          data.length.toString() +
+          data.take(10).join() +
+          data.reversed.take(10).join();
+      final fileName =
+          '${albumName.replaceAll(RegExp(r'[^\w\s]+'), '')}_${hash.hashCode}.jpg';
+
       final file = File(p.join(artDir.path, fileName));
       if (!await file.exists()) {
         await file.writeAsBytes(data);

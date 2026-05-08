@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:io';
 import 'package:media_kit/media_kit.dart';
 import 'package:dbus/dbus.dart';
@@ -13,7 +14,9 @@ class AudioService {
   void Function()? onPrevious;
 
   AudioService() {
-    player = Player(configuration: const PlayerConfiguration(title: 'Looper Player'));
+    player = Player(
+      configuration: const PlayerConfiguration(title: 'Looper Player'),
+    );
     _initMpris();
   }
 
@@ -41,7 +44,9 @@ class AudioService {
       await _dBusClient!.registerObject(_mprisPlayer!);
 
       // Set initial status
-      _mprisPlayer!.updatePlaybackStatus(player.state.playing ? 'Playing' : 'Paused');
+      _mprisPlayer!.updatePlaybackStatus(
+        player.state.playing ? 'Playing' : 'Paused',
+      );
 
       player.stream.playing.listen((playing) {
         _mprisPlayer!.updatePlaybackStatus(playing ? 'Playing' : 'Paused');
@@ -54,15 +59,63 @@ class AudioService {
       player.stream.duration.listen((duration) {
         _updateMprisMetadata(player.state.playlist.index);
       });
-
     } catch (e) {
-      print('Failed to initialize MPRIS: $e');
+      debugPrint('Failed to initialize MPRIS: $e');
     }
   }
 
   void _updateMprisMetadata(int index) {
     if (_mprisPlayer == null) return;
+
     // We update metadata when song changes or duration is loaded
+    try {
+      final currentMedia =
+          player.state.playlist.medias.isNotEmpty &&
+              index >= 0 &&
+              index < player.state.playlist.medias.length
+          ? player.state.playlist.medias[index]
+          : null;
+
+      if (currentMedia != null && currentMedia.extras != null) {
+        final extras = currentMedia.extras!;
+        final mprisMetadata = <String, DBusValue>{};
+        final trackId =
+            '/org/mpris/MediaPlayer2/Track/${currentMedia.uri.hashCode.abs()}';
+        mprisMetadata['mpris:trackid'] = DBusObjectPath(trackId);
+
+        if (extras['title'] != null) {
+          mprisMetadata['xesam:title'] = DBusString(extras['title'].toString());
+        }
+        if (extras['artist'] != null) {
+          mprisMetadata['xesam:artist'] = DBusArray.string([
+            extras['artist'].toString(),
+          ]);
+        }
+        if (extras['album'] != null) {
+          mprisMetadata['xesam:album'] = DBusString(extras['album'].toString());
+        }
+        if (extras['artPath'] != null) {
+          mprisMetadata['mpris:artUrl'] = DBusString(
+            'file://${extras['artPath']}',
+          );
+        }
+
+        // Use player duration if available, otherwise fallback to metadata
+        final duration = player.state.duration;
+        if (duration.inMilliseconds > 0) {
+          mprisMetadata['mpris:length'] = DBusInt64(duration.inMicroseconds);
+        } else if (extras['duration'] != null) {
+          final durationMs = int.tryParse(extras['duration'].toString()) ?? 0;
+          if (durationMs > 0) {
+            mprisMetadata['mpris:length'] = DBusInt64(durationMs * 1000);
+          }
+        }
+
+        _mprisPlayer!.updateMetadata(mprisMetadata);
+      }
+    } catch (e) {
+      debugPrint('Error updating MPRIS metadata: $e');
+    }
   }
 
   Future<void> play(String path, {Map<String, dynamic>? metadata}) async {
@@ -79,13 +132,17 @@ class AudioService {
         mprisMetadata['xesam:title'] = DBusString(metadata['title'].toString());
       }
       if (metadata['artist'] != null) {
-        mprisMetadata['xesam:artist'] = DBusArray.string([metadata['artist'].toString()]);
+        mprisMetadata['xesam:artist'] = DBusArray.string([
+          metadata['artist'].toString(),
+        ]);
       }
       if (metadata['album'] != null) {
         mprisMetadata['xesam:album'] = DBusString(metadata['album'].toString());
       }
       if (metadata['artPath'] != null) {
-        mprisMetadata['mpris:artUrl'] = DBusString('file://${metadata['artPath']}');
+        mprisMetadata['mpris:artUrl'] = DBusString(
+          'file://${metadata['artPath']}',
+        );
       }
       if (metadata['duration'] != null) {
         final durationMs = int.tryParse(metadata['duration'].toString()) ?? 0;

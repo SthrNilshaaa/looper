@@ -1,0 +1,12 @@
+[Desktop Entry]
+Version=1.0
+Name=Looper Player
+GenericName=Music Player
+Comment=A powerful music player.
+Exec=looper_player %U
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Player;
+MimeType=audio/mpeg;audio/x-mpegurl;audio/x-scpls;audio/x-vorbis+ogg;audio/x-wav;audio/aac;audio/flac;audio/mp4;
+Icon=looper_player
+StartupNotify=true

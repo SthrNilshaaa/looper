@@ -13,9 +13,12 @@ class SettingsView extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(24),
       children: [
-        const Text('Settings', style: TextStyle(fontSize: 32, fontWeight: FontWeight.normal)),
+        const Text(
+          'Settings',
+          style: TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
+        ),
         const SizedBox(height: 32),
-        
+
         _SectionHeader(title: 'Library'),
         const _LibraryFoldersList(),
         ListTile(
@@ -35,10 +38,12 @@ class SettingsView extends ConsumerWidget {
           subtitle: const Text('Force a full scan of your music folders'),
           onTap: () {
             ref.read(libraryProvider.notifier).scanSavedFolders();
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Scanning library...')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Scanning library...')),
+            );
           },
         ),
-        
+
         const Divider(height: 48),
         _SectionHeader(title: 'Appearance'),
         SwitchListTile(
@@ -47,7 +52,7 @@ class SettingsView extends ConsumerWidget {
           subtitle: const Text('Adapt app colors to album artwork'),
           value: ref.watch(settingsProvider).enableDynamicTheming,
           onChanged: (val) {
-             ref.read(settingsProvider.notifier).updateDynamicTheming(val);
+            ref.read(settingsProvider.notifier).updateDynamicTheming(val);
           },
         ),
         ListTile(
@@ -59,7 +64,7 @@ class SettingsView extends ConsumerWidget {
             // TODO: Theme mode selection
           },
         ),
-        
+
         const Divider(height: 48),
         _SectionHeader(title: 'Audio'),
         ListTile(
@@ -71,7 +76,7 @@ class SettingsView extends ConsumerWidget {
             // TODO: EQ
           },
         ),
-        
+
         const Divider(height: 48),
         _SectionHeader(title: 'About'),
         const ListTile(
@@ -95,22 +100,28 @@ class _LibraryFoldersList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final folders = ref.watch(settingsProvider).libraryFolders;
-    
+
     if (folders.isEmpty) return const SizedBox.shrink();
 
     return Column(
-      children: folders.map((path) => ListTile(
-        leading: const Icon(LucideIcons.folder),
-        title: Text(path.split('/').last),
-        subtitle: Text(path),
-        trailing: IconButton(
-          icon: const Icon(LucideIcons.trash2, size: 18),
-          onPressed: () {
-            final newFolders = List<String>.from(folders)..remove(path);
-            ref.read(settingsProvider.notifier).updateLibraryFolders(newFolders);
-          },
-        ),
-      )).toList(),
+      children: folders
+          .map(
+            (path) => ListTile(
+              leading: const Icon(LucideIcons.folder),
+              title: Text(path.split('/').last),
+              subtitle: Text(path),
+              trailing: IconButton(
+                icon: const Icon(LucideIcons.trash2, size: 18),
+                onPressed: () {
+                  final newFolders = List<String>.from(folders)..remove(path);
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateLibraryFolders(newFolders);
+                },
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }

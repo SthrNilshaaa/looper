@@ -1,12 +1,10 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
-import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
-import 'package:isar/isar.dart';
 
 class CollectionDetailView extends ConsumerWidget {
   final String title;
@@ -27,30 +25,28 @@ class CollectionDetailView extends ConsumerWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isNarrow = constraints.maxWidth < 700;
-        
+
         return SingleChildScrollView(
           child: Column(
             children: [
               // Header
               Container(
                 padding: EdgeInsets.all(isNarrow ? 16 : 32),
-                child: isNarrow 
-                  ? Column(
-                      children: [
-                        _buildArt(context, isNarrow),
-                        const SizedBox(height: 24),
-                        _buildInfo(context, ref, isNarrow),
-                      ],
-                    )
-                  : Row(
-                      children: [
-                        _buildArt(context, isNarrow),
-                        const SizedBox(width: 32),
-                        Expanded(
-                          child: _buildInfo(context, ref, isNarrow),
-                        ),
-                      ],
-                    ),
+                child: isNarrow
+                    ? Column(
+                        children: [
+                          _buildArt(context, isNarrow),
+                          const SizedBox(height: 24),
+                          _buildInfo(context, ref, isNarrow),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          _buildArt(context, isNarrow),
+                          const SizedBox(width: 32),
+                          Expanded(child: _buildInfo(context, ref, isNarrow)),
+                        ],
+                      ),
               ),
               // Songs List
               SongsList(
@@ -67,31 +63,36 @@ class CollectionDetailView extends ConsumerWidget {
 
   Widget _buildArt(BuildContext context, bool isNarrow) {
     final double size = isNarrow ? 160 : 200;
-    return Container(
+    return OptimizedImage(
+      imagePath: artPath,
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Theme.of(context).colorScheme.surfaceVariant,
-        image: artPath != null 
-          ? DecorationImage(image: FileImage(File(artPath!)), fit: BoxFit.cover)
-          : null,
+      borderRadius: BorderRadius.circular(16),
+      placeholder: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(
+          LucideIcons.music,
+          size: isNarrow ? 48 : 64,
+          color: Colors.grey,
+        ),
       ),
-      child: artPath == null 
-        ? Icon(LucideIcons.music, size: isNarrow ? 48 : 64, color: Colors.grey)
-        : null,
     );
   }
 
   Widget _buildInfo(BuildContext context, WidgetRef ref, bool isNarrow) {
     return Column(
-      crossAxisAlignment: isNarrow ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: isNarrow
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
         Text(
-          title, 
+          title,
           style: TextStyle(
-            fontSize: isNarrow ? 32 : 48, 
-            fontWeight: FontWeight.normal
+            fontSize: isNarrow ? 32 : 48,
+            fontWeight: FontWeight.normal,
           ),
           textAlign: isNarrow ? TextAlign.center : TextAlign.start,
           maxLines: 1,
@@ -99,8 +100,11 @@ class CollectionDetailView extends ConsumerWidget {
         ),
         if (subtitle != null)
           Text(
-            subtitle!, 
-            style: TextStyle(fontSize: isNarrow ? 18 : 24, color: Colors.grey[400]),
+            subtitle!,
+            style: TextStyle(
+              fontSize: isNarrow ? 18 : 24,
+              color: Colors.grey[400],
+            ),
             textAlign: isNarrow ? TextAlign.center : TextAlign.start,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -109,18 +113,20 @@ class CollectionDetailView extends ConsumerWidget {
         // Text('${songs.length} songs', style: const TextStyle(color: Colors.grey)),
         const SizedBox(height: 24),
         Row(
-          mainAxisAlignment: isNarrow ? MainAxisAlignment.center : MainAxisAlignment.start,
+          mainAxisAlignment: isNarrow
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
           children: [
             ElevatedButton.icon(
               onPressed: () {
                 ref.read(playbackProvider.notifier).setPlaylist(songs);
               },
-              icon:  Icon(Icons.play_arrow_sharp),
+              icon: Icon(Icons.play_arrow_sharp),
               label: const Text('Play All'),
               style: ElevatedButton.styleFrom(
                 padding: EdgeInsets.symmetric(
-                  horizontal: isNarrow ? 12 : 18, 
-                  vertical: isNarrow ? 12 : 18
+                  horizontal: isNarrow ? 12 : 18,
+                  vertical: isNarrow ? 12 : 18,
                 ),
               ),
             ),
@@ -130,7 +136,7 @@ class CollectionDetailView extends ConsumerWidget {
                 ref.read(playbackProvider.notifier).toggleShuffle();
                 ref.read(playbackProvider.notifier).setPlaylist(songs);
               },
-              icon: const Icon(LucideIcons.shuffle ,size : 8),
+              icon: const Icon(LucideIcons.shuffle, size: 8),
             ),
           ],
         ),
