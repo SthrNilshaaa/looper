@@ -101,9 +101,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 settings.enableDynamicTheming &&
                 playback.currentSong?.artPath != null) ...[
               Positioned.fill(
-                child: Image.file(
-                  File(playback.currentSong!.artPath!),
-                  fit: BoxFit.cover,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 1000),
+                  child: Image.file(
+                    File(playback.currentSong!.artPath!),
+                    key: ValueKey(playback.currentSong!.artPath!),
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
               Positioned.fill(
