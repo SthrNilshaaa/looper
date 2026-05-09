@@ -33,29 +33,31 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   }
 
   Future<void> updateLibraryFolders(List<String> folders) async {
+    final newState = _clone(state)..libraryFolders = folders;
     await DbService.isar.writeTxn(() async {
-      state.libraryFolders = folders;
-      await DbService.isar.appSettings.put(state);
+      await DbService.isar.appSettings.put(newState);
     });
-    state = _clone(state);
+    state = newState;
   }
 
   Future<void> updateLanguage(String lang) async {
+    final newState = _clone(state)..language = lang;
     await DbService.isar.writeTxn(() async {
-      state.language = lang;
-      await DbService.isar.appSettings.put(state);
+      await DbService.isar.appSettings.put(newState);
     });
-    state = _clone(state);
+    state = newState;
   }
 
   Future<void> updateShuffle(bool shuffle) async {
-    state.shuffle = shuffle;
-    await _save();
+    final newState = _clone(state)..shuffle = shuffle;
+    await _save(newState);
+    state = newState;
   }
 
   Future<void> updateRepeatMode(int mode) async {
-    state.repeatMode = mode;
-    await _save();
+    final newState = _clone(state)..repeatMode = mode;
+    await _save(newState);
+    state = newState;
   }
 
   AppSettings _clone(AppSettings s) {
@@ -67,30 +69,50 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..shuffle = s.shuffle
       ..repeatMode = s.repeatMode
       ..language = s.language
-      ..enableDynamicTheming = s.enableDynamicTheming;
+      ..enableDynamicTheming = s.enableDynamicTheming
+      ..saveDynamicColor = s.saveDynamicColor
+      ..accentColor = s.accentColor;
   }
 
   Future<void> updateDynamicTheming(bool enabled) async {
+    final newState = _clone(state)..enableDynamicTheming = enabled;
     await DbService.isar.writeTxn(() async {
-      state.enableDynamicTheming = enabled;
-      await DbService.isar.appSettings.put(state);
+      await DbService.isar.appSettings.put(newState);
     });
-    state = _clone(state);
+    state = newState;
+  }
+
+  Future<void> updateAccentColor(int color) async {
+    final newState = _clone(state)..accentColor = color;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateSaveDynamicColor(bool enabled) async {
+    final newState = _clone(state)..saveDynamicColor = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
   }
 
   Future<void> updateLastPlayedSong(int? songId) async {
-    state.lastPlayedSongId = songId;
-    await _save();
+    final newState = _clone(state)..lastPlayedSongId = songId;
+    await _save(newState);
+    state = newState;
   }
 
   Future<void> updateVolume(double volume) async {
-    state.volume = volume;
-    await _save();
+    final newState = _clone(state)..volume = volume;
+    await _save(newState);
+    state = newState;
   }
 
-  Future<void> _save() async {
+  Future<void> _save(AppSettings settings) async {
     await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(state);
+      await DbService.isar.appSettings.put(settings);
     });
   }
 }

@@ -84,5 +84,7 @@ class AppSettings {
   bool shuffle = false;
   int repeatMode = 0; // 0: off, 1: one, 2: all
   String language = 'en';
-  bool enableDynamicTheming = false;
+  bool enableDynamicTheming = true;
+  bool saveDynamicColor = true;
+  int accentColor = 0xFF41C25E; // Default green
 }

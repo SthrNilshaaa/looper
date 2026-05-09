@@ -9,6 +9,9 @@ import '../../features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:looper_player/ui/widgets/color_maper.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PlayerBar extends ConsumerWidget {
   const PlayerBar({super.key});
@@ -49,6 +52,7 @@ class PlayerBar extends ConsumerWidget {
           ref.watch(appNavigationProvider).activeItem == NavItem.lyrics,
       isQueueActive:
           ref.watch(appNavigationProvider).activeItem == NavItem.queue,
+      isDynamic: ref.watch(settingsProvider).enableDynamicTheming,
     );
   }
 }
@@ -77,6 +81,7 @@ class _PremiumPlayerBar extends StatelessWidget {
   final VoidCallback onMuteToggle;
   final bool isLyricsActive;
   final bool isQueueActive;
+  final bool isDynamic;
 
   const _PremiumPlayerBar({
     required this.title,
@@ -102,6 +107,7 @@ class _PremiumPlayerBar extends StatelessWidget {
     required this.onMuteToggle,
     this.isLyricsActive = false,
     this.isQueueActive = false,
+    this.isDynamic = false,
   });
 
   @override
@@ -123,7 +129,10 @@ class _PremiumPlayerBar extends StatelessWidget {
             top: 0,
           ),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.04),
+            color: isDynamic
+                ? colorScheme.primary.withOpacity(0.04)
+                // : Colors.white.withOpacity(0.04),
+                : Color(0xFF0E0E0E),
             borderRadius: BorderRadius.circular(6),
             // border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
             boxShadow: [
@@ -354,15 +363,20 @@ class _PremiumPlayerBar extends StatelessWidget {
           IconButton(
             onPressed: onRepeat,
             icon: SvgPicture.asset(
-              'assets/music_bar_Icons/repeat.svg',
+              repeatMode == RepeatMode.one
+                  ? 'assets/music_bar_Icons/repeat_1.svg'
+                  : 'assets/music_bar_Icons/repeat.svg',
               width: 12,
               height: 12,
-              colorFilter: ColorFilter.mode(
-                repeatMode != RepeatMode.off
-                    ? colorScheme.primary
-                    : Colors.white38,
-                BlendMode.srcIn,
-              ),
+              colorFilter: repeatMode == RepeatMode.one
+                  ? null
+                  : ColorFilter.mode(
+                      repeatMode == RepeatMode.all ? Colors.white : Colors.white38,
+                      BlendMode.srcIn,
+                    ),
+              colorMapper: repeatMode == RepeatMode.one
+                  ? AccentColorMapper(colorScheme.primary)
+                  : null,
             ),
             tooltip: 'Repeat',
           ),
@@ -496,6 +510,47 @@ class _ExpressiveSlider extends StatelessWidget {
     return "$minutes:$seconds";
   }
 
+  Widget _buildAnimatedDuration(String duration, bool isRightAligned) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment:
+          isRightAligned ? MainAxisAlignment.end : MainAxisAlignment.start,
+      children: duration.characters.map((char) {
+        return SizedBox(
+          width: char == ':' ? 4 : 8,
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (Widget child, Animation<double> animation) {
+              final isIn = (child as Text).data == char;
+              return ClipRect(
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset(0.0, isIn ? 0.5 : -0.5),
+                    end: Offset.zero,
+                  ).animate(animation),
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                ),
+              );
+            },
+            child: Text(
+              char,
+              key: ValueKey(char),
+              style: GoogleFonts.dmSans(
+                color: Colors.white,
+                fontSize: 12,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final double progress = duration.inMilliseconds > 0
@@ -509,24 +564,18 @@ class _ExpressiveSlider extends StatelessWidget {
         return Row(
           children: [
             if (showTimestamps) ...[
-              // const SizedBox(width: 4),
-              Text(
-                _formatDuration(position),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontFamily: 'DMSans Regular',
-                ),
+              SizedBox(
+                width: 45,
+                child: _buildAnimatedDuration(_formatDuration(position), true),
               ),
               const SizedBox(width: 12),
             ],
             Expanded(
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  trackHeight: 2,
+                  trackHeight: 1.8,
                   activeTrackColor: color,
                   inactiveTrackColor: Colors.white10,
-                  //thumbShape: SliderComponentShape.noThumb,
                   thumbShape: const _LineThumbShape(
                     thumbHeight: 12,
                     thumbWidth: 3,
@@ -544,21 +593,17 @@ class _ExpressiveSlider extends StatelessWidget {
                   activeColor: color,
                   inactiveColor: Colors.white10,
                   squiggleAmplitude: isPlaying ? 2.0 : 0.0,
-                  squiggleWavelength: 3.0,
-                  squiggleSpeed: 0.1,
+                  squiggleWavelength: 4.5,
+                  squiggleSpeed: 0.08,
                   useLineThumb: false,
                 ),
               ),
             ),
             if (showTimestamps) ...[
               const SizedBox(width: 12),
-              Text(
-                _formatDuration(duration),
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontFamily: 'DMSans Regular',
-                ),
+              SizedBox(
+                width: 45,
+                child: _buildAnimatedDuration(_formatDuration(duration), false),
               ),
             ],
           ],

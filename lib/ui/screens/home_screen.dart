@@ -84,7 +84,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final bool isNarrow = MediaQuery.of(context).size.width < 800;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: isDynamic
+          ? (playback.currentSong != null
+              ? Theme.of(context).colorScheme.background
+              : null)
+          : null,
       drawer: isNarrow
           ? Drawer(
               child: Container(
@@ -168,13 +172,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                             padding: const EdgeInsets.symmetric(horizontal: 24),
                                             child: Row(
                                               children: [
-                                                _HeaderButton(
-                                                  onTap: () => ref.read(appNavigationProvider.notifier).setItem(NavItem.home),
-                                                  icon: LucideIcons.arrowLeft,
-                                                  label: 'Back',
-                                                  isDynamic: isDynamic,
+                                                AnimatedContainer(
+                                                  duration: const Duration(milliseconds: 300),
+                                                  curve: Curves.easeInOutCubic,
+                                                  width: nav.history.isEmpty ? 0 : 120,
+                                                  child: ClipRect(
+                                                    child: AnimatedScale(
+                                                      scale: nav.history.isEmpty ? 0.0 : 1.0,
+                                                      duration: const Duration(milliseconds: 300),
+                                                      curve: Curves.easeOutBack,
+                                                      child: Padding(
+                                                        padding: const EdgeInsets.only(right: 16),
+                                                        child: _HeaderButton(
+                                                          onTap: () => ref.read(appNavigationProvider.notifier).goBack(),
+                                                          icon: LucideIcons.arrowLeft,
+                                                          label: 'Back',
+                                                          isDynamic: isDynamic,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
                                                 ),
-                                                const SizedBox(width: 16),
                                                 const Expanded(child: GlobalSearchBar()),
                                                 // const SizedBox(width: 48),
                                                 Spacer(),
@@ -219,72 +237,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  // Widget _buildWelcomeView(BuildContext context, AppLocalizations l10n) {
-  //   return Center(
-  //     child: Column(
-  //       mainAxisAlignment: MainAxisAlignment.center,
-  //       children: [
-  //         const Spacer(),
-  //         Container(
-  //           height: 120,
-  //           alignment: Alignment.center,
-  //           child: SvgPicture.asset(
-  //             'assets/main_logo.svg',
-  //             height: 100,
-  //             fit: BoxFit.contain,
-  //             placeholderBuilder: (context) => const Text(
-  //               'Looper Player',
-  //               style: TextStyle(
-  //                 fontSize: 48,
-  //                 fontWeight: FontWeight.normal,
-  //                 color: Colors.white,
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //         const SizedBox(height: 32),
-  //         Text(
-  //           'Welcome to ${l10n.appTitle}',
-  //           style: const TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
-  //         ),
-  //         const SizedBox(height: 16),
-  //         Text(
-  //           l10n.scanLibrary,
-  //           textAlign: TextAlign.center,
-  //           style: const TextStyle(fontSize: 16, color: Colors.grey),
-  //         ),
-  //         const SizedBox(height: 48),
-  //         ElevatedButton.icon(
-  //           onPressed: () async {
-  //             final String? path = await FilePicker.platform.getDirectoryPath();
-  //             if (path != null) {
-  //               ref.read(libraryProvider.notifier).scanLibrary(path);
-  //             }
-  //           },
-  //           icon: const Icon(LucideIcons.folderSearch),
-  //           label: Text(l10n.addFolder),
-  //           style: ElevatedButton.styleFrom(
-  //             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
-  //             textStyle: const TextStyle(
-  //               fontSize: 18,
-  //               fontWeight: FontWeight.normal,
-  //             ),
-  //           ),
-  //         ),
-  //         const Spacer(),
-  //         const Text(
-  //           'High-Fidelity Audio • Modern Experience',
-  //           style: TextStyle(
-  //             fontSize: 12,
-  //             color: Colors.grey,
-  //             letterSpacing: 1.5,
-  //           ),
-  //         ),
-  //         const SizedBox(height: 32),
-  //       ],
-  //     ),
-  //   );
-  // }
+
 
   Widget _buildMainContent(
     NavigationState nav,
@@ -339,6 +292,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           title: nav.collectionTitle ?? 'Unknown',
           subtitle: nav.collectionSubtitle,
           artPath: nav.collectionArt,
+          imageUrl: nav.collectionImageUrl,
           songs: nav.collectionSongs,
         );
       case NavItem.queue:

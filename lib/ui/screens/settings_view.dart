@@ -8,6 +8,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -39,6 +40,19 @@ class SettingsView extends ConsumerWidget {
                 ref.read(settingsProvider.notifier).updateDynamicTheming(value);
               },
             ),
+            // if (settings.enableDynamicTheming)
+            //   SwitchListTile(
+            //     secondary: const SizedBox(width: 24), // Indent for hierarchy
+            //     title: const Text('Save Dynamic Color'),
+            //     subtitle:
+            //         const Text('Keep the last extracted color after restart'),
+            //     value: settings.saveDynamicColor,
+            //     onChanged: (value) {
+            //       ref
+            //           .read(settingsProvider.notifier)
+            //           .updateSaveDynamicColor(value);
+            //     },
+            //   ),
           ],
         ),
         _Section(
@@ -102,13 +116,9 @@ class SettingsView extends ConsumerWidget {
           title: l10n.about,
           children: [
             ListTile(
-              leading: SvgPicture.asset(
-                'assets/main_logo.svg',
+              leading: Image.asset(
+                'assets/icon.png',
                 height: 24,
-                colorFilter: const ColorFilter.mode(
-                  Colors.white,
-                  BlendMode.srcIn,
-                ),
               ),
               title: const Text('Looper Player'),
               subtitle: const Text('Version 1.0.0'),
@@ -121,6 +131,7 @@ class SettingsView extends ConsumerWidget {
             ),
           ],
         ),
+        const _MaintainerInfo(),
       ],
     );
   }
@@ -148,6 +159,120 @@ class SettingsView extends ConsumerWidget {
               Navigator.pop(context);
             },
             child: const Text('Clear', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MaintainerInfo extends StatelessWidget {
+  const _MaintainerInfo();
+
+  @override
+  Widget build(BuildContext context) {
+    return _Section(
+      title: 'Maintainer & Designer',
+      children: [
+        _MaintainerTile(
+          name: 'Nilesh Suthar',
+          role: 'Creator and maintainer',
+          avatar: 'assets/about/maintainer_avatar.png',
+          github: 'https://github.com/SthrNilshaaa',
+          telegram: 'https://t.me/neelshy',
+        ),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        _MaintainerTile(
+          name: 'Karan Suthar',
+          role: 'Designer and maintainer',
+          avatar: 'assets/about/designer_avatar.png',
+          github: 'https://github.com/sthrkaran',
+          telegram: 'https://t.me/karanwhy',
+        ),
+      ],
+    );
+  }
+}
+
+class _MaintainerTile extends StatelessWidget {
+  final String name;
+  final String role;
+  final String avatar;
+  final String github;
+  final String telegram;
+
+  const _MaintainerTile({
+    required this.name,
+    required this.role,
+    required this.avatar,
+    required this.github,
+    required this.telegram,
+  });
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        debugPrint('Could not launch $url');
+      }
+    } catch (e) {
+      debugPrint('Error launching URL: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      leading: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white10, width: 1),
+        ),
+        child: CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.white10,
+          backgroundImage: AssetImage(avatar),
+        ),
+      ),
+      title: Text(
+        name,
+        style: const TextStyle(
+          fontWeight: FontWeight.normal,
+          fontSize: 16,
+          letterSpacing: -0.2,
+        ),
+      ),
+      subtitle: Text(
+        role,
+        style: const TextStyle(
+          color: Colors.grey,
+          fontSize: 13,
+          letterSpacing: -0.1,
+        ),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: SvgPicture.asset(
+              'assets/about/github_icon.svg',
+              width: 18,
+              height: 18,
+              // colorFilter:
+              //     const ColorFilter.mode(Colors.white70, BlendMode.srcIn),
+            ),
+            onPressed: () => _launchUrl(github),
+          ),
+          IconButton(
+            icon: SvgPicture.asset(
+              'assets/about/telegram_icon.svg',
+              width: 18,
+              height: 18,
+              // colorFilter:
+              //     const ColorFilter.mode(Colors.white70, BlendMode.srcIn),
+            ),
+            onPressed: () => _launchUrl(telegram),
           ),
         ],
       ),

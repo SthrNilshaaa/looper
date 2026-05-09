@@ -23,7 +23,7 @@ static void first_frame_cb(MyApplication* self, FlView* view) {
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
-  g_set_prgname("looper_player");
+  g_set_prgname("looper-player");
   GtkWindow* window =
       GTK_WINDOW(gtk_application_window_new(GTK_APPLICATION(application)));
 
@@ -52,6 +52,8 @@ static void my_application_activate(GApplication* application) {
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
     gtk_window_set_title(window, "Looper Player");
+    gtk_window_set_icon_name(window, "looper-player");
+    gtk_window_set_role(window, "looper-player");
   }
 
   gtk_window_set_default_size(window, 1280, 720);

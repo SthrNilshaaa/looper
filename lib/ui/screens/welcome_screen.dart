@@ -18,7 +18,7 @@ class WelcomeScreen extends ConsumerWidget {
       height: double.infinity,
       color: const Color(0xFF070707),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Expanded(

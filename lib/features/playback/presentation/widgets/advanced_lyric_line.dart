@@ -8,6 +8,7 @@ class AdvancedLyricLine extends StatelessWidget {
   final Duration currentPosition;
   final LyricsSyncMode mode;
   final bool isActive;
+  final int relativeIndex;
   final VoidCallback onTap;
 
   const AdvancedLyricLine({
@@ -16,21 +17,36 @@ class AdvancedLyricLine extends StatelessWidget {
     required this.currentPosition,
     required this.mode,
     required this.isActive,
+    required this.relativeIndex,
     required this.onTap,
   });
+
+  bool _isHindi(String text) {
+    return RegExp(r'[\u0900-\u097F]').hasMatch(text);
+  }
 
   @override
   Widget build(BuildContext context) {
     final progress = line.getProgress(currentPosition);
     final isPast = currentPosition > line.endTime;
 
-    // Base style for all text
-    final baseStyle = GoogleFonts.spaceGrotesk(
+    // Calculate dynamic opacity based on distance from active line
+    double lineOpacity = 1.0;
+    if (!isActive) {
+      lineOpacity = (0.5 / (relativeIndex * 0.9)).clamp(0.12, 0.4);
+    }
+
+    // Language-aware font selection
+    final bool isHindiText = _isHindi(line.text);
+    final baseStyle = (isHindiText
+            ? GoogleFonts.poppins()
+            : GoogleFonts.spaceGrotesk())
+        .copyWith(
       fontSize: isActive ? 36 : 32,
-      fontWeight: FontWeight.w600,
-      letterSpacing: -0.5,
+      fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+      letterSpacing: isHindiText ? 0.0 : -0.5,
       height: 1.2,
-      color: Colors.white.withOpacity(isActive ? 1.0 : 0.01),
+      color: Colors.white.withOpacity(isActive ? 1.0 : lineOpacity),
     );
 
     // Active color (Theme Primary)
@@ -50,7 +66,7 @@ class AdvancedLyricLine extends StatelessWidget {
           child: AnimatedOpacity(
             duration: const Duration(milliseconds: 500),
             curve: Curves.easeOutCubic,
-            opacity: isActive ? 1.0 : (isPast ? 0.3 : 0.6),
+            opacity: isActive ? 1.0 : (lineOpacity * 1.5).clamp(0.0, 1.0),
             child: AnimatedDefaultTextStyle(
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOutCubic,
@@ -85,24 +101,26 @@ class AdvancedLyricLine extends StatelessWidget {
 
     if (!isActive && !isPast) {
       return isInstrumental
-          ? const Center(
+          ? const Align(
+              alignment: Alignment.centerLeft,
               child: Icon(Icons.music_note, color: Colors.white24, size: 30),
             )
           : Text(
               text,
-              style: baseStyle.copyWith(color: Colors.white),
+              style: baseStyle.copyWith(color: Colors.white.withOpacity(0.5)),
               textAlign: TextAlign.start,
             );
     }
 
     if (isPast) {
       return isInstrumental
-          ? const Center(
+          ? const Align(
+              alignment: Alignment.centerLeft,
               child: Icon(Icons.music_note, color: Colors.white10, size: 30),
             )
           : Text(
               text,
-              style: baseStyle.copyWith(color: Colors.white),
+              style: baseStyle.copyWith(color: Colors.white.withOpacity(0.3)),
               textAlign: TextAlign.start,
             );
     }
@@ -116,7 +134,8 @@ class AdvancedLyricLine extends StatelessWidget {
           children: [
             Expanded(
               child: isInstrumental
-                  ? const Center(
+                  ? const Align(
+                      alignment: Alignment.centerLeft,
                       child: Icon(
                         Icons.music_note,
                         color: Colors.white,
@@ -126,8 +145,8 @@ class AdvancedLyricLine extends StatelessWidget {
                   : Text(
                       displayText,
                       style: baseStyle.copyWith(
-                        color: Colors.white,
-                      ), // Very bright white for active line
+                        color: activeColor,
+                      ), // Dynamic color for active line
                       textAlign: TextAlign.start,
                     ),
             ),
@@ -167,11 +186,11 @@ class AdvancedLyricLine extends StatelessWidget {
               return AnimatedDefaultTextStyle(
                 duration: const Duration(milliseconds: 150),
                 style: baseStyle.copyWith(
-                  color: isWordActive ? Colors.white : baseStyle.color,
+                  color: isWordActive ? activeColor : baseStyle.color,
                   shadows: isWordActive
                       ? [
                           Shadow(
-                            color: Colors.white.withOpacity(0.5),
+                            color: activeColor.withOpacity(0.3),
                             blurRadius: 16,
                           ),
                         ]
@@ -208,8 +227,8 @@ class AdvancedLyricLine extends StatelessWidget {
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
                 colors: [
-                  Colors.white,
-                  Colors.white.withOpacity(0.8),
+                  activeColor,
+                  activeColor.withOpacity(0.8),
                   baseStyle.color ?? Colors.white24,
                 ],
                 stops: [start, progress, end],

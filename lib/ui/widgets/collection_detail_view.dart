@@ -10,6 +10,7 @@ class CollectionDetailView extends ConsumerWidget {
   final String title;
   final String? subtitle;
   final String? artPath;
+  final String? imageUrl;
   final List<Song> songs;
 
   const CollectionDetailView({
@@ -17,6 +18,7 @@ class CollectionDetailView extends ConsumerWidget {
     required this.title,
     this.subtitle,
     this.artPath,
+    this.imageUrl,
     required this.songs,
   });
 
@@ -31,7 +33,9 @@ class CollectionDetailView extends ConsumerWidget {
             children: [
               // Header
               Container(
-                padding: EdgeInsets.all(isNarrow ? 16 : 32),
+                padding: EdgeInsets.symmetric(horizontal:  isNarrow ? 16 : 32,
+                  vertical: isNarrow ? 12 : 16,
+                ),
                 child: isNarrow
                     ? Column(
                         children: [
@@ -65,6 +69,7 @@ class CollectionDetailView extends ConsumerWidget {
     final double size = isNarrow ? 160 : 200;
     return OptimizedImage(
       imagePath: artPath,
+      imageUrl: imageUrl,
       width: size,
       height: size,
       borderRadius: BorderRadius.circular(16),

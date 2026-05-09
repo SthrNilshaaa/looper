@@ -59,8 +59,20 @@ class _AlbumCard extends ConsumerWidget {
         nav.activeItem == NavItem.collectionDetail &&
         nav.collectionTitle == album.name;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
+    return InkWell(
+      onTap: () async {
+        final songs = await DbService.isar.songs
+            .filter()
+            .albumEqualTo(album.name)
+            .findAll();
+        ref.read(appNavigationProvider.notifier).showCollection(
+              title: album.name,
+              subtitle: album.artist,
+              art: album.artPath,
+              songs: songs,
+            );
+      },
+      borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(12),
@@ -78,23 +90,7 @@ class _AlbumCard extends ConsumerWidget {
               ? Border.all(color: Colors.white10.withOpacity(0.1), width: 1)
               : null,
         ),
-        child: InkWell(
-          onTap: () async {
-            final songs = await DbService.isar.songs
-                .filter()
-                .albumEqualTo(album.name)
-                .findAll();
-            ref
-                .read(appNavigationProvider.notifier)
-                .showCollection(
-                  title: album.name,
-                  subtitle: album.artist,
-                  art: album.artPath,
-                  songs: songs,
-                );
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Column(
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
@@ -160,7 +156,6 @@ class _AlbumCard extends ConsumerWidget {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -204,8 +199,20 @@ class _ArtistCard extends ConsumerWidget {
         nav.activeItem == NavItem.collectionDetail &&
         nav.collectionTitle == artist.name;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
+    return InkWell(
+      onTap: () async {
+        final songs = await DbService.isar.songs
+            .filter()
+            .artistEqualTo(artist.name)
+            .findAll();
+        ref.read(appNavigationProvider.notifier).showCollection(
+              title: artist.name,
+              art: artist.artPath,
+              imageUrl: artist.artistImageUrl,
+              songs: songs,
+            );
+      },
+      borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(12),
@@ -223,64 +230,48 @@ class _ArtistCard extends ConsumerWidget {
               ? Border.all(color: Colors.white10.withOpacity(0.1), width: 1)
               : null,
         ),
-        child: InkWell(
-          onTap: () async {
-            final songs = await DbService.isar.songs
-                .filter()
-                .artistEqualTo(artist.name)
-                .findAll();
-            ref
-                .read(appNavigationProvider.notifier)
-                .showCollection(
-                  title: artist.name,
-                  art: artist.artPath,
-                  songs: songs,
-                );
-          },
-          borderRadius: BorderRadius.circular(20),
-          child: Column(
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                    color: Colors.white.withOpacity(0.05),
-                  ),
-                  child: ClipOval(
-                    child: OptimizedImage(
-                      imageUrl: artist.artistImageUrl,
-                      imagePath: artist.artPath,
-                      fit: BoxFit.cover,
-                      placeholder: const Center(
-                        child: Icon(
-                          LucideIcons.user,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                  color: Colors.white.withOpacity(0.05),
+                ),
+                child: ClipOval(
+                  child: OptimizedImage(
+                    imageUrl: artist.artistImageUrl,
+                    imagePath: artist.artPath,
+                    fit: BoxFit.cover,
+                    placeholder: const Center(
+                      child: Icon(
+                        LucideIcons.user,
+                        size: 48,
+                        color: Colors.grey,
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                artist.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.normal,
-                  fontSize: 14,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              artist.name,
+              style: const TextStyle(
+                fontWeight: FontWeight.normal,
+                fontSize: 14,
               ),
-            ],
-          ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );

@@ -36,11 +36,14 @@ void main(List<String> args) async {
   // Initialize Window Manager
   await windowManager.ensureInitialized();
   WindowOptions windowOptions = const WindowOptions(
-    size: Size(1200, 800),
+    size: Size(1300, 700),
     center: true,
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
     title: 'Looper Player',
+    // fullScreen: true,
+
+
   );
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {

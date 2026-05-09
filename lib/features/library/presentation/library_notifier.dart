@@ -155,3 +155,11 @@ final recentlyPlayedProvider = StreamProvider<List<Song>>((ref) {
       .limit(10)
       .watch(fireImmediately: true);
 });
+
+final topSongsProvider = StreamProvider<List<Song>>((ref) {
+  return DbService.isar.songs
+      .where()
+      .sortByPlayCountDesc()
+      .limit(8)
+      .watch(fireImmediately: true);
+});

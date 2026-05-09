@@ -43,28 +43,7 @@ class SongsList extends ConsumerWidget {
                 '${songs.length} ${l10n.songs}',
                 style: const TextStyle(color: Colors.grey, fontSize: 13),
               ),
-              Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: () async {
-                      final String? path = await FilePicker.platform
-                          .getDirectoryPath();
-                      if (path != null) {
-                        ref.read(libraryProvider.notifier).scanLibrary(path);
-                      }
-                    },
-                    icon: const Icon(LucideIcons.plus, size: 16),
-                    label: Text(
-                      l10n.addFolder,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      foregroundColor: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  TextButton.icon(
+              TextButton.icon(
                     onPressed: () async {
                       final confirm = await showDialog<bool>(
                         context: context,
@@ -104,8 +83,69 @@ class SongsList extends ConsumerWidget {
                       foregroundColor: Colors.red[300],
                     ),
                   ),
-                ],
-              ),
+              // Row(
+              //   children: [
+              //     TextButton.icon(
+              //       onPressed: () async {
+              //         final String? path = await FilePicker.platform
+              //             .getDirectoryPath();
+              //         if (path != null) {
+              //           ref.read(libraryProvider.notifier).scanLibrary(path);
+              //         }
+              //       },
+              //       icon: const Icon(LucideIcons.plus, size: 16),
+              //       label: Text(
+              //         l10n.addFolder,
+              //         style: const TextStyle(fontSize: 13),
+              //       ),
+              //       style: TextButton.styleFrom(
+              //         padding: const EdgeInsets.symmetric(horizontal: 12),
+              //         foregroundColor: Theme.of(context).colorScheme.primary,
+              //       ),
+              //     ),
+              //     const SizedBox(width: 8),
+              //     TextButton.icon(
+              //       onPressed: () async {
+              //         final confirm = await showDialog<bool>(
+              //           context: context,
+              //           builder: (context) => AlertDialog(
+              //             title: Text(l10n.resetLibrary),
+              //             content: const Text(
+              //               'This will clear all songs, albums, and artists and perform a full rescan of your folders.',
+              //             ),
+              //             actions: [
+              //               TextButton(
+              //                 onPressed: () => Navigator.pop(context, false),
+              //                 child: const Text('Cancel'),
+              //               ),
+              //               TextButton(
+              //                 onPressed: () => Navigator.pop(context, true),
+              //                 child: const Text(
+              //                   'Reset',
+              //                   style: TextStyle(color: Colors.red),
+              //                 ),
+              //               ),
+              //             ],
+              //           ),
+              //         );
+              //         if (confirm == true) {
+              //           await ref
+              //               .read(libraryProvider.notifier)
+              //               .resetAndRescan();
+              //         }
+              //       },
+              //       icon: const Icon(LucideIcons.refreshCw, size: 16),
+              //       label: Text(
+              //         l10n.resetLibrary,
+              //         style: const TextStyle(fontSize: 13),
+              //       ),
+              //       style: TextButton.styleFrom(
+              //         padding: const EdgeInsets.symmetric(horizontal: 12),
+              //         foregroundColor: Colors.red[300],
+              //       ),
+              //     ),
+              //   ],
+              // ),
             ],
           ),
         ),
@@ -117,7 +157,7 @@ class SongsList extends ConsumerWidget {
             itemCount: songs.length,
             itemBuilder: (context, index) {
               final song = songs[index];
-              return _SongTile(song: song, l10n: l10n);
+              return _SongTile(song: song, l10n: l10n, songs: songs);
             },
           )
         else
@@ -129,7 +169,7 @@ class SongsList extends ConsumerWidget {
               itemCount: songs.length,
               itemBuilder: (context, index) {
                 final song = songs[index];
-                return _SongTile(song: song, l10n: l10n);
+                return _SongTile(song: song, l10n: l10n, songs: songs);
               },
             ),
           ),
@@ -329,9 +369,14 @@ void _showPlaylistSelector(
 
 class _SongTile extends ConsumerWidget {
   final Song song;
+  final List<Song> songs;
   final AppLocalizations l10n;
 
-  const _SongTile({required this.song, required this.l10n});
+  const _SongTile({
+    required this.song,
+    required this.songs,
+    required this.l10n,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -434,7 +479,14 @@ class _SongTile extends ConsumerWidget {
           ],
         ),
         onTap: () {
-          ref.read(playbackProvider.notifier).play(song);
+          final index = songs.indexWhere((s) => s.id == song.id);
+          if (index != -1) {
+            ref
+                .read(playbackProvider.notifier)
+                .setPlaylist(songs, initialIndex: index);
+          } else {
+            ref.read(playbackProvider.notifier).play(song);
+          }
         },
       ),
     );
