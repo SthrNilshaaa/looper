@@ -47,10 +47,7 @@ jobs:
           # Use flutter_distributor to build all configured formats
           # We use --name dev because that's how it's defined in distribute_options.yaml
           export PATH="$PATH":"$HOME/.pub-cache/bin"
-          flutter_distributor release --name dev --target deb
-          flutter_distributor release --name dev --target rpm
-          flutter_distributor release --name dev --target appimage
-          flutter_distributor release --name dev --target archive
+          flutter_distributor release --name dev
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
