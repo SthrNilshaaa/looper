@@ -10,6 +10,7 @@ releases:
     targets:
       - deb
       - rpm
+      - appimage
       - archive
     build_args:
       --release: 
