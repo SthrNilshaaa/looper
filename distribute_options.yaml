@@ -8,10 +8,11 @@ releases:
     display_name: Looper Player
     executable_name: looper_player
     targets:
-      - deb
-      - rpm
-      - appimage
-      - archive
+      - linux-deb
+      - linux-rpm
+      - linux-appimage
+      - linux-archive
+      
     build_args:
       --release: 
 
