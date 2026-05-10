@@ -42,7 +42,7 @@ class AdvancedLyricLine extends StatelessWidget {
         (isHindiText ? GoogleFonts.poppins() : GoogleFonts.spaceGrotesk())
             .copyWith(
               fontSize: isActive ? 36 : 32,
-              fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
+              fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
               letterSpacing: isHindiText ? 0.0 : -0.5,
               height: 1.2,
               color: Colors.white.withOpacity(isActive ? 1.0 : lineOpacity),

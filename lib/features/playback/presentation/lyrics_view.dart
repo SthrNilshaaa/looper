@@ -30,7 +30,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       children: [
         Column(
           children: [
-            const SizedBox(height: 48), // Space for floating button
+            //const SizedBox(height: 48), // Space for floating button
             if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
             Expanded(
               child: lyricsState.isLoading
@@ -74,20 +74,20 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             ),
           ],
         ),
-        Positioned(
-          top: 16,
-          right: 16,
-          child: IconButton(
-            icon: const Icon(
-              LucideIcons.pictureInPicture2,
-              color: Colors.white70,
-            ),
-            tooltip: 'Overlay Lyrics',
-            onPressed: () {
-              ref.read(overlayServiceProvider).toggleOverlay();
-            },
-          ),
-        ),
+        // Positioned(
+        //   top: 16,
+        //   right: 16,
+        //   child: IconButton(
+        //     icon: const Icon(
+        //       LucideIcons.pictureInPicture2,
+        //       color: Colors.white70,
+        //     ),
+        //     tooltip: 'Overlay Lyrics',
+        //     onPressed: () {
+        //       ref.read(overlayServiceProvider).toggleOverlay();
+        //     },
+        //   ),
+        // ),
       ],
     );
   }
