@@ -15,23 +15,23 @@ releases:
         build_args:
           --release:
 
-      - name: linux-rpm
-        package:
-          platform: linux
-          target: rpm
-        build_args:
-          --release:
+      # - name: linux-rpm
+      #   package:
+      #     platform: linux
+      #     target: rpm
+      #   build_args:
+      #     --release:
 
-      - name: linux-appimage
-        package:
-          platform: linux
-          target: appimage
-        build_args:
-          --release:
+      # - name: linux-appimage
+      #   package:
+      #     platform: linux
+      #     target: appimage
+      #   build_args:
+      #     --release:
 
-      - name: linux-archive
-        package:
-          platform: linux
-          target: archive
-        build_args:
-          --release:
+      # - name: linux-archive
+      #   package:
+      #     platform: linux
+      #     target: archive
+      #   build_args:
+      #     --release:
