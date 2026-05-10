@@ -35,10 +35,11 @@ class OverlayService {
     await windowManager.setBackgroundColor(Colors.transparent);
 
     // Set to a smaller size suitable for lyrics
-    await windowManager.setSize(const Size(500, 150));
-    await windowManager.setOpacity(
-      1.0,
-    ); // Make sure the window isn't entirely invisible
+    await windowManager.setSize(const Size(400, 150));
+    // Provide a small delay to ensure the OS has applied the borderless state
+    // before the window is resized.
+    await Future.delayed(const Duration(milliseconds: 50));
+    await windowManager.setBackgroundColor(Colors.transparent);
   }
 
   Future<void> exitOverlay() async {

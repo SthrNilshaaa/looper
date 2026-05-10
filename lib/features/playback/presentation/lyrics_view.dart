@@ -24,54 +24,69 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
   @override
   Widget build(BuildContext context) {
     final lyricsState = ref.watch(lyricsProvider);
-    final currentSong = ref.watch(
-      playbackProvider.select((s) => s.currentSong),
-    );
     final primaryColor = Theme.of(context).colorScheme.primary;
 
-    return Column(
+    return Stack(
       children: [
-        _buildHeader(currentSong),
-        if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
-        Expanded(
-          child: lyricsState.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : lyricsState.rawLrc == null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.music_note,
-                        size: 80,
-                        color: primaryColor.withOpacity(0.3),
+        Column(
+          children: [
+            const SizedBox(height: 48), // Space for floating button
+            if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
+            Expanded(
+              child: lyricsState.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : lyricsState.rawLrc == null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.music_note,
+                            size: 80,
+                            color: primaryColor.withOpacity(0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Lyrics not available.',
+                            style: GoogleFonts.spaceGrotesk(
+                              color: Colors.white.withOpacity(0.4),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Lyrics not available.',
-                        style: GoogleFonts.spaceGrotesk(
-                          color: Colors.white.withOpacity(0.4),
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : Consumer(
-                  builder: (context, ref, child) {
-                    final position = ref.watch(
-                      playbackProvider.select((s) => s.position),
-                    );
-                    return AdvancedLyricRenderer(
-                      lines: lyricsState.parsedLines,
-                      currentPosition: position,
-                      mode: _syncMode,
-                      onSeek: (pos) =>
-                          ref.read(playbackProvider.notifier).seek(pos),
-                    );
-                  },
-                ),
+                    )
+                  : Consumer(
+                      builder: (context, ref, child) {
+                        final position = ref.watch(
+                          playbackProvider.select((s) => s.position),
+                        );
+                        return AdvancedLyricRenderer(
+                          lines: lyricsState.parsedLines,
+                          currentPosition: position,
+                          mode: _syncMode,
+                          onSeek: (pos) =>
+                              ref.read(playbackProvider.notifier).seek(pos),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+        Positioned(
+          top: 16,
+          right: 16,
+          child: IconButton(
+            icon: const Icon(
+              LucideIcons.pictureInPicture2,
+              color: Colors.white70,
+            ),
+            tooltip: 'Overlay Lyrics',
+            onPressed: () {
+              ref.read(overlayServiceProvider).toggleOverlay();
+            },
+          ),
         ),
       ],
     );
@@ -100,169 +115,6 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildHeader(Song? currentSong) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isNarrow = constraints.maxWidth < 600;
-        final bool isShort = MediaQuery.of(context).size.height < 500;
-
-        return Padding(
-          padding: EdgeInsets.symmetric(
-            vertical: isNarrow || isShort ? 8 : 24,
-            horizontal: isNarrow ? 16 : 32,
-          ),
-          child: isNarrow
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (currentSong != null) ...[
-                      _buildSongInfoCompact(currentSong, isShort),
-                      SizedBox(height: isShort ? 8 : 16),
-                    ],
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _buildModeSelector(isShort),
-                        const SizedBox(width: 16),
-                        IconButton(
-                          icon: const Icon(
-                            LucideIcons.pictureInPicture2,
-                            color: Colors.white70,
-                          ),
-                          tooltip: 'Overlay Lyrics',
-                          onPressed: () {
-                            ref.read(overlayServiceProvider).toggleOverlay();
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                )
-              : Row(
-                  children: [
-                    if (currentSong != null) ...[
-                      _buildArt(currentSong, isShort ? 60 : 80),
-                      const SizedBox(width: 24),
-                      Expanded(child: _buildSongText(currentSong, isShort)),
-                    ],
-                    _buildModeSelector(isShort),
-                    const SizedBox(width: 16),
-                    IconButton(
-                      icon: const Icon(
-                        LucideIcons.pictureInPicture2,
-                        color: Colors.white70,
-                      ),
-                      tooltip: 'Overlay Lyrics',
-                      onPressed: () {
-                        ref.read(overlayServiceProvider).toggleOverlay();
-                      },
-                    ),
-                  ],
-                ),
-        );
-      },
-    );
-  }
-
-  Widget _buildArt(Song currentSong, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white.withOpacity(0.05),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: currentSong.artPath == null
-          ? Icon(Icons.music_note, color: Colors.grey[600], size: size / 2)
-          : Image.file(
-              File(currentSong.artPath!),
-              fit: BoxFit.cover,
-              cacheWidth: size.toInt() * 2,
-            ),
-    );
-  }
-
-  Widget _buildSongText(Song currentSong, bool isShort) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          currentSong.title,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: isShort ? 20 : 28,
-            fontWeight: FontWeight.normal,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        Text(
-          currentSong.artist ?? 'Unknown Artist',
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: isShort ? 14 : 18,
-            color: Colors.grey[400],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSongInfoCompact(Song currentSong, bool isShort) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: isShort ? 40 : 50,
-          height: isShort ? 40 : 50,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: Colors.white.withOpacity(0.05),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: currentSong.artPath == null
-              ? Icon(
-                  Icons.music_note,
-                  color: Colors.grey[600],
-                  size: isShort ? 20 : 24,
-                )
-              : Image.file(
-                  File(currentSong.artPath!),
-                  fit: BoxFit.cover,
-                  cacheWidth: (isShort ? 40 : 50) * 2,
-                ),
-        ),
-        const SizedBox(width: 12),
-        Flexible(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                currentSong.title,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: isShort ? 14 : 18,
-                  fontWeight: FontWeight.normal,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                currentSong.artist ?? 'Unknown Artist',
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: isShort ? 12 : 14,
-                  color: Colors.grey[400],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

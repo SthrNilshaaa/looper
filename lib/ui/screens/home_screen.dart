@@ -96,9 +96,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       backgroundColor: isDynamic
           ? (playback.currentSong != null
-                ? Theme.of(context).colorScheme.background
-                : null)
-          : null,
+                ? Theme.of(context).colorScheme.surface
+                : Theme.of(context).scaffoldBackgroundColor)
+          : Theme.of(context).scaffoldBackgroundColor,
       drawer: isNarrow
           ? Drawer(
               child: Container(

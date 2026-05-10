@@ -17,6 +17,8 @@ class OverlayLyricsWidget extends ConsumerStatefulWidget {
 }
 
 class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
+  Size? _initialSize;
+
   @override
   Widget build(BuildContext context) {
     // Only rebuild when the parsed lines change
@@ -33,7 +35,7 @@ class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
       },
       child: Container(
         color: Colors.black.withOpacity(0.5),
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Stack(
           children: [
             Center(
@@ -68,7 +70,7 @@ class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
                         currentLine,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.spaceGrotesk(
-                          fontSize: 26,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.primary,
                         ),
@@ -76,12 +78,12 @@ class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (nextLine.isNotEmpty) ...[
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 4),
                         Text(
                           nextLine,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.spaceGrotesk(
-                            fontSize: 16,
+                            fontSize: 14,
                             color: Colors.white70,
                           ),
                           maxLines: 1,
@@ -115,11 +117,28 @@ class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
             ),
             // Resize handle on the bottom right
             Positioned(
-              bottom: -5,
-              right: -5,
+              bottom: 0,
+              right: 0,
               child: GestureDetector(
-                onPanStart: (details) {
-                  windowManager.startResizing(ResizeEdge.bottomRight);
+                onPanStart: (details) async {
+                  _initialSize = await windowManager.getSize();
+                },
+                onPanUpdate: (details) async {
+                  if (_initialSize != null) {
+                    final newWidth =
+                        _initialSize!.width + details.localPosition.dx;
+                    final newHeight =
+                        _initialSize!.height + details.localPosition.dy;
+
+                    // Enforce a minimum size
+                    final width = newWidth < 100 ? 100.0 : newWidth;
+                    final height = newHeight < 50 ? 50.0 : newHeight;
+
+                    await windowManager.setSize(Size(width, height));
+                  }
+                },
+                onPanEnd: (details) {
+                  _initialSize = null;
                 },
                 child: MouseRegion(
                   cursor: SystemMouseCursors.resizeDownRight,
