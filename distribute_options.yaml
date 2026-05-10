@@ -1,23 +1,37 @@
 output: dist/
-publish:
-  # You can add publishing options here (e.g. github)
-  
+
 releases:
   - name: dev
-    package_name: looper_player
     display_name: Looper Player
-    executable_name: looper_player
-    targets:
-      - deb
-      - rpm
-      - archive
-    build_args:
-      --release: 
+    jobs:
+      - name: linux-deb
+        package:
+          platform: linux
+          target: deb
+        # Override the package name specifically for Debian to satisfy the hyphen rule
+        # while keeping the internal project name as looper_player for Dart compatibility.
+        maker_config:
+          package_name: looper-player
+        build_args:
+          --release:
 
-    deb_options:
-      # Optional: custom postinst/prerm scripts
-      # postinst: linux/deb/postinst
-      
-    rpm_options:
-      # Optional: custom spec template
-      # spec_template: linux/rpm/project.spec
+      - name: linux-rpm
+        package:
+          platform: linux
+          target: rpm
+        build_args:
+          --release:
+
+      - name: linux-appimage
+        package:
+          platform: linux
+          target: appimage
+        build_args:
+          --release:
+
+      - name: linux-archive
+        package:
+          platform: linux
+          target: archive
+        build_args:
+          --release:

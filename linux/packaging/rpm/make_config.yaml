@@ -1,5 +1,5 @@
 display_name: Looper Player
-name: looper-player
+name: looper_player
 version: 1.0.0
 release: 1
 summary: A modern, high-fidelity music player for Linux.

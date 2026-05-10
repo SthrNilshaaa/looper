@@ -28,7 +28,7 @@ jobs:
 
       - name: Install AppImageTool
         run: |
-          sudo wget https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool
+          sudo wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool
           sudo chmod +x /usr/local/bin/appimagetool
 
       - name: Setup Flutter
@@ -45,12 +45,9 @@ jobs:
       - name: Build All Formats
         run: |
           # Use flutter_distributor to build all configured formats
-          # We use --name dev because that's how it's defined in distribute_options.yaml
+          # This will build deb, rpm, appimage, and tar.gz in one go
           export PATH="$PATH":"$HOME/.pub-cache/bin"
-          flutter_distributor release --name dev --target deb
-          flutter_distributor release --name dev --target rpm
-          flutter_distributor release --name dev --target appimage
-          flutter_distributor release --name dev --target archive
+          flutter_distributor release --name dev
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
