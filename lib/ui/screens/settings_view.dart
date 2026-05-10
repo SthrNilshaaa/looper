@@ -116,10 +116,7 @@ class SettingsView extends ConsumerWidget {
           title: l10n.about,
           children: [
             ListTile(
-              leading: Image.asset(
-                'assets/icon.png',
-                height: 24,
-              ),
+              leading: Image.asset('assets/icon.png', height: 24),
               title: const Text('Looper Player'),
               subtitle: const Text('Version 1.0.0'),
             ),

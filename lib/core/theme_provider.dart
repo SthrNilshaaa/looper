@@ -126,7 +126,9 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
   }
 
   void _resetTheme() {
-    debugPrint('🔄 Resetting theme to accent color: ${Color(_settings.accentColor)}');
+    debugPrint(
+      '🔄 Resetting theme to accent color: ${Color(_settings.accentColor)}',
+    );
     state = state.copyWith(
       colorScheme: ColorScheme.fromSeed(
         seedColor: Color(_settings.accentColor),

@@ -122,7 +122,7 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
             currentPosition: widget.currentPosition,
             mode: widget.mode,
             isActive: isActive,
-            relativeIndex: _currentLineIndex == -1 
+            relativeIndex: _currentLineIndex == -1
                 ? index // If nothing active, treat first line as reference or just use index
                 : (index - _currentLineIndex).abs(),
             onTap: () => widget.onSeek(line.startTime),

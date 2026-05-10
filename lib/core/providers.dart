@@ -21,3 +21,5 @@ final searchFocusNodeProvider = Provider<FocusNode>((ref) {
   ref.onDispose(() => node.dispose());
   return node;
 });
+
+final overlayModeProvider = StateProvider<bool>((ref) => false);

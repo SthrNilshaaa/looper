@@ -44,45 +44,43 @@ class SongsList extends ConsumerWidget {
                 style: const TextStyle(color: Colors.grey, fontSize: 13),
               ),
               TextButton.icon(
-                    onPressed: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text(l10n.resetLibrary),
-                          content: const Text(
-                            'This will clear all songs, albums, and artists and perform a full rescan of your folders.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text(
-                                'Reset',
-                                style: TextStyle(color: Colors.red),
-                              ),
-                            ),
-                          ],
+                onPressed: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(l10n.resetLibrary),
+                      content: const Text(
+                        'This will clear all songs, albums, and artists and perform a full rescan of your folders.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
                         ),
-                      );
-                      if (confirm == true) {
-                        await ref
-                            .read(libraryProvider.notifier)
-                            .resetAndRescan();
-                      }
-                    },
-                    icon: const Icon(LucideIcons.refreshCw, size: 16),
-                    label: Text(
-                      l10n.resetLibrary,
-                      style: const TextStyle(fontSize: 13),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text(
+                            'Reset',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
                     ),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      foregroundColor: Colors.red[300],
-                    ),
-                  ),
+                  );
+                  if (confirm == true) {
+                    await ref.read(libraryProvider.notifier).resetAndRescan();
+                  }
+                },
+                icon: const Icon(LucideIcons.refreshCw, size: 16),
+                label: Text(
+                  l10n.resetLibrary,
+                  style: const TextStyle(fontSize: 13),
+                ),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  foregroundColor: Colors.red[300],
+                ),
+              ),
               // Row(
               //   children: [
               //     TextButton.icon(

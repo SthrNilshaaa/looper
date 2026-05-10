@@ -49,8 +49,6 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
     // Remove global watch of searchQueryProvider to prevent rebuilds on every keystroke
     // final query = ref.watch(searchQueryProvider);
 
-
-
     if (nav.activeItem == NavItem.lyrics) {
       return const SizedBox.shrink();
     }
@@ -71,7 +69,10 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
               53,
               53,
             ).withOpacity(isDynamic ? 0.3 : 0.1),
-            border: Border.all(color: Colors.white10.withOpacity(0.1), width: 1),
+            border: Border.all(
+              color: Colors.white10.withOpacity(0.1),
+              width: 1,
+            ),
             boxShadow: [
               if (!isDynamic)
                 BoxShadow(
@@ -89,7 +90,10 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                 sigmaY: isDynamic ? 5 : 0,
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 2,
+                ),
                 child: TextField(
                   focusNode: ref.watch(searchFocusNodeProvider),
                   controller: _controller,
@@ -108,7 +112,6 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                       color: Colors.white.withOpacity(0.5),
                       fontSize: 14,
                       fontFamily: 'DMSans',
-                      
                     ),
                     prefixIcon: SizedBox(
                       width: 50,
