@@ -33,7 +33,8 @@ class CollectionDetailView extends ConsumerWidget {
             children: [
               // Header
               Container(
-                padding: EdgeInsets.symmetric(horizontal:  isNarrow ? 16 : 32,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isNarrow ? 16 : 32,
                   vertical: isNarrow ? 12 : 16,
                 ),
                 child: isNarrow

@@ -371,7 +371,9 @@ class _PremiumPlayerBar extends StatelessWidget {
               colorFilter: repeatMode == RepeatMode.one
                   ? null
                   : ColorFilter.mode(
-                      repeatMode == RepeatMode.all ? Colors.white : Colors.white38,
+                      repeatMode == RepeatMode.all
+                          ? Colors.white
+                          : Colors.white38,
                       BlendMode.srcIn,
                     ),
               colorMapper: repeatMode == RepeatMode.one
@@ -513,8 +515,9 @@ class _ExpressiveSlider extends StatelessWidget {
   Widget _buildAnimatedDuration(String duration, bool isRightAligned) {
     return Row(
       mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment:
-          isRightAligned ? MainAxisAlignment.end : MainAxisAlignment.start,
+      mainAxisAlignment: isRightAligned
+          ? MainAxisAlignment.end
+          : MainAxisAlignment.start,
       children: duration.characters.map((char) {
         return SizedBox(
           width: char == ':' ? 4 : 8,
@@ -528,10 +531,7 @@ class _ExpressiveSlider extends StatelessWidget {
                     begin: Offset(0.0, isIn ? 0.5 : -0.5),
                     end: Offset.zero,
                   ).animate(animation),
-                  child: FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  ),
+                  child: FadeTransition(opacity: animation, child: child),
                 ),
               );
             },

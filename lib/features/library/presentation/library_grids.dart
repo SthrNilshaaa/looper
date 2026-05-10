@@ -65,7 +65,9 @@ class _AlbumCard extends ConsumerWidget {
             .filter()
             .albumEqualTo(album.name)
             .findAll();
-        ref.read(appNavigationProvider.notifier).showCollection(
+        ref
+            .read(appNavigationProvider.notifier)
+            .showCollection(
               title: album.name,
               subtitle: album.artist,
               art: album.artPath,
@@ -91,71 +93,71 @@ class _AlbumCard extends ConsumerWidget {
               : null,
         ),
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.3),
-                        blurRadius: 15,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                    color: Colors.white.withOpacity(0.05),
-                  ),
-                  child: album.artPath != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: OptimizedImage(
-                            imagePath: album.artPath,
-                            fit: BoxFit.cover,
-                            placeholder: const Center(
-                              child: Icon(
-                                LucideIcons.disc,
-                                size: 48,
-                                color: Colors.grey,
-                              ),
-                            ),
-                          ),
-                        )
-                      : const Center(
-                          child: Icon(
-                            LucideIcons.disc,
-                            size: 48,
-                            color: Colors.grey,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      album.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.normal,
-                        fontSize: 14,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      album.artist ?? 'Unknown Artist',
-                      style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
                     ),
                   ],
+                  color: Colors.white.withOpacity(0.05),
                 ),
+                child: album.artPath != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: OptimizedImage(
+                          imagePath: album.artPath,
+                          fit: BoxFit.cover,
+                          placeholder: const Center(
+                            child: Icon(
+                              LucideIcons.disc,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ),
+                      )
+                    : const Center(
+                        child: Icon(
+                          LucideIcons.disc,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
+                      ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    album.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.normal,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    album.artist ?? 'Unknown Artist',
+                    style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -205,7 +207,9 @@ class _ArtistCard extends ConsumerWidget {
             .filter()
             .artistEqualTo(artist.name)
             .findAll();
-        ref.read(appNavigationProvider.notifier).showCollection(
+        ref
+            .read(appNavigationProvider.notifier)
+            .showCollection(
               title: artist.name,
               art: artist.artPath,
               imageUrl: artist.artistImageUrl,

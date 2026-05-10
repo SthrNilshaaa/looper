@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'widgets/advanced_lyric_renderer.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'overlay_service.dart';
 
 enum LyricsSyncMode { line, word, char }
 
@@ -22,10 +24,14 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
   @override
   Widget build(BuildContext context) {
     final lyricsState = ref.watch(lyricsProvider);
+    final currentSong = ref.watch(
+      playbackProvider.select((s) => s.currentSong),
+    );
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Column(
       children: [
+        _buildHeader(currentSong),
         if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
         Expanded(
           child: lyricsState.isLoading
@@ -116,7 +122,23 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                       _buildSongInfoCompact(currentSong, isShort),
                       SizedBox(height: isShort ? 8 : 16),
                     ],
-                    _buildModeSelector(isShort),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _buildModeSelector(isShort),
+                        const SizedBox(width: 16),
+                        IconButton(
+                          icon: const Icon(
+                            LucideIcons.pictureInPicture2,
+                            color: Colors.white70,
+                          ),
+                          tooltip: 'Overlay Lyrics',
+                          onPressed: () {
+                            ref.read(overlayServiceProvider).toggleOverlay();
+                          },
+                        ),
+                      ],
+                    ),
                   ],
                 )
               : Row(
@@ -127,6 +149,17 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                       Expanded(child: _buildSongText(currentSong, isShort)),
                     ],
                     _buildModeSelector(isShort),
+                    const SizedBox(width: 16),
+                    IconButton(
+                      icon: const Icon(
+                        LucideIcons.pictureInPicture2,
+                        color: Colors.white70,
+                      ),
+                      tooltip: 'Overlay Lyrics',
+                      onPressed: () {
+                        ref.read(overlayServiceProvider).toggleOverlay();
+                      },
+                    ),
                   ],
                 ),
         );
@@ -141,16 +174,15 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white.withOpacity(0.05),
-        image: currentSong.artPath != null
-            ? DecorationImage(
-                image: FileImage(File(currentSong.artPath!)),
-                fit: BoxFit.cover,
-              )
-            : null,
       ),
+      clipBehavior: Clip.antiAlias,
       child: currentSong.artPath == null
           ? Icon(Icons.music_note, color: Colors.grey[600], size: size / 2)
-          : null,
+          : Image.file(
+              File(currentSong.artPath!),
+              fit: BoxFit.cover,
+              cacheWidth: size.toInt() * 2,
+            ),
     );
   }
 
@@ -189,20 +221,19 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             color: Colors.white.withOpacity(0.05),
-            image: currentSong.artPath != null
-                ? DecorationImage(
-                    image: FileImage(File(currentSong.artPath!)),
-                    fit: BoxFit.cover,
-                  )
-                : null,
           ),
+          clipBehavior: Clip.antiAlias,
           child: currentSong.artPath == null
               ? Icon(
                   Icons.music_note,
                   color: Colors.grey[600],
                   size: isShort ? 20 : 24,
                 )
-              : null,
+              : Image.file(
+                  File(currentSong.artPath!),
+                  fit: BoxFit.cover,
+                  cacheWidth: (isShort ? 40 : 50) * 2,
+                ),
         ),
         const SizedBox(width: 12),
         Flexible(

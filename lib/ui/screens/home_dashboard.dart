@@ -112,7 +112,9 @@ class HomeDashboard extends ConsumerWidget {
                         .filter()
                         .albumEqualTo(album.name)
                         .findAll();
-                    ref.read(appNavigationProvider.notifier).showCollection(
+                    ref
+                        .read(appNavigationProvider.notifier)
+                        .showCollection(
                           title: album.name,
                           subtitle: album.artist,
                           art: album.artPath,
@@ -156,8 +158,10 @@ class HomeDashboard extends ConsumerWidget {
                           album.artist ?? 'Unknown',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              const TextStyle(fontSize: 11, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -235,8 +239,10 @@ class HomeDashboard extends ConsumerWidget {
                           song.artist ?? 'Unknown',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              const TextStyle(fontSize: 11, color: Colors.grey),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Colors.grey,
+                          ),
                         ),
                       ],
                     ),
@@ -303,7 +309,9 @@ class HomeDashboard extends ConsumerWidget {
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       color: isCurrent
-                          ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.primary.withOpacity(0.5)
                           : Colors.white.withOpacity(0.02),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -405,10 +413,7 @@ class _FeaturedArtistCard extends ConsumerWidget {
   final Artist artist;
   final bool isNarrow;
 
-  const _FeaturedArtistCard({
-    required this.artist,
-    required this.isNarrow,
-  });
+  const _FeaturedArtistCard({required this.artist, required this.isNarrow});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -420,7 +425,9 @@ class _FeaturedArtistCard extends ConsumerWidget {
               .filter()
               .artistEqualTo(artist.name)
               .findAll();
-          ref.read(appNavigationProvider.notifier).showCollection(
+          ref
+              .read(appNavigationProvider.notifier)
+              .showCollection(
                 title: artist.name,
                 subtitle: 'Artist',
                 art: artist.artPath,

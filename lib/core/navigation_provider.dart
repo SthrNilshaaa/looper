@@ -99,7 +99,8 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     required List<Song> songs,
   }) {
     // Push current state to history
-    final newHistory = List<NavigationState>.from(state.history)..add(_captureCurrentState());
+    final newHistory = List<NavigationState>.from(state.history)
+      ..add(_captureCurrentState());
 
     state = state.copyWith(
       activeItem: NavItem.collectionDetail,
@@ -138,5 +139,5 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
 
 final appNavigationProvider =
     StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
-  return NavigationNotifier();
-});
+      return NavigationNotifier();
+    });

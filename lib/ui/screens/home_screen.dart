@@ -30,6 +30,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/features/library/presentation/library_grids.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import '../widgets/global_search_bar.dart';
+import 'package:looper_player/features/playback/presentation/widgets/overlay_lyrics_widget.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -83,11 +84,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final bool showWelcome = library.songs.isEmpty && !library.isScanning;
     final bool isNarrow = MediaQuery.of(context).size.width < 800;
 
+    final isOverlayMode = ref.watch(overlayModeProvider);
+
+    if (isOverlayMode) {
+      return const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: OverlayLyricsWidget(),
+      );
+    }
+
     return Scaffold(
       backgroundColor: isDynamic
           ? (playback.currentSong != null
-              ? Theme.of(context).colorScheme.background
-              : null)
+                ? Theme.of(context).colorScheme.background
+                : null)
           : null,
       drawer: isNarrow
           ? Drawer(
@@ -169,23 +179,42 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       children: [
                                         if (nav.activeItem != NavItem.lyrics)
                                           Padding(
-                                            padding: const EdgeInsets.symmetric(horizontal: 24),
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 24,
+                                            ),
                                             child: Row(
                                               children: [
                                                 AnimatedContainer(
-                                                  duration: const Duration(milliseconds: 300),
+                                                  duration: const Duration(
+                                                    milliseconds: 300,
+                                                  ),
                                                   curve: Curves.easeInOutCubic,
-                                                  width: nav.history.isEmpty ? 0 : 120,
+                                                  width: nav.history.isEmpty
+                                                      ? 0
+                                                      : 120,
                                                   child: ClipRect(
                                                     child: AnimatedScale(
-                                                      scale: nav.history.isEmpty ? 0.0 : 1.0,
-                                                      duration: const Duration(milliseconds: 300),
+                                                      scale: nav.history.isEmpty
+                                                          ? 0.0
+                                                          : 1.0,
+                                                      duration: const Duration(
+                                                        milliseconds: 300,
+                                                      ),
                                                       curve: Curves.easeOutBack,
                                                       child: Padding(
-                                                        padding: const EdgeInsets.only(right: 16),
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              right: 16,
+                                                            ),
                                                         child: _HeaderButton(
-                                                          onTap: () => ref.read(appNavigationProvider.notifier).goBack(),
-                                                          icon: LucideIcons.arrowLeft,
+                                                          onTap: () => ref
+                                                              .read(
+                                                                appNavigationProvider
+                                                                    .notifier,
+                                                              )
+                                                              .goBack(),
+                                                          icon: LucideIcons
+                                                              .arrowLeft,
                                                           label: 'Back',
                                                           isDynamic: isDynamic,
                                                         ),
@@ -193,14 +222,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                     ),
                                                   ),
                                                 ),
-                                                const Expanded(child: GlobalSearchBar()),
+                                                const Expanded(
+                                                  child: GlobalSearchBar(),
+                                                ),
                                                 // const SizedBox(width: 48),
                                                 Spacer(),
                                                 _HeaderButton(
                                                   onTap: () async {
-                                                    final String? path = await FilePicker.platform.getDirectoryPath();
+                                                    final String? path =
+                                                        await FilePicker
+                                                            .platform
+                                                            .getDirectoryPath();
                                                     if (path != null) {
-                                                      ref.read(libraryProvider.notifier).scanLibrary(path);
+                                                      ref
+                                                          .read(
+                                                            libraryProvider
+                                                                .notifier,
+                                                          )
+                                                          .scanLibrary(path);
                                                     }
                                                   },
                                                   icon: LucideIcons.plus,
@@ -236,8 +275,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-
-
 
   Widget _buildMainContent(
     NavigationState nav,
@@ -374,7 +411,9 @@ class Sidebar extends ConsumerWidget {
                             child: SvgPicture.asset(
                               'assets/main_logo.svg',
                               fit: BoxFit.contain,
-                              colorMapper: AccentColorMapper(Theme.of(context).colorScheme.primary),
+                              colorMapper: AccentColorMapper(
+                                Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                           ),
                         ],
@@ -477,11 +516,13 @@ class _HeaderButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          color: const Color.fromARGB(255, 53, 53, 53).withOpacity(isDynamic ? 0.3 : 0.1),
-          border: Border.all(
-            color: Colors.white10.withOpacity(0.1),
-            width: 1,
-          ),
+          color: const Color.fromARGB(
+            255,
+            53,
+            53,
+            53,
+          ).withOpacity(isDynamic ? 0.3 : 0.1),
+          border: Border.all(color: Colors.white10.withOpacity(0.1), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -561,5 +602,3 @@ class _SidebarItem extends StatelessWidget {
     );
   }
 }
-
-

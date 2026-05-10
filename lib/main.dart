@@ -41,9 +41,7 @@ void main(List<String> args) async {
     skipTaskbar: false,
     titleBarStyle: TitleBarStyle.hidden,
     title: 'Looper Player',
-    // fullScreen: true,
-
-
+    backgroundColor: Colors.transparent,
   );
 
   await windowManager.waitUntilReadyToShow(windowOptions, () async {
@@ -71,6 +69,7 @@ class MyApp extends ConsumerWidget {
       return MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Looper Player',
+        color: Colors.transparent,
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: colorScheme,
