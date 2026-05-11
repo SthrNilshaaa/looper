@@ -39,7 +39,8 @@ class OptimizedImage extends StatelessWidget {
           fit: fit,
           placeholder: (context, url) => placeholder ?? const SizedBox(),
           errorWidget: (context, url, error) => placeholder ?? const SizedBox(),
-          memCacheWidth: cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
+          memCacheWidth:
+              cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
         );
       } else if (File(imagePath!).existsSync()) {
         imageWidget = Image.file(
@@ -47,7 +48,8 @@ class OptimizedImage extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
-          cacheWidth: cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
+          cacheWidth:
+              cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
           cacheHeight: cacheHeight,
           errorBuilder: (context, error, stackTrace) =>
               placeholder ?? const SizedBox(),

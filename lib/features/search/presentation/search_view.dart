@@ -168,14 +168,18 @@ class SearchView extends ConsumerWidget {
     );
   }
 
-  Widget _buildYouTubeResults(WidgetRef ref, BuildContext context, SearchResults localResults) {
+  Widget _buildYouTubeResults(
+    WidgetRef ref,
+    BuildContext context,
+    SearchResults localResults,
+  ) {
     final ytResultsAsync = ref.watch(youtubeSearchResultsProvider);
 
     return ytResultsAsync.when(
       data: (tracks) {
         if (tracks.isEmpty) {
-          if (localResults.songs.isEmpty && 
-              localResults.albums.isEmpty && 
+          if (localResults.songs.isEmpty &&
+              localResults.albums.isEmpty &&
               localResults.artists.isEmpty) {
             return const Center(
               child: Padding(
@@ -480,7 +484,7 @@ class _YouTubeResultTile extends ConsumerWidget {
         style: const TextStyle(fontSize: 14),
       ),
       subtitle: Text(
-        track.artist,
+        track.artists,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(fontSize: 12, color: Colors.grey),

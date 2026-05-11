@@ -11,7 +11,6 @@ import 'package:isar/isar.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'dart:io';
 import '../../search/data/youtube_music_service.dart';
-import '../../search/presentation/youtube_search_notifier.dart';
 
 enum RepeatMode { off, all, one }
 
@@ -160,7 +159,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       );
 
       try {
-        final streamUrl = await ref.read(youtubeMusicServiceProvider).getStreamUrl(videoId!);
+        final streamUrl = await ref
+            .read(youtubeMusicServiceProvider)
+            .getStreamUrl(videoId!);
         if (streamUrl == null || streamUrl.isEmpty) {
           state = state.copyWith(isLoading: false, isPlaying: false);
           return;
@@ -168,12 +169,18 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         finalPath = streamUrl;
 
         print('Opening YouTube stream...');
-        await ref.read(audioServiceProvider).play(finalPath, metadata: metadata);
+        await ref
+            .read(audioServiceProvider)
+            .play(finalPath, metadata: metadata);
 
         // Wait briefly for MediaKit to initialize
         await Future.delayed(const Duration(milliseconds: 800));
 
-        final mediaDuration = ref.read(audioServiceProvider).player.state.duration;
+        final mediaDuration = ref
+            .read(audioServiceProvider)
+            .player
+            .state
+            .duration;
 
         // Detect failed open
         if (mediaDuration == Duration.zero) {
@@ -456,17 +463,35 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
   }
 
+  int? _parseDuration(String? durationString) {
+    if (durationString == null || durationString.isEmpty) return null;
+    final parts = durationString.split(':');
+    if (parts.length == 2) {
+      final minutes = int.tryParse(parts[0]) ?? 0;
+      final seconds = int.tryParse(parts[1]) ?? 0;
+      return (minutes * 60 + seconds) * 1000;
+    } else if (parts.length == 3) {
+      final hours = int.tryParse(parts[0]) ?? 0;
+      final minutes = int.tryParse(parts[1]) ?? 0;
+      final seconds = int.tryParse(parts[2]) ?? 0;
+      return (hours * 3600 + minutes * 60 + seconds) * 1000;
+    }
+    return null;
+  }
+
   Future<void> playYouTube(YouTubeTrack track) async {
     // Create a temporary song object
     // Note: This won't be saved to Isar unless we explicitly do it.
     // We use a dummy ID for temporary songs or handle them specially.
     final song = Song()
-      ..id = -1 // Dummy ID
+      ..id =
+          -1 // Dummy ID
       ..title = track.title
-      ..artist = track.artist
+      ..artist = track.artists
       ..path = 'youtube://${track.videoId}'
-      ..duration = track.duration?.inMilliseconds
-      ..artPath = track.thumbnailUrl // For network images, we'll need to handle this in UI
+      ..duration = _parseDuration(track.duration)
+      ..artPath = track
+          .thumbnailUrl // For network images, we'll need to handle this in UI
       ..dateAdded = DateTime.now();
 
     await play(song);

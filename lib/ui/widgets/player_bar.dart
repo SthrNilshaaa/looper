@@ -310,31 +310,31 @@ class _PremiumPlayerBar extends StatelessWidget {
               color: colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-              child: isLoading
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      child: isPlaying
-                          ? Icon(
-                              Icons.pause,
-                              key: const ValueKey('pause'),
-                              color: Colors.white,
-                              size: isVeryNarrow ? 12 : 18,
-                            )
-                          : Icon(
-                              Icons.play_arrow_sharp,
-                              key: const ValueKey('play'),
-                              color: Colors.white,
-                              size: isVeryNarrow ? 12 : 18,
-                            ),
+            child: isLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
                     ),
+                  )
+                : AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: isPlaying
+                        ? Icon(
+                            Icons.pause,
+                            key: const ValueKey('pause'),
+                            color: Colors.white,
+                            size: isVeryNarrow ? 12 : 18,
+                          )
+                        : Icon(
+                            Icons.play_arrow_sharp,
+                            key: const ValueKey('play'),
+                            color: Colors.white,
+                            size: isVeryNarrow ? 12 : 18,
+                          ),
+                  ),
           ),
         ),
         const SizedBox(width: 4),

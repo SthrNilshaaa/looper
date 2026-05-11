@@ -78,7 +78,10 @@ dependencies:
   dbus: ^0.7.12
   local_notifier: ^0.1.6
   animate_gradient: ^0.0.4
-  youtube_explode_dart: ^2.2.2
+  yt_flutter_musicapi:
+    git:
+      url: https://github.com/golanpiyush/yt_flutter_musicapi.git
+      ref: main
 
 dev_dependencies:
   flutter_test:
