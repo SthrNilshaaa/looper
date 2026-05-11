@@ -20,7 +20,7 @@ class AudioService {
         logLevel: MPVLogLevel.debug,
       ),
     );
-    
+
     // Log errors for debugging
     player.stream.error.listen((error) {
       debugPrint('MediaKit Player Error: $error');
@@ -129,7 +129,8 @@ class AudioService {
 
   Future<void> play(String path, {Map<String, dynamic>? metadata}) async {
     final extras = metadata?.map((k, v) => MapEntry(k, v.toString()));
-    final headers = path.contains('youtube.com') || path.contains('googlevideo.com')
+    final headers =
+        path.contains('youtube.com') || path.contains('googlevideo.com')
         ? {
             'User-Agent':
                 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
