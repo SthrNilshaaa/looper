@@ -189,7 +189,8 @@ class _SongResultCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
+    final isCurrent =
+        ref.watch(playbackProvider.select((s) => s.currentSong?.id)) == song.id;
 
     return InkWell(
       onTap: () => ref.read(playbackProvider.notifier).play(song),
