@@ -299,7 +299,10 @@ class HomeDashboard extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final song = songs[index];
                 final isCurrent =
-                    ref.watch(playbackProvider).currentSong?.id == song.id;
+                    ref.watch(
+                      playbackProvider.select((s) => s.currentSong?.id),
+                    ) ==
+                    song.id;
 
                 return InkWell(
                   onTap: () => ref.read(playbackProvider.notifier).play(song),
