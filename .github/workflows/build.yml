@@ -40,14 +40,13 @@ jobs:
       - name: Install Flutter Dependencies
         run: |
           flutter pub get
-          flutter pub global activate flutter_distributor
+          flutter pub global activate fastforge
 
       - name: Build All Formats
         run: |
-          # Use flutter_distributor to build all configured formats
-          # This will build deb, rpm, appimage, and tar.gz in one go
+          # Use fastforge (successor to flutter_distributor)
           export PATH="$PATH":"$HOME/.pub-cache/bin"
-          flutter_distributor release --name dev
+          fastforge release --name dev
 
       - name: Create Release
         uses: softprops/action-gh-release@v1

@@ -403,15 +403,10 @@ class _SongTile extends ConsumerWidget {
           child: song.artPath != null
               ? ClipRRect(
                   borderRadius: BorderRadius.circular(4),
-                  child: Image.file(
-                    File(song.artPath!),
+                  child: OptimizedImage(
+                    imagePath: song.artPath,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      debugPrint(
-                        '❌ List Image error: $error for path: ${song.artPath}',
-                      );
-                      return const Icon(LucideIcons.music, size: 20);
-                    },
+                    placeholder: const Icon(LucideIcons.music, size: 20),
                   ),
                 )
               : (isCurrent && ref.watch(playbackProvider).isPlaying

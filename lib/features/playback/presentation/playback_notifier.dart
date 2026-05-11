@@ -10,6 +10,8 @@ import 'package:metadata_god/metadata_god.dart';
 import 'package:isar/isar.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'dart:io';
+import '../../search/data/youtube_music_service.dart';
+import '../../search/presentation/youtube_search_notifier.dart';
 
 enum RepeatMode { off, all, one }
 
@@ -21,6 +23,7 @@ class PlaybackState {
   final bool isShuffle;
   final RepeatMode repeatMode;
   final double volume;
+  final bool isLoading;
 
   final List<Song> queue;
 
@@ -32,6 +35,7 @@ class PlaybackState {
     this.isShuffle = false,
     this.repeatMode = RepeatMode.off,
     this.volume = 1.0,
+    this.isLoading = false,
     this.queue = const [],
   });
 
@@ -43,6 +47,7 @@ class PlaybackState {
     bool? isShuffle,
     RepeatMode? repeatMode,
     double? volume,
+    bool? isLoading,
     List<Song>? queue,
   }) {
     return PlaybackState(
@@ -53,6 +58,7 @@ class PlaybackState {
       isShuffle: isShuffle ?? this.isShuffle,
       repeatMode: repeatMode ?? this.repeatMode,
       volume: volume ?? this.volume,
+      isLoading: isLoading ?? this.isLoading,
       queue: queue ?? this.queue,
     );
   }
@@ -132,14 +138,74 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> play(Song song) async {
     state = state.copyWith(currentSong: song);
-    final metadata = {
+    final isYouTube = song.path.startsWith('youtube://');
+    final videoId = isYouTube ? song.path.replaceFirst('youtube://', '') : null;
+
+    final metadata = <String, dynamic>{
       'title': song.title,
       'artist': song.artist ?? 'Unknown Artist',
       'album': song.album ?? 'Unknown Album',
       if (song.artPath != null) 'artPath': song.artPath!,
       if (song.duration != null) 'duration': song.duration!,
+      if (videoId != null) 'videoId': videoId,
     };
-    await ref.read(audioServiceProvider).play(song.path, metadata: metadata);
+
+    String finalPath = song.path;
+    if (isYouTube) {
+      state = state.copyWith(
+        isLoading: true,
+        isPlaying: false,
+        position: Duration.zero,
+        duration: Duration.zero,
+      );
+
+      try {
+        final streamUrl = await ref.read(youtubeMusicServiceProvider).getStreamUrl(videoId!);
+        if (streamUrl == null || streamUrl.isEmpty) {
+          state = state.copyWith(isLoading: false, isPlaying: false);
+          return;
+        }
+        finalPath = streamUrl;
+
+        print('Opening YouTube stream...');
+        await ref.read(audioServiceProvider).play(finalPath, metadata: metadata);
+
+        // Wait briefly for MediaKit to initialize
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        final mediaDuration = ref.read(audioServiceProvider).player.state.duration;
+
+        // Detect failed open
+        if (mediaDuration == Duration.zero) {
+          print('Media failed to initialize');
+          state = state.copyWith(
+            isLoading: false,
+            isPlaying: false,
+            duration: Duration.zero,
+            position: Duration.zero,
+          );
+          return;
+        }
+
+        state = state.copyWith(
+          isLoading: false,
+          isPlaying: true,
+          duration: mediaDuration,
+        );
+      } catch (e, stack) {
+        print('YouTube playback failed: $e');
+        print(stack);
+        state = state.copyWith(
+          isLoading: false,
+          isPlaying: false,
+          duration: Duration.zero,
+          position: Duration.zero,
+        );
+        return;
+      }
+    } else {
+      await ref.read(audioServiceProvider).play(finalPath, metadata: metadata);
+    }
 
     await windowManager.setTitle(
       'Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}',
@@ -388,6 +454,22 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     } else {
       setVolume(_lastVolume > 0 ? _lastVolume : 1.0);
     }
+  }
+
+  Future<void> playYouTube(YouTubeTrack track) async {
+    // Create a temporary song object
+    // Note: This won't be saved to Isar unless we explicitly do it.
+    // We use a dummy ID for temporary songs or handle them specially.
+    final song = Song()
+      ..id = -1 // Dummy ID
+      ..title = track.title
+      ..artist = track.artist
+      ..path = 'youtube://${track.videoId}'
+      ..duration = track.duration?.inMilliseconds
+      ..artPath = track.thumbnailUrl // For network images, we'll need to handle this in UI
+      ..dateAdded = DateTime.now();
+
+    await play(song);
   }
 }
 

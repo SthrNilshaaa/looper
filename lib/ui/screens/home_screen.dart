@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
+import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:animations/animations.dart';
 import 'package:window_manager/window_manager.dart';
@@ -117,8 +118,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               Positioned.fill(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 1000),
-                  child: Image.file(
-                    File(playback.currentSong!.artPath!),
+                  child: OptimizedImage(
+                    imagePath: playback.currentSong!.artPath,
                     key: ValueKey(playback.currentSong!.artPath!),
                     fit: BoxFit.cover,
                   ),
@@ -529,12 +530,16 @@ class _HeaderButton extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: Colors.white),
             const SizedBox(width: 10),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.normal,
+            Flexible(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.normal,
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ),
           ],

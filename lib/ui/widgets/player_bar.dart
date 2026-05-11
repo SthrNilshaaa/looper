@@ -48,6 +48,7 @@ class PlayerBar extends ConsumerWidget {
       onFavoriteToggle: () =>
           ref.read(playbackProvider.notifier).toggleFavorite(),
       isFavorite: song.isFavorite,
+      isLoading: playback.isLoading,
       isLyricsActive:
           ref.watch(appNavigationProvider).activeItem == NavItem.lyrics,
       isQueueActive:
@@ -82,6 +83,7 @@ class _PremiumPlayerBar extends StatelessWidget {
   final bool isLyricsActive;
   final bool isQueueActive;
   final bool isDynamic;
+  final bool isLoading;
 
   const _PremiumPlayerBar({
     required this.title,
@@ -108,6 +110,7 @@ class _PremiumPlayerBar extends StatelessWidget {
     this.isLyricsActive = false,
     this.isQueueActive = false,
     this.isDynamic = false,
+    this.isLoading = false,
   });
 
   @override
@@ -307,19 +310,31 @@ class _PremiumPlayerBar extends StatelessWidget {
               color: colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: isPlaying
-                ? Icon(
-                    // LucideIcons.pause,
-                    Icons.pause,
-                    color: Colors.white,
-                    size: isVeryNarrow ? 12 : 18,
-                  )
-                : Icon(
-                    // LucideIcons.play,
-                    Icons.play_arrow_sharp,
-                    color: Colors.white,
-                    size: isVeryNarrow ? 12 : 18,
-                  ),
+              child: isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 200),
+                      child: isPlaying
+                          ? Icon(
+                              Icons.pause,
+                              key: const ValueKey('pause'),
+                              color: Colors.white,
+                              size: isVeryNarrow ? 12 : 18,
+                            )
+                          : Icon(
+                              Icons.play_arrow_sharp,
+                              key: const ValueKey('play'),
+                              color: Colors.white,
+                              size: isVeryNarrow ? 12 : 18,
+                            ),
+                    ),
           ),
         ),
         const SizedBox(width: 4),
@@ -553,7 +568,10 @@ class _ExpressiveSlider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double progress = duration.inMilliseconds > 0
+    final bool hasValidDuration =
+        duration.inMilliseconds > 0 && position.inMilliseconds >= 0;
+
+    final double progress = hasValidDuration
         ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
         : 0.0;
 
@@ -603,7 +621,10 @@ class _ExpressiveSlider extends StatelessWidget {
               const SizedBox(width: 12),
               SizedBox(
                 width: 45,
-                child: _buildAnimatedDuration(_formatDuration(duration), false),
+                child: _buildAnimatedDuration(
+                  hasValidDuration ? _formatDuration(duration) : '--:--',
+                  false,
+                ),
               ),
             ],
           ],

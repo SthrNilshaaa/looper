@@ -15,8 +15,17 @@ class AudioService {
 
   AudioService() {
     player = Player(
-      configuration: const PlayerConfiguration(title: 'Looper Player'),
+      configuration: const PlayerConfiguration(
+        title: 'Looper Player',
+        logLevel: MPVLogLevel.debug,
+      ),
     );
+    
+    // Log errors for debugging
+    player.stream.error.listen((error) {
+      debugPrint('MediaKit Player Error: $error');
+    });
+
     _initMpris();
   }
 
@@ -120,7 +129,24 @@ class AudioService {
 
   Future<void> play(String path, {Map<String, dynamic>? metadata}) async {
     final extras = metadata?.map((k, v) => MapEntry(k, v.toString()));
-    await player.open(Media(path, extras: extras));
+    final headers = path.contains('youtube.com') || path.contains('googlevideo.com')
+        ? {
+            'User-Agent':
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            'Referer': metadata?['videoId'] != null
+                ? 'https://www.youtube.com/watch?v=${metadata!['videoId']}'
+                : 'https://www.youtube.com/',
+            'Origin': 'https://www.youtube.com',
+            'Accept': '*/*',
+            'Range': 'bytes=0-',
+          }
+        : {
+            'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+          };
+
+    await player.open(Media(path, extras: extras, httpHeaders: headers));
+    await player.play();
 
     if (_mprisPlayer != null && metadata != null) {
       final mprisMetadata = <String, DBusValue>{};

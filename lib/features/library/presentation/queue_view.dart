@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/search/presentation/search_view.dart';
 
 class QueueView extends ConsumerWidget {
   const QueueView({super.key});
@@ -85,7 +86,7 @@ class QueueView extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(8),
                               image: song.artPath != null
                                   ? DecorationImage(
-                                      image: FileImage(File(song.artPath!)),
+                                      image: getImageProvider(song.artPath),
                                       fit: BoxFit.cover,
                                     )
                                   : null,

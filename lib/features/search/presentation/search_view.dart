@@ -9,6 +9,17 @@ import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/core/navigation_provider.dart';
+import 'package:looper_player/features/search/presentation/youtube_search_notifier.dart';
+import '../data/youtube_music_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+ImageProvider getImageProvider(String? path) {
+  if (path == null) return const AssetImage('assets/placeholder.png');
+  if (path.startsWith('http')) {
+    return CachedNetworkImageProvider(path);
+  }
+  return FileImage(File(path));
+}
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -99,12 +110,6 @@ class SearchView extends ConsumerWidget {
     WidgetRef ref,
     BuildContext context,
   ) {
-    if (results.songs.isEmpty &&
-        results.albums.isEmpty &&
-        results.artists.isEmpty) {
-      return const Center(child: Text('No results found'));
-    }
-
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       children: [
@@ -156,7 +161,64 @@ class SearchView extends ConsumerWidget {
             physics: const NeverScrollableScrollPhysics(),
           ),
         ],
+        const SizedBox(height: 24),
+        _buildYouTubeResults(ref, context, results),
+        const SizedBox(height: 40),
       ],
+    );
+  }
+
+  Widget _buildYouTubeResults(WidgetRef ref, BuildContext context, SearchResults localResults) {
+    final ytResultsAsync = ref.watch(youtubeSearchResultsProvider);
+
+    return ytResultsAsync.when(
+      data: (tracks) {
+        if (tracks.isEmpty) {
+          if (localResults.songs.isEmpty && 
+              localResults.albums.isEmpty && 
+              localResults.artists.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.only(top: 100),
+                child: Text('No results found'),
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.play_circle_fill, color: Colors.red, size: 20),
+                SizedBox(width: 8),
+                Text(
+                  'YouTube Music',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: tracks.length,
+              itemBuilder: (context, index) {
+                final track = tracks[index];
+                return _YouTubeResultTile(track: track);
+              },
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(20.0),
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (e, s) => const SizedBox.shrink(),
     );
   }
 
@@ -218,7 +280,7 @@ class _SongResultCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 image: song.artPath != null
                     ? DecorationImage(
-                        image: FileImage(File(song.artPath!)),
+                        image: getImageProvider(song.artPath),
                         fit: BoxFit.cover,
                       )
                     : null,
@@ -303,7 +365,7 @@ class _ArtistResultCard extends ConsumerWidget {
               radius: 40,
               backgroundColor: Colors.grey.withOpacity(0.1),
               backgroundImage: artist.artPath != null
-                  ? FileImage(File(artist.artPath!))
+                  ? getImageProvider(artist.artPath)
                   : null,
               child: artist.artPath == null
                   ? const Icon(LucideIcons.user)
@@ -357,7 +419,7 @@ class _AlbumResultCard extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(12),
                 image: album.artPath != null
                     ? DecorationImage(
-                        image: FileImage(File(album.artPath!)),
+                        image: getImageProvider(album.artPath),
                         fit: BoxFit.cover,
                       )
                     : null,
@@ -388,6 +450,50 @@ class _AlbumResultCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _YouTubeResultTile extends ConsumerWidget {
+  final YouTubeTrack track;
+  const _YouTubeResultTile({required this.track});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: CachedNetworkImage(
+          imageUrl: track.thumbnailUrl,
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(color: Colors.white10),
+          errorWidget: (context, url, error) => const Icon(Icons.music_note),
+        ),
+      ),
+      title: Text(
+        track.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 14),
+      ),
+      subtitle: Text(
+        track.artist,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 12, color: Colors.grey),
+      ),
+      trailing: IconButton(
+        icon: const Icon(Icons.play_arrow),
+        onPressed: () {
+          ref.read(playbackProvider.notifier).playYouTube(track);
+        },
+      ),
+      onTap: () {
+        ref.read(playbackProvider.notifier).playYouTube(track);
+      },
     );
   }
 }

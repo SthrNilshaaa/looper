@@ -74,14 +74,20 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
 
     try {
       _isUpdating = true;
-      final file = File(imagePath);
-      if (!await file.exists()) {
-        _isUpdating = false;
-        return;
+      ImageProvider provider;
+      if (imagePath.startsWith('http')) {
+        provider = NetworkImage(imagePath);
+      } else {
+        final file = File(imagePath);
+        if (!await file.exists()) {
+          _isUpdating = false;
+          return;
+        }
+        provider = FileImage(file);
       }
 
       final palette = await PaletteGenerator.fromImageProvider(
-        ResizeImage(FileImage(file), width: 100, height: 100),
+        ResizeImage(provider, width: 100, height: 100),
         maximumColorCount: 8,
       );
 

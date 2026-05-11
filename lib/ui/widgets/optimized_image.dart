@@ -30,17 +30,31 @@ class OptimizedImage extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget imageWidget;
 
-    if (imagePath != null && File(imagePath!).existsSync()) {
-      imageWidget = Image.file(
-        File(imagePath!),
-        width: width,
-        height: height,
-        fit: fit,
-        cacheWidth: cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
-        cacheHeight: cacheHeight,
-        errorBuilder: (context, error, stackTrace) =>
-            placeholder ?? const SizedBox(),
-      );
+    if (imagePath != null && imagePath!.isNotEmpty) {
+      if (imagePath!.startsWith('http')) {
+        imageWidget = CachedNetworkImage(
+          imageUrl: imagePath!,
+          width: width,
+          height: height,
+          fit: fit,
+          placeholder: (context, url) => placeholder ?? const SizedBox(),
+          errorWidget: (context, url, error) => placeholder ?? const SizedBox(),
+          memCacheWidth: cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
+        );
+      } else if (File(imagePath!).existsSync()) {
+        imageWidget = Image.file(
+          File(imagePath!),
+          width: width,
+          height: height,
+          fit: fit,
+          cacheWidth: cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
+          cacheHeight: cacheHeight,
+          errorBuilder: (context, error, stackTrace) =>
+              placeholder ?? const SizedBox(),
+        );
+      } else {
+        imageWidget = placeholder ?? const SizedBox();
+      }
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
       imageWidget = CachedNetworkImage(
         imageUrl: imageUrl!,
