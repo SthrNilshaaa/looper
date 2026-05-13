@@ -126,12 +126,7 @@ class _PremiumPlayerBar extends StatelessWidget {
           height: 80.s,
           margin: Platform.isAndroid || Platform.isIOS
               ? EdgeInsets.zero
-              : EdgeInsets.only(
-                  left: 48.s,
-                  right: 48.s,
-                  bottom: 32.sp,
-                  top: 0,
-                ),
+              : EdgeInsets.only(left: 48.s, right: 48.s, bottom: 32.sp, top: 0),
           decoration: BoxDecoration(
             color: isDynamic
                 ? colorScheme.primary.withOpacity(0.04)

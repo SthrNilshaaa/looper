@@ -133,7 +133,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     } catch (e) {
       print('❌ Error during scan: $e');
     }
-    
+
     state = state.copyWith(isScanning: false);
     print('🏁 Scan finished for: $path');
   }

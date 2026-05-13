@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:media_kit/media_kit.dart';
 import 'package:dbus/dbus.dart';
 import 'mpris.dart';
+import 'package:audio_service/audio_service.dart' as asrv;
+import 'audio_handler.dart';
 
 class AudioService {
   late final Player player;
   MPRISPlayer? _mprisPlayer;
   DBusClient? _dBusClient;
+  MyAudioHandler? _audioHandler;
 
   // Callbacks for MPRIS controls
   void Function()? onNext;
@@ -18,6 +21,33 @@ class AudioService {
       configuration: const PlayerConfiguration(title: 'Looper Player'),
     );
     _initMpris();
+    _initAndroidAudioHandler();
+  }
+
+  Future<void> _initAndroidAudioHandler() async {
+    if (!Platform.isAndroid) return;
+
+    try {
+      _audioHandler = await asrv.AudioService.init(
+        builder: () => MyAudioHandler(player),
+        config: const asrv.AudioServiceConfig(
+          androidNotificationChannelId:
+              'com.example.looper_player.channel.audio',
+          androidNotificationChannelName: 'Audio Playback',
+          androidNotificationOngoing: true,
+        ),
+      );
+
+      _audioHandler?.onNext = () {
+        if (onNext != null) onNext!();
+      };
+
+      _audioHandler?.onPrevious = () {
+        if (onPrevious != null) onPrevious!();
+      };
+    } catch (e) {
+      debugPrint('Failed to init audio handler: $e');
+    }
   }
 
   Future<void> _initMpris() async {
@@ -121,6 +151,25 @@ class AudioService {
   Future<void> play(String path, {Map<String, dynamic>? metadata}) async {
     final extras = metadata?.map((k, v) => MapEntry(k, v.toString()));
     await player.open(Media(path, extras: extras));
+
+    if (Platform.isAndroid && _audioHandler != null && metadata != null) {
+      final item = asrv.MediaItem(
+        id: path,
+        album: metadata['album']?.toString(),
+        title: metadata['title']?.toString() ?? 'Unknown Title',
+        artist: metadata['artist']?.toString(),
+        duration: metadata['duration'] != null
+            ? Duration(
+                milliseconds:
+                    int.tryParse(metadata['duration'].toString()) ?? 0,
+              )
+            : null,
+        artUri: metadata['artPath'] != null
+            ? Uri.file(metadata['artPath'])
+            : null,
+      );
+      _audioHandler?.updateMediaItem(item);
+    }
 
     if (_mprisPlayer != null && metadata != null) {
       final mprisMetadata = <String, DBusValue>{};

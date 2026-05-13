@@ -92,10 +92,10 @@ class HomeDashboard extends ConsumerWidget {
       children: [
         Text(
           'My Albums',
-              style: TextStyle(
-                fontSize: (isNarrow ? 14 : 18).ts,
-                fontWeight: FontWeight.w400,
-              ),
+          style: TextStyle(
+            fontSize: (isNarrow ? 14 : 18).ts,
+            fontWeight: FontWeight.w400,
+          ),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -186,10 +186,10 @@ class HomeDashboard extends ConsumerWidget {
       children: [
         Text(
           'Recently Played',
-              style: TextStyle(
-                fontSize: (isNarrow ? 14 : 18).ts,
-                fontWeight: FontWeight.w400,
-              ),
+          style: TextStyle(
+            fontSize: (isNarrow ? 14 : 18).ts,
+            fontWeight: FontWeight.w400,
+          ),
         ),
         const SizedBox(height: 16),
         SizedBox(

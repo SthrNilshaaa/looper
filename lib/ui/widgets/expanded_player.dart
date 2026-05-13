@@ -13,11 +13,17 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:looper_player/ui/screens/android/android_expanded_player.dart';
+
 class ExpandedPlayer extends ConsumerWidget {
   const ExpandedPlayer({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (Platform.isAndroid) {
+      return const AndroidExpandedPlayer();
+    }
+
     final playback = ref.watch(playbackProvider);
     final song = playback.currentSong;
     final colorScheme = Theme.of(context).colorScheme;
@@ -32,10 +38,7 @@ class ExpandedPlayer extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              colorScheme.primary.withOpacity(0.2),
-              Colors.black,
-            ],
+            colors: [colorScheme.primary.withOpacity(0.2), Colors.black],
           ),
         ),
         child: SafeArea(
@@ -48,8 +51,13 @@ class ExpandedPlayer extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
-                      icon: const Icon(LucideIcons.chevronDown, color: Colors.white),
-                      onPressed: () => ref.read(appNavigationProvider.notifier).setPlayerExpansion(false),
+                      icon: const Icon(
+                        LucideIcons.chevronDown,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => ref
+                          .read(appNavigationProvider.notifier)
+                          .setPlayerExpansion(false),
                     ),
                     Text(
                       'NOW PLAYING',
@@ -61,7 +69,10 @@ class ExpandedPlayer extends ConsumerWidget {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(LucideIcons.moreVertical, color: Colors.white),
+                      icon: const Icon(
+                        LucideIcons.moreVertical,
+                        color: Colors.white,
+                      ),
                       onPressed: () {},
                     ),
                   ],
@@ -152,15 +163,21 @@ class ExpandedPlayer extends ConsumerWidget {
                         trackHeight: 2,
                         activeTrackColor: colorScheme.primary,
                         inactiveTrackColor: Colors.white10,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                        thumbShape: const RoundSliderThumbShape(
+                          enabledThumbRadius: 6,
+                        ),
                         overlayShape: SliderComponentShape.noOverlay,
                       ),
                       child: SquigglySlider(
                         value: playback.duration.inMilliseconds > 0
-                            ? (playback.position.inMilliseconds / playback.duration.inMilliseconds).clamp(0.0, 1.0)
+                            ? (playback.position.inMilliseconds /
+                                      playback.duration.inMilliseconds)
+                                  .clamp(0.0, 1.0)
                             : 0.0,
                         onChanged: (val) {
-                          ref.read(playbackProvider.notifier).seek(playback.duration * val);
+                          ref
+                              .read(playbackProvider.notifier)
+                              .seek(playback.duration * val);
                         },
                         activeColor: colorScheme.primary,
                         inactiveColor: Colors.white10,
@@ -175,11 +192,17 @@ class ExpandedPlayer extends ConsumerWidget {
                       children: [
                         Text(
                           _formatDuration(playback.position),
-                          style: TextStyle(color: Colors.white60, fontSize: 12.ts),
+                          style: TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12.ts,
+                          ),
                         ),
                         Text(
                           _formatDuration(playback.duration),
-                          style: TextStyle(color: Colors.white60, fontSize: 12.ts),
+                          style: TextStyle(
+                            color: Colors.white60,
+                            fontSize: 12.ts,
+                          ),
                         ),
                       ],
                     ),
@@ -197,18 +220,29 @@ class ExpandedPlayer extends ConsumerWidget {
                   children: [
                     IconButton(
                       icon: Icon(
-                        playback.isShuffle ? LucideIcons.shuffle : LucideIcons.shuffle,
-                        color: playback.isShuffle ? colorScheme.primary : Colors.white60,
+                        playback.isShuffle
+                            ? LucideIcons.shuffle
+                            : LucideIcons.shuffle,
+                        color: playback.isShuffle
+                            ? colorScheme.primary
+                            : Colors.white60,
                         size: 24.s,
                       ),
-                      onPressed: () => ref.read(playbackProvider.notifier).toggleShuffle(),
+                      onPressed: () =>
+                          ref.read(playbackProvider.notifier).toggleShuffle(),
                     ),
                     IconButton(
-                      icon: Icon(LucideIcons.skipBack, color: Colors.white, size: 32.s),
-                      onPressed: () => ref.read(playbackProvider.notifier).skipPrevious(),
+                      icon: Icon(
+                        LucideIcons.skipBack,
+                        color: Colors.white,
+                        size: 32.s,
+                      ),
+                      onPressed: () =>
+                          ref.read(playbackProvider.notifier).skipPrevious(),
                     ),
                     GestureDetector(
-                      onTap: () => ref.read(playbackProvider.notifier).togglePlay(),
+                      onTap: () =>
+                          ref.read(playbackProvider.notifier).togglePlay(),
                       child: Container(
                         width: 72.s,
                         height: 72.s,
@@ -231,8 +265,13 @@ class ExpandedPlayer extends ConsumerWidget {
                       ),
                     ),
                     IconButton(
-                      icon: Icon(LucideIcons.skipForward, color: Colors.white, size: 32.s),
-                      onPressed: () => ref.read(playbackProvider.notifier).skipNext(),
+                      icon: Icon(
+                        LucideIcons.skipForward,
+                        color: Colors.white,
+                        size: 32.s,
+                      ),
+                      onPressed: () =>
+                          ref.read(playbackProvider.notifier).skipNext(),
                     ),
                     IconButton(
                       icon: Icon(
@@ -261,24 +300,43 @@ class ExpandedPlayer extends ConsumerWidget {
                   children: [
                     IconButton(
                       icon: Icon(
-                        song.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        song.isFavorite
+                            ? Icons.favorite
+                            : Icons.favorite_border,
                         color: song.isFavorite ? Colors.red : Colors.white60,
                         size: 24.s,
                       ),
-                      onPressed: () => ref.read(playbackProvider.notifier).toggleFavorite(),
+                      onPressed: () =>
+                          ref.read(playbackProvider.notifier).toggleFavorite(),
                     ),
                     IconButton(
-                      icon: Icon(LucideIcons.listMusic, color: Colors.white60, size: 24.s),
+                      icon: Icon(
+                        LucideIcons.listMusic,
+                        color: Colors.white60,
+                        size: 24.s,
+                      ),
                       onPressed: () {
-                        ref.read(appNavigationProvider.notifier).setPlayerExpansion(false);
-                        ref.read(appNavigationProvider.notifier).setItem(NavItem.queue);
+                        ref
+                            .read(appNavigationProvider.notifier)
+                            .setPlayerExpansion(false);
+                        ref
+                            .read(appNavigationProvider.notifier)
+                            .setItem(NavItem.queue);
                       },
                     ),
                     IconButton(
-                      icon: Icon(LucideIcons.languages, color: Colors.white60, size: 24.s),
+                      icon: Icon(
+                        LucideIcons.languages,
+                        color: Colors.white60,
+                        size: 24.s,
+                      ),
                       onPressed: () {
-                        ref.read(appNavigationProvider.notifier).setPlayerExpansion(false);
-                        ref.read(appNavigationProvider.notifier).setItem(NavItem.lyrics);
+                        ref
+                            .read(appNavigationProvider.notifier)
+                            .setPlayerExpansion(false);
+                        ref
+                            .read(appNavigationProvider.notifier)
+                            .setItem(NavItem.lyrics);
                       },
                     ),
                   ],

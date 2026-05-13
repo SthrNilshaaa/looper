@@ -82,7 +82,9 @@ class WelcomeScreen extends ConsumerWidget {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Storage permissions are required to scan your library'),
+                                content: Text(
+                                  'Storage permissions are required to scan your library',
+                                ),
                               ),
                             );
                           }
@@ -146,8 +148,8 @@ class WelcomeScreen extends ConsumerWidget {
     if (!Platform.isAndroid) return false;
     final audioStatus = await Permission.audio.status;
     if (audioStatus.isGranted || audioStatus.isLimited) return true;
-    
+
     final request = await Permission.audio.request();
-    return !request.isRestricted; 
+    return !request.isRestricted;
   }
 }

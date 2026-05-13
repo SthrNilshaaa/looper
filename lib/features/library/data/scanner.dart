@@ -26,7 +26,7 @@ class LibraryScanner {
       print('❌ Scanner: Directory does not exist: $path');
       return;
     }
-    
+
     final List<File> filesToProcess = [];
     try {
       await for (final entity in dir.list(recursive: true, followLinks: true)) {
@@ -40,7 +40,7 @@ class LibraryScanner {
     } catch (e) {
       print('❌ Scanner: Error listing files: $e');
     }
-    
+
     print('🎵 Found ${filesToProcess.length} audio files to process.');
 
     if (filesToProcess.isEmpty) return;
