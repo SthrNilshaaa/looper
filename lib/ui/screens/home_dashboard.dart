@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:flutter_svg/svg.dart';
@@ -29,9 +30,9 @@ class HomeDashboard extends ConsumerWidget {
 
         return ListView(
           padding: EdgeInsets.only(
-            top: isNarrow ? 4 : 8,
-            left: isNarrow ? 16 : 32,
-            right: isNarrow ? 16 : 32,
+            top: (isNarrow ? 4 : 8).s,
+            left: (isNarrow ? 16 : 32).s,
+            right: (isNarrow ? 16 : 32).s,
           ),
           children: [
             if (showLogo)
@@ -40,7 +41,7 @@ class HomeDashboard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    height: 50,
+                    height: 50.s,
                     child: SvgPicture.asset(
                       'assets/main_logo.svg',
                       fit: BoxFit.contain,
@@ -91,10 +92,10 @@ class HomeDashboard extends ConsumerWidget {
       children: [
         Text(
           'My Albums',
-          style: TextStyle(
-            fontSize: isNarrow ? 14 : 18,
-            fontWeight: FontWeight.w400,
-          ),
+              style: TextStyle(
+                fontSize: (isNarrow ? 14 : 18).ts,
+                fontWeight: FontWeight.w400,
+              ),
         ),
         const SizedBox(height: 16),
         SizedBox(
@@ -185,10 +186,10 @@ class HomeDashboard extends ConsumerWidget {
       children: [
         Text(
           'Recently Played',
-          style: TextStyle(
-            fontSize: isNarrow ? 14 : 18,
-            fontWeight: FontWeight.w400,
-          ),
+              style: TextStyle(
+                fontSize: (isNarrow ? 14 : 18).ts,
+                fontWeight: FontWeight.w400,
+              ),
         ),
         const SizedBox(height: 16),
         SizedBox(

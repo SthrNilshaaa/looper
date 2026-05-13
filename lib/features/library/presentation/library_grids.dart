@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -31,9 +32,9 @@ class AlbumsGrid extends ConsumerWidget {
 
     return albumsAsync.when(
       data: (albums) => GridView.builder(
-        padding: const EdgeInsets.all(24),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 200,
+        padding: EdgeInsets.all(24.s),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 200.s,
           childAspectRatio: 0.72,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
@@ -77,7 +78,7 @@ class _AlbumCard extends ConsumerWidget {
       borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12.s),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           color: isSelected
@@ -140,16 +141,16 @@ class _AlbumCard extends ConsumerWidget {
                 children: [
                   Text(
                     album.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.normal,
-                      fontSize: 14,
+                      fontSize: 14.ts,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     album.artist ?? 'Unknown Artist',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                    style: TextStyle(color: Colors.grey[400], fontSize: 12.ts),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -173,9 +174,9 @@ class ArtistsGrid extends ConsumerWidget {
 
     return artistsAsync.when(
       data: (artists) => GridView.builder(
-        padding: const EdgeInsets.all(24),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 180,
+        padding: EdgeInsets.all(24.s),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 180.s,
           childAspectRatio: 0.8,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
@@ -219,7 +220,7 @@ class _ArtistCard extends ConsumerWidget {
       borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12.s),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           color: isSelected
@@ -268,9 +269,9 @@ class _ArtistCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               artist.name,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.normal,
-                fontSize: 14,
+                fontSize: 14.ts,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

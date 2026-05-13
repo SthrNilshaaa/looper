@@ -60,8 +60,9 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     final folders = _ref.read(settingsProvider).libraryFolders;
     if (folders.isEmpty) {
       // If no folders saved, try default Music dir
-      String defaultPath = '${Platform.environment['HOME']}/Music';
+      String defaultPath = '';
       if (Platform.isLinux) {
+        defaultPath = '${Platform.environment['HOME']}/Music';
         try {
           final result = await Process.run('xdg-user-dir', ['MUSIC']);
           if (result.exitCode == 0 &&
@@ -71,6 +72,8 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         } catch (_) {
           // Fallback to ~/Music if xdg-user-dir fails
         }
+      } else if (Platform.isAndroid) {
+        defaultPath = '/storage/emulated/0/Music';
       }
 
       if (Directory(defaultPath).existsSync()) {
@@ -106,22 +109,33 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   }
 
   Future<void> scanLibrary(String path) async {
+    print('📂 Starting scan for: $path');
     state = state.copyWith(isScanning: true);
 
-    if (Directory(path).existsSync()) {
-      // Add to saved folders if not already there
-      final settings = _ref.read(settingsProvider);
-      if (!settings.libraryFolders.contains(path)) {
-        final newFolders = List<String>.from(settings.libraryFolders)
-          ..add(path);
-        await _ref
-            .read(settingsProvider.notifier)
-            .updateLibraryFolders(newFolders);
-      }
+    try {
+      final dir = Directory(path);
+      if (dir.existsSync()) {
+        print('✅ Directory exists: $path');
+        // Add to saved folders if not already there
+        final settings = _ref.read(settingsProvider);
+        if (!settings.libraryFolders.contains(path)) {
+          final newFolders = List<String>.from(settings.libraryFolders)
+            ..add(path);
+          await _ref
+              .read(settingsProvider.notifier)
+              .updateLibraryFolders(newFolders);
+        }
 
-      await LibraryScanner().scanDirectory(path);
+        await LibraryScanner().scanDirectory(path);
+      } else {
+        print('❌ Directory does NOT exist or is inaccessible: $path');
+      }
+    } catch (e) {
+      print('❌ Error during scan: $e');
     }
+    
     state = state.copyWith(isScanning: false);
+    print('🏁 Scan finished for: $path');
   }
 
   Future<void> toggleFavorite(Song song) async {

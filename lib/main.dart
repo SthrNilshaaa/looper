@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,13 +17,16 @@ import 'package:looper_player/core/theme_provider.dart';
 import 'package:looper_player/ui/widgets/keyboard_handler.dart';
 import 'package:looper_player/core/providers.dart';
 import 'package:local_notifier/local_notifier.dart';
+import 'core/ui_utils.dart';
 
 void main(List<String> args) async {
   final String? initialFile = args.isNotEmpty ? args.first : null;
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize LocalNotifier
-  await localNotifier.setup(appName: 'Looper Player');
+  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+    await localNotifier.setup(appName: 'Looper Player');
+  }
 
   // Initialize MetadataGod
   MetadataGod.initialize();
@@ -34,20 +38,22 @@ void main(List<String> args) async {
   await DbService.init();
 
   // Initialize Window Manager
-  await windowManager.ensureInitialized();
-  WindowOptions windowOptions = const WindowOptions(
-    size: Size(1300, 700),
-    center: true,
-    skipTaskbar: false,
-    titleBarStyle: TitleBarStyle.hidden,
-    title: 'Looper Player',
-    backgroundColor: Colors.transparent,
-  );
+  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+    await windowManager.ensureInitialized();
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(1300, 700),
+      center: true,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.hidden,
+      title: 'Looper Player',
+      backgroundColor: Colors.transparent,
+    );
 
-  await windowManager.waitUntilReadyToShow(windowOptions, () async {
-    await windowManager.show();
-    await windowManager.focus();
-  });
+    await windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
 
   runApp(
     ProviderScope(
@@ -73,7 +79,13 @@ class MyApp extends ConsumerWidget {
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: colorScheme,
-          textTheme: GoogleFonts.dmSansTextTheme(ThemeData.dark().textTheme),
+          textTheme: GoogleFonts.dmSansTextTheme(
+            ThemeData.dark().textTheme.apply(
+                  fontSizeFactor: UiUtils.scale,
+                  displayColor: Colors.white,
+                  bodyColor: Colors.white70,
+                ),
+          ),
         ),
         themeAnimationDuration: const Duration(milliseconds: 1000),
         themeAnimationCurve: Curves.easeInOut,

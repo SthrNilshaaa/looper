@@ -141,9 +141,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     };
     await ref.read(audioServiceProvider).play(song.path, metadata: metadata);
 
-    await windowManager.setTitle(
-      'Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}',
-    );
+    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+      await windowManager.setTitle(
+        'Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}',
+      );
+    }
 
     // Broadcast notification on Linux
     if (Platform.isLinux) {

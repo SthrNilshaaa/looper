@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:looper_player/core/ui_utils.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import 'package:animations/animations.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import '../widgets/player_bar.dart';
+import '../widgets/expanded_player.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/features/library/presentation/library_grids.dart';
@@ -150,7 +152,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 // Sidebar - hidden on narrow screens
                                 if (!isNarrowLayout)
                                   Container(
-                                    width: 240,
+                                    width: 240.s,
                                     decoration: BoxDecoration(
                                       color: Theme.of(context)
                                           .colorScheme
@@ -267,9 +269,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                 ),
                 // Global Player Bar always at the bottom
-                PlayerBar(),
+                if (!nav.isPlayerExpanded)
+                  GestureDetector(
+                    onVerticalDragUpdate: (details) {
+                      if (Platform.isAndroid || Platform.isIOS) {
+                        if (details.delta.dy < -10) {
+                          ref
+                              .read(appNavigationProvider.notifier)
+                              .setPlayerExpansion(true);
+                        }
+                      }
+                    },
+                    child: const PlayerBar(),
+                  ),
               ],
             ),
+            // Expanded Player View
+            if (nav.isPlayerExpanded)
+              Positioned.fill(
+                child: WillPopScope(
+                  onWillPop: () async {
+                    ref
+                        .read(appNavigationProvider.notifier)
+                        .setPlayerExpansion(false);
+                    return false;
+                  },
+                  child: const ExpandedPlayer(),
+                ),
+              ),
           ],
         ),
       ),
@@ -357,6 +384,9 @@ class CustomTitleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isAndroid || Platform.isIOS) {
+      return const SizedBox.shrink();
+    }
     return WindowCaption(
       brightness: Brightness.dark,
       backgroundColor: Colors.transparent,
@@ -512,8 +542,8 @@ class _HeaderButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
       child: Container(
-        height: 55,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        height: 55.s,
+        padding: EdgeInsets.symmetric(horizontal: 20.s),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           color: const Color.fromARGB(
@@ -527,13 +557,13 @@ class _HeaderButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: Colors.white),
-            const SizedBox(width: 10),
+            Icon(icon, size: 18.s, color: Colors.white),
+            SizedBox(width: 10.s),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 14.ts,
                 fontWeight: FontWeight.normal,
               ),
             ),
@@ -572,8 +602,8 @@ class _SidebarItem extends StatelessWidget {
         leading: customIcon != null
             ? SvgPicture.asset(
                 customIcon!,
-                width: 17,
-                height: 17,
+                width: 17.s,
+                height: 17.s,
                 colorFilter: ColorFilter.mode(
                   isSelected ? selectedColor : unselectedColor,
                   BlendMode.srcIn,
@@ -581,13 +611,13 @@ class _SidebarItem extends StatelessWidget {
               )
             : Icon(
                 icon,
-                size: 17,
+                size: 17.s,
                 color: isSelected ? selectedColor : unselectedColor,
               ),
         title: Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 14.ts,
             color: isSelected ? selectedColor : unselectedColor,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),

@@ -49,6 +49,7 @@ dependencies:
   # Audio Playback
   media_kit: ^1.1.10
   media_kit_libs_linux: ^1.1.2
+  media_kit_libs_android_audio: ^1.1.2
   media_kit_native_event_loop: ^1.0.9
 
   # Database
@@ -86,6 +87,13 @@ dev_dependencies:
   riverpod_generator: ^2.4.0
   isar_generator: ^3.1.0+1
   flutter_distributor: ^0.6.6
+  flutter_launcher_icons: ^0.13.1
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/launcher_logo.png"
+  min_sdk_android: 21
 
 flutter:
   generate: true

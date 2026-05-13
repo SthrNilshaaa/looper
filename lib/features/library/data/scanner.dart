@@ -20,18 +20,28 @@ class LibraryScanner {
   ];
 
   Future<void> scanDirectory(String path) async {
+    print('🔍 Scanning directory: $path');
     final dir = Directory(path);
-    if (!await dir.exists()) return;
-
+    if (!await dir.exists()) {
+      print('❌ Scanner: Directory does not exist: $path');
+      return;
+    }
+    
     final List<File> filesToProcess = [];
-    await for (final entity in dir.list(recursive: true, followLinks: true)) {
-      if (entity is File) {
-        final ext = p.extension(entity.path).toLowerCase();
-        if (supportedExtensions.contains(ext)) {
-          filesToProcess.add(entity);
+    try {
+      await for (final entity in dir.list(recursive: true, followLinks: true)) {
+        if (entity is File) {
+          final ext = p.extension(entity.path).toLowerCase();
+          if (supportedExtensions.contains(ext)) {
+            filesToProcess.add(entity);
+          }
         }
       }
+    } catch (e) {
+      print('❌ Scanner: Error listing files: $e');
     }
+    
+    print('🎵 Found ${filesToProcess.length} audio files to process.');
 
     if (filesToProcess.isEmpty) return;
 

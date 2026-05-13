@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter/material.dart';
 import '../../domain/lyric_models.dart';
 import '../lyrics_view.dart';
@@ -101,11 +103,11 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
       controller: _scrollController,
       physics: const BouncingScrollPhysics(),
       itemCount: widget.lines.length,
-      padding: const EdgeInsets.only(
-        top: 100,
-        bottom: 400,
-        left: 48,
-        right: 32,
+      padding: EdgeInsets.only(
+        top: 60.s,
+        bottom: (Platform.isAndroid || Platform.isIOS) ? 120.s : 400.s,
+        left: 24.s,
+        right: 24.s,
       ),
       itemBuilder: (context, index) {
         final line = widget.lines[index];

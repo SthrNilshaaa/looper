@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'dart:io';
+import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
@@ -121,19 +123,22 @@ class _PremiumPlayerBar extends StatelessWidget {
         final bool isVeryNarrow = constraints.maxWidth < 600;
 
         return Container(
-          height: 80,
-          margin: const EdgeInsets.only(
-            left: 48,
-            right: 48,
-            bottom: 32,
-            top: 0,
-          ),
+          height: 80.s,
+          margin: Platform.isAndroid || Platform.isIOS
+              ? EdgeInsets.zero
+              : EdgeInsets.only(
+                  left: 48.s,
+                  right: 48.s,
+                  bottom: 32.sp,
+                  top: 0,
+                ),
           decoration: BoxDecoration(
             color: isDynamic
                 ? colorScheme.primary.withOpacity(0.04)
-                // : Colors.white.withOpacity(0.04),
-                : Color(0xFF0E0E0E),
-            borderRadius: BorderRadius.circular(6),
+                : const Color(0xFF0E0E0E),
+            borderRadius: Platform.isAndroid || Platform.isIOS
+                ? BorderRadius.zero
+                : BorderRadius.circular(6),
             // border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
             boxShadow: [
               BoxShadow(
@@ -223,8 +228,8 @@ class _PremiumPlayerBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: isVeryNarrow ? 40 : 56,
-          height: isVeryNarrow ? 40 : 56,
+          width: (isVeryNarrow ? 40 : 56).s,
+          height: (isVeryNarrow ? 40 : 56).s,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             //color: Colors.white.withOpacity(0.05),
@@ -243,7 +248,7 @@ class _PremiumPlayerBar extends StatelessWidget {
             placeholder: Icon(
               LucideIcons.music,
               color: Colors.white24,
-              size: isVeryNarrow ? 16 : 24,
+              size: (isVeryNarrow ? 16 : 24).s,
             ),
           ),
         ),
@@ -258,7 +263,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.normal,
-                  fontSize: isVeryNarrow ? 12 : 14,
+                  fontSize: (isVeryNarrow ? 12 : 14).ts,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -267,7 +272,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                 artist,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.5),
-                  fontSize: isVeryNarrow ? 10 : 12,
+                  fontSize: (isVeryNarrow ? 10 : 12).ts,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -301,8 +306,8 @@ class _PremiumPlayerBar extends StatelessWidget {
         GestureDetector(
           onTap: onPlayPause,
           child: Container(
-            width: isVeryNarrow ? 28 : 36,
-            height: isVeryNarrow ? 28 : 36,
+            width: (isVeryNarrow ? 28 : 36).s,
+            height: (isVeryNarrow ? 28 : 36).s,
             decoration: BoxDecoration(
               color: colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
@@ -312,13 +317,13 @@ class _PremiumPlayerBar extends StatelessWidget {
                     // LucideIcons.pause,
                     Icons.pause,
                     color: Colors.white,
-                    size: isVeryNarrow ? 12 : 18,
+                    size: (isVeryNarrow ? 12 : 18).s,
                   )
                 : Icon(
                     // LucideIcons.play,
                     Icons.play_arrow_sharp,
                     color: Colors.white,
-                    size: isVeryNarrow ? 12 : 18,
+                    size: (isVeryNarrow ? 12 : 18).s,
                   ),
           ),
         ),

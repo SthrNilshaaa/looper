@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:looper_player/core/ui_utils.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -385,7 +386,7 @@ class _SongTile extends ConsumerWidget {
     return AnimatedContainer(
       key: ValueKey('tile_${song.id}'),
       duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: EdgeInsets.only(bottom: 8.s),
       decoration: BoxDecoration(
         color: isCurrent
             ? Theme.of(context).colorScheme.primary.withOpacity(0.5)
@@ -394,8 +395,8 @@ class _SongTile extends ConsumerWidget {
       ),
       child: ListTile(
         leading: Container(
-          width: 40,
-          height: 40,
+          width: 40.s,
+          height: 40.s,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(4),
             color: Colors.grey.withOpacity(0.1),
@@ -416,7 +417,7 @@ class _SongTile extends ConsumerWidget {
                 )
               : (isCurrent && ref.watch(playbackProvider).isPlaying
                     ? const Icon(LucideIcons.volume2, size: 20)
-                    : const Icon(LucideIcons.music, size: 20)),
+                    : Icon(LucideIcons.music, size: 20.s)),
         ),
         title: Text(
           song.title,
@@ -453,9 +454,9 @@ class _SongTile extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 LucideIcons.moreVertical,
-                size: 18,
+                size: 18.s,
                 color: Colors.grey,
               ),
               onPressed: () => _showSongOptions(context, ref, song, l10n),
@@ -464,7 +465,7 @@ class _SongTile extends ConsumerWidget {
               icon: Icon(
                 song.isFavorite ? Icons.favorite : Icons.favorite_border,
                 color: song.isFavorite ? Colors.red : Colors.grey,
-                size: 18,
+                size: 18.s,
               ),
               onPressed: () =>
                   ref.read(libraryProvider.notifier).toggleFavorite(song),
