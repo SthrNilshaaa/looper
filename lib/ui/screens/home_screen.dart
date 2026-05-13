@@ -34,6 +34,9 @@ import 'package:looper_player/l10n/app_localizations.dart';
 import '../widgets/global_search_bar.dart';
 import 'package:looper_player/features/playback/presentation/widgets/overlay_lyrics_widget.dart';
 
+import 'dart:io';
+import 'android/android_main_screen.dart';
+
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -73,6 +76,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isAndroid) {
+      return const AndroidMainScreen();
+    }
+
     final library = ref.watch(libraryProvider);
     final nav = ref.watch(appNavigationProvider);
     final playback = ref.watch(playbackProvider);

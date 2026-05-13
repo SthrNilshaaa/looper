@@ -49,7 +49,7 @@ dependencies:
   # Audio Playback
   media_kit: ^1.1.10
   media_kit_libs_linux: ^1.1.2
-  media_kit_libs_android_audio: ^1.1.2
+  media_kit_libs_android_audio: ^1.3.8
   media_kit_native_event_loop: ^1.0.9
 
   # Database
@@ -78,6 +78,8 @@ dependencies:
   dbus: ^0.7.12
   local_notifier: ^0.1.6
   animate_gradient: ^0.0.4
+  audio_service: ^0.18.18
+  just_audio_background: ^0.0.1-beta.17
 
 dev_dependencies:
   flutter_test:

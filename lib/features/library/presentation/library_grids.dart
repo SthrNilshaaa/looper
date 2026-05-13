@@ -269,10 +269,7 @@ class _ArtistCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               artist.name,
-              style: TextStyle(
-                fontWeight: FontWeight.normal,
-                fontSize: 14.ts,
-              ),
+              style: TextStyle(fontWeight: FontWeight.normal, fontSize: 14.ts),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
