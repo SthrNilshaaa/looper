@@ -81,7 +81,6 @@ class MyApp extends ConsumerWidget {
           colorScheme: colorScheme,
           textTheme: GoogleFonts.dmSansTextTheme(
             ThemeData.dark().textTheme.apply(
-              fontSizeFactor: UiUtils.scale,
               displayColor: Colors.white,
               bodyColor: Colors.white70,
             ),

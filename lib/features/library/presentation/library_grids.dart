@@ -7,6 +7,8 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
 import 'package:isar/isar.dart';
 
 // Providers for Albums and Artists
@@ -109,28 +111,36 @@ class _AlbumCard extends ConsumerWidget {
                   ],
                   color: Colors.white.withOpacity(0.05),
                 ),
-                child: album.artPath != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: OptimizedImage(
-                          imagePath: album.artPath,
-                          fit: BoxFit.cover,
-                          placeholder: const Center(
+                child: Hero(
+                  tag: 'collection_${album.name}',
+                  child: PlayingOverlay(
+                    isPlaying: ref.watch(playbackProvider).currentSong?.album == album.name &&
+                               ref.watch(playbackProvider).isPlaying,
+                    borderRadius: 16,
+                    child: album.artPath != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: OptimizedImage(
+                              imagePath: album.artPath,
+                              fit: BoxFit.cover,
+                              placeholder: const Center(
+                                child: Icon(
+                                  LucideIcons.disc,
+                                  size: 48,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          )
+                        : const Center(
                             child: Icon(
                               LucideIcons.disc,
                               size: 48,
                               color: Colors.grey,
                             ),
                           ),
-                        ),
-                      )
-                    : const Center(
-                        child: Icon(
-                          LucideIcons.disc,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
-                      ),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -208,12 +218,15 @@ class _ArtistCard extends ConsumerWidget {
             .filter()
             .artistEqualTo(artist.name)
             .findAll();
+        final isLocalImage = artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http');
+        final isNetworkImage = artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http');
+
         ref
             .read(appNavigationProvider.notifier)
             .showCollection(
               title: artist.name,
-              art: artist.artPath,
-              imageUrl: artist.artistImageUrl,
+              art: isLocalImage ? artist.artistImageUrl : artist.artPath,
+              imageUrl: isNetworkImage ? artist.artistImageUrl : null,
               songs: songs,
             );
       },
@@ -250,16 +263,19 @@ class _ArtistCard extends ConsumerWidget {
                   ],
                   color: Colors.white.withOpacity(0.05),
                 ),
-                child: ClipOval(
-                  child: OptimizedImage(
-                    imageUrl: artist.artistImageUrl,
-                    imagePath: artist.artPath,
-                    fit: BoxFit.cover,
-                    placeholder: const Center(
-                      child: Icon(
-                        LucideIcons.user,
-                        size: 48,
-                        color: Colors.grey,
+                child: Hero(
+                  tag: 'collection_${artist.name}',
+                  child: ClipOval(
+                    child: OptimizedImage(
+                      imageUrl: artist.artistImageUrl,
+                      imagePath: artist.artPath,
+                      fit: BoxFit.cover,
+                      placeholder: const Center(
+                        child: Icon(
+                          LucideIcons.user,
+                          size: 48,
+                          color: Colors.grey,
+                        ),
                       ),
                     ),
                   ),

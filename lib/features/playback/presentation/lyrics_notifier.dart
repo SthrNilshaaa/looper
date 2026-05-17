@@ -1,5 +1,10 @@
+import 'dart:io';
+import 'package:looper_player/core/db_service.dart';
+import 'package:looper_player/core/providers.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../data/lyrics_service.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import '../data/lyrics_fetcher.dart';
 import 'playback_notifier.dart';
 import '../domain/lyric_models.dart';
 
@@ -33,10 +38,13 @@ class LyricsState {
 
 class LyricsNotifier extends StateNotifier<LyricsState> {
   final Ref ref;
-  final LyricsService _service = LyricsService();
 
   LyricsNotifier(this.ref) : super(LyricsState()) {
-    // Listen to current song changes
+    final currentSong = ref.read(playbackProvider).currentSong;
+    if (currentSong != null) {
+      _fetchLyrics(currentSong);
+    }
+
     ref.listen(playbackProvider.select((s) => s.currentSong), (previous, next) {
       if (next != null && next.id != state.songId) {
         _fetchLyrics(next);
@@ -44,8 +52,7 @@ class LyricsNotifier extends StateNotifier<LyricsState> {
     });
   }
 
-  Future<void> _fetchLyrics(dynamic song) async {
-    // Check if already in cache (simple in-memory cache for now)
+  Future<void> _fetchLyrics(Song song) async {
     if (state.songId == song.id && state.rawLrc != null) return;
 
     state = state.copyWith(
@@ -55,16 +62,9 @@ class LyricsNotifier extends StateNotifier<LyricsState> {
       parsedLines: [],
     );
 
-    final response = await _service.getLyrics(
-      trackName: song.title.trim(),
-      artistName: (song.artist ?? '').trim(),
-      albumName: (song.album ?? '').trim(),
-      durationSeconds: (song.duration ?? 0) ~/ 1000,
-    );
+    final lrc = await LyricsFetcher.fetchLyrics(song);
 
-    // Only update if we're still on the same song
     if (state.songId == song.id) {
-      final lrc = response?.syncedLyrics ?? response?.plainLyrics;
       final lines = lrc != null
           ? LrcParser.parse(lrc, Duration(milliseconds: song.duration ?? 0))
           : <LyricLine>[];

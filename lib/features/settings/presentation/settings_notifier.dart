@@ -70,12 +70,30 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..repeatMode = s.repeatMode
       ..language = s.language
       ..enableDynamicTheming = s.enableDynamicTheming
+      ..darkTheme = s.darkTheme
       ..saveDynamicColor = s.saveDynamicColor
+      ..dynamicLyrics = s.dynamicLyrics
       ..accentColor = s.accentColor;
   }
 
   Future<void> updateDynamicTheming(bool enabled) async {
     final newState = _clone(state)..enableDynamicTheming = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateDarkTheme(bool enabled) async {
+    final newState = _clone(state)..darkTheme = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateDynamicLyrics(bool enabled) async {
+    final newState = _clone(state)..dynamicLyrics = enabled;
     await DbService.isar.writeTxn(() async {
       await DbService.isar.appSettings.put(newState);
     });

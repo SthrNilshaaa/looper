@@ -3,9 +3,11 @@ import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter/material.dart';
 import '../../domain/lyric_models.dart';
 import '../lyrics_view.dart';
+import '../lyrics_search_provider.dart';
 import 'advanced_lyric_line.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AdvancedLyricRenderer extends StatefulWidget {
+class AdvancedLyricRenderer extends ConsumerStatefulWidget {
   final List<LyricLine> lines;
   final Duration currentPosition;
   final LyricsSyncMode mode;
@@ -20,10 +22,10 @@ class AdvancedLyricRenderer extends StatefulWidget {
   });
 
   @override
-  State<AdvancedLyricRenderer> createState() => _AdvancedLyricRendererState();
+  ConsumerState<AdvancedLyricRenderer> createState() => _AdvancedLyricRendererState();
 }
 
-class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
+class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _lineKeys = {};
   int _currentLineIndex = -1;
@@ -43,6 +45,21 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
   }
 
   void _updateActiveLine({bool forceScroll = false}) {
+    final searchQuery = ref.read(lyricsSearchQueryProvider).toLowerCase();
+    
+    // If there's a search query, prioritize showing that match
+    if (searchQuery.isNotEmpty) {
+      final searchIndex = widget.lines.indexWhere(
+        (line) => line.text.toLowerCase().contains(searchQuery),
+      );
+      if (searchIndex != -1 && (searchIndex != _currentLineIndex || forceScroll)) {
+        _currentLineIndex = searchIndex;
+        _scrollToIndex(searchIndex, isSearch: true);
+        if (mounted) setState(() {});
+        return;
+      }
+    }
+
     final index = widget.lines.indexWhere(
       (line) =>
           widget.currentPosition >= line.startTime &&
@@ -56,33 +73,31 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
     }
   }
 
-  void _scrollToIndex(int index) {
+  void _scrollToIndex(int index, {bool isSearch = false}) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final key = _lineKeys[index];
       if (key?.currentContext != null) {
         Scrollable.ensureVisible(
           key!.currentContext!,
-          duration: const Duration(milliseconds: 1000),
-          curve: Curves.fastLinearToSlowEaseIn,
-          alignment: 0.15, // Perfect 2nd position from top
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.fastOutSlowIn,
+          alignment: isSearch ? 0.5 : 0.2, // Center more for search matches
         );
       } else {
-        // Fallback for off-screen items
         if (_scrollController.hasClients) {
           _scrollController
               .animateTo(
-                (index * 70.0), // rough estimate to get it in view
-                duration: const Duration(milliseconds: 400),
-                curve: Curves.fastOutSlowIn,
+                (index * 80.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeInOutCubic,
               )
               .then((_) {
-                // Try again once it's likely built
                 if (mounted && _lineKeys[index]?.currentContext != null) {
                   Scrollable.ensureVisible(
                     _lineKeys[index]!.currentContext!,
-                    duration: const Duration(milliseconds: 1000),
-                    curve: Curves.fastLinearToSlowEaseIn,
-                    alignment: 0.15,
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.fastOutSlowIn,
+                    alignment: isSearch ? 0.5 : 0.2,
                   );
                 }
               });
@@ -125,8 +140,8 @@ class _AdvancedLyricRendererState extends State<AdvancedLyricRenderer> {
             mode: widget.mode,
             isActive: isActive,
             relativeIndex: _currentLineIndex == -1
-                ? index // If nothing active, treat first line as reference or just use index
-                : (index - _currentLineIndex).abs(),
+                ? index
+                : index - _currentLineIndex,
             onTap: () => widget.onSeek(line.startTime),
           ),
         );

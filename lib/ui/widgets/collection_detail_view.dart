@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
@@ -24,34 +26,26 @@ class CollectionDetailView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isNarrow = constraints.maxWidth < 700;
-
-        return SingleChildScrollView(
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+          padding: const EdgeInsets.only(bottom: 200), // Added padding to fix navbar overlap
           child: Column(
             children: [
-              // Header
+              // Header - Now always a Row for cover and name
               Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isNarrow ? 16 : 32,
-                  vertical: isNarrow ? 12 : 16,
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _buildArt(context, true),
+                    const SizedBox(width: 20),
+                    Expanded(child: _buildInfo(context, ref, true)),
+                  ],
                 ),
-                child: isNarrow
-                    ? Column(
-                        children: [
-                          _buildArt(context, isNarrow),
-                          const SizedBox(height: 24),
-                          _buildInfo(context, ref, isNarrow),
-                        ],
-                      )
-                    : Row(
-                        children: [
-                          _buildArt(context, isNarrow),
-                          const SizedBox(width: 32),
-                          Expanded(child: _buildInfo(context, ref, isNarrow)),
-                        ],
-                      ),
               ),
               // Songs List
               SongsList(
@@ -63,26 +57,31 @@ class CollectionDetailView extends ConsumerWidget {
           ),
         );
       },
-    );
+    ),
+  ),
+  );
   }
 
   Widget _buildArt(BuildContext context, bool isNarrow) {
-    final double size = isNarrow ? 160 : 200;
-    return OptimizedImage(
-      imagePath: artPath,
-      imageUrl: imageUrl,
-      width: size,
-      height: size,
-      borderRadius: BorderRadius.circular(16),
-      placeholder: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Icon(
-          LucideIcons.music,
-          size: isNarrow ? 48 : 64,
-          color: Colors.grey,
+    final double size = 140; // Unified size for a cleaner Row look
+    return Hero(
+      tag: 'collection_$title',
+      child: OptimizedImage(
+        imagePath: artPath,
+        imageUrl: imageUrl,
+        width: size,
+        height: size,
+        borderRadius: BorderRadius.circular(16),
+        placeholder: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(
+            LucideIcons.music,
+            size: 48,
+            color: Colors.grey,
+          ),
         ),
       ),
     );
@@ -90,59 +89,71 @@ class CollectionDetailView extends ConsumerWidget {
 
   Widget _buildInfo(BuildContext context, WidgetRef ref, bool isNarrow) {
     return Column(
-      crossAxisAlignment: isNarrow
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: TextStyle(
-            fontSize: isNarrow ? 32 : 48,
-            fontWeight: FontWeight.normal,
+          style: const TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-          textAlign: isNarrow ? TextAlign.center : TextAlign.start,
-          maxLines: 1,
+          maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        if (subtitle != null)
+        if (subtitle != null) ...[
+          const SizedBox(height: 4),
           Text(
             subtitle!,
             style: TextStyle(
-              fontSize: isNarrow ? 18 : 24,
-              color: Colors.grey[400],
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.5),
             ),
-            textAlign: isNarrow ? TextAlign.center : TextAlign.start,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-        // const SizedBox(height: 16),
-        // Text('${songs.length} songs', style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 24),
+        ],
+        const SizedBox(height: 16),
         Row(
-          mainAxisAlignment: isNarrow
-              ? MainAxisAlignment.center
-              : MainAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            ElevatedButton.icon(
-              onPressed: () {
+            PremiumSection(
+              borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              height: 44,
+              useExpanded: false,
+              onTap: () {
+                HapticFeedback.mediumImpact();
                 ref.read(playbackProvider.notifier).setPlaylist(songs);
               },
-              icon: Icon(Icons.play_arrow_sharp),
-              label: const Text('Play All'),
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(
-                  horizontal: isNarrow ? 12 : 18,
-                  vertical: isNarrow ? 12 : 18,
-                ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.play_arrow_rounded, color: Colors.white, size: 20),
+                  SizedBox(width: 6),
+                  Text(
+                    'Play All',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 16),
-            IconButton.filledTonal(
-              onPressed: () {
+            const SizedBox(width: 8),
+            PremiumSection(
+              borderRadius: BorderRadius.circular(12),
+              width: 44,
+              height: 44,
+              useExpanded: false,
+              onTap: () {
+                HapticFeedback.lightImpact();
                 ref.read(playbackProvider.notifier).toggleShuffle();
                 ref.read(playbackProvider.notifier).setPlaylist(songs);
               },
-              icon: const Icon(LucideIcons.shuffle, size: 8),
+              child: const Icon(LucideIcons.shuffle, size: 16, color: Colors.white),
             ),
           ],
         ),

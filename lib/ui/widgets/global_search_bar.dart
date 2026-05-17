@@ -2,10 +2,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/providers.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/features/search/presentation/search_view.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/core/app_icons.dart';
+import 'package:looper_player/core/ui_utils.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 class GlobalSearchBar extends ConsumerStatefulWidget {
   const GlobalSearchBar({super.key});
@@ -118,10 +121,11 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(
-                            LucideIcons.search,
-                            size: 20,
-                            color: Colors.white,
+                          SvgPicture.asset(
+                            AppIcons.search,
+                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                            width: AppIcons.sizeSmall.s,
+                            height: AppIcons.sizeSmall.s,
                           ),
                           Container(
                             height: 30,

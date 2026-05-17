@@ -17,6 +17,7 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
         playbackState.add(
           playbackState.value.copyWith(
             playing: playing,
+            processingState: AudioProcessingState.ready,
             controls: [
               MediaControl.skipToPrevious,
               if (playing) MediaControl.pause else MediaControl.play,
@@ -33,7 +34,10 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
 
       player.stream.position.listen((position) {
         playbackState.add(
-          playbackState.value.copyWith(updatePosition: position),
+          playbackState.value.copyWith(
+            updatePosition: position,
+            bufferedPosition: player.state.buffer,
+          ),
         );
       });
 
@@ -48,6 +52,23 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
           onNext!();
         }
       });
+
+      // Initial state
+      playbackState.add(
+        playbackState.value.copyWith(
+          controls: [
+            MediaControl.skipToPrevious,
+            MediaControl.play,
+            MediaControl.skipToNext,
+          ],
+          processingState: AudioProcessingState.ready,
+          systemActions: const {
+            MediaAction.seek,
+            MediaAction.seekForward,
+            MediaAction.seekBackward,
+          },
+        ),
+      );
     }
   }
 

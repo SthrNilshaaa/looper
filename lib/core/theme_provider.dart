@@ -31,7 +31,8 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
           colorScheme: ColorScheme.fromSeed(
             seedColor: Color(_settings.accentColor),
             primary: Color(_settings.accentColor),
-            surface: const Color(0xFF070707),
+            surface: _settings.darkTheme ? Colors.black : const Color(0xFF11110E),
+            surfaceContainer: _settings.darkTheme ? const Color(0xFF0A0A0A) : const Color(0xFF1E1E1E),
             brightness: Brightness.dark,
           ),
         ),
@@ -45,12 +46,13 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
     _settings = newSettings;
 
     debugPrint(
-      '⚙️ Settings updated in ThemeNotifier. Dynamic: ${newSettings.enableDynamicTheming}, Color: ${Color(newSettings.accentColor)}',
+      '⚙️ Settings updated in ThemeNotifier. Dynamic: ${newSettings.enableDynamicTheming}, Dark: ${newSettings.darkTheme}, Color: ${Color(newSettings.accentColor)}',
     );
 
     // Handle theme reset logic
     if (!newSettings.enableDynamicTheming) {
       if (oldSettings.enableDynamicTheming ||
+          oldSettings.darkTheme != newSettings.darkTheme ||
           oldSettings.accentColor != newSettings.accentColor) {
         _resetTheme();
       }
@@ -127,13 +129,20 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
 
   void _resetTheme() {
     debugPrint(
-      '🔄 Resetting theme to accent color: ${Color(_settings.accentColor)}',
+      '🔄 Resetting theme to accent color: ${Color(_settings.accentColor)}, OLED Mode: ${_settings.darkTheme}',
     );
+    
+    // darkTheme ON = OLED/Pure Black (#000000)
+    // darkTheme OFF = Premium Deep Black (#11110E)
+    final surfaceColor = _settings.darkTheme ? Colors.black : const Color(0xFF11110E);
+    final containerColor = _settings.darkTheme ? const Color(0xFF0A0A0A) : const Color(0xFF1E1E1E);
+    
     state = state.copyWith(
       colorScheme: ColorScheme.fromSeed(
         seedColor: Color(_settings.accentColor),
         primary: Color(_settings.accentColor),
-        surface: const Color(0xFF070707),
+        surface: surfaceColor,
+        surfaceContainer: containerColor,
         brightness: Brightness.dark,
       ),
     );

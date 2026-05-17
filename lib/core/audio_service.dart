@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:media_kit/media_kit.dart';
 import 'package:dbus/dbus.dart';
@@ -12,16 +13,62 @@ class AudioService {
   DBusClient? _dBusClient;
   MyAudioHandler? _audioHandler;
 
-  // Callbacks for MPRIS controls
+  // Callbacks for controls
   void Function()? onNext;
   void Function()? onPrevious;
+  void Function(Duration)? onSeek;
 
   AudioService() {
     player = Player(
-      configuration: const PlayerConfiguration(title: 'Looper Player'),
+      configuration: const PlayerConfiguration(
+        title: 'Looper Player',
+      ),
     );
+    // Set high-precision position updates for lyrics sync (15ms)
+    if (Platform.isAndroid || Platform.isIOS || Platform.isLinux || Platform.isWindows) {
+      try {
+        // Using dynamic as some versions of media_kit don't expose setProperty in the interface
+        (player as dynamic).setProperty('playback-time-update-interval', '0.015');
+      } catch (e) {
+        debugPrint('Failed to set playback-time-update-interval: $e');
+      }
+    }
     _initMpris();
     _initAndroidAudioHandler();
+    _initAndroidBroadcasts();
+  }
+
+  void _initAndroidBroadcasts() {
+    if (!Platform.isAndroid) return;
+
+    player.stream.playing.listen((playing) {
+      _sendAndroidBroadcast(playing);
+    });
+
+    player.stream.playlist.listen((_) {
+      _sendAndroidBroadcast(player.state.playing);
+    });
+  }
+
+  void _sendAndroidBroadcast(bool isPlaying) {
+    if (!Platform.isAndroid) return;
+
+    final media = player.state.playlist.medias.isNotEmpty &&
+            player.state.playlist.index >= 0 &&
+            player.state.playlist.index < player.state.playlist.medias.length
+        ? player.state.playlist.medias[player.state.playlist.index]
+        : null;
+
+    if (media != null && media.extras != null) {
+      const channel = MethodChannel('com.looper.player/broadcast');
+      channel.invokeMethod('broadcastMetadata', {
+        'title': media.extras!['title'],
+        'artist': media.extras!['artist'],
+        'album': media.extras!['album'],
+        'duration': player.state.duration.inMilliseconds,
+        'isPlaying': isPlaying,
+      });
+    }
   }
 
   Future<void> _initAndroidAudioHandler() async {
@@ -32,9 +79,10 @@ class AudioService {
         builder: () => MyAudioHandler(player),
         config: const asrv.AudioServiceConfig(
           androidNotificationChannelId:
-              'com.example.looper_player.channel.audio',
+              'com.looper.player.channel.audio.v3',
           androidNotificationChannelName: 'Audio Playback',
           androidNotificationOngoing: true,
+          androidNotificationIcon: 'drawable/ic_notification_session',
         ),
       );
 
@@ -44,6 +92,10 @@ class AudioService {
 
       _audioHandler?.onPrevious = () {
         if (onPrevious != null) onPrevious!();
+      };
+
+      _audioHandler?.onSeek = (duration) {
+        if (onSeek != null) onSeek!(duration);
       };
     } catch (e) {
       debugPrint('Failed to init audio handler: $e');

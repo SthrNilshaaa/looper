@@ -14,6 +14,12 @@ enum NavItem {
   settings,
   collectionDetail,
   queue,
+  genres,
+  folders,
+  history,
+  mostPlayed,
+  downloads,
+  smartCollections,
 }
 
 class NavigationState {

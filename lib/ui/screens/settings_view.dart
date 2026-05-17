@@ -40,6 +40,24 @@ class SettingsView extends ConsumerWidget {
                 ref.read(settingsProvider.notifier).updateDynamicTheming(value);
               },
             ),
+            SwitchListTile(
+              secondary: const Icon(LucideIcons.moon),
+              title: const Text('Pure Black (OLED)'),
+              subtitle: const Text('Use absolute black backgrounds'),
+              value: settings.darkTheme,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).updateDarkTheme(value);
+              },
+            ),
+            SwitchListTile(
+              secondary: const Icon(LucideIcons.music),
+              title: const Text('Dynamic Lyrics Background'),
+              subtitle: const Text('Apply album-art blur to lyrics screen'),
+              value: settings.dynamicLyrics,
+              onChanged: (value) {
+                ref.read(settingsProvider.notifier).updateDynamicLyrics(value);
+              },
+            ),
             // if (settings.enableDynamicTheming)
             //   SwitchListTile(
             //     secondary: const SizedBox(width: 24), // Indent for hierarchy

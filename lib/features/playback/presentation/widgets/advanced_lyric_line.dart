@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../lyrics_search_provider.dart';
 import '../../domain/lyric_models.dart';
 import '../lyrics_view.dart';
 
-class AdvancedLyricLine extends StatelessWidget {
+class AdvancedLyricLine extends ConsumerWidget {
   final LyricLine line;
   final Duration currentPosition;
   final LyricsSyncMode mode;
@@ -26,56 +28,84 @@ class AdvancedLyricLine extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final progress = line.getProgress(currentPosition);
     final isPast = currentPosition > line.endTime;
 
+    // Calculate absolute distance for opacity and duration
+    final absIndex = relativeIndex.abs();
+    
     // Calculate dynamic opacity based on distance from active line
     double lineOpacity = 1.0;
     if (!isActive) {
-      lineOpacity = (0.5 / (relativeIndex * 0.9)).clamp(0.12, 0.4);
+      lineOpacity = (0.5 / (absIndex * 0.9)).clamp(0.3, 0.5);
     }
+
+    // Active color (Theme Primary)
+    final activeColor = Theme.of(context).colorScheme.primary;
 
     // Language-aware font selection
     final bool isHindiText = _isHindi(line.text);
     final baseStyle =
         (isHindiText ? GoogleFonts.poppins() : GoogleFonts.spaceGrotesk())
             .copyWith(
-              fontSize: isActive ? 36 : 32,
+              fontSize: isActive ? 32 : 30, // Increased active size, no scale
               fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
               letterSpacing: isHindiText ? 0.0 : -0.5,
               height: 1.2,
-              color: Colors.white.withOpacity(isActive ? 1.0 : lineOpacity),
+              color: isActive ? activeColor : Colors.white.withOpacity(lineOpacity),
+              shadows: isActive ? [
+                Shadow(
+                  color: activeColor.withOpacity(0.3),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                )
+              ] : null,
             );
 
-    // Active color (Theme Primary)
-    final activeColor = Theme.of(context).colorScheme.primary;
+    // Staggered animation durations based on absolute distance
+    final animDuration = Duration(milliseconds: 600 + (absIndex * 20).clamp(0, 200));
+    
+    // Smooth curve for all transitions
+    final curve = Curves.fastOutSlowIn;
+
+    // Watch the search query for highlighting
+    final searchQuery = ref.watch(lyricsSearchQueryProvider).toLowerCase();
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onTap,
-        child: AnimatedPadding(
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.fastLinearToSlowEaseIn,
-          padding: EdgeInsets.symmetric(
-            vertical: isActive ? 24 : 12,
-            horizontal: 16,
-          ),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOutCubic,
-            opacity: isActive ? 1.0 : (lineOpacity * 1.5).clamp(0.0, 1.0),
-            child: AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutCubic,
-              style: baseStyle,
-              child: _buildModeContent(
-                context,
-                progress,
-                isPast,
-                baseStyle,
-                activeColor,
+        child: AnimatedContainer(
+          duration: animDuration,
+          curve: curve,
+          transformAlignment: Alignment.centerLeft,
+          transform: Matrix4.identity()..translate(0.0, isActive ? -4.0 : 0.0),
+          child: AnimatedPadding(
+            duration: animDuration,
+            curve: curve,
+            padding: EdgeInsets.symmetric(
+              vertical: isActive ? 24 : 10,
+              horizontal: 0,
+            ),
+            child: AnimatedOpacity(
+              duration: animDuration,
+              curve: curve,
+              opacity: isActive ? 1.0 : (lineOpacity * 1.5).clamp(0.1, 1.0),
+              child: AnimatedDefaultTextStyle(
+                duration: animDuration,
+                curve: curve,
+                style: baseStyle,
+                softWrap: true,
+                textAlign: TextAlign.start,
+                child: _buildModeContent(
+                  context,
+                  progress,
+                  isPast,
+                  baseStyle,
+                  activeColor,
+                  searchQuery,
+                ),
               ),
             ),
           ),
@@ -90,6 +120,7 @@ class AdvancedLyricLine extends StatelessWidget {
     bool isPast,
     TextStyle baseStyle,
     Color activeColor,
+    String searchQuery,
   ) {
     final String text = line.text;
     final bool isInstrumental =
@@ -97,6 +128,9 @@ class AdvancedLyricLine extends StatelessWidget {
         text.toLowerCase().contains('instrumental') ||
         text.toLowerCase().contains('[music]') ||
         text.trim() == '♪';
+
+    // If there is a search match, always highlight it
+    final bool isSearchMatch = searchQuery.isNotEmpty && text.toLowerCase().contains(searchQuery);
 
     if (!isActive && !isPast) {
       return isInstrumental
@@ -106,8 +140,10 @@ class AdvancedLyricLine extends StatelessWidget {
             )
           : Text(
               text,
-              style: baseStyle.copyWith(color: Colors.white.withOpacity(0.5)),
+              style: isSearchMatch ? baseStyle.copyWith(color: activeColor.withOpacity(0.9)) : null,
               textAlign: TextAlign.start,
+              softWrap: true,
+              overflow: TextOverflow.visible,
             );
     }
 
@@ -119,12 +155,14 @@ class AdvancedLyricLine extends StatelessWidget {
             )
           : Text(
               text,
-              style: baseStyle.copyWith(color: Colors.white.withOpacity(0.3)),
               textAlign: TextAlign.start,
+              softWrap: true,
+              overflow: TextOverflow.visible,
+              // Inherits muted color from baseStyle
             );
     }
 
-    // For active line, add music symbols if it's instrumental or just for style
+    // For active line, add music symbols if it's instrumental
     final displayText = isInstrumental ? '♫' : text;
 
     switch (mode) {
@@ -141,12 +179,18 @@ class AdvancedLyricLine extends StatelessWidget {
                         size: 40,
                       ),
                     )
-                  : Text(
-                      displayText,
-                      style: baseStyle.copyWith(
-                        color: activeColor,
-                      ), // Dynamic color for active line
-                      textAlign: TextAlign.start,
+                  : Hero(
+                      tag: 'active_lyric_line',
+                      child: Material(
+                        type: MaterialType.transparency,
+                        child: Text(
+                          displayText,
+                          textAlign: TextAlign.start,
+                          softWrap: true,
+                          overflow: TextOverflow.visible,
+                          style: baseStyle.copyWith(decoration: TextDecoration.none),
+                        ),
+                      ),
                     ),
             ),
           ],
@@ -183,9 +227,10 @@ class AdvancedLyricLine extends StatelessWidget {
             children: List.generate(words.length, (index) {
               final isWordActive = index <= activeWordIndex;
               return AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 150),
+                duration: const Duration(milliseconds: 250), // Smoother word transition
+                curve: Curves.easeOutCubic,
                 style: baseStyle.copyWith(
-                  color: isWordActive ? activeColor : baseStyle.color,
+                  color: isWordActive ? activeColor : baseStyle.color?.withOpacity(0.5),
                   shadows: isWordActive
                       ? [
                           Shadow(
@@ -217,7 +262,6 @@ class AdvancedLyricLine extends StatelessWidget {
           child: ShaderMask(
             blendMode: BlendMode.srcIn,
             shaderCallback: (bounds) {
-              // Create a sharp gradient for Apple Music style karaoke
               const gradientWidth = 0.01;
               final start = (progress - gradientWidth).clamp(0.0, 1.0);
               final end = (progress + gradientWidth).clamp(0.0, 1.0);
@@ -237,6 +281,8 @@ class AdvancedLyricLine extends StatelessWidget {
               text,
               style: baseStyle.copyWith(color: Colors.white),
               textAlign: TextAlign.start,
+              softWrap: true,
+              overflow: TextOverflow.visible,
             ),
           ),
         ),

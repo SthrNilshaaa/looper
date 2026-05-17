@@ -30,10 +30,11 @@ class Song {
   @Index()
   DateTime? lastPlayed;
   bool isFavorite = false;
+  String? lyrics;
 
   // Metadata for search
   @Index(type: IndexType.value, caseSensitive: false)
-  List<String> get searchTerms => [title, ?artist, ?album];
+  List<String> get searchTerms => [title, artist ?? '', album ?? '', lyrics ?? ''];
 }
 
 @collection
@@ -84,7 +85,9 @@ class AppSettings {
   bool shuffle = false;
   int repeatMode = 0; // 0: off, 1: one, 2: all
   String language = 'en';
-  bool enableDynamicTheming = true;
+  bool enableDynamicTheming = false;
+  bool darkTheme = false;
   bool saveDynamicColor = true;
-  int accentColor = 0xFF41C25E; // Default green
+  bool dynamicLyrics = true;
+  int accentColor = 0xFF41C25E; // Default Green
 }

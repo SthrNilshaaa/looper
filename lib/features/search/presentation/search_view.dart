@@ -9,6 +9,7 @@ import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/core/navigation_provider.dart';
+import 'package:looper_player/features/playback/presentation/lyrics_search_provider.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -36,6 +37,8 @@ final searchResultsProvider = StreamProvider<SearchResults>((ref) {
       .artistContains(query, caseSensitive: false)
       .or()
       .albumContains(query, caseSensitive: false)
+      .or()
+      .lyricsContains(query, caseSensitive: false)
       .watch(fireImmediately: true)
       .asyncMap((songs) async {
         final albums = await DbService.isar.albums
@@ -154,6 +157,7 @@ class SearchView extends ConsumerWidget {
             songs: results.songs.sublist(1),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            searchQuery: ref.read(searchQueryProvider),
           ),
         ],
       ],
@@ -176,7 +180,10 @@ class SearchView extends ConsumerWidget {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
         ),
         const SizedBox(height: 12),
-        _SongResultCard(song: topSong),
+        _SongResultCard(
+          song: topSong,
+          searchQuery: ref.read(searchQueryProvider),
+        ),
       ],
     );
   }
@@ -184,15 +191,26 @@ class SearchView extends ConsumerWidget {
 
 class _SongResultCard extends ConsumerWidget {
   final Song song;
-  const _SongResultCard({required this.song});
+  final String? searchQuery;
+  const _SongResultCard({required this.song, this.searchQuery});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
 
+    String? lyricSnippet;
+    if (searchQuery != null && searchQuery!.isNotEmpty && song.lyrics != null) {
+      lyricSnippet = _getLyricSnippet(song.lyrics!, searchQuery!);
+    }
+
     return InkWell(
-      onTap: () => ref.read(playbackProvider.notifier).play(song),
+      onTap: () {
+        if (searchQuery != null) {
+          ref.read(lyricsSearchQueryProvider.notifier).state = searchQuery!;
+        }
+        ref.read(playbackProvider.notifier).play(song);
+      },
       borderRadius: BorderRadius.circular(16),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -247,14 +265,44 @@ class _SongResultCard extends ConsumerWidget {
                     song.artist ?? 'Unknown Artist',
                     style: const TextStyle(fontSize: 14, color: Colors.grey),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    song.album ?? 'Unknown Album',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.withOpacity(0.7),
+                  if (lyricSnippet != null) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.quote, size: 10, color: colorScheme.primary),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              lyricSnippet,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.primary.withOpacity(0.9),
+                                fontStyle: FontStyle.italic,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ] else ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      song.album ?? 'Unknown Album',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -270,6 +318,27 @@ class _SongResultCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String? _getLyricSnippet(String lyrics, String query) {
+    final lowerLyrics = lyrics.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final index = lowerLyrics.indexOf(lowerQuery);
+    if (index == -1) return null;
+
+    int start = index;
+    while (start > 0 && lyrics[start - 1] != '\n') {
+      start--;
+      if (index - start > 40) break;
+    }
+
+    int end = index + query.length;
+    while (end < lyrics.length && lyrics[end] != '\n') {
+      end++;
+      if (end - index > 60) break;
+    }
+
+    return lyrics.substring(start, end).trim();
   }
 }
 

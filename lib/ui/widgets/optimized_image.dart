@@ -36,7 +36,7 @@ class OptimizedImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        cacheWidth: cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
+        cacheWidth: cacheWidth ?? (width != null ? (width! * 2.5).toInt() : 800),
         cacheHeight: cacheHeight,
         errorBuilder: (context, error, stackTrace) =>
             placeholder ?? const SizedBox(),
@@ -50,7 +50,7 @@ class OptimizedImage extends StatelessWidget {
         placeholder: (context, url) => placeholder ?? const SizedBox(),
         errorWidget: (context, url, error) => placeholder ?? const SizedBox(),
         memCacheWidth:
-            cacheWidth ?? (width != null ? (width! * 2).toInt() : 300),
+            cacheWidth ?? (width != null ? (width! * 2.5).toInt() : 800),
       );
     } else {
       imageWidget = placeholder ?? const SizedBox();

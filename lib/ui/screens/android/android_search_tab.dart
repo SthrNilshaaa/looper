@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:looper_player/features/search/presentation/search_view.dart';
 import 'package:looper_player/ui/widgets/global_search_bar.dart';
 
 class AndroidSearchTab extends StatelessWidget {
@@ -7,25 +8,27 @@ class AndroidSearchTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Color(0xFF121212),
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.symmetric(horizontal: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Search',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
+              Padding(
+                padding: EdgeInsets.only(top: 16, bottom: 8),
+                child: Text(
+                  'Search',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              SizedBox(height: 16),
+              GlobalSearchBar(),
               Expanded(
-                child:
-                    GlobalSearchBar(), // Reusing the global search bar widget
+                child: SearchView(),
               ),
             ],
           ),

@@ -28,8 +28,17 @@ class LrcParser {
 
     // More flexible regex to handle [mm:ss], [mm:ss.xx], [mm:ss.xxx], [mm:ss:xx]
     final regExp = RegExp(r'\[(\d{1,3}):(\d{2})(?:[:\.](\d{2,3}))?\](.*)');
+    final offsetRegExp = RegExp(r'\[offset:(-?\d+)\]');
+    int globalOffsetMs = 0;
 
     for (var line in lines) {
+      // Check for offset tag
+      final offsetMatch = offsetRegExp.firstMatch(line);
+      if (offsetMatch != null) {
+        globalOffsetMs = int.tryParse(offsetMatch.group(1)!) ?? 0;
+        continue;
+      }
+
       final match = regExp.firstMatch(line);
       if (match != null) {
         final minutes = int.parse(match.group(1)!);
@@ -45,7 +54,7 @@ class LrcParser {
         final startTime = Duration(
           minutes: minutes,
           seconds: seconds,
-          milliseconds: milliseconds,
+          milliseconds: milliseconds + globalOffsetMs,
         );
         final text = match.group(4)!.trim();
         rawLines.add({'start': startTime, 'text': text});
