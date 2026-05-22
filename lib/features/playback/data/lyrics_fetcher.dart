@@ -15,15 +15,15 @@ class LyricsFetcher {
     final artist = (song.artist ?? 'Unknown Artist').trim();
     final title = song.title.trim();
 
-    // 1. Try Song Database First
+    // 1. Try Song Database (Previously cached) - INSTANT, ZERO DELAY
     if (song.lyrics != null && song.lyrics!.isNotEmpty) {
       return song.lyrics;
     }
 
-    // 2. Try Embedded Metadata (Live check)
-    lrc = await MetadataService.getEmbeddedLyrics(song.path);
+    // 2. Try Local Cache
+    lrc = await LyricsCache.get(artist, title);
     if (lrc != null && lrc.isNotEmpty) {
-      // Save to DB for future use
+      // Save to database for faster next-time loading
       await DbService.isar.writeTxn(() async {
         final dbSong = await DbService.isar.songs.get(song.id);
         if (dbSong != null) {
@@ -34,11 +34,22 @@ class LyricsFetcher {
       return lrc;
     }
 
-    // 3. Try Local Cache
-    lrc = await LyricsCache.get(artist, title);
-    if (lrc != null) return lrc;
+    // 3. Try Embedded Metadata (Live check inside FLAC/MP3 etc.)
+    lrc = await MetadataService.getEmbeddedLyrics(song.path);
+    if (lrc != null && lrc.isNotEmpty) {
+      final taggedLrc = '[source:embedded]\n$lrc';
+      // Save to DB for instant future loading
+      await DbService.isar.writeTxn(() async {
+        final dbSong = await DbService.isar.songs.get(song.id);
+        if (dbSong != null) {
+          dbSong.lyrics = taggedLrc;
+          await DbService.isar.songs.put(dbSong);
+        }
+      });
+      return taggedLrc;
+    }
 
-    // 4. Try External Sidecar Files
+    // 4. Try External Sidecar Files (LRC/TXT next to song file)
     final songFile = File(song.path);
     final songDir = songFile.parent.path;
     final songBaseName = p.basenameWithoutExtension(song.path);
@@ -57,15 +68,25 @@ class LyricsFetcher {
         if (await file.exists()) {
           final content = await file.readAsString();
           if (content.isNotEmpty) {
-            lrc = content;
+            lrc = '[source:local]\n$content';
             break;
           }
         }
       } catch (_) {}
     }
-    if (lrc != null) return lrc;
+    if (lrc != null) {
+      // Save to DB for instant future loading
+      await DbService.isar.writeTxn(() async {
+        final dbSong = await DbService.isar.songs.get(song.id);
+        if (dbSong != null) {
+          dbSong.lyrics = lrc;
+          await DbService.isar.songs.put(dbSong);
+        }
+      });
+      return lrc;
+    }
 
-    // 5. Online service search
+    // 5. Online service search (LRCLIB) - LAST FALLBACK
     try {
       final response = await _service.getLyrics(
         trackName: title,
@@ -73,9 +94,10 @@ class LyricsFetcher {
         albumName: (song.album ?? '').trim(),
         durationSeconds: (song.duration ?? 0) ~/ 1000,
       );
-      lrc = response?.syncedLyrics ?? response?.plainLyrics;
+      final raw = response?.syncedLyrics ?? response?.plainLyrics;
 
-      if (lrc != null && lrc.isNotEmpty) {
+      if (raw != null && raw.isNotEmpty) {
+        lrc = '[source:lrclib]\n$raw';
         // Save to cache and DB
         await LyricsCache.save(artist, title, lrc);
         await DbService.isar.writeTxn(() async {

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/ui/widgets/optimized_image.dart';
+import 'package:looper_player/core/ui_utils.dart';
 
 class QueueView extends ConsumerWidget {
   const QueueView({super.key});
@@ -14,20 +16,24 @@ class QueueView extends ConsumerWidget {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: Platform.isAndroid ? 12 : 24,
+          ),
           child: Row(
             children: [
-              const Text(
-                'Play Queue',
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
-              ),
+              if (!Platform.isAndroid)
+                const Text(
+                  'Play Queue',
+                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
+                ),
               const Spacer(),
               if (playback.queue.isNotEmpty)
                 TextButton.icon(
                   onPressed: () =>
                       ref.read(playbackProvider.notifier).clearQueue(),
                   icon: const Icon(LucideIcons.trash2, size: 18),
-                  label: const Text('Clear'),
+                  label: Text(UiUtils.tr(context, 'Clear', 'साफ़ करें')),
                   style: TextButton.styleFrom(foregroundColor: Colors.red),
                 ),
             ],
@@ -35,11 +41,18 @@ class QueueView extends ConsumerWidget {
         ),
         Expanded(
           child: playback.queue.isEmpty
-              ? const Center(child: Text('Queue is empty'))
+              ? Center(
+                  child: Text(
+                    UiUtils.tr(context, 'Queue is empty', 'कतार खाली है'),
+                    style: const TextStyle(color: Colors.grey, fontSize: 16),
+                  ),
+                )
               : ReorderableListView.builder(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 16,
+                  padding: EdgeInsets.only(
+                    left: 24,
+                    right: 24,
+                    top: 16,
+                    bottom: Platform.isAndroid ? 200 : 16,
                   ),
                   itemCount: playback.queue.length,
                   onReorder: (oldIndex, newIndex) {
@@ -52,7 +65,7 @@ class QueueView extends ConsumerWidget {
                     final isCurrent = playback.currentSong?.id == song.id;
 
                     return Dismissible(
-                      key: ValueKey(song.id),
+                      key: ValueKey('queue_view_${song.path}_$index'),
                       direction: DismissDirection.endToStart,
                       onDismissed: (_) {
                         ref
@@ -66,7 +79,7 @@ class QueueView extends ConsumerWidget {
                         child: const Icon(LucideIcons.x, color: Colors.red),
                       ),
                       child: AnimatedContainer(
-                        key: ValueKey('tile_${song.id}'),
+                        key: ValueKey('queue_tile_${song.path}_$index'),
                         duration: const Duration(milliseconds: 300),
                         margin: const EdgeInsets.only(bottom: 8),
                         decoration: BoxDecoration(
@@ -78,21 +91,11 @@ class QueueView extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: ListTile(
-                          leading: Container(
+                          leading: OptimizedImage(
+                            imagePath: song.artPath,
                             width: 44,
                             height: 44,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: song.artPath != null
-                                  ? DecorationImage(
-                                      image: FileImage(File(song.artPath!)),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                            ),
-                            child: song.artPath == null
-                                ? const Icon(LucideIcons.music)
-                                : null,
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           title: Text(
                             song.title,
@@ -122,7 +125,7 @@ class QueueView extends ConsumerWidget {
                             ),
                           ),
                           onTap: () =>
-                              ref.read(playbackProvider.notifier).play(song),
+                              ref.read(playbackProvider.notifier).playAtIndex(index),
                         ),
                       ),
                     );

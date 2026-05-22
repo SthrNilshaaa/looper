@@ -5,18 +5,24 @@ import 'package:media_kit/media_kit.dart';
 import 'package:dbus/dbus.dart';
 import 'mpris.dart';
 import 'package:audio_service/audio_service.dart' as asrv;
+import 'package:audio_session/audio_session.dart' as asrv_sess;
 import 'audio_handler.dart';
+import 'db_service.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
 
 class AudioService {
   late final Player player;
   MPRISPlayer? _mprisPlayer;
   DBusClient? _dBusClient;
   MyAudioHandler? _audioHandler;
+  bool _playOnInterruptionEnd = false;
 
   // Callbacks for controls
   void Function()? onNext;
   void Function()? onPrevious;
   void Function(Duration)? onSeek;
+  void Function()? onFavoriteToggle;
+  void Function()? onShuffleToggle;
 
   AudioService() {
     player = Player(
@@ -36,6 +42,7 @@ class AudioService {
     _initMpris();
     _initAndroidAudioHandler();
     _initAndroidBroadcasts();
+    _initAudioSession();
   }
 
   void _initAndroidBroadcasts() {
@@ -97,8 +104,122 @@ class AudioService {
       _audioHandler?.onSeek = (duration) {
         if (onSeek != null) onSeek!(duration);
       };
+
+      _audioHandler?.onFavoriteToggle = () {
+        if (onFavoriteToggle != null) onFavoriteToggle!();
+      };
+
+      _audioHandler?.onShuffleToggle = () {
+        if (onShuffleToggle != null) onShuffleToggle!();
+      };
+
+      _audioHandler?.onPlay = () {
+        resume();
+      };
+
+      _audioHandler?.onPause = () {
+        pause();
+      };
     } catch (e) {
       debugPrint('Failed to init audio handler: $e');
+    }
+  }
+
+  Future<void> _initAudioSession() async {
+    if (!Platform.isAndroid) return;
+    try {
+      final session = await asrv_sess.AudioSession.instance;
+      await session.configure(const asrv_sess.AudioSessionConfiguration.music());
+
+      session.interruptionEventStream.listen((event) {
+        debugPrint('🎵 AudioSession: Interruption event received: begin=${event.begin}, type=${event.type}');
+        _handleAudioInterruption(event);
+      });
+
+      session.becomingNoisyEventStream.listen((_) async {
+        debugPrint('🎵 AudioSession: Becoming noisy (headphones unplugged). Pausing...');
+        try {
+          final settings = await DbService.isar.appSettings.get(0);
+          if (settings == null || !settings.audioFocus) return;
+          await pause();
+        } catch (e) {
+          debugPrint('Error handling noisy event: $e');
+        }
+      });
+    } catch (e) {
+      debugPrint('Failed to initialize AudioSession: $e');
+    }
+  }
+
+  Future<void> _handleAudioInterruption(asrv_sess.AudioInterruptionEvent event) async {
+    try {
+      final settings = await DbService.isar.appSettings.get(0);
+      if (settings == null || !settings.audioFocus) return;
+
+      if (event.begin) {
+        switch (event.type) {
+          case asrv_sess.AudioInterruptionType.duck:
+            player.setVolume(player.state.volume * 0.2);
+            break;
+          case asrv_sess.AudioInterruptionType.pause:
+          case asrv_sess.AudioInterruptionType.unknown:
+            if (player.state.playing) {
+              _playOnInterruptionEnd = true;
+              debugPrint('🎵 AudioSession: Interruption began. Will auto-resume on finish.');
+            } else {
+              _playOnInterruptionEnd = false;
+            }
+            await player.pause();
+            break;
+        }
+      } else {
+        switch (event.type) {
+          case asrv_sess.AudioInterruptionType.duck:
+            player.setVolume(settings.volume * 100);
+            break;
+          case asrv_sess.AudioInterruptionType.pause:
+          case asrv_sess.AudioInterruptionType.unknown:
+            if (_playOnInterruptionEnd) {
+              _playOnInterruptionEnd = false;
+              debugPrint('🎵 AudioSession: Interruption ended. Auto-resuming playback...');
+              await resume();
+            }
+            break;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error handling audio interruption: $e');
+    }
+  }
+
+  Future<bool> _requestAudioFocus() async {
+    try {
+      final settings = await DbService.isar.appSettings.get(0);
+      if (settings == null || !settings.audioFocus) return true;
+
+      final session = await asrv_sess.AudioSession.instance;
+      final success = await session.setActive(true);
+      if (!success) {
+        debugPrint('Audio focus request denied (e.g., active call).');
+      }
+      return success;
+    } catch (e) {
+      debugPrint('Error requesting audio focus: $e');
+      return true;
+    }
+  }
+
+  void updatePlaybackState({
+    required bool isPlaying,
+    required bool isFavorite,
+    required bool isShuffle,
+  }) {
+    if (Platform.isAndroid && _audioHandler != null) {
+      _audioHandler!.updateControls(
+        isPlaying: isPlaying,
+        isFavorite: isFavorite,
+        isShuffle: isShuffle,
+      );
     }
   }
 
@@ -201,6 +322,11 @@ class AudioService {
   }
 
   Future<void> play(String path, {Map<String, dynamic>? metadata}) async {
+    _playOnInterruptionEnd = false; // Reset auto-resume on fresh manual play
+    if (Platform.isAndroid) {
+      _requestAudioFocus(); // Request focus, but don't let transient delay block the user
+    }
+
     final extras = metadata?.map((k, v) => MapEntry(k, v.toString()));
     await player.open(Media(path, extras: extras));
 
@@ -257,10 +383,23 @@ class AudioService {
   }
 
   Future<void> pause() async {
+    _playOnInterruptionEnd = false; // User manually paused! Reset auto-resume
     await player.pause();
+    if (Platform.isAndroid) {
+      try {
+        final session = await asrv_sess.AudioSession.instance;
+        await session.setActive(false);
+      } catch (e) {
+        debugPrint('Error deactivating audio session: $e');
+      }
+    }
   }
 
   Future<void> resume() async {
+    _playOnInterruptionEnd = false; // Reset auto-resume on manual resume
+    if (Platform.isAndroid) {
+      _requestAudioFocus(); // Request focus, but don't let transient delay block the user
+    }
     await player.play();
   }
 
@@ -272,6 +411,14 @@ class AudioService {
     await player.stop();
     if (_mprisPlayer != null) {
       _mprisPlayer!.updatePlaybackStatus('Stopped');
+    }
+    if (Platform.isAndroid) {
+      try {
+        final session = await asrv_sess.AudioSession.instance;
+        await session.setActive(false);
+      } catch (e) {
+        debugPrint('Error deactivating audio session: $e');
+      }
     }
   }
 

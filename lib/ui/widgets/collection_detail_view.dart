@@ -26,68 +26,67 @@ class CollectionDetailView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final activeSong = ref.watch(playbackProvider).currentSong;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             return SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 200), // Added padding to fix navbar overlap
-          child: Column(
-            children: [
-              // Header - Now always a Row for cover and name
-              Container(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    _buildArt(context, true),
-                    const SizedBox(width: 20),
-                    Expanded(child: _buildInfo(context, ref, true)),
-                  ],
-                ),
+              padding: const EdgeInsets.only(bottom: 200), // Added padding to fix navbar overlap
+              child: Column(
+                children: [
+                  // Header - Now always a Row for cover and name
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        _buildArt(context, true),
+                        const SizedBox(width: 20),
+                        Expanded(child: _buildInfo(context, ref, true, activeSong?.artPath)),
+                      ],
+                    ),
+                  ),
+                  // Songs List
+                  SongsList(
+                    songs: songs,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                  ),
+                ],
               ),
-              // Songs List
-              SongsList(
-                songs: songs,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-              ),
-            ],
-          ),
-        );
-      },
-    ),
-  ),
-  );
-  }
-
-  Widget _buildArt(BuildContext context, bool isNarrow) {
-    final double size = 140; // Unified size for a cleaner Row look
-    return Hero(
-      tag: 'collection_$title',
-      child: OptimizedImage(
-        imagePath: artPath,
-        imageUrl: imageUrl,
-        width: size,
-        height: size,
-        borderRadius: BorderRadius.circular(16),
-        placeholder: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.05),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: const Icon(
-            LucideIcons.music,
-            size: 48,
-            color: Colors.grey,
-          ),
+            );
+          },
         ),
       ),
     );
   }
 
-  Widget _buildInfo(BuildContext context, WidgetRef ref, bool isNarrow) {
+  Widget _buildArt(BuildContext context, bool isNarrow) {
+    final double size = 140; // Unified size for a cleaner Row look
+    return OptimizedImage(
+      imagePath: artPath,
+      imageUrl: imageUrl,
+      width: size,
+      height: size,
+      borderRadius: BorderRadius.circular(16),
+      placeholder: Container(
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: const Icon(
+          LucideIcons.music,
+          size: 48,
+          color: Colors.grey,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfo(BuildContext context, WidgetRef ref, bool isNarrow, String? activeArtworkPath) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -107,7 +106,7 @@ class CollectionDetailView extends ConsumerWidget {
             subtitle!,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.white.withOpacity(0.5),
+              color: Colors.white.withValues(alpha: 0.5),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

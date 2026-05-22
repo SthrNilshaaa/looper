@@ -1,0 +1,160 @@
+name: Secure Build, Signing, and Unified CI Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=../upload-keystore.jks" >> android/key.properties
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Android Release APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Rename and Prepare APKs
+        run: |
+          mkdir -p build/release-assets
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/release-assets/looper-player-arm64-v8a.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/release-assets/looper-player-armeabi-v7a.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk build/release-assets/looper-player-x86_64.apk
+
+      - name: Upload Android Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apks
+          path: build/release-assets/*.apk
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev libblkid-dev liblzma-dev \
+            libgcrypt20-dev libmpv-dev libnotify-dev \
+            rpm
+
+      - name: Install appimagetool for AppImage Packaging
+        run: |
+          sudo wget -O /usr/local/bin/appimagetool https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+          sudo chmod +x /usr/local/bin/appimagetool
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Linux Platform Support
+        run: flutter config --enable-linux-desktop
+
+      - name: Install Flutter Distributor
+        run: flutter pub global activate flutter_distributor
+
+      - name: Add Pub global bin to PATH
+        run: echo "$HOME/.pub-cache/bin" >> $GITHUB_PATH
+
+      - name: Install Project Dependencies
+        run: flutter pub get
+
+      - name: Package Linux Distributors (DEB, RPM, AppImage, Archive)
+        run: |
+          flutter_distributor release --name dev --package linux-deb
+          flutter_distributor release --name dev --package linux-rpm
+          flutter_distributor release --name dev --package linux-appimage
+          flutter_distributor release --name dev --package linux-archive
+
+      - name: Organize Linux Distribution Artifacts
+        run: |
+          mkdir -p build/linux-release-assets
+          find dist/ -type f \( -name "*.deb" -o -name "*.rpm" -o -name "*.AppImage" -o -name "*.tar.gz" \) -exec cp {} build/linux-release-assets/ \;
+          ls -la build/linux-release-assets/
+
+      - name: Upload Linux Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-packages
+          path: build/linux-release-assets/*
+
+  publish-release:
+    needs: [build-android, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download Android Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-apks
+          path: release-binaries
+
+      - name: Download Linux Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-packages
+          path: release-binaries
+
+      - name: List Downloaded Binaries
+        run: ls -lh release-binaries
+
+      - name: Generate Premium Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          
+          # Create automated premium release notes using GitHub CLI
+          gh release create "$TAG_NAME" \
+            release-binaries/* \
+            --title "Looper Player $TAG_NAME" \
+            --notes "### 🚀 Welcome to Looper Player $TAG_NAME!
+            
+            We are excited to present **Looper Player $TAG_NAME**—the ultimate offline-first, high-fidelity local music player for Android and Linux!
+            
+            This release features secure, cryptographically signed production builds for Android and complete Linux packages (Debian, RedHat, AppImage, and portable Archive formats) built directly through our automated CI/CD pipelines.
+            
+            #### 📱 Platforms Supported
+            - **Android**: Signed production APKs supporting modern `arm64-v8a`, `armeabi-v7a`, and `x86_64` architectures.
+            - **Linux**: High-compatibility Native packages for Debian/Ubuntu (`.deb`), RedHat/Fedora (`.rpm`), platform-agnostic standalone (`.AppImage`), and portable (`.tar.gz`) archives.
+            
+            ---
+            *Looper Player is 100% offline-first, private, and telemetry-free. Enjoy your local high-fidelity audio with beautifully synchronized interactive lyrics.*"

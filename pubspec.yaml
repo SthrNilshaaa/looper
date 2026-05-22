@@ -79,6 +79,7 @@ dependencies:
   local_notifier: ^0.1.6
   animate_gradient: ^0.0.4
   audio_service: ^0.18.18
+  audio_session: ^0.2.3
   just_audio_background: ^0.0.1-beta.17
   share_plus: ^12.0.2
   ffmpeg_kit_flutter_new_full:

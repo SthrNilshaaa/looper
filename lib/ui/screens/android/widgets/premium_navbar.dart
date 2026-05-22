@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'premium_section.dart';
@@ -23,7 +24,8 @@ class PremiumNavbar extends ConsumerWidget {
     final accentColor = Color(settings.accentColor);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final useBlur = settings.enableDynamicTheming;
-    // final useBlur = true;
+   
+    
 
     return Container(
       padding: EdgeInsets.fromLTRB(16, 2, 16, 16 + bottomPadding),
@@ -60,8 +62,9 @@ class PremiumNavbar extends ConsumerWidget {
                 PremiumSection(
                   flex: 3,
                   heroTag: 'nav_morph_1',
+                  //  useblur true,
                   isSelected: true,
-                  useBlur: useBlur,
+                   useBlur: useBlur,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(0);
@@ -82,10 +85,11 @@ class PremiumNavbar extends ConsumerWidget {
                 PremiumSection(
                   flex: 6,
                   heroTag: 'nav_morph_2',
+                  // useblur true,
                   isSelected: false,
                   showLeftBorder: true,
                   showShadow: false,
-                  useBlur: useBlur,
+                   useBlur: useBlur,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
                     bottomLeft: Radius.circular(12),
@@ -123,8 +127,9 @@ class PremiumNavbar extends ConsumerWidget {
                 PremiumSection(
                   flex: 3,
                   heroTag: 'nav_morph_1',
+                //  useblur true,
                   isSelected: false,
-                  useBlur: useBlur,
+                   useBlur: useBlur,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(0);
@@ -145,8 +150,9 @@ class PremiumNavbar extends ConsumerWidget {
                 PremiumSection(
                   flex: 3,
                   heroTag: 'nav_morph_2',
+                  // use/////blur true,
                   isSelected: true,
-                  useBlur: useBlur,
+                   useBlur: useBlur,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(1);
@@ -162,8 +168,9 @@ class PremiumNavbar extends ConsumerWidget {
                 PremiumSection(
                   flex: 3,
                   heroTag: 'nav_morph_3',
+                   //useblur true,
                   isSelected: false,
-                  useBlur: useBlur,
+                   useBlur: useBlur,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(2);
@@ -182,7 +189,9 @@ class PremiumNavbar extends ConsumerWidget {
                 PremiumSection(
                   flex: 6,
                   heroTag: 'nav_morph_1',
+                 //useblur true,
                   isSelected: false,
+                 
                   showRightBorder: true,
                   showShadow: false,
                   useBlur: useBlur,
@@ -224,9 +233,11 @@ class PremiumNavbar extends ConsumerWidget {
                 ),
                 PremiumSection(
                   flex: 3,
+
+                  // useBlur: true,
                   heroTag: 'nav_morph_2',
                   isSelected: true,
-                  useBlur: useBlur,
+                   useBlur: useBlur,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(2);
@@ -285,13 +296,14 @@ class _NavItem extends StatelessWidget {
         const SizedBox(width: 8),
         Flexible(
           child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 300),
+            duration:  Duration(milliseconds: 300),
             style: TextStyle(
               inherit: false,
               color: isSelected ? accentColor : Colors.white.withOpacity(0.4),
               fontSize: 13.ts,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: 0.2,
+              fontFamily: 'DMSans'
             ),
             child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),

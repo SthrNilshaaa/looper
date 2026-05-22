@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
 import 'dart:io';
 
-class PremiumSection extends StatelessWidget {
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+
+class PremiumSection extends ConsumerWidget {
   final Widget child;
   final BorderRadius borderRadius;
   final VoidCallback? onTap;
@@ -19,6 +22,8 @@ class PremiumSection extends StatelessWidget {
   final bool showShadow;
   final double blurAmount;
   final bool useBlur;
+  final bool forceNoBlur;
+  final bool forceBlur;
 
   const PremiumSection({
     super.key,
@@ -35,15 +40,17 @@ class PremiumSection extends StatelessWidget {
     this.heroTag,
     this.showLeftBorder = true,
     this.showRightBorder = true,
-    this.showShadow = true,
+    this.showShadow = false,
     this.blurAmount = 10,
     this.useBlur = false,
+    this.forceNoBlur = false,
+    this.forceBlur = false,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final borderSide = BorderSide(
-      color: Colors.white.withOpacity(0.05),
+      color: Colors.white.withValues(alpha: 0.05),
       width: 1.2,
     );
 
@@ -54,7 +61,7 @@ class PremiumSection extends StatelessWidget {
       width: width,
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? (useBlur ? Colors.white.withOpacity(0.05) : Theme.of(context).colorScheme.surfaceContainer),
+        color: backgroundColor ?? (useBlur || forceBlur ? Colors.white.withValues(alpha: 0.05) : Theme.of(context).colorScheme.surfaceContainer),
         borderRadius: borderRadius,
         border: Border(
           top: borderSide,
@@ -65,7 +72,7 @@ class PremiumSection extends StatelessWidget {
         boxShadow: showShadow
             ? [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   blurRadius: 15,
                   spreadRadius: 2,
                   offset: const Offset(0, 4),
@@ -76,15 +83,28 @@ class PremiumSection extends StatelessWidget {
       child: Center(child: child),
     );
 
-    // Optimization: On Android, multiple BackdropFilters are very expensive.
-    // We only use it if specifically requested and for larger sections.
-    final bool shouldBlur = useBlur;// && (!Platform.isAndroid || blurAmount > 15);
+    final bool shouldBlur = useBlur && !forceNoBlur;
 
-    if (shouldBlur) {
+    if (shouldBlur == true) {
       containerBody = ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
+          filter: ImageFilter.blur(
+            sigmaX: blurAmount,
+            sigmaY: blurAmount,
+          ),
+          child: containerBody,
+        ),
+      );
+    }
+    if (forceBlur) {
+      containerBody = ClipRRect(
+        borderRadius: borderRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: blurAmount,
+            sigmaY: blurAmount,
+          ),
           child: containerBody,
         ),
       );

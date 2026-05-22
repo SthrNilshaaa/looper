@@ -28,6 +28,20 @@ class OptimizedImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fallback = placeholder ?? Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.04),
+        borderRadius: borderRadius,
+      ),
+      child: Center(
+        child: Icon(
+          Icons.music_note_rounded,
+          color: Colors.white.withOpacity(0.3),
+          size: width != null ? (width! * 0.5).clamp(16, 48) : 32,
+        ),
+      ),
+    );
+
     Widget imageWidget;
 
     if (imagePath != null && File(imagePath!).existsSync()) {
@@ -38,8 +52,7 @@ class OptimizedImage extends StatelessWidget {
         fit: fit,
         cacheWidth: cacheWidth ?? (width != null ? (width! * 2.5).toInt() : 800),
         cacheHeight: cacheHeight,
-        errorBuilder: (context, error, stackTrace) =>
-            placeholder ?? const SizedBox(),
+        errorBuilder: (context, error, stackTrace) => fallback,
       );
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
       imageWidget = CachedNetworkImage(
@@ -47,13 +60,13 @@ class OptimizedImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        placeholder: (context, url) => placeholder ?? const SizedBox(),
-        errorWidget: (context, url, error) => placeholder ?? const SizedBox(),
+        placeholder: (context, url) => fallback,
+        errorWidget: (context, url, error) => fallback,
         memCacheWidth:
             cacheWidth ?? (width != null ? (width! * 2.5).toInt() : 800),
       );
     } else {
-      imageWidget = placeholder ?? const SizedBox();
+      imageWidget = fallback;
     }
 
     if (borderRadius != null) {

@@ -73,7 +73,34 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..darkTheme = s.darkTheme
       ..saveDynamicColor = s.saveDynamicColor
       ..dynamicLyrics = s.dynamicLyrics
-      ..accentColor = s.accentColor;
+      ..accentColor = s.accentColor
+      ..audioFocus = s.audioFocus
+      ..disableSquiggle = s.disableSquiggle
+      ..disableAnimatedDuration = s.disableAnimatedDuration;
+  }
+
+  Future<void> updateDisableSquiggle(bool disabled) async {
+    final newState = _clone(state)..disableSquiggle = disabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateDisableAnimatedDuration(bool disabled) async {
+    final newState = _clone(state)..disableAnimatedDuration = disabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAudioFocus(bool enabled) async {
+    final newState = _clone(state)..audioFocus = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
   }
 
   Future<void> updateDynamicTheming(bool enabled) async {

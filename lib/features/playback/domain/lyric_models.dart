@@ -61,7 +61,37 @@ class LrcParser {
       }
     }
 
-    if (rawLines.isEmpty) return [];
+    if (rawLines.isEmpty) {
+      // FALLBACK FOR PLAIN TEXT LYRICS (no timestamps)
+      // Filter out metadata tags like [ti:xx], [ar:xx], etc.
+      final List<String> plainLines = [];
+      final metaRegExp = RegExp(r'^\[[a-zA-Z]+:.*\]$');
+      for (var line in lines) {
+        final trimmed = line.trim();
+        if (trimmed.isEmpty) continue;
+        if (metaRegExp.hasMatch(trimmed)) continue;
+        if (trimmed.startsWith('[') && trimmed.endsWith(']') && !trimmed.contains(' ')) continue;
+        plainLines.add(trimmed);
+      }
+
+      if (plainLines.isNotEmpty) {
+        final List<LyricLine> result = [];
+        final count = plainLines.length;
+        final totalMs = totalDuration.inMilliseconds > 0 ? totalDuration.inMilliseconds : 180000; // fallback to 3 mins
+        final interval = totalMs ~/ count;
+        for (var i = 0; i < count; i++) {
+          result.add(
+            LyricLine(
+              startTime: Duration(milliseconds: interval * i),
+              endTime: Duration(milliseconds: interval * (i + 1)),
+              text: plainLines[i],
+            ),
+          );
+        }
+        return result;
+      }
+      return [];
+    }
 
     // Sort by start time just in case
     rawLines.sort(

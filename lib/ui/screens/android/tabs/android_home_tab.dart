@@ -4,14 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/navigation_provider.dart';
-import 'package:looper_player/ui/screens/android/song_info_screen.dart';
+import 'package:looper_player/ui/screens/android/song/song_info_screen.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
-import 'widgets/premium_section.dart';
-import 'widgets/song_details_bottom_sheet.dart';
+import 'package:looper_player/core/ui_utils.dart';
+import '../widgets/premium_section.dart';
+import '../widgets/song_details_bottom_sheet.dart';
+import '../widgets/empty_library_view.dart';
+import '../widgets/premium_loading_view.dart';
 
 
 class AndroidHomeTab extends ConsumerStatefulWidget {
@@ -56,7 +59,10 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
             children: [
               ListTile(
                 leading: const Icon(LucideIcons.listOrdered, color: Colors.white),
-                title: const Text('Add to Queue', style: TextStyle(color: Colors.white)),
+                title: Text(
+                  UiUtils.tr(context, 'Add to Queue', 'कतार में जोड़ें'),
+                  style: const TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   ref.read(playbackProvider.notifier).addToQueue(song);
                   Navigator.pop(context);
@@ -68,7 +74,9 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                   color: song.isFavorite ? Colors.red : Colors.white,
                 ),
                 title: Text(
-                  song.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                  song.isFavorite 
+                      ? UiUtils.tr(context, 'Remove from Favorites', 'पसंदीदा से हटाएं') 
+                      : UiUtils.tr(context, 'Add to Favorites', 'पसंदीदा में जोड़ें'),
                   style: const TextStyle(color: Colors.white),
                 ),
                 onTap: () {
@@ -78,7 +86,10 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
               ),
               ListTile(
                 leading: const Icon(LucideIcons.info, color: Colors.white),
-                title: const Text('Song Details', style: TextStyle(color: Colors.white)),
+                title: Text(
+                  UiUtils.tr(context, 'Song Details', 'गीत के विवरण'),
+                  style: const TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   showModalBottomSheet(
@@ -92,7 +103,10 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
               ),
               ListTile(
                 leading: const Icon(LucideIcons.activity, color: Colors.white),
-                title: const Text('Technical Info & Frequency', style: TextStyle(color: Colors.white)),
+                title: Text(
+                  UiUtils.tr(context, 'Technical Info & Frequency', 'तकनीकी जानकारी और आवृत्ति'),
+                  style: const TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
@@ -105,7 +119,10 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
               ),
               ListTile(
                 leading: const Icon(LucideIcons.share2, color: Colors.white),
-                title: const Text('Share', style: TextStyle(color: Colors.white)),
+                title: Text(
+                  UiUtils.tr(context, 'Share', 'साझा करें'),
+                  style: const TextStyle(color: Colors.white),
+                ),
                 onTap: () {
                   ref.read(playbackProvider.notifier).shareSong(song);
                   Navigator.pop(context);
@@ -123,6 +140,21 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
   Widget build(BuildContext context) {
     final library = ref.watch(libraryProvider);
     final playbackState = ref.watch(playbackProvider);
+
+    if (library.isScanning) {
+      return const PremiumLoadingView();
+    }
+
+    if (library.songs.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: EmptyLibraryView(
+            title: UiUtils.tr(context, 'No songs found', 'कोई गाना नहीं मिला'),
+          ),
+        ),
+      );
+    }
 
     // Sort songs for Quick Picks (most played)
     final allSongs = List<Song>.from(library.songs);
@@ -178,6 +210,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                         bottomRight: Radius.circular(20),
                       ),
                       width: 44,
+                      // useBlur: ,
                       height: 44,
                       useExpanded: false,
                       onTap: () {
@@ -205,16 +238,16 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Quick Picks',
-                          style: TextStyle(
+                        Text(
+                          UiUtils.tr(context, 'Quick Picks', 'त्वरित चयन'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          'Today Mix for you',
+                          UiUtils.tr(context, 'Today Mix for you', 'आपके लिए आज का मिक्स'),
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.4),
                             fontSize: 14,
@@ -238,14 +271,14 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                               .setPlaylist(shuffledPicks, initialIndex: 0);
                         }
                       },
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(LucideIcons.shuffle, size: 16, color: Colors.white),
-                          SizedBox(width: 8),
+                          const Icon(LucideIcons.shuffle, size: 16, color: Colors.white),
+                          const SizedBox(width: 8),
                           Text(
-                            'Play',
-                            style: TextStyle(
+                            UiUtils.tr(context, 'Play', 'चलाएं'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                             ),
@@ -338,6 +371,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                             ),
                                             child: OptimizedImage(
                                               imagePath: song.artPath,
+                                              width: itemWidth,
+                                              height: itemWidth,
                                               fit: BoxFit.cover,
                                             ),
                                           ),
@@ -377,8 +412,10 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                           ),
                                         ),
                                         // Playing indicator overlay
-                                        if (isPlaying && playbackState.isPlaying)
-                                          Positioned.fill(
+                                        Positioned.fill(
+                                          child: AnimatedOpacity(
+                                            duration: const Duration(milliseconds: 300),
+                                            opacity: isPlaying && playbackState.isPlaying ? 1.0 : 0.0,
                                             child: Container(
                                               decoration: BoxDecoration(
                                                 color: Colors.black.withOpacity(0.5),
@@ -394,6 +431,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                               ),
                                             ),
                                           ),
+                                        ),
                                       ],
                                     ),
                                   );
@@ -433,9 +471,9 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Songs',
-                      style: TextStyle(
+                    Text(
+                      UiUtils.tr(context, 'Songs', 'गाने'),
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -450,18 +488,18 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                         HapticFeedback.lightImpact();
                         ref.read(appNavigationProvider.notifier).setItem(NavItem.songs);
                       },
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'View All',
-                            style: TextStyle(
+                            UiUtils.tr(context, 'View All', 'सभी देखें'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          SizedBox(width: 4),
-                          Icon(LucideIcons.arrowRight, size: 16, color: Colors.white),
+                          const SizedBox(width: 4),
+                          const Icon(LucideIcons.arrowRight, size: 16, color: Colors.white),
                         ],
                       ),
                     ),
@@ -492,8 +530,10 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                             height: 48,
                             fit: BoxFit.cover,
                           ),
-                          if (isCurrent && playbackState.isPlaying)
-                            Positioned.fill(
+                          Positioned.fill(
+                            child: AnimatedOpacity(
+                              duration: const Duration(milliseconds: 300),
+                              opacity: isCurrent && playbackState.isPlaying ? 1.0 : 0.0,
                               child: Container(
                                 color: Colors.black.withOpacity(0.4),
                                 child: Center(
@@ -506,6 +546,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                 ),
                               ),
                             ),
+                          ),
                         ],
                       ),
                     ),
@@ -519,7 +560,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
-                      song.artist ?? 'Unknown',
+                      song.artist ?? UiUtils.tr(context, 'Unknown', 'अज्ञात'),
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.5),
                         fontSize: 13,
@@ -568,12 +609,12 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
 
             // Artists Row
             if (library.artists.isNotEmpty) ...[
-              const SliverToBoxAdapter(
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 24, 16, 12),
+                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
                   child: Text(
-                    'Artists',
-                    style: TextStyle(
+                    UiUtils.tr(context, 'Artists', 'कलाकार'),
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -603,7 +644,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
 
                             ref.read(appNavigationProvider.notifier).showCollection(
                                   title: artist.name,
-                                  subtitle: '${artistSongs.length} Songs',
+                                  subtitle: '${artistSongs.length} ${UiUtils.tr(context, 'Songs', 'गाने')}',
                                   art: isLocalImage ? artist.artistImageUrl : (artist.artPath ?? (artistSongs.isNotEmpty ? artistSongs.first.artPath : null)),
                                   imageUrl: isNetworkImage ? artist.artistImageUrl : null,
                                   songs: artistSongs,
@@ -618,20 +659,17 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                   shape: BoxShape.circle,
                                   color: Theme.of(context).colorScheme.surfaceContainer,
                                 ),
-                                child: Hero(
-                                  tag: 'collection_${artist.name}',
-                                  child: OptimizedImage(
-                                    imagePath: artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http')
-                                        ? artist.artistImageUrl
-                                        : null,
-                                    imageUrl: artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http')
-                                        ? artist.artistImageUrl
-                                        : null,
-                                    width: 90,
-                                    height: 90,
-                                    borderRadius: BorderRadius.circular(45),
-                                    placeholder: const Icon(LucideIcons.user, color: Colors.white24, size: 40),
-                                  ),
+                                child: OptimizedImage(
+                                  imagePath: artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http')
+                                      ? artist.artistImageUrl
+                                      : null,
+                                  imageUrl: artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http')
+                                      ? artist.artistImageUrl
+                                      : null,
+                                  width: 90,
+                                  height: 90,
+                                  borderRadius: BorderRadius.circular(45),
+                                  placeholder: const Icon(LucideIcons.user, color: Colors.white24, size: 40),
                                 ),
                               ),
                               const SizedBox(height: 8),

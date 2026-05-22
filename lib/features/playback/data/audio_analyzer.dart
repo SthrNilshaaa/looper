@@ -47,7 +47,16 @@ class AudioAnalysis {
 }
 
 class AudioAnalyzer {
+  static final Map<String, AudioAnalysis> _cache = {};
+
+  static AudioAnalysis? getCachedAnalysis(String filePath) {
+    return _cache[filePath];
+  }
+
   static Future<AudioAnalysis?> analyze(String filePath) async {
+    if (_cache.containsKey(filePath)) {
+      return _cache[filePath];
+    }
     try {
       final session = await FFprobeKit.getMediaInformation(filePath);
       final info = session.getMediaInformation();
@@ -84,7 +93,7 @@ class AudioAnalyzer {
                         int.tryParse(props['bits_per_sample']?.toString() ?? '') ?? 0;
       }
 
-      return AudioAnalysis(
+      final analysis = AudioAnalysis(
         codec: codec,
         container: container,
         sampleRate: sampleRate,
@@ -98,6 +107,8 @@ class AudioAnalyzer {
         label: tags['label']?.toString() ?? tags['LABEL']?.toString() ?? tags['organization']?.toString(),
         encoder: tags['encoder']?.toString(),
       );
+      _cache[filePath] = analysis;
+      return analysis;
     } catch (e) {
       debugPrint('Error analyzing audio: $e');
       return null;

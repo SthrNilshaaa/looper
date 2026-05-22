@@ -111,35 +111,32 @@ class _AlbumCard extends ConsumerWidget {
                   ],
                   color: Colors.white.withOpacity(0.05),
                 ),
-                child: Hero(
-                  tag: 'collection_${album.name}',
-                  child: PlayingOverlay(
-                    isPlaying: ref.watch(playbackProvider).currentSong?.album == album.name &&
-                               ref.watch(playbackProvider).isPlaying,
-                    borderRadius: 16,
-                    child: album.artPath != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(16),
-                            child: OptimizedImage(
-                              imagePath: album.artPath,
-                              fit: BoxFit.cover,
-                              placeholder: const Center(
-                                child: Icon(
-                                  LucideIcons.disc,
-                                  size: 48,
-                                  color: Colors.grey,
-                                ),
+                child: PlayingOverlay(
+                  isPlaying: ref.watch(playbackProvider).currentSong?.album == album.name &&
+                             ref.watch(playbackProvider).isPlaying,
+                  borderRadius: 16,
+                  child: album.artPath != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: OptimizedImage(
+                            imagePath: album.artPath,
+                            fit: BoxFit.cover,
+                            placeholder: const Center(
+                              child: Icon(
+                                LucideIcons.disc,
+                                size: 48,
+                                color: Colors.grey,
                               ),
                             ),
-                          )
-                        : const Center(
-                            child: Icon(
-                              LucideIcons.disc,
-                              size: 48,
-                              color: Colors.grey,
-                            ),
                           ),
-                  ),
+                        )
+                      : const Center(
+                          child: Icon(
+                            LucideIcons.disc,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
+                        ),
                 ),
               ),
             ),
@@ -263,19 +260,16 @@ class _ArtistCard extends ConsumerWidget {
                   ],
                   color: Colors.white.withOpacity(0.05),
                 ),
-                child: Hero(
-                  tag: 'collection_${artist.name}',
-                  child: ClipOval(
-                    child: OptimizedImage(
-                      imageUrl: artist.artistImageUrl,
-                      imagePath: artist.artPath,
-                      fit: BoxFit.cover,
-                      placeholder: const Center(
-                        child: Icon(
-                          LucideIcons.user,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
+                child: ClipOval(
+                  child: OptimizedImage(
+                    imageUrl: artist.artistImageUrl,
+                    imagePath: artist.artPath,
+                    fit: BoxFit.cover,
+                    placeholder: const Center(
+                      child: Icon(
+                        LucideIcons.user,
+                        size: 48,
+                        color: Colors.grey,
                       ),
                     ),
                   ),

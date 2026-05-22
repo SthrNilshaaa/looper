@@ -17,15 +17,19 @@ import 'package:looper_player/ui/screens/welcome_screen.dart';
 import 'package:looper_player/ui/widgets/collection_detail_view.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
-import 'android_home_tab.dart';
-import 'android_search_tab.dart';
-import 'android_library_tab.dart';
-import 'android_expanded_player.dart';
+import 'tabs/android_home_tab.dart';
+import 'tabs/android_search_tab.dart';
+import 'tabs/android_library_tab.dart';
+import 'tabs/android_songs_tab.dart';
+import 'player/android_expanded_player.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'widgets/premium_navbar.dart';
-import 'views/library_categories_views.dart';
+import 'widgets/premium_section.dart';
+import 'tabs/views/library_categories_views.dart';
 import 'package:looper_player/features/library/presentation/smart_views.dart';
+import 'package:looper_player/features/library/presentation/queue_view.dart';
+
 
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:animations/animations.dart';
@@ -46,82 +50,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
 
   final List<Widget> _tabs = [
     const AndroidHomeTab(),
-    Consumer(
-      builder: (context, ref, _) {
-        final library = ref.watch(libraryProvider);
-        final settings = ref.watch(settingsProvider);
-        return library.songs.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.asset(
-                      AppIcons.songs,
-                      width: 64,
-                      height: 64,
-                      colorFilter: const ColorFilter.mode(
-                        Colors.white24,
-                        BlendMode.srcIn,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No songs found',
-                      style: TextStyle(color: Colors.white70, fontSize: 18),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        ref.read(libraryProvider.notifier).scanSavedFolders();
-                      },
-                      icon: SvgPicture.asset(
-                        AppIcons.search,
-                        width: 18,
-                        height: 18,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.black,
-                          BlendMode.srcIn,
-                        ),
-                      ),
-                      label: const Text('Scan for Music'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            : Scaffold(
-                backgroundColor: settings.enableDynamicTheming
-                    ? Colors.transparent
-                    : Theme.of(context).colorScheme.surface,
-                body: SafeArea(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-                        child: Text(
-                          'All Songs',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      Expanded(child: SongsList(songs: library.songs)),
-                    ],
-                  ),
-                ),
-              );
-      },
-    ),
+    const AndroidSongsTab(),
     const AndroidLibraryTab(),
   ];
 
@@ -133,6 +62,22 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
     final nav = ref.watch(appNavigationProvider);
     final activeItem = nav.activeItem;
     final navigatorKey = ref.read(androidNavigatorKeyProvider);
+    final rootItem = () {
+      if (activeItem == NavItem.home ||
+          activeItem == NavItem.songs ||
+          activeItem == NavItem.playlists) {
+        return activeItem;
+      }
+      for (final histState in nav.history.reversed) {
+        final histActive = histState.activeItem;
+        if (histActive == NavItem.home ||
+            histActive == NavItem.songs ||
+            histActive == NavItem.playlists) {
+          return histActive;
+        }
+      }
+      return NavItem.home;
+    }();
 
     // Handle Sub-view Navigation via Navigator (to enable Hero)
     ref.listen(appNavigationProvider, (previous, next) {
@@ -216,6 +161,16 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             ),
           ),
         );
+      } else if (next.activeItem == NavItem.queue &&
+          previous?.activeItem != NavItem.queue) {
+        navigatorKey.currentState?.push(
+          _createPremiumRoute(
+            const CategoryDetailWrapper(
+              title: 'Queue',
+              child: const QueueView(),
+            ),
+          ),
+        );
       } else if (next.activeItem == NavItem.history &&
           previous?.activeItem != NavItem.history) {
         navigatorKey.currentState?.push(
@@ -235,8 +190,12 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
 
     final library = ref.watch(libraryProvider);
     final settings = ref.watch(settingsProvider);
+    final isWelcomeBypassed = ref.watch(welcomeBypassedProvider);
 
-    if (library.songs.isEmpty && !library.isScanning) {
+    final isSetupComplete = isWelcomeBypassed ||
+                            settings.libraryFolders.isNotEmpty;
+
+    if (!isSetupComplete) {
       return const WelcomeScreen();
     }
 
@@ -273,9 +232,9 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
           _lastBackPressTime = now;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text(
-                'Press back again to exit',
-                style: TextStyle(color: Colors.white),
+              content: Text(
+                UiUtils.tr(context, 'Press back again to exit', 'बाहर निकलने के लिए फिर से वापस दबाएं'),
+                style: const TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.black87,
               duration: const Duration(seconds: 2),
@@ -284,7 +243,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                 borderRadius: BorderRadius.circular(10),
               ),
               margin: EdgeInsets.only(
-                bottom: 100, // Above the navbar
+                bottom:  song != null? 180:100, // Above the navbar
                 left: 20,
                 right: 20,
               ),
@@ -296,49 +255,80 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
       },
       child: Scaffold(
         backgroundColor: settings.enableDynamicTheming ? Colors.transparent : Theme.of(context).colorScheme.surface,
-        drawer: Drawer(
-          child: Container(
-            color: Theme.of(context).colorScheme.surface,
-            child: Sidebar(l10n: l10n),
-          ),
-        ),
+        // drawer: Drawer(
+        //   child: Container(
+        //     color: Theme.of(context).colorScheme.surface,
+        //     child: Sidebar(l10n: l10n),
+        //   ),
+        // ),
         body: Stack(
           children: [
             // Dynamic Background (Matched exactly with Lyrics Screen for consistency)
-            if (settings.enableDynamicTheming && song?.artPath != null) ...[
-              Positioned.fill(
-                child: TweenAnimationBuilder<double>(
-                  key: ValueKey(song!.artPath),
-                  tween: Tween<double>(begin: 1.0, end: 1.1),
-                  duration: const Duration(seconds: 30),
-                  curve: Curves.linear,
-                  builder: (context, scale, child) {
-                    return Transform.scale(
-                      scale: scale,
-                      child: RepaintBoundary(
-                        child: Image.file(
-                          File(song.artPath!),
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                          cacheWidth: 100, // Low-res cache for optimal blur performance
-                          cacheHeight: 100,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const SizedBox.shrink(),
+            if (settings.enableDynamicTheming) ...[
+              if (song?.artPath != null) ...[
+                Positioned.fill(
+                  child: TweenAnimationBuilder<double>(
+                    key: ValueKey(song!.artPath),
+                    tween: Tween(begin: 1.0, end: 1.08),
+                    duration: const Duration(seconds: 30),
+                    curve: Curves.linear,
+                    builder: (context, scale, child) {
+                      return Transform.scale(
+                        scale: scale,
+                        child: ImageFiltered(
+                          imageFilter: ImageFilter.blur(
+                            sigmaX: 18,
+                            sigmaY: 18,
+                          ),
+                          child: RepaintBoundary(
+                            child: Image.file(
+                              File(song.artPath!),
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+
+                              // VERY IMPORTANT
+                              filterQuality: FilterQuality.low,
+
+                              // Massive optimization
+                              cacheWidth: 80,
+                              cacheHeight: 80,
+
+                              gaplessPlayback: true,
+
+                              errorBuilder: (_, __, ___) =>
+                                  const SizedBox.shrink(),
+                            ),
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                  child: Container(
-                    color: Colors.black.withOpacity(0.7),
+                      );
+                    },
                   ),
                 ),
-              ),
+
+                // Dark overlay
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.72),
+                  ),
+                ),
+              ] else ...[
+                Positioned.fill(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: Alignment.topRight,
+                        radius: 1.5,
+                        colors: [
+                          Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                          Theme.of(context).colorScheme.surface,
+                        ],
+                        stops: const [0.0, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
             Positioned.fill(
               child: Navigator(
@@ -349,13 +339,26 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                       return Consumer(
                         builder: (context, ref, child) {
                           final nav = ref.watch(appNavigationProvider);
-                          int index = 0;
-                          if (nav.activeItem == NavItem.home)
-                            index = 0;
-                          else if (nav.activeItem == NavItem.songs)
-                            index = 1;
-                          else if (nav.activeItem == NavItem.playlists)
-                            index = 2;
+                          final rootItem = () {
+                            final active = nav.activeItem;
+                            if (active == NavItem.home ||
+                                active == NavItem.songs ||
+                                active == NavItem.playlists) {
+                              return active;
+                            }
+                            for (final histState in nav.history.reversed) {
+                              final histActive = histState.activeItem;
+                              if (histActive == NavItem.home ||
+                                  histActive == NavItem.songs ||
+                                  histActive == NavItem.playlists) {
+                                return histActive;
+                              }
+                            }
+                            return NavItem.home;
+                          }();
+                          int index = rootItem == NavItem.home
+                              ? 0
+                              : (rootItem == NavItem.songs ? 1 : 2);
 
                           return PageTransitionSwitcher(
                             duration: const Duration(milliseconds: 500),
@@ -365,6 +368,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                                   return FadeThroughTransition(
                                     animation: animation,
                                     secondaryAnimation: secondaryAnimation,
+                                    fillColor: Colors.transparent,
                                     child: child,
                                   );
                                 },
@@ -380,29 +384,42 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                 },
               ),
             ),
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: IgnorePointer(
+                child: Container(
+                  height: 180,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.1),
+                        Colors.black.withOpacity(0.4),
+                        Colors.black.withOpacity(0.8),
+                      ],
+                      stops: const [
+                        0.0,
+                        0.35,
+                        0.7,
+                        1.0,
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+           
 
             // Mini Player & Navbar with Gradient
             Positioned(
               bottom: 0,
               left: 0,
               right: 0,
-              child: Container(
-                padding: const EdgeInsets.only(top: 48),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.0),
-                      Colors.black.withOpacity(0.3),
-                      Colors.black.withOpacity(0.6),
-                      //Theme.of(context).colorScheme.surface,
-                      Colors.black,
-                    ],
-                    stops: const [0.0, 0.3, 0.7, 1.0],
-                  ),
-                ),
-                child: Column(
+              child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     AnimatedSwitcher(
@@ -416,11 +433,9 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                     ),
                     const SizedBox(height: 4),
                     PremiumNavbar(
-                      currentIndex: activeItem == NavItem.home
+                      currentIndex: rootItem == NavItem.home
                           ? 0
-                          : (activeItem == NavItem.songs
-                                ? 1
-                                : (activeItem == NavItem.playlists ? 2 : 0)),
+                          : (rootItem == NavItem.songs ? 1 : 2),
                       onTap: (index) {
                         NavItem target;
                         switch (index) {
@@ -443,7 +458,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                   ],
                 ),
               ),
-            ),
+             
           ],
         ),
       ),

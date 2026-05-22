@@ -18,6 +18,8 @@ import 'package:isar/isar.dart';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/screens/android/song/song_info_screen.dart';
+import 'package:looper_player/ui/screens/android/widgets/song_details_bottom_sheet.dart';
 
 class SongsList extends ConsumerWidget {
   final List<Song> songs;
@@ -165,14 +167,13 @@ void _showSongOptions(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
-    builder: (context) => Container(
-      padding: const EdgeInsets.symmetric(vertical: 24),
+    builder: (context) => SafeArea(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
             child: Row(
               children: [
                 OptimizedImage(
@@ -198,6 +199,7 @@ void _showSongOptions(
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.normal,
+                          color: Colors.white,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -215,75 +217,138 @@ void _showSongOptions(
               ],
             ),
           ),
-          const Divider(color: Colors.white10, height: 32),
-          ListTile(
-            leading: const Icon(
-              LucideIcons.playCircle,
-              color: Colors.blueAccent,
+          const Divider(color: Colors.white10, height: 1),
+          Flexible(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ListTile(
+                    leading: const Icon(
+                      LucideIcons.playCircle,
+                      color: Colors.blueAccent,
+                    ),
+                    title: const Text(
+                      'Play Next',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      ref.read(playbackProvider.notifier).addNext(song);
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Will play next'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      LucideIcons.listPlus,
+                      color: Colors.greenAccent,
+                    ),
+                    title: const Text(
+                      'Add to Queue',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      ref.read(playbackProvider.notifier).addToQueue(song);
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Added to queue'),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      LucideIcons.listMusic,
+                      color: Colors.orangeAccent,
+                    ),
+                    title: Text(
+                      'Add to ${l10n.playlists}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showPlaylistSelector(context, ref, song, l10n);
+                    },
+                  ),
+                  ListTile(
+                    leading: Icon(
+                      song.isFavorite ? Icons.favorite : Icons.favorite_border,
+                      color: song.isFavorite ? Colors.red : Colors.white70,
+                    ),
+                    title: Text(
+                      song.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    onTap: () {
+                      ref.read(libraryProvider.notifier).toggleFavorite(song);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      LucideIcons.info,
+                      color: Colors.white70,
+                    ),
+                    title: const Text(
+                      'Song Details',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      showModalBottomSheet(
+                        context: context,
+                        useRootNavigator: true,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => SongDetailsBottomSheet(song: song),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      LucideIcons.activity,
+                      color: Colors.white70,
+                    ),
+                    title: const Text(
+                      'Technical Info & Frequency',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SongInfoScreen(song: song),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(
+                      LucideIcons.share2,
+                      color: Colors.white70,
+                    ),
+                    title: const Text(
+                      'Share',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    onTap: () {
+                      ref.read(playbackProvider.notifier).shareSong(song);
+                      Navigator.pop(context);
+                    },
+                  ),
+                ],
+              ),
             ),
-            title: const Text(
-              'Play Next',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-            onTap: () {
-              ref.read(playbackProvider.notifier).addNext(song);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Will play next'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
           ),
-          ListTile(
-            leading: const Icon(
-              LucideIcons.listPlus,
-              color: Colors.greenAccent,
-            ),
-            title: const Text(
-              'Add to Queue',
-              style: TextStyle(fontWeight: FontWeight.w500),
-            ),
-            onTap: () {
-              ref.read(playbackProvider.notifier).addToQueue(song);
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Added to queue'),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-          ),
-          const Divider(color: Colors.white10),
-          ListTile(
-            leading: const Icon(
-              LucideIcons.listMusic,
-              color: Colors.orangeAccent,
-            ),
-            title: Text(
-              'Add to ${l10n.playlists}',
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-            onTap: () {
-              Navigator.pop(context);
-              _showPlaylistSelector(context, ref, song, l10n);
-            },
-          ),
-          ListTile(
-            leading: Icon(
-              song.isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: song.isFavorite ? Colors.red : Colors.white70,
-            ),
-            title: Text(
-              song.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-            ),
-            onTap: () {
-              ref.read(libraryProvider.notifier).toggleFavorite(song);
-              Navigator.pop(context);
-            },
-          ),
+          const SizedBox(height: 8),
         ],
       ),
     ),
@@ -355,9 +420,63 @@ class _SongTile extends ConsumerWidget {
     this.searchQuery,
   });
 
+  Widget _buildHighlightedText({
+    required BuildContext context,
+    required String text,
+    required String query,
+    required TextStyle baseStyle,
+    required TextStyle highlightStyle,
+  }) {
+    if (query.isEmpty) {
+      return Text(text, style: baseStyle);
+    }
+
+    final lowerText = text.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final index = lowerText.indexOf(lowerQuery);
+
+    if (index == -1) {
+      return Text(text, style: baseStyle);
+    }
+
+    final List<TextSpan> spans = [];
+    int start = 0;
+    int indexOfMatch;
+
+    while ((indexOfMatch = lowerText.indexOf(lowerQuery, start)) != -1) {
+      // Add text before match
+      if (indexOfMatch > start) {
+        spans.add(TextSpan(
+          text: text.substring(start, indexOfMatch),
+          style: baseStyle,
+        ));
+      }
+      // Add matched text
+      spans.add(TextSpan(
+        text: text.substring(indexOfMatch, indexOfMatch + query.length),
+        style: highlightStyle,
+      ));
+      start = indexOfMatch + query.length;
+    }
+
+    // Add remaining text
+    if (start < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(start),
+        style: baseStyle,
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
+    
     final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
 
     String? lyricSnippet;
@@ -367,34 +486,34 @@ class _SongTile extends ConsumerWidget {
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      leading: Hero(
-        tag: 'song_art_${song.id}',
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: Stack(
-            children: [
-              OptimizedImage(
-                imagePath: song.artPath,
-                width: 48,
-                height: 48,
-                fit: BoxFit.cover,
-              ),
-              if (isCurrent && ref.watch(playbackProvider).isPlaying)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.4),
-                    child: Center(
-                      child: Image.asset(
-                        'assets/android_icons/Playing.gif',
-                        width: 24,
-                        height: 24,
-                        color: Colors.white,
-                      ),
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Stack(
+          children: [
+            OptimizedImage(
+              imagePath: song.artPath,
+              width: 48,
+              height: 48,
+              fit: BoxFit.cover,
+            ),
+            Positioned.fill(
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: isCurrent && ref.watch(playbackProvider).isPlaying ? 1.0 : 0.0,
+                child: Container(
+                  color: Colors.black.withOpacity(0.4),
+                  child: Center(
+                    child: Image.asset(
+                      'assets/android_icons/Playing.gif',
+                      width: 24,
+                      height: 24,
+                      color: Colors.white,
                     ),
                   ),
                 ),
-            ],
-          ),
+              ),
+            ),
+          ],
         ),
       ),
       title: Text(
@@ -446,28 +565,45 @@ class _SongTile extends ConsumerWidget {
             ),
           ),
           if (lyricSnippet != null) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Icon(
-                  LucideIcons.quote,
-                  size: 10,
-                  color: Colors.blueAccent,
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                  width: 0.8,
                 ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    lyricSnippet,
-                    style: TextStyle(
-                      color: Colors.blueAccent.withOpacity(0.7),
-                      fontSize: 11,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.quote,
+                    size: 9,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: _buildHighlightedText(
+                      context: context,
+                      text: lyricSnippet,
+                      query: searchQuery ?? '',
+                      baseStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.75),
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      highlightStyle: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ],
@@ -495,21 +631,30 @@ class _SongTile extends ConsumerWidget {
     final index = lowerLyrics.indexOf(lowerQuery);
     if (index == -1) return null;
 
-    // Find the start of the line
     int start = index;
+    bool truncatedStart = false;
     while (start > 0 && lyrics[start - 1] != '\n') {
       start--;
-      if (index - start > 40) break; // Limit backward search
+      if (index - start > 40) {
+        truncatedStart = true;
+        break;
+      }
     }
 
-    // Find the end of the line
     int end = index + query.length;
+    bool truncatedEnd = false;
     while (end < lyrics.length && lyrics[end] != '\n') {
       end++;
-      if (end - index > 60) break; // Limit forward search
+      if (end - index > 60) {
+        truncatedEnd = true;
+        break;
+      }
     }
 
-    return lyrics.substring(start, end).trim();
+    String snippet = lyrics.substring(start, end).trim();
+    if (truncatedStart) snippet = '...$snippet';
+    if (truncatedEnd) snippet = '$snippet...';
+    return snippet;
   }
 }
 

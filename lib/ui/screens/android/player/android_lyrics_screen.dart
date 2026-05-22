@@ -25,10 +25,17 @@ class AndroidLyricsScreen extends ConsumerStatefulWidget {
 }
 
 class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
+  bool _zoomIn = true;
+
   @override
   void initState() {
     super.initState();
-    _enableWakelock();
+    final isPlaying = ref.read(playbackProvider).isPlaying;
+    if (isPlaying) {
+      _enableWakelock();
+    } else {
+      _disableWakelock();
+    }
   }
 
   @override
@@ -53,6 +60,17 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
     }
   }
 
+  TextStyle _getHeroStyle(Hero hero, TextStyle fallback) {
+    final child = hero.child;
+    if (child is ScrollingText) {
+      return child.style ?? fallback;
+    }
+    if (child is Text) {
+      return child.style ?? fallback;
+    }
+    return fallback;
+  }
+
   Widget _buildHeroTextShuttle(
     BuildContext flightContext,
     Animation<double> animation,
@@ -63,33 +81,31 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
     final Hero fromHero = fromHeroContext.widget as Hero;
     final Hero toHero = toHeroContext.widget as Hero;
 
-    String text = '';
-    TextStyle? fromStyle;
-    TextStyle? toStyle;
+    final isArtist = fromHero.tag == 'song_artist' || toHero.tag == 'song_artist';
+    final playback = ref.read(playbackProvider);
+    final song = playback.currentSong;
+    if (song == null) return const SizedBox.shrink();
 
-    if (fromHero.child is ScrollingText) {
-      final s = fromHero.child as ScrollingText;
-      text = s.text;
-      fromStyle = s.style;
-    } else if (fromHero.child is Text) {
-      final t = fromHero.child as Text;
-      text = t.data ?? '';
-      fromStyle = t.style;
-    }
+    final text = isArtist ? (song.artist ?? 'Unknown Artist') : song.title;
 
-    if (toHero.child is ScrollingText) {
-      final s = toHero.child as ScrollingText;
-      text = s.text;
-      toStyle = s.style;
-    } else if (toHero.child is Text) {
-      final t = toHero.child as Text;
-      text = t.data ?? '';
-      toStyle = t.style;
-    }
+    final fallbackFrom = isArtist
+        ? TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14)
+        : const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold);
+
+    final fallbackTo = isArtist
+        ? TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 18)
+        : const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold);
+
+    final fromStyle = _getHeroStyle(fromHero, fallbackFrom);
+    final toStyle = _getHeroStyle(toHero, fallbackTo);
 
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
+        final lerpValue = flightDirection == HeroFlightDirection.push
+            ? animation.value
+            : 1.0 - animation.value;
+
         return Material(
           type: MaterialType.transparency,
           child: FittedBox(
@@ -97,7 +113,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
             alignment: Alignment.centerLeft,
             child: Text(
               text,
-              style: TextStyle.lerp(fromStyle, toStyle, animation.value),
+              style: TextStyle.lerp(fromStyle, toStyle, lerpValue),
               maxLines: 1,
               overflow: TextOverflow.visible,
             ),
@@ -109,6 +125,16 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<PlaybackState>(playbackProvider, (previous, next) {
+      if (next.isPlaying != previous?.isPlaying) {
+        if (next.isPlaying) {
+          _enableWakelock();
+        } else {
+          _disableWakelock();
+        }
+      }
+    });
+
     final playback = ref.watch(playbackProvider);
     final song = playback.currentSong;
     final settings = ref.watch(settingsProvider);
@@ -130,14 +156,23 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
             if ((settings.enableDynamicTheming || settings.dynamicLyrics) &&
                 song.artPath != null) ...[
               TweenAnimationBuilder<double>(
-                tween: Tween<double>(begin: 1.0, end: 1.1),
+                tween: Tween<double>(
+                  begin: _zoomIn ? 1.0 : 2.0,
+                  end: _zoomIn ? 2.0 : 1.0,
+                ),
                 duration: const Duration(seconds: 30),
                 curve: Curves.linear,
+                onEnd: () {
+                  setState(() {
+                    _zoomIn = !_zoomIn;
+                  });
+                },
                 builder: (context, scale, child) {
                   return Transform.scale(
                     scale: scale,
-                    child: Image.file(
-                      File(song.artPath!),
+                    child: OptimizedImage(
+                      imagePath: !song.artPath!.startsWith('http') ? song.artPath : null,
+                      imageUrl: song.artPath!.startsWith('http') ? song.artPath : null,
                       fit: BoxFit.cover,
                       width: double.infinity,
                       height: double.infinity,
@@ -155,7 +190,19 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
               ),
             ] else ...[
               Positioned.fill(
-                child: Container(color: Theme.of(context).colorScheme.surface),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: RadialGradient(
+                      center: Alignment.topRight,
+                      radius: 1.5,
+                      colors: [
+                        Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                        Theme.of(context).colorScheme.surface,
+                      ],
+                      stops: const [0.0, 1.0],
+                    ),
+                  ),
+                ),
               ),
             ],
 
@@ -212,6 +259,17 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                             ],
                           ),
                         ),
+                         Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                            child: SizedBox(
+                                    height: 36,
+                                    child: VerticalDivider(
+                                      width: 1,
+                                      thickness: 0.5,
+                                      color: Colors.white.withOpacity(0.15),
+                                    ),
+                                  ),
+                          ),
                         // Play/Pause with Hero
                         PremiumSection(
                           borderRadius: BorderRadius.circular(32),
@@ -221,6 +279,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                           useBlur:
                               settings.enableDynamicTheming ||
                               settings.dynamicLyrics,
+                           
                           onTap: () {
                             HapticFeedback.mediumImpact();
                             ref.read(playbackProvider.notifier).togglePlay();
@@ -251,6 +310,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                           useBlur:
                               settings.enableDynamicTheming ||
                               settings.dynamicLyrics,
+                           
                           onTap: () {
                             HapticFeedback.lightImpact();
                             Navigator.pop(context);

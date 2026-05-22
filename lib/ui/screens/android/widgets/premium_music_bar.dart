@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:looper_player/ui/screens/android/android_expanded_player.dart';
+import 'package:looper_player/ui/screens/android/player/android_expanded_player.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
@@ -143,12 +143,16 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
             final double tiltX = (offset.dx / 100).clamp(-0.2, 0.2);
             final double tiltY = (offset.dy / 100).clamp(-0.1, 0.1);
             
+            final matrix = Matrix4.identity();
+            if (tiltX != 0 || tiltY != 0) {
+              matrix.setEntry(3, 2, 0.001); // perspective
+              matrix.rotateX(-tiltY);
+              matrix.rotateY(tiltX);
+              matrix.translate(offset.dx * 0.3, offset.dy * 0.3);
+            }
+            
             return Transform(
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001) // perspective
-                ..rotateX(-tiltY)
-                ..rotateY(tiltX)
-                ..translate(offset.dx * 0.3, offset.dy * 0.3),
+              transform: matrix,
               alignment: Alignment.center,
               child: child,
             );
@@ -166,6 +170,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                   PremiumSection(
                     flex: 8,
                     useBlur: useBlur,
+                    //forceBlur true,
                     useExpanded: true,
                     onTap: null, // Handled by parent GestureDetector
                     borderRadius: const BorderRadius.only(
@@ -178,33 +183,40 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                       children: [
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: Hero(
-                            tag: 'album_art',
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(32),
-                              child: Stack(
-                                children: [
-                                  OptimizedImage(
-                                    imagePath: song.artPath,
-                                    width: 50,
-                                    height: 50,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  if (playback.isPlaying)
+                          child: SizedBox(
+                            width: 50,
+                            height: 50,
+                            child: Hero(
+                              tag: 'album_art',
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(32),
+                                child: Stack(
+                                  fit: StackFit.expand,
+                                  children: [
+                                    OptimizedImage(
+                                      imagePath: song.artPath != null && !song.artPath!.startsWith('http') ? song.artPath : null,
+                                      imageUrl: song.artPath != null && song.artPath!.startsWith('http') ? song.artPath : null,
+                                      fit: BoxFit.cover,
+                                    ),
                                     Positioned.fill(
-                                      child: Container(
-                                        color: Colors.black.withOpacity(0.4),
-                                        child: Center(
-                                          child: Image.asset(
-                                            'assets/android_icons/Playing.gif',
-                                            width: 24,
-                                            height: 24,
-                                            color: Colors.white,
+                                      child: AnimatedOpacity(
+                                        duration: const Duration(milliseconds: 300),
+                                        opacity: playback.isPlaying ? 1.0 : 0.0,
+                                        child: Container(
+                                          color: Colors.black.withOpacity(0.4),
+                                          child: Center(
+                                            child: Image.asset(
+                                              'assets/android_icons/Playing.gif',
+                                              width: 24,
+                                              height: 24,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -249,6 +261,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                   PremiumSection(
                     flex: 2, 
                     useBlur: useBlur,
+                    //forceBlur true,
                     useExpanded: true,
                     onTap: null, // Handled by parent GestureDetector
                     borderRadius: const BorderRadius.only(
@@ -260,15 +273,25 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                     child: Center(
                       child: Hero(
                         tag: 'play_pause_icon',
-                        child: SvgPicture.asset(
-                          playback.isPlaying 
-                              ? AppIcons.pause 
-                              : AppIcons.play,
-                          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                          width: AppIcons.miniPlayerIcon.s,
-                          height: AppIcons.miniPlayerIcon.s,
+                        child: AnimatedScale(
+                          scale: playback.isPlaying ? 0.9 : 1.0,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOutBack,
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween<double>(begin: 0.0, end: playback.isPlaying ? 1.0 : 0.0),
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOutCubic,
+                            builder: (context, value, child) {
+                              return AnimatedIcon(
+                                icon: AnimatedIcons.play_pause,
+                                progress: AlwaysStoppedAnimation(value),
+                                color: Colors.white,
+                                size: AppIcons.expandedPlayerPlayPauseIcon.s,
+                              );
+                            },
+                          ),
                         ),
-                      ),
+                      ),  
                     ),
                   ),
                 ],

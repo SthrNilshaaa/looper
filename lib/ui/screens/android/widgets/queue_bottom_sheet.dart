@@ -60,7 +60,7 @@ class QueueBottomSheet extends ConsumerWidget {
                 final isCurrent = playback.currentSong?.id == song.id;
 
                 return ListTile(
-                  key: ValueKey(song.id),
+                  key: ValueKey('queue_sheet_${song.path}_$index'),
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: OptimizedImage(
@@ -101,7 +101,7 @@ class QueueBottomSheet extends ConsumerWidget {
                     ],
                   ),
                   onTap: () {
-                    ref.read(playbackProvider.notifier).play(song);
+                    ref.read(playbackProvider.notifier).playAtIndex(index);
                   },
                 );
               },

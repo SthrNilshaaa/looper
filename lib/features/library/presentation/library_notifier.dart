@@ -68,6 +68,19 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
 
   LibraryNotifier(this._ref) : super(LibraryState()) {
     _loadLibrary();
+
+    // Automatically clean up database and refresh songs whenever active library folders change!
+    _ref.listen<List<String>>(
+      settingsProvider.select((s) => s.libraryFolders),
+      (previous, next) async {
+        if (previous != null && previous != next) {
+          print('📂 LibraryNotifier: Library folders changed. Syncing database...');
+          await syncSongsWithFolders(next);
+          _loadLibrary(); // Force-reload lists immediately
+        }
+      },
+      fireImmediately: false,
+    );
   }
 
   void _loadLibrary() {
@@ -313,7 +326,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       state = state.copyWith(isScanning: true);
       for (final path in scanRoots) {
         if (Directory(path).existsSync()) {
-          await scanLibrary(path);
+          await scanLibrary(path, updateIsScanning: false);
         }
       }
       state = state.copyWith(isScanning: false);
@@ -347,28 +360,31 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     state = state.copyWith(isScanning: false);
   }
 
-  Future<void> scanLibrary(String path) async {
-    if (!await _requestPermissions()) return;
+  Future<int> scanLibrary(String path, {bool updateIsScanning = true}) async {
+    if (!await _requestPermissions()) return 0;
     print('📂 Starting scan for: $path');
-    state = state.copyWith(isScanning: true);
+    if (updateIsScanning) {
+      state = state.copyWith(isScanning: true);
+    }
+    int totalSongsFound = 0;
 
     try {
       final dir = Directory(path);
       if (dir.existsSync()) {
         print('✅ Directory exists: $path');
-        final songsFound = await LibraryScanner().scanDirectory(path);
+        final result = await LibraryScanner().scanDirectory(path);
+        totalSongsFound = result.songsCount;
         
-        if (songsFound > 0) {
-          // Add to saved folders if not already there
+        if (totalSongsFound > 0) {
+          // Add the root folder and all subfolders where music was actually found!
           final settings = _ref.read(settingsProvider);
-          if (!settings.libraryFolders.contains(path)) {
-            final newFolders = List<String>.from(settings.libraryFolders)
-              ..add(path);
-            await _ref
-                .read(settingsProvider.notifier)
-                .updateLibraryFolders(newFolders);
-            print('📁 Added folder to library: $path ($songsFound songs)');
-          }
+          final newFolders = Set<String>.from(settings.libraryFolders)
+            ..add(path)
+            ..addAll(result.musicFolders);
+          await _ref
+              .read(settingsProvider.notifier)
+              .updateLibraryFolders(newFolders.toList());
+          print('📁 Added folders & subfolders to library: $path ($totalSongsFound songs across ${result.musicFolders.length} folders)');
         } else {
           print('ℹ️ No music found in: $path (not adding to settings)');
         }
@@ -379,8 +395,11 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       print('❌ Error during scan: $e');
     }
 
-    state = state.copyWith(isScanning: false);
+    if (updateIsScanning) {
+      state = state.copyWith(isScanning: false);
+    }
     print('🏁 Scan finished for: $path');
+    return totalSongsFound;
   }
 
   Future<void> toggleFavorite(Song song) async {
@@ -394,6 +413,44 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         // Fallback for songs not yet in DB (e.g. played from file)
         song.isFavorite = !song.isFavorite;
         await DbService.isar.songs.put(song);
+      }
+    });
+  }
+
+  Future<void> syncSongsWithFolders(List<String> activeFolders) async {
+    await DbService.isar.writeTxn(() async {
+      // Find all songs in the DB
+      final allSongs = await DbService.isar.songs.where().findAll();
+      
+      // Filter songs that do NOT belong to any of the active folders
+      final songsToDelete = allSongs.where((song) {
+        return !activeFolders.any((folder) => song.path.startsWith(folder));
+      }).toList();
+      
+      if (songsToDelete.isNotEmpty) {
+        final idsToDelete = songsToDelete.map((s) => s.id).toList();
+        await DbService.isar.songs.deleteAll(idsToDelete);
+        print('🧹 LibraryNotifier: Deleted ${idsToDelete.length} songs that belong to removed folders.');
+        
+        // Clean up empty albums & artists
+        final remainingSongs = await DbService.isar.songs.where().findAll();
+        final activeAlbumNames = remainingSongs.map((s) => s.album).toSet();
+        final activeArtistNames = remainingSongs.map((s) => s.artist).toSet();
+        
+        // Load all albums and artists
+        final allAlbums = await DbService.isar.albums.where().findAll();
+        final albumsToDelete = allAlbums.where((a) => !activeAlbumNames.contains(a.name)).map((a) => a.id).toList();
+        if (albumsToDelete.isNotEmpty) {
+          await DbService.isar.albums.deleteAll(albumsToDelete);
+          print('🧹 LibraryNotifier: Cleaned up ${albumsToDelete.length} orphaned albums.');
+        }
+
+        final allArtists = await DbService.isar.artists.where().findAll();
+        final artistsToDelete = allArtists.where((art) => !activeArtistNames.contains(art.name)).map((art) => art.id).toList();
+        if (artistsToDelete.isNotEmpty) {
+          await DbService.isar.artists.deleteAll(artistsToDelete);
+          print('🧹 LibraryNotifier: Cleaned up ${artistsToDelete.length} orphaned artists.');
+        }
       }
     });
   }

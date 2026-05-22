@@ -39,6 +39,7 @@ class AppIcons {
   static const double miniPlayerIcon = 20.0;
   static const double expandedPlayerMainControl = 20.0;
   static const double expandedPlayerSecondaryControl = 18.0;
+  static const double expandedPlayerPlayPauseIcon = 36.0;
   static const double sidebarIcon = 17.0;
   static const double headerIcon = 12.0;
 }

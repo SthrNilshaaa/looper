@@ -77,12 +77,26 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     ref.read(audioServiceProvider).onNext = skipNext;
     ref.read(audioServiceProvider).onPrevious = skipPrevious;
     ref.read(audioServiceProvider).onSeek = (duration) => seek(duration);
+    ref.read(audioServiceProvider).onFavoriteToggle = toggleFavorite;
+    ref.read(audioServiceProvider).onShuffleToggle = toggleShuffle;
     _init();
+  }
+
+  void _updateNotification() {
+    final song = state.currentSong;
+    if (song != null) {
+      ref.read(audioServiceProvider).updatePlaybackState(
+        isPlaying: state.isPlaying,
+        isFavorite: song.isFavorite,
+        isShuffle: state.isShuffle,
+      );
+    }
   }
 
   Future<void> _init() async {
     player.stream.playing.listen((playing) {
       state = state.copyWith(isPlaying: playing);
+      _updateNotification();
     });
 
     player.stream.position.listen((position) {
@@ -99,7 +113,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       if (completed) {
         if (state.repeatMode == RepeatMode.one) {
           player.seek(Duration.zero);
-          player.play();
+          ref.read(audioServiceProvider).resume();
         } else {
           skipNext();
         }
@@ -122,6 +136,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         _playlist = [song];
         _currentIndex = 0;
       }
+    }
+  }
+
+  Future<void> playAtIndex(int index) async {
+    if (index >= 0 && index < _playlist.length) {
+      _currentIndex = index;
+      await play(_playlist[_currentIndex]);
     }
   }
 
@@ -205,6 +226,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
       state = state.copyWith(queue: List.from(_playlist));
     }
+    _updateNotification();
   }
 
   void addToQueue(Song song) {
@@ -263,12 +285,12 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> togglePlay() async {
     if (state.isPlaying) {
-      await player.pause();
+      await ref.read(audioServiceProvider).pause();
     } else {
       if (player.state.playlist.medias.isEmpty && state.currentSong != null) {
         await play(state.currentSong!);
       } else {
-        await player.play();
+        await ref.read(audioServiceProvider).resume();
       }
     }
   }
@@ -281,7 +303,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         _currentIndex = 0;
       } else {
         _currentIndex = _playlist.length - 1;
-        await player.pause();
+        await ref.read(audioServiceProvider).pause();
         return;
       }
     }
@@ -330,6 +352,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       );
     }
     ref.read(settingsProvider.notifier).updateShuffle(newState);
+    _updateNotification();
   }
 
   int songId(Song s) => s.id;
@@ -404,6 +427,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
     // Refresh the state to trigger UI updates
     state = state.copyWith(currentSong: song);
+    _updateNotification();
   }
 
   double _lastVolume = 1.0;

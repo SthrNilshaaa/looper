@@ -6342,53 +6342,68 @@ const AppSettingsSchema = CollectionSchema(
       name: r'accentColor',
       type: IsarType.long,
     ),
-    r'darkTheme': PropertySchema(
+    r'audioFocus': PropertySchema(
       id: 1,
+      name: r'audioFocus',
+      type: IsarType.bool,
+    ),
+    r'darkTheme': PropertySchema(
+      id: 2,
       name: r'darkTheme',
       type: IsarType.bool,
     ),
+    r'disableAnimatedDuration': PropertySchema(
+      id: 3,
+      name: r'disableAnimatedDuration',
+      type: IsarType.bool,
+    ),
+    r'disableSquiggle': PropertySchema(
+      id: 4,
+      name: r'disableSquiggle',
+      type: IsarType.bool,
+    ),
     r'dynamicLyrics': PropertySchema(
-      id: 2,
+      id: 5,
       name: r'dynamicLyrics',
       type: IsarType.bool,
     ),
     r'enableDynamicTheming': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'enableDynamicTheming',
       type: IsarType.bool,
     ),
     r'language': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'language',
       type: IsarType.string,
     ),
     r'lastPlayedSongId': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'lastPlayedSongId',
       type: IsarType.long,
     ),
     r'libraryFolders': PropertySchema(
-      id: 6,
+      id: 9,
       name: r'libraryFolders',
       type: IsarType.stringList,
     ),
     r'repeatMode': PropertySchema(
-      id: 7,
+      id: 10,
       name: r'repeatMode',
       type: IsarType.long,
     ),
     r'saveDynamicColor': PropertySchema(
-      id: 8,
+      id: 11,
       name: r'saveDynamicColor',
       type: IsarType.bool,
     ),
     r'shuffle': PropertySchema(
-      id: 9,
+      id: 12,
       name: r'shuffle',
       type: IsarType.bool,
     ),
     r'volume': PropertySchema(
-      id: 10,
+      id: 13,
       name: r'volume',
       type: IsarType.double,
     )
@@ -6431,16 +6446,19 @@ void _appSettingsSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.accentColor);
-  writer.writeBool(offsets[1], object.darkTheme);
-  writer.writeBool(offsets[2], object.dynamicLyrics);
-  writer.writeBool(offsets[3], object.enableDynamicTheming);
-  writer.writeString(offsets[4], object.language);
-  writer.writeLong(offsets[5], object.lastPlayedSongId);
-  writer.writeStringList(offsets[6], object.libraryFolders);
-  writer.writeLong(offsets[7], object.repeatMode);
-  writer.writeBool(offsets[8], object.saveDynamicColor);
-  writer.writeBool(offsets[9], object.shuffle);
-  writer.writeDouble(offsets[10], object.volume);
+  writer.writeBool(offsets[1], object.audioFocus);
+  writer.writeBool(offsets[2], object.darkTheme);
+  writer.writeBool(offsets[3], object.disableAnimatedDuration);
+  writer.writeBool(offsets[4], object.disableSquiggle);
+  writer.writeBool(offsets[5], object.dynamicLyrics);
+  writer.writeBool(offsets[6], object.enableDynamicTheming);
+  writer.writeString(offsets[7], object.language);
+  writer.writeLong(offsets[8], object.lastPlayedSongId);
+  writer.writeStringList(offsets[9], object.libraryFolders);
+  writer.writeLong(offsets[10], object.repeatMode);
+  writer.writeBool(offsets[11], object.saveDynamicColor);
+  writer.writeBool(offsets[12], object.shuffle);
+  writer.writeDouble(offsets[13], object.volume);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -6451,17 +6469,20 @@ AppSettings _appSettingsDeserialize(
 ) {
   final object = AppSettings();
   object.accentColor = reader.readLong(offsets[0]);
-  object.darkTheme = reader.readBool(offsets[1]);
-  object.dynamicLyrics = reader.readBool(offsets[2]);
-  object.enableDynamicTheming = reader.readBool(offsets[3]);
+  object.audioFocus = reader.readBool(offsets[1]);
+  object.darkTheme = reader.readBool(offsets[2]);
+  object.disableAnimatedDuration = reader.readBool(offsets[3]);
+  object.disableSquiggle = reader.readBool(offsets[4]);
+  object.dynamicLyrics = reader.readBool(offsets[5]);
+  object.enableDynamicTheming = reader.readBool(offsets[6]);
   object.id = id;
-  object.language = reader.readString(offsets[4]);
-  object.lastPlayedSongId = reader.readLongOrNull(offsets[5]);
-  object.libraryFolders = reader.readStringList(offsets[6]) ?? [];
-  object.repeatMode = reader.readLong(offsets[7]);
-  object.saveDynamicColor = reader.readBool(offsets[8]);
-  object.shuffle = reader.readBool(offsets[9]);
-  object.volume = reader.readDouble(offsets[10]);
+  object.language = reader.readString(offsets[7]);
+  object.lastPlayedSongId = reader.readLongOrNull(offsets[8]);
+  object.libraryFolders = reader.readStringList(offsets[9]) ?? [];
+  object.repeatMode = reader.readLong(offsets[10]);
+  object.saveDynamicColor = reader.readBool(offsets[11]);
+  object.shuffle = reader.readBool(offsets[12]);
+  object.volume = reader.readDouble(offsets[13]);
   return object;
 }
 
@@ -6481,18 +6502,24 @@ P _appSettingsDeserializeProp<P>(
     case 3:
       return (reader.readBool(offset)) as P;
     case 4:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 7:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 9:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 10:
+      return (reader.readLong(offset)) as P;
+    case 11:
+      return (reader.readBool(offset)) as P;
+    case 12:
+      return (reader.readBool(offset)) as P;
+    case 13:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -6649,10 +6676,40 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioFocusEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'audioFocus',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       darkThemeEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'darkTheme',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      disableAnimatedDurationEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'disableAnimatedDuration',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      disableSquiggleEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'disableSquiggle',
         value: value,
       ));
     });
@@ -7326,6 +7383,18 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByAudioFocus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioFocus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByAudioFocusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioFocus', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByDarkTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'darkTheme', Sort.asc);
@@ -7335,6 +7404,33 @@ extension AppSettingsQuerySortBy
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByDarkThemeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'darkTheme', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByDisableAnimatedDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disableAnimatedDuration', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByDisableAnimatedDurationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disableAnimatedDuration', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByDisableSquiggle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disableSquiggle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByDisableSquiggleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disableSquiggle', Sort.desc);
     });
   }
 
@@ -7456,6 +7552,18 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByAudioFocus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioFocus', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByAudioFocusDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioFocus', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByDarkTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'darkTheme', Sort.asc);
@@ -7465,6 +7573,33 @@ extension AppSettingsQuerySortThenBy
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByDarkThemeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'darkTheme', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByDisableAnimatedDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disableAnimatedDuration', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByDisableAnimatedDurationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disableAnimatedDuration', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByDisableSquiggle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disableSquiggle', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByDisableSquiggleDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'disableSquiggle', Sort.desc);
     });
   }
 
@@ -7592,9 +7727,29 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByAudioFocus() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'audioFocus');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByDarkTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'darkTheme');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByDisableAnimatedDuration() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'disableAnimatedDuration');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByDisableSquiggle() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'disableSquiggle');
     });
   }
 
@@ -7671,9 +7826,28 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, bool, QQueryOperations> audioFocusProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'audioFocus');
+    });
+  }
+
   QueryBuilder<AppSettings, bool, QQueryOperations> darkThemeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'darkTheme');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+      disableAnimatedDurationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'disableAnimatedDuration');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> disableSquiggleProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'disableSquiggle');
     });
   }
 

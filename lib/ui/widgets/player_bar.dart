@@ -396,8 +396,8 @@ class _PremiumPlayerBar extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 120),
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  trackHeight: 2,
-                  trackShape: const RoundedRectSliderTrackShape(),
+                  trackHeight: Platform.isLinux ? 2.0 : 6.0,
+                  trackShape: const EqualHeightTrackShape(),
                   thumbShape: const LineThumbShape(
                     thumbHeight: 0,
                     thumbWidth: 3,
@@ -468,6 +468,39 @@ class _PremiumPlayerBar extends StatelessWidget {
           tooltip: 'Queue',
         ),
       ],
+    );
+  }
+}
+
+class EqualHeightTrackShape extends RoundedRectSliderTrackShape {
+  const EqualHeightTrackShape();
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    double additionalActiveTrackHeight = 0,
+  }) {
+    super.paint(
+      context,
+      offset,
+      parentBox: parentBox,
+      sliderTheme: sliderTheme,
+      enableAnimation: enableAnimation,
+      textDirection: textDirection,
+      thumbCenter: thumbCenter,
+      secondaryOffset: secondaryOffset,
+      isDiscrete: isDiscrete,
+      isEnabled: isEnabled,
+      additionalActiveTrackHeight: 0,
     );
   }
 }

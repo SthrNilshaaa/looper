@@ -7,6 +7,13 @@ import '../domain/models/models.dart';
 import 'package:isar/isar.dart';
 import '../../playback/data/metadata_service.dart';
 
+class ScanResult {
+  final int songsCount;
+  final Set<String> musicFolders;
+
+  ScanResult({required this.songsCount, required this.musicFolders});
+}
+
 class LibraryScanner {
   final List<String> supportedExtensions = [
     '.mp3',
@@ -22,29 +29,34 @@ class LibraryScanner {
     '.wma',
   ];
 
-  Future<int> scanDirectory(String path, {bool addFolderToSettings = false}) async {
+  Future<ScanResult> scanDirectory(String path, {bool addFolderToSettings = false}) async {
     print('🔍 Scanner: Scanning directory: $path');
     final dir = Directory(path);
     if (!await dir.exists()) {
       print('❌ Scanner: Directory does not exist: $path');
-      return 0;
+      return ScanResult(songsCount: 0, musicFolders: {});
     }
 
     final List<File> filesToProcess = [];
     final Set<String> musicFolders = {};
     
-    try {
-      await for (final entity in dir.list(recursive: true, followLinks: true)) {
-        final baseName = p.basename(entity.path);
-        
-        // Skip hidden files and directories (starting with .)
-        if (baseName.startsWith('.') && baseName != '.') continue;
-        
-        // Also skip if any parent directory is hidden
-        final relativePath = p.relative(entity.path, from: path);
-        if (relativePath.split(p.separator).any((part) => part.startsWith('.') && part != '.')) {
-          continue;
-        }
+    Future<void> traverse(Directory currentDir) async {
+      final baseName = p.basename(currentDir.path);
+      // Skip hidden folders and Android system directories to avoid slow scans or access issues
+      if (baseName.startsWith('.') && baseName != '.') return;
+      if (baseName.toLowerCase() == 'android') return;
+
+      List<FileSystemEntity> entities = [];
+      try {
+        entities = await currentDir.list(recursive: false, followLinks: true).toList();
+      } catch (e) {
+        // Silently catch and skip restricted directories without crashing the whole scan!
+        return;
+      }
+
+      for (final entity in entities) {
+        final name = p.basename(entity.path);
+        if (name.startsWith('.') && name != '.') continue;
 
         if (entity is File) {
           final ext = p.extension(entity.path).toLowerCase();
@@ -52,15 +64,21 @@ class LibraryScanner {
             filesToProcess.add(entity);
             musicFolders.add(p.dirname(entity.path));
           }
+        } else if (entity is Directory) {
+          await traverse(entity);
         }
       }
+    }
+
+    try {
+      await traverse(dir);
     } catch (e) {
-      print('❌ Scanner: Error listing files in $path: $e');
+      print('❌ Scanner: Critical error during traversal of $path: $e');
     }
 
     print('🎵 Scanner: Found ${filesToProcess.length} audio files in $path');
 
-    if (filesToProcess.isEmpty) return 0;
+    if (filesToProcess.isEmpty) return ScanResult(songsCount: 0, musicFolders: {});
 
     // If requested, add discovered folders to settings
     if (addFolderToSettings) {
@@ -141,7 +159,7 @@ class LibraryScanner {
         }
       });
     }
-    return filesToProcess.length;
+    return ScanResult(songsCount: filesToProcess.length, musicFolders: musicFolders);
   }
 
   Future<Map<String, dynamic>?> _extractMetadata(File file) async {

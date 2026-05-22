@@ -65,9 +65,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return;
       }
 
-      if (settings.libraryFolders.isEmpty) {
-        // First time opening: silently scan default folders (like xdg MUSIC) instead of prompting
-        ref.read(libraryProvider.notifier).scanSavedFolders();
+      // If we are on Android and the library is currently empty,
+      // we DO NOT scan automatically at startup because we want the WelcomeScreen to serve as an intro 
+      // where the user must manually trigger permissions/scanning via interaction!
+      final initialSongsEmpty = ref.read(libraryProvider).songs.isEmpty;
+      if (Platform.isAndroid && initialSongsEmpty) {
+        print('ℹ️ Welcome screen mode: skipping auto-scan at startup to prevent premature permission popups');
       } else {
         ref.read(libraryProvider.notifier).scanSavedFolders();
       }
@@ -90,7 +93,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Ensure lyrics pre-fetching is active
     ref.watch(lyricsProvider);
 
-    final bool showWelcome = library.songs.isEmpty && !library.isScanning;
+    final isSetupComplete = ref.watch(welcomeBypassedProvider) ||
+                            settings.libraryFolders.isNotEmpty;
+    final bool showWelcome = !isSetupComplete && !library.isScanning;
     final bool isNarrow = MediaQuery.of(context).size.width < 800;
 
     final isOverlayMode = ref.watch(overlayModeProvider);

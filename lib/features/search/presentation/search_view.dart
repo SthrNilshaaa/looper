@@ -10,6 +10,7 @@ import 'package:isar/isar.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_search_provider.dart';
+import 'package:looper_player/core/ui_utils.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -88,9 +89,9 @@ class SearchView extends ConsumerWidget {
             color: Colors.grey.withOpacity(0.2),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Search your entire library',
-            style: TextStyle(color: Colors.grey),
+          Text(
+            UiUtils.tr(context, 'Search your entire library', 'अपनी पूरी लाइब्रेरी खोजें'),
+            style: const TextStyle(color: Colors.grey),
           ),
         ],
       ),
@@ -105,18 +106,18 @@ class SearchView extends ConsumerWidget {
     if (results.songs.isEmpty &&
         results.albums.isEmpty &&
         results.artists.isEmpty) {
-      return const Center(child: Text('No results found'));
+      return Center(child: Text(UiUtils.tr(context, 'No results found', 'कोई परिणाम नहीं मिला')));
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       children: [
         _buildTopResult(results, ref, context),
         const SizedBox(height: 16),
         if (results.artists.isNotEmpty) ...[
-          const Text(
-            'Artists',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+          Text(
+            UiUtils.tr(context, 'Artists', 'कलाकार'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -131,9 +132,9 @@ class SearchView extends ConsumerWidget {
           const SizedBox(height: 24),
         ],
         if (results.albums.isNotEmpty) ...[
-          const Text(
-            'Albums',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+          Text(
+            UiUtils.tr(context, 'Albums', 'एल्बम'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -148,9 +149,9 @@ class SearchView extends ConsumerWidget {
           const SizedBox(height: 24),
         ],
         if (results.songs.length > 1) ...[
-          const Text(
-            'Songs',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+          Text(
+            UiUtils.tr(context, 'Songs', 'गाने'),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
           ),
           const SizedBox(height: 12),
           SongsList(
@@ -175,9 +176,9 @@ class SearchView extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Top Result',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+        Text(
+          UiUtils.tr(context, 'Top Result', 'शीर्ष परिणाम'),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
         ),
         const SizedBox(height: 12),
         _SongResultCard(
@@ -193,6 +194,60 @@ class _SongResultCard extends ConsumerWidget {
   final Song song;
   final String? searchQuery;
   const _SongResultCard({required this.song, this.searchQuery});
+
+  Widget _buildHighlightedText({
+    required BuildContext context,
+    required String text,
+    required String query,
+    required TextStyle baseStyle,
+    required TextStyle highlightStyle,
+  }) {
+    if (query.isEmpty) {
+      return Text(text, style: baseStyle);
+    }
+
+    final lowerText = text.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final index = lowerText.indexOf(lowerQuery);
+
+    if (index == -1) {
+      return Text(text, style: baseStyle);
+    }
+
+    final List<TextSpan> spans = [];
+    int start = 0;
+    int indexOfMatch;
+
+    while ((indexOfMatch = lowerText.indexOf(lowerQuery, start)) != -1) {
+      // Add text before match
+      if (indexOfMatch > start) {
+        spans.add(TextSpan(
+          text: text.substring(start, indexOfMatch),
+          style: baseStyle,
+        ));
+      }
+      // Add matched text
+      spans.add(TextSpan(
+        text: text.substring(indexOfMatch, indexOfMatch + query.length),
+        style: highlightStyle,
+      ));
+      start = indexOfMatch + query.length;
+    }
+
+    // Add remaining text
+    if (start < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(start),
+        style: baseStyle,
+      ));
+    }
+
+    return RichText(
+      text: TextSpan(children: spans),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -227,93 +282,127 @@ class _SongResultCard extends ConsumerWidget {
                 : Colors.white10.withOpacity(0.05),
           ),
         ),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 80,
-              height: 80,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                image: song.artPath != null
-                    ? DecorationImage(
-                        image: FileImage(File(song.artPath!)),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-                color: Colors.white10,
-              ),
-              child: song.artPath == null
-                  ? const Icon(LucideIcons.music, size: 32)
-                  : null,
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    song.title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.normal,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            Row(
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    image: song.artPath != null
+                        ? DecorationImage(
+                            image: FileImage(File(song.artPath!)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
+                    color: Colors.white10,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    song.artist ?? 'Unknown Artist',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  if (lyricSnippet != null) ...[
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
+                  child: song.artPath == null
+                      ? const Icon(LucideIcons.music, size: 32)
+                      : null,
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        song.title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.normal,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(LucideIcons.quote, size: 10, color: colorScheme.primary),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              lyricSnippet,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colorScheme.primary.withOpacity(0.9),
-                                fontStyle: FontStyle.italic,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                      const SizedBox(height: 4),
+                      Text(
+                        song.artist ?? UiUtils.tr(context, 'Unknown Artist', 'अज्ञात कलाकार'),
+                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      if (lyricSnippet == null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          song.album ?? UiUtils.tr(context, 'Unknown Album', 'अज्ञात एल्बम'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.withOpacity(0.7),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.play_arrow, color: Colors.white),
+                ),
+              ],
+            ),
+            if (lyricSnippet != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.primary.withOpacity(0.15),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          LucideIcons.quote,
+                          size: 11,
+                          color: colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          UiUtils.tr(context, 'MATCHING LYRICS', 'मैचिंग लिरिक्स'),
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: colorScheme.primary,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
                     ),
-                  ] else ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      song.album ?? 'Unknown Album',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.withOpacity(0.7),
+                    const SizedBox(height: 6),
+                    _buildHighlightedText(
+                      context: context,
+                      text: lyricSnippet,
+                      query: searchQuery ?? '',
+                      baseStyle: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.85),
+                        fontStyle: FontStyle.italic,
+                      ),
+                      highlightStyle: TextStyle(
+                        fontSize: 13,
+                        color: colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: FontStyle.italic,
+                        backgroundColor: colorScheme.primary.withOpacity(0.12),
                       ),
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colorScheme.primary,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.play_arrow, color: Colors.white),
-            ),
+            ],
           ],
         ),
       ),
@@ -327,18 +416,29 @@ class _SongResultCard extends ConsumerWidget {
     if (index == -1) return null;
 
     int start = index;
+    bool truncatedStart = false;
     while (start > 0 && lyrics[start - 1] != '\n') {
       start--;
-      if (index - start > 40) break;
+      if (index - start > 40) {
+        truncatedStart = true;
+        break;
+      }
     }
 
     int end = index + query.length;
+    bool truncatedEnd = false;
     while (end < lyrics.length && lyrics[end] != '\n') {
       end++;
-      if (end - index > 60) break;
+      if (end - index > 60) {
+        truncatedEnd = true;
+        break;
+      }
     }
 
-    return lyrics.substring(start, end).trim();
+    String snippet = lyrics.substring(start, end).trim();
+    if (truncatedStart) snippet = '...$snippet';
+    if (truncatedEnd) snippet = '$snippet...';
+    return snippet;
   }
 }
 
@@ -358,7 +458,7 @@ class _ArtistResultCard extends ConsumerWidget {
             .read(appNavigationProvider.notifier)
             .showCollection(
               title: artist.name,
-              subtitle: 'Artist',
+              subtitle: UiUtils.tr(context, 'Artist', 'कलाकार'),
               songs: songs,
               art: artist.artPath,
             );
@@ -409,7 +509,7 @@ class _AlbumResultCard extends ConsumerWidget {
             .read(appNavigationProvider.notifier)
             .showCollection(
               title: album.name,
-              subtitle: album.artist ?? 'Unknown Artist',
+              subtitle: album.artist ?? UiUtils.tr(context, 'Unknown Artist', 'अज्ञात कलाकार'),
               songs: songs,
               art: album.artPath,
             );
@@ -449,7 +549,7 @@ class _AlbumResultCard extends ConsumerWidget {
               ),
             ),
             Text(
-              album.artist ?? 'Unknown Artist',
+              album.artist ?? UiUtils.tr(context, 'Unknown Artist', 'अज्ञात कलाकार'),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.grey, fontSize: 11),

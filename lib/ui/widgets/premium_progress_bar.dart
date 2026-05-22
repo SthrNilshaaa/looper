@@ -1,9 +1,13 @@
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:squiggly_slider/slider.dart';
+import 'squiggly_slider/slider.dart';
 
-class ExpressiveSlider extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+
+class ExpressiveSlider extends ConsumerStatefulWidget {
   final Duration position;
   final Duration duration;
   final bool isPlaying;
@@ -26,10 +30,10 @@ class ExpressiveSlider extends StatefulWidget {
   });
 
   @override
-  State<ExpressiveSlider> createState() => _ExpressiveSliderState();
+  ConsumerState<ExpressiveSlider> createState() => _ExpressiveSliderState();
 }
 
-class _ExpressiveSliderState extends State<ExpressiveSlider> {
+class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
   double? _dragValue;
 
   String _formatDuration(Duration duration) {
@@ -40,6 +44,19 @@ class _ExpressiveSliderState extends State<ExpressiveSlider> {
   }
 
   Widget _buildAnimatedDuration(String durationStr, bool isRightAligned) {
+    final settings = ref.watch(settingsProvider);
+    if (settings.disableAnimatedDuration) {
+      return Text(
+        durationStr,
+        style: GoogleFonts.dmSans(
+          color: Colors.white70,
+          fontWeight: Platform.isLinux ? FontWeight.w300 : FontWeight.w600,
+          fontSize: 12,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      );
+    }
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: isRightAligned
@@ -47,7 +64,7 @@ class _ExpressiveSliderState extends State<ExpressiveSlider> {
           : MainAxisAlignment.start,
       children: durationStr.characters.map((char) {
         return SizedBox(
-          width: char == ':' ? 6 : 10,
+          width: char == ':' ? 5 : 9,
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             transitionBuilder: (Widget child, Animation<double> animation) {
@@ -67,7 +84,7 @@ class _ExpressiveSliderState extends State<ExpressiveSlider> {
               key: ValueKey(char),
               style: GoogleFonts.dmSans(
                 color: Colors.white70,
-                fontWeight: FontWeight.w800,
+                fontWeight:Platform.isLinux ? FontWeight.w300: FontWeight.w600,
                 fontSize: 12,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
@@ -81,55 +98,81 @@ class _ExpressiveSliderState extends State<ExpressiveSlider> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
     final double progress = widget.duration.inMilliseconds > 0
         ? (widget.position.inMilliseconds / widget.duration.inMilliseconds).clamp(0.0, 1.0)
         : 0.0;
 
     final displayValue = _dragValue ?? progress;
+    final bool enableWave = widget.isPlaying && displayValue > 0.12;
     final displayPosition = _dragValue != null 
         ? widget.duration * _dragValue! 
         : widget.position;
 
+    final sliderWidget = SliderTheme(
+      data: SliderTheme.of(context).copyWith(
+        trackHeight: Platform.isLinux ? 2.0 : 8.0,
+        activeTrackColor: widget.color,
+        trackShape: PremiumGapTrackShape(
+          gap: Platform.isLinux ? 3 : 6,
+        ),
+        inactiveTrackColor: Colors.white10,
+        
+         thumbShape:  LineThumbShape(
+          thumbHeight: Platform.isLinux ? 10 : 16,
+          thumbWidth: Platform.isLinux ? 2 : 6,
+        ),
+        overlayShape: SliderComponentShape.noOverlay,
+      ),
+      child: SquigglySlider(
+        value: displayValue,
+        onChanged: (val) {
+          setState(() => _dragValue = val);
+          widget.onSeek(widget.duration * val);
+        },
+        onChangeStart: (val) {
+          setState(() => _dragValue = val);
+          widget.onSeekStart?.call();
+        },
+        onChangeEnd: (val) {
+          setState(() => _dragValue = null);
+          widget.onSeekEnd?.call();
+        },
+        activeColor: widget.color,
+        inactiveColor: Colors.white10,
+        squiggleAmplitude: settings.disableSquiggle ? 0.0 : (enableWave ? 2.0 : 0.0),
+        squiggleWavelength:Platform.isLinux? 4.5:6.0,
+        squiggleSpeed:Platform.isLinux? 0.08:0.05,
+        useLineThumb: false,
+      ),
+    );
+
+    if (Platform.isLinux) {
+      return Row(
+        mainAxisSize: MainAxisSize.max,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (widget.showTimestamps) ...[
+            _buildAnimatedDuration(_formatDuration(displayPosition), false),
+            const SizedBox(width: 12),
+          ],
+          Expanded(child: sliderWidget),
+          if (widget.showTimestamps) ...[
+            const SizedBox(width: 12),
+            _buildAnimatedDuration(_formatDuration(widget.duration), true),
+          ],
+        ],
+      );
+    }
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackHeight: 2.8,
-            activeTrackColor: widget.color,
-            inactiveTrackColor: Colors.white10,
-            thumbShape: const LineThumbShape(
-              thumbHeight: 12,
-              thumbWidth: 3,
-            ),
-            overlayShape: SliderComponentShape.noOverlay,
-          ),
-          child: SquigglySlider(
-            value: displayValue,
-            onChanged: (val) {
-              setState(() => _dragValue = val);
-              widget.onSeek(widget.duration * val);
-            },
-            onChangeStart: (val) {
-              setState(() => _dragValue = val);
-              widget.onSeekStart?.call();
-            },
-            onChangeEnd: (val) {
-              setState(() => _dragValue = null);
-              widget.onSeekEnd?.call();
-            },
-            activeColor: widget.color,
-            inactiveColor: Colors.white10,
-            squiggleAmplitude: widget.isPlaying ? 2.0 : 0.0,
-            squiggleWavelength: 4.5,
-            squiggleSpeed: 0.08,
-            useLineThumb: false,
-          ),
-        ),
+        sliderWidget,
         if (widget.showTimestamps) ...[
           const SizedBox(height: 4),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -182,5 +225,78 @@ class LineThumbShape extends SliderComponentShape {
       ),
       paint,
     );
+  }
+}
+class PremiumGapTrackShape extends RoundedRectSliderTrackShape {
+    final double gap;
+
+  const PremiumGapTrackShape({
+    this.gap = 6,
+    });
+
+    @override
+    void paint(
+      PaintingContext context,
+      Offset offset, {
+      required RenderBox parentBox,
+      required SliderThemeData sliderTheme,
+      required Animation<double> enableAnimation,
+      required Offset thumbCenter,
+      Offset? secondaryOffset,
+      bool isEnabled = false,
+      bool isDiscrete = false,
+      required TextDirection textDirection,
+      double additionalActiveTrackHeight = 0.0,
+    }) {
+        if (sliderTheme.trackHeight == null ||
+          sliderTheme.trackHeight! <= 0) {
+        return;
+        }
+
+    final Rect trackRect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+
+    final Paint activePaint = Paint()
+      ..color = sliderTheme.activeTrackColor!;
+
+    final Paint inactivePaint = Paint()
+      ..color = sliderTheme.inactiveTrackColor!;
+
+    final double trackHeight = sliderTheme.trackHeight!;
+    final Radius radius = Radius.circular(trackHeight / 2);
+
+    // ACTIVE TRACK
+    final RRect activeRRect = RRect.fromLTRBAndCorners(
+      trackRect.left,
+      trackRect.top,
+      thumbCenter.dx - gap,
+      trackRect.bottom,
+      topLeft: radius,
+      bottomLeft: radius,
+      topRight: radius,
+      bottomRight: radius,
+    );
+
+    // INACTIVE TRACK
+    final RRect inactiveRRect = RRect.fromLTRBAndCorners(
+      thumbCenter.dx + gap,
+      trackRect.top,
+      trackRect.right,
+      trackRect.bottom,
+      topLeft: radius,
+      bottomLeft: radius,
+      topRight: radius,
+      bottomRight: radius,
+    );
+
+    context.canvas.drawRRect(activeRRect, activePaint);
+    context.canvas.drawRRect(inactiveRRect, inactivePaint);
+
+
   }
 }

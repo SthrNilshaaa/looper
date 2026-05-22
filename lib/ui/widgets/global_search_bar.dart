@@ -110,7 +110,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                     }
                   },
                   decoration: InputDecoration(
-                    hintText: 'Search songs',
+                    hintText: UiUtils.tr(context, 'Search songs', 'गाने खोजें'),
                     hintStyle: TextStyle(
                       color: Colors.white.withOpacity(0.5),
                       fontSize: 14,

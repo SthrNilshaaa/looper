@@ -90,4 +90,7 @@ class AppSettings {
   bool saveDynamicColor = true;
   bool dynamicLyrics = true;
   int accentColor = 0xFF41C25E; // Default Green
+  bool audioFocus = true;
+  bool disableSquiggle = false;
+  bool disableAnimatedDuration = false;
 }

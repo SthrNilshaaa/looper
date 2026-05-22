@@ -13,7 +13,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:looper_player/ui/screens/android/android_expanded_player.dart';
+import 'package:looper_player/ui/screens/android/player/android_expanded_player.dart';
 
 class ExpandedPlayer extends ConsumerWidget {
   const ExpandedPlayer({super.key});
