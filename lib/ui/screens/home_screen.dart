@@ -85,7 +85,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final library = ref.watch(libraryProvider);
     final nav = ref.watch(appNavigationProvider);
-    final playback = ref.watch(playbackProvider);
+    final currentSong = ref.watch(
+      playbackProvider.select((s) => s.currentSong),
+    );
     final settings = ref.watch(settingsProvider);
     final isDynamic = settings.enableDynamicTheming;
     final l10n = AppLocalizations.of(context)!;
@@ -109,7 +111,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: isDynamic
-          ? (playback.currentSong != null
+          ? (currentSong != null
                 ? Theme.of(context).colorScheme.surface
                 : Theme.of(context).scaffoldBackgroundColor)
           : Theme.of(context).scaffoldBackgroundColor,
@@ -127,13 +129,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // Global Background Art (Conditional)
             if (!showWelcome &&
                 settings.enableDynamicTheming &&
-                playback.currentSong?.artPath != null) ...[
+                currentSong?.artPath != null) ...[
               Positioned.fill(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 1000),
                   child: Image.file(
-                    File(playback.currentSong!.artPath!),
-                    key: ValueKey(playback.currentSong!.artPath!),
+                    File(currentSong!.artPath!),
+                    key: ValueKey(currentSong!.artPath!),
                     fit: BoxFit.cover,
                   ),
                 ),
