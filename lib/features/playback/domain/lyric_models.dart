@@ -28,8 +28,17 @@ class LrcParser {
 
     // More flexible regex to handle [mm:ss], [mm:ss.xx], [mm:ss.xxx], [mm:ss:xx]
     final regExp = RegExp(r'\[(\d{1,3}):(\d{2})(?:[:\.](\d{2,3}))?\](.*)');
+    final offsetRegExp = RegExp(r'\[offset:(-?\d+)\]');
+    int globalOffsetMs = 0;
 
     for (var line in lines) {
+      // Check for offset tag
+      final offsetMatch = offsetRegExp.firstMatch(line);
+      if (offsetMatch != null) {
+        globalOffsetMs = int.tryParse(offsetMatch.group(1)!) ?? 0;
+        continue;
+      }
+
       final match = regExp.firstMatch(line);
       if (match != null) {
         final minutes = int.parse(match.group(1)!);
@@ -45,14 +54,44 @@ class LrcParser {
         final startTime = Duration(
           minutes: minutes,
           seconds: seconds,
-          milliseconds: milliseconds,
+          milliseconds: milliseconds + globalOffsetMs,
         );
         final text = match.group(4)!.trim();
         rawLines.add({'start': startTime, 'text': text});
       }
     }
 
-    if (rawLines.isEmpty) return [];
+    if (rawLines.isEmpty) {
+      // FALLBACK FOR PLAIN TEXT LYRICS (no timestamps)
+      // Filter out metadata tags like [ti:xx], [ar:xx], etc.
+      final List<String> plainLines = [];
+      final metaRegExp = RegExp(r'^\[[a-zA-Z]+:.*\]$');
+      for (var line in lines) {
+        final trimmed = line.trim();
+        if (trimmed.isEmpty) continue;
+        if (metaRegExp.hasMatch(trimmed)) continue;
+        if (trimmed.startsWith('[') && trimmed.endsWith(']') && !trimmed.contains(' ')) continue;
+        plainLines.add(trimmed);
+      }
+
+      if (plainLines.isNotEmpty) {
+        final List<LyricLine> result = [];
+        final count = plainLines.length;
+        final totalMs = totalDuration.inMilliseconds > 0 ? totalDuration.inMilliseconds : 180000; // fallback to 3 mins
+        final interval = totalMs ~/ count;
+        for (var i = 0; i < count; i++) {
+          result.add(
+            LyricLine(
+              startTime: Duration(milliseconds: interval * i),
+              endTime: Duration(milliseconds: interval * (i + 1)),
+              text: plainLines[i],
+            ),
+          );
+        }
+        return result;
+      }
+      return [];
+    }
 
     // Sort by start time just in case
     rawLines.sort(

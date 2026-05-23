@@ -10,6 +10,8 @@ import 'package:metadata_god/metadata_god.dart';
 import 'package:isar/isar.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:share_plus/share_plus.dart';
 
 enum RepeatMode { off, all, one }
 
@@ -22,6 +24,7 @@ class PlaybackState {
   final RepeatMode repeatMode;
   final double volume;
 
+  final bool isScrubbing;
   final List<Song> queue;
 
   PlaybackState({
@@ -32,31 +35,36 @@ class PlaybackState {
     this.isShuffle = false,
     this.repeatMode = RepeatMode.off,
     this.volume = 1.0,
+    this.isScrubbing = false,
     this.queue = const [],
   });
 
   PlaybackState copyWith({
-    Song? currentSong,
+    Object? currentSong = _sentinel,
     bool? isPlaying,
     Duration? position,
     Duration? duration,
     bool? isShuffle,
     RepeatMode? repeatMode,
     double? volume,
+    bool? isScrubbing,
     List<Song>? queue,
   }) {
     return PlaybackState(
-      currentSong: currentSong ?? this.currentSong,
+      currentSong: currentSong == _sentinel ? this.currentSong : currentSong as Song?,
       isPlaying: isPlaying ?? this.isPlaying,
       position: position ?? this.position,
       duration: duration ?? this.duration,
       isShuffle: isShuffle ?? this.isShuffle,
       repeatMode: repeatMode ?? this.repeatMode,
       volume: volume ?? this.volume,
+      isScrubbing: isScrubbing ?? this.isScrubbing,
       queue: queue ?? this.queue,
     );
   }
 }
+
+const _sentinel = Object();
 
 class PlaybackNotifier extends StateNotifier<PlaybackState> {
   final Ref ref;
@@ -68,16 +76,33 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     player = ref.read(audioServiceProvider).player;
     ref.read(audioServiceProvider).onNext = skipNext;
     ref.read(audioServiceProvider).onPrevious = skipPrevious;
+    ref.read(audioServiceProvider).onSeek = (duration) => seek(duration);
+    ref.read(audioServiceProvider).onFavoriteToggle = toggleFavorite;
+    ref.read(audioServiceProvider).onShuffleToggle = toggleShuffle;
     _init();
+  }
+
+  void _updateNotification() {
+    final song = state.currentSong;
+    if (song != null) {
+      ref.read(audioServiceProvider).updatePlaybackState(
+        isPlaying: state.isPlaying,
+        isFavorite: song.isFavorite,
+        isShuffle: state.isShuffle,
+      );
+    }
   }
 
   Future<void> _init() async {
     player.stream.playing.listen((playing) {
       state = state.copyWith(isPlaying: playing);
+      _updateNotification();
     });
 
     player.stream.position.listen((position) {
-      state = state.copyWith(position: position);
+      if (!state.isScrubbing) {
+        state = state.copyWith(position: position);
+      }
     });
 
     player.stream.duration.listen((duration) {
@@ -88,7 +113,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       if (completed) {
         if (state.repeatMode == RepeatMode.one) {
           player.seek(Duration.zero);
-          player.play();
+          ref.read(audioServiceProvider).resume();
         } else {
           skipNext();
         }
@@ -111,6 +136,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         _playlist = [song];
         _currentIndex = 0;
       }
+    }
+  }
+
+  Future<void> playAtIndex(int index) async {
+    if (index >= 0 && index < _playlist.length) {
+      _currentIndex = index;
+      await play(_playlist[_currentIndex]);
     }
   }
 
@@ -141,9 +173,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     };
     await ref.read(audioServiceProvider).play(song.path, metadata: metadata);
 
-    await windowManager.setTitle(
-      'Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}',
-    );
+    if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+      await windowManager.setTitle(
+        'Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}',
+      );
+    }
 
     // Broadcast notification on Linux
     if (Platform.isLinux) {
@@ -192,6 +226,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
       state = state.copyWith(queue: List.from(_playlist));
     }
+    _updateNotification();
   }
 
   void addToQueue(Song song) {
@@ -250,12 +285,12 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> togglePlay() async {
     if (state.isPlaying) {
-      await player.pause();
+      await ref.read(audioServiceProvider).pause();
     } else {
       if (player.state.playlist.medias.isEmpty && state.currentSong != null) {
         await play(state.currentSong!);
       } else {
-        await player.play();
+        await ref.read(audioServiceProvider).resume();
       }
     }
   }
@@ -268,7 +303,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         _currentIndex = 0;
       } else {
         _currentIndex = _playlist.length - 1;
-        await player.pause();
+        await ref.read(audioServiceProvider).pause();
         return;
       }
     }
@@ -317,6 +352,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       );
     }
     ref.read(settingsProvider.notifier).updateShuffle(newState);
+    _updateNotification();
   }
 
   int songId(Song s) => s.id;
@@ -336,6 +372,16 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> seek(Duration position) async {
     await player.seek(position);
+  }
+
+  void startScrubbing() {
+    state = state.copyWith(isScrubbing: true);
+    player.setVolume(0);
+  }
+
+  void stopScrubbing() {
+    state = state.copyWith(isScrubbing: false);
+    player.setVolume(state.volume * 100);
   }
 
   void reorderQueue(int oldIndex, int newIndex) {
@@ -362,7 +408,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   void clearQueue() {
     _playlist = [];
     _currentIndex = -1;
-    state = state.copyWith(queue: [], currentSong: null, isPlaying: false);
+    state = PlaybackState(
+      volume: state.volume,
+      isShuffle: state.isShuffle,
+      repeatMode: state.repeatMode,
+    );
     player.stop();
   }
 
@@ -377,6 +427,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
     // Refresh the state to trigger UI updates
     state = state.copyWith(currentSong: song);
+    _updateNotification();
   }
 
   double _lastVolume = 1.0;
@@ -388,6 +439,58 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     } else {
       setVolume(_lastVolume > 0 ? _lastVolume : 1.0);
     }
+  }
+
+  Future<void> renameSong(Song song, String newTitle) async {
+    final file = File(song.path);
+    final dir = file.parent.path;
+    final ext = p.extension(song.path);
+    final newPath = p.join(dir, '$newTitle$ext');
+
+    try {
+      if (await file.exists()) {
+        await file.rename(newPath);
+      }
+
+      await DbService.isar.writeTxn(() async {
+        song.title = newTitle;
+        song.path = newPath;
+        await DbService.isar.songs.put(song);
+      });
+
+      // Update state if it's the current song
+      if (state.currentSong?.id == song.id) {
+        state = state.copyWith(currentSong: song);
+      }
+    } catch (e) {
+      print('Error renaming file: $e');
+    }
+  }
+
+  Future<void> deleteSong(Song song) async {
+    try {
+      final file = File(song.path);
+      if (await file.exists()) {
+        await file.delete();
+      }
+
+      await DbService.isar.writeTxn(() async {
+        await DbService.isar.songs.delete(song.id);
+      });
+
+      if (state.currentSong?.id == song.id) {
+        await skipNext();
+      }
+
+      _playlist.removeWhere((s) => s.id == song.id);
+      state = state.copyWith(queue: List.from(_playlist));
+    } catch (e) {
+      print('Error deleting file: $e');
+    }
+  }
+
+  Future<void> shareSong(Song song) async {
+    await Share.shareXFiles([XFile(song.path)], text: 'Check out this song: ${song.title}');
   }
 }
 

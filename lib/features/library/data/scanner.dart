@@ -5,6 +5,14 @@ import 'package:path_provider/path_provider.dart';
 import '../../../core/db_service.dart';
 import '../domain/models/models.dart';
 import 'package:isar/isar.dart';
+import '../../playback/data/metadata_service.dart';
+
+class ScanResult {
+  final int songsCount;
+  final Set<String> musicFolders;
+
+  ScanResult({required this.songsCount, required this.musicFolders});
+}
 
 class LibraryScanner {
   final List<String> supportedExtensions = [
@@ -13,30 +21,74 @@ class LibraryScanner {
     '.opus',
     '.aac',
     '.m4a',
+    '.m4b',
     '.wav',
     '.ogg',
     '.aiff',
     '.alac',
+    '.wma',
   ];
 
-  Future<void> scanDirectory(String path) async {
+  Future<ScanResult> scanDirectory(String path, {bool addFolderToSettings = false}) async {
+    print('🔍 Scanner: Scanning directory: $path');
     final dir = Directory(path);
-    if (!await dir.exists()) return;
+    if (!await dir.exists()) {
+      print('❌ Scanner: Directory does not exist: $path');
+      return ScanResult(songsCount: 0, musicFolders: {});
+    }
 
     final List<File> filesToProcess = [];
-    await for (final entity in dir.list(recursive: true, followLinks: true)) {
-      if (entity is File) {
-        final ext = p.extension(entity.path).toLowerCase();
-        if (supportedExtensions.contains(ext)) {
-          filesToProcess.add(entity);
+    final Set<String> musicFolders = {};
+    
+    Future<void> traverse(Directory currentDir) async {
+      final baseName = p.basename(currentDir.path);
+      // Skip hidden folders and Android system directories to avoid slow scans or access issues
+      if (baseName.startsWith('.') && baseName != '.') return;
+      if (baseName.toLowerCase() == 'android') return;
+
+      List<FileSystemEntity> entities = [];
+      try {
+        entities = await currentDir.list(recursive: false, followLinks: true).toList();
+      } catch (e) {
+        // Silently catch and skip restricted directories without crashing the whole scan!
+        return;
+      }
+
+      for (final entity in entities) {
+        final name = p.basename(entity.path);
+        if (name.startsWith('.') && name != '.') continue;
+
+        if (entity is File) {
+          final ext = p.extension(entity.path).toLowerCase();
+          if (supportedExtensions.contains(ext)) {
+            filesToProcess.add(entity);
+            musicFolders.add(p.dirname(entity.path));
+          }
+        } else if (entity is Directory) {
+          await traverse(entity);
         }
       }
     }
 
-    if (filesToProcess.isEmpty) return;
+    try {
+      await traverse(dir);
+    } catch (e) {
+      print('❌ Scanner: Critical error during traversal of $path: $e');
+    }
 
-    // Process in batches to avoid overwhelming the system
-    const int batchSize = 20;
+    print('🎵 Scanner: Found ${filesToProcess.length} audio files in $path');
+
+    if (filesToProcess.isEmpty) return ScanResult(songsCount: 0, musicFolders: {});
+
+    // If requested, add discovered folders to settings
+    if (addFolderToSettings) {
+      // In a real app, you might want to add these to settingsProvider
+      // For now, we print them and ensure they are processed
+      print('📂 Scanner: Discovered ${musicFolders.length} folders with music');
+    }
+
+    // Process in smaller batches with delays to keep UI responsive
+    const int batchSize = 4;
     for (int i = 0; i < filesToProcess.length; i += batchSize) {
       final end = (i + batchSize < filesToProcess.length)
           ? i + batchSize
@@ -44,6 +96,9 @@ class LibraryScanner {
       final batch = filesToProcess.sublist(i, end);
 
       final results = await Future.wait(batch.map((f) => _extractMetadata(f)));
+      
+      // Small pause to allow UI to breathe
+      await Future.delayed(const Duration(milliseconds: 50));
 
       await DbService.isar.writeTxn(() async {
         for (final data in results) {
@@ -104,33 +159,48 @@ class LibraryScanner {
         }
       });
     }
+    return ScanResult(songsCount: filesToProcess.length, musicFolders: musicFolders);
   }
 
   Future<Map<String, dynamic>?> _extractMetadata(File file) async {
     try {
-      final metadata = await MetadataGod.readMetadata(file: file.path);
+      Metadata? metadata;
+      try {
+        metadata = await MetadataGod.readMetadata(file: file.path);
+      } catch (e) {
+        print('⚠️ MetadataGod failed for ${file.path}: $e');
+      }
+
       String? artPath;
-      if (metadata.picture != null) {
+      if (metadata?.picture != null) {
         artPath = await saveAlbumArt(
-          metadata.album ?? 'unknown',
-          metadata.picture!.data,
+          metadata?.album ?? 'unknown',
+          metadata!.picture!.data,
         );
       }
 
+      final lyrics = await MetadataService.getEmbeddedLyrics(file.path);
+
       final song = Song()
         ..path = file.path
-        ..title = metadata.title ?? p.basenameWithoutExtension(file.path)
-        ..artist = metadata.artist
-        ..album = metadata.album
-        ..genre = metadata.genre
-        ..duration = metadata.durationMs?.toInt()
-        ..trackNumber = metadata.trackNumber
-        ..year = metadata.year
+        ..title = metadata?.title ?? p.basenameWithoutExtension(file.path)
+        ..artist = metadata?.artist ?? 'Unknown Artist'
+        ..album = metadata?.album ?? 'Unknown Album'
+        ..genre = metadata?.genre
+        ..duration = metadata?.durationMs?.toInt()
+        ..trackNumber = metadata?.trackNumber
+        ..year = metadata?.year
         ..artPath = artPath
+        ..lyrics = lyrics
         ..dateAdded = DateTime.now();
 
-      return {'song': song, 'metadata': metadata, 'artPath': artPath};
+      return {
+        'song': song,
+        'metadata': metadata ?? Metadata(title: song.title, artist: song.artist, album: song.album),
+        'artPath': artPath
+      };
     } catch (e) {
+      print('❌ Final error extracting metadata for ${file.path}: $e');
       return null;
     }
   }

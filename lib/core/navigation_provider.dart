@@ -14,6 +14,12 @@ enum NavItem {
   settings,
   collectionDetail,
   queue,
+  genres,
+  folders,
+  history,
+  mostPlayed,
+  downloads,
+  smartCollections,
 }
 
 class NavigationState {
@@ -24,6 +30,7 @@ class NavigationState {
   final String? collectionImageUrl;
   final List<Song> collectionSongs;
   final List<NavigationState> history;
+  final bool isPlayerExpanded;
 
   NavigationState({
     required this.activeItem,
@@ -33,6 +40,7 @@ class NavigationState {
     this.collectionImageUrl,
     this.collectionSongs = const [],
     this.history = const [],
+    this.isPlayerExpanded = false,
   });
 
   NavigationState copyWith({
@@ -43,6 +51,7 @@ class NavigationState {
     String? collectionImageUrl,
     List<Song>? collectionSongs,
     List<NavigationState>? history,
+    bool? isPlayerExpanded,
   }) {
     return NavigationState(
       activeItem: activeItem ?? this.activeItem,
@@ -52,6 +61,7 @@ class NavigationState {
       collectionImageUrl: collectionImageUrl ?? this.collectionImageUrl,
       collectionSongs: collectionSongs ?? this.collectionSongs,
       history: history ?? this.history,
+      isPlayerExpanded: isPlayerExpanded ?? this.isPlayerExpanded,
     );
   }
 }
@@ -133,7 +143,16 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       collectionArt: state.collectionArt,
       collectionImageUrl: state.collectionImageUrl,
       collectionSongs: state.collectionSongs,
+      isPlayerExpanded: state.isPlayerExpanded,
     );
+  }
+
+  void togglePlayerExpansion() {
+    state = state.copyWith(isPlayerExpanded: !state.isPlayerExpanded);
+  }
+
+  void setPlayerExpansion(bool expanded) {
+    state = state.copyWith(isPlayerExpanded: expanded);
   }
 }
 

@@ -53,3 +53,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Android Signing & Local Files
+*.jks
+**/android/key.properties
+scratch/
+log.txt
+*.zip
+test_svg.png
+

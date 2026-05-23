@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/core/app_icons.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import 'package:animations/animations.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:file_picker/file_picker.dart';
 import '../widgets/player_bar.dart';
+import '../widgets/expanded_player.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/features/library/presentation/library_grids.dart';
@@ -31,6 +34,8 @@ import 'package:looper_player/features/library/presentation/library_grids.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import '../widgets/global_search_bar.dart';
 import 'package:looper_player/features/playback/presentation/widgets/overlay_lyrics_widget.dart';
+
+import 'android/android_main_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -60,9 +65,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return;
       }
 
-      if (settings.libraryFolders.isEmpty) {
-        // First time opening: silently scan default folders (like xdg MUSIC) instead of prompting
-        ref.read(libraryProvider.notifier).scanSavedFolders();
+      // If we are on Android and the library is currently empty,
+      // we DO NOT scan automatically at startup because we want the WelcomeScreen to serve as an intro 
+      // where the user must manually trigger permissions/scanning via interaction!
+      final initialSongsEmpty = ref.read(libraryProvider).songs.isEmpty;
+      if (Platform.isAndroid && initialSongsEmpty) {
+        print('ℹ️ Welcome screen mode: skipping auto-scan at startup to prevent premature permission popups');
       } else {
         ref.read(libraryProvider.notifier).scanSavedFolders();
       }
@@ -71,6 +79,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isAndroid) {
+      return const AndroidMainScreen();
+    }
+
     final library = ref.watch(libraryProvider);
     final nav = ref.watch(appNavigationProvider);
     final currentSong = ref.watch(
@@ -83,7 +95,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Ensure lyrics pre-fetching is active
     ref.watch(lyricsProvider);
 
-    final bool showWelcome = library.songs.isEmpty && !library.isScanning;
+    final isSetupComplete = ref.watch(welcomeBypassedProvider) ||
+                            settings.libraryFolders.isNotEmpty;
+    final bool showWelcome = !isSetupComplete && !library.isScanning;
     final bool isNarrow = MediaQuery.of(context).size.width < 800;
 
     final isOverlayMode = ref.watch(overlayModeProvider);
@@ -128,7 +142,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
               Positioned.fill(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                  filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
                   child: Container(color: Colors.black.withOpacity(0.8)),
                 ),
               ),
@@ -152,7 +166,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 // Sidebar - hidden on narrow screens
                                 if (!isNarrowLayout)
                                   Container(
-                                    width: 240,
+                                    width: 240.s,
                                     decoration: BoxDecoration(
                                       color: Theme.of(context)
                                           .colorScheme
@@ -269,9 +283,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                 ),
                 // Global Player Bar always at the bottom
-                PlayerBar(),
+                if (!nav.isPlayerExpanded)
+                  GestureDetector(
+                    onVerticalDragUpdate: (details) {
+                      if (Platform.isAndroid || Platform.isIOS) {
+                        if (details.delta.dy < -10) {
+                          ref
+                              .read(appNavigationProvider.notifier)
+                              .setPlayerExpansion(true);
+                        }
+                      }
+                    },
+                    child: const PlayerBar(),
+                  ),
               ],
             ),
+            // Expanded Player View
+            if (nav.isPlayerExpanded)
+              Positioned.fill(
+                child: WillPopScope(
+                  onWillPop: () async {
+                    ref
+                        .read(appNavigationProvider.notifier)
+                        .setPlayerExpansion(false);
+                    return false;
+                  },
+                  child: const ExpandedPlayer(),
+                ),
+              ),
           ],
         ),
       ),
@@ -359,6 +398,9 @@ class CustomTitleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (Platform.isAndroid || Platform.isIOS) {
+      return const SizedBox.shrink();
+    }
     return WindowCaption(
       brightness: Brightness.dark,
       backgroundColor: Colors.transparent,
@@ -398,7 +440,7 @@ class Sidebar extends ConsumerWidget {
           return SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: constraints.maxHeight - 32,
+                minHeight: (constraints.maxHeight - 32).clamp(0.0, double.infinity),
               ), // -32 for padding
               child: IntrinsicHeight(
                 child: Column(
@@ -423,13 +465,13 @@ class Sidebar extends ConsumerWidget {
                     ),
                     SizedBox(height: 24),
                     _SidebarItem(
-                      customIcon: 'assets/side_bar/home_active.svg',
+                      customIcon: AppIcons.home,
                       label: 'Home',
                       isSelected: activeItem == NavItem.home,
                       onTap: () => navigateTo(NavItem.home),
                     ),
                     _SidebarItem(
-                      customIcon: 'assets/side_bar/my_music.svg',
+                      customIcon: AppIcons.songs,
                       label: l10n.songs,
                       isSelected: activeItem == NavItem.songs,
                       onTap: () => navigateTo(NavItem.songs),
@@ -448,7 +490,7 @@ class Sidebar extends ConsumerWidget {
                       onTap: () => navigateTo(NavItem.artists),
                     ),
                     _SidebarItem(
-                      customIcon: 'assets/side_bar/library.svg',
+                      customIcon: AppIcons.library,
                       label: l10n.playlists,
                       isSelected: activeItem == NavItem.playlists,
                       onTap: () => navigateTo(NavItem.playlists),
@@ -460,7 +502,7 @@ class Sidebar extends ConsumerWidget {
                       onTap: () => navigateTo(NavItem.recentlyPlayed),
                     ),
                     _SidebarItem(
-                      customIcon: 'assets/side_bar/favourites.svg',
+                      customIcon: AppIcons.heart,
                       label: 'Favorites',
                       isSelected: activeItem == NavItem.favorites,
                       onTap: () => navigateTo(NavItem.favorites),
@@ -472,7 +514,7 @@ class Sidebar extends ConsumerWidget {
                       onTap: () => navigateTo(NavItem.queue),
                     ),
                     _SidebarItem(
-                      icon: LucideIcons.settings,
+                      customIcon: AppIcons.settings,
                       label: l10n.settings,
                       isSelected: activeItem == NavItem.settings,
                       onTap: () => navigateTo(NavItem.settings),
@@ -514,8 +556,8 @@ class _HeaderButton extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(30),
       child: Container(
-        height: 55,
-        padding: const EdgeInsets.symmetric(horizontal: 20),
+        height: 55.s,
+        padding: EdgeInsets.symmetric(horizontal: 20.s),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
           color: const Color.fromARGB(
@@ -529,13 +571,21 @@ class _HeaderButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: Colors.white),
-            const SizedBox(width: 10),
+            if (icon == LucideIcons.arrowLeft)
+              SvgPicture.asset(
+                AppIcons.backVector,
+                width: AppIcons.headerIcon.s,
+                height: AppIcons.headerIcon.s,
+                colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+              )
+            else
+              Icon(icon, size: AppIcons.headerIcon.s, color: Colors.white),
+            SizedBox(width: 10.s),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.white,
-                fontSize: 14,
+                fontSize: 14.ts,
                 fontWeight: FontWeight.normal,
               ),
             ),
@@ -574,8 +624,8 @@ class _SidebarItem extends StatelessWidget {
         leading: customIcon != null
             ? SvgPicture.asset(
                 customIcon!,
-                width: 17,
-                height: 17,
+                width: AppIcons.sidebarIcon.s,
+                height: AppIcons.sidebarIcon.s,
                 colorFilter: ColorFilter.mode(
                   isSelected ? selectedColor : unselectedColor,
                   BlendMode.srcIn,
@@ -583,13 +633,13 @@ class _SidebarItem extends StatelessWidget {
               )
             : Icon(
                 icon,
-                size: 17,
+                size: AppIcons.sidebarIcon.s,
                 color: isSelected ? selectedColor : unselectedColor,
               ),
         title: Text(
           label,
           style: TextStyle(
-            fontSize: 14,
+            fontSize: 14.ts,
             color: isSelected ? selectedColor : unselectedColor,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
           ),

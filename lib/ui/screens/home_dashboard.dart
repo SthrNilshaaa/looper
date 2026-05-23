@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
 import 'package:looper_player/features/library/presentation/library_grids.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
@@ -29,9 +31,9 @@ class HomeDashboard extends ConsumerWidget {
 
         return ListView(
           padding: EdgeInsets.only(
-            top: isNarrow ? 4 : 8,
-            left: isNarrow ? 16 : 32,
-            right: isNarrow ? 16 : 32,
+            top: (isNarrow ? 4 : 8).s,
+            left: (isNarrow ? 16 : 32).s,
+            right: (isNarrow ? 16 : 32).s,
           ),
           children: [
             if (showLogo)
@@ -40,7 +42,7 @@ class HomeDashboard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    height: 50,
+                    height: 50.s,
                     child: SvgPicture.asset(
                       'assets/main_logo.svg',
                       fit: BoxFit.contain,
@@ -92,7 +94,7 @@ class HomeDashboard extends ConsumerWidget {
         Text(
           'My Albums',
           style: TextStyle(
-            fontSize: isNarrow ? 14 : 18,
+            fontSize: (isNarrow ? 14 : 18).ts,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -186,7 +188,7 @@ class HomeDashboard extends ConsumerWidget {
         Text(
           'Recently Played',
           style: TextStyle(
-            fontSize: isNarrow ? 14 : 18,
+            fontSize: (isNarrow ? 14 : 18).ts,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -320,12 +322,16 @@ class HomeDashboard extends ConsumerWidget {
                     ),
                     child: Row(
                       children: [
-                        OptimizedImage(
-                          imagePath: song.artPath,
-                          width: 54,
-                          height: 54,
-                          borderRadius: BorderRadius.circular(4),
-                          placeholder: const Icon(LucideIcons.music, size: 20),
+                        PlayingOverlay(
+                          isPlaying: isCurrent && ref.watch(playbackProvider).isPlaying,
+                          borderRadius: 4,
+                          child: OptimizedImage(
+                            imagePath: song.artPath,
+                            width: 54,
+                            height: 54,
+                            borderRadius: BorderRadius.circular(4),
+                            placeholder: const Icon(LucideIcons.music, size: 20),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

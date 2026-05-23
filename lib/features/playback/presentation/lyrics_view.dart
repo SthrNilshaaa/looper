@@ -8,6 +8,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'widgets/advanced_lyric_renderer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'overlay_service.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 enum LyricsSyncMode { line, word, char }
 
@@ -20,6 +21,34 @@ class LyricsView extends ConsumerStatefulWidget {
 
 class _LyricsViewState extends ConsumerState<LyricsView> {
   LyricsSyncMode _syncMode = LyricsSyncMode.line;
+
+  @override
+  void initState() {
+    super.initState();
+    _enableWakelock();
+  }
+
+  @override
+  void dispose() {
+    _disableWakelock();
+    super.dispose();
+  }
+
+  Future<void> _enableWakelock() async {
+    try {
+      await WakelockPlus.enable();
+    } catch (e) {
+      debugPrint('Failed to enable wakelock: $e');
+    }
+  }
+
+  Future<void> _disableWakelock() async {
+    try {
+      await WakelockPlus.disable();
+    } catch (e) {
+      debugPrint('Failed to disable wakelock: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

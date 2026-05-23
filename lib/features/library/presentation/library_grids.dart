@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -6,6 +7,8 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
 import 'package:isar/isar.dart';
 
 // Providers for Albums and Artists
@@ -31,9 +34,9 @@ class AlbumsGrid extends ConsumerWidget {
 
     return albumsAsync.when(
       data: (albums) => GridView.builder(
-        padding: const EdgeInsets.all(24),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 200,
+        padding: EdgeInsets.all(24.s),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 200.s,
           childAspectRatio: 0.72,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
@@ -77,7 +80,7 @@ class _AlbumCard extends ConsumerWidget {
       borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12.s),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           color: isSelected
@@ -108,28 +111,33 @@ class _AlbumCard extends ConsumerWidget {
                   ],
                   color: Colors.white.withOpacity(0.05),
                 ),
-                child: album.artPath != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: OptimizedImage(
-                          imagePath: album.artPath,
-                          fit: BoxFit.cover,
-                          placeholder: const Center(
-                            child: Icon(
-                              LucideIcons.disc,
-                              size: 48,
-                              color: Colors.grey,
+                child: PlayingOverlay(
+                  isPlaying: ref.watch(playbackProvider).currentSong?.album == album.name &&
+                             ref.watch(playbackProvider).isPlaying,
+                  borderRadius: 16,
+                  child: album.artPath != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: OptimizedImage(
+                            imagePath: album.artPath,
+                            fit: BoxFit.cover,
+                            placeholder: const Center(
+                              child: Icon(
+                                LucideIcons.disc,
+                                size: 48,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
+                        )
+                      : const Center(
+                          child: Icon(
+                            LucideIcons.disc,
+                            size: 48,
+                            color: Colors.grey,
+                          ),
                         ),
-                      )
-                    : const Center(
-                        child: Icon(
-                          LucideIcons.disc,
-                          size: 48,
-                          color: Colors.grey,
-                        ),
-                      ),
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -140,16 +148,16 @@ class _AlbumCard extends ConsumerWidget {
                 children: [
                   Text(
                     album.name,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.normal,
-                      fontSize: 14,
+                      fontSize: 14.ts,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
                     album.artist ?? 'Unknown Artist',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                    style: TextStyle(color: Colors.grey[400], fontSize: 12.ts),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -173,9 +181,9 @@ class ArtistsGrid extends ConsumerWidget {
 
     return artistsAsync.when(
       data: (artists) => GridView.builder(
-        padding: const EdgeInsets.all(24),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-          maxCrossAxisExtent: 180,
+        padding: EdgeInsets.all(24.s),
+        gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+          maxCrossAxisExtent: 180.s,
           childAspectRatio: 0.8,
           crossAxisSpacing: 20,
           mainAxisSpacing: 20,
@@ -207,19 +215,22 @@ class _ArtistCard extends ConsumerWidget {
             .filter()
             .artistEqualTo(artist.name)
             .findAll();
+        final isLocalImage = artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http');
+        final isNetworkImage = artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http');
+
         ref
             .read(appNavigationProvider.notifier)
             .showCollection(
               title: artist.name,
-              art: artist.artPath,
-              imageUrl: artist.artistImageUrl,
+              art: isLocalImage ? artist.artistImageUrl : artist.artPath,
+              imageUrl: isNetworkImage ? artist.artistImageUrl : null,
               songs: songs,
             );
       },
       borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12.s),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           color: isSelected
@@ -268,10 +279,7 @@ class _ArtistCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               artist.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.normal,
-                fontSize: 14,
-              ),
+              style: TextStyle(fontWeight: FontWeight.normal, fontSize: 14.ts),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

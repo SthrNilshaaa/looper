@@ -1,17 +1,18 @@
 import 'dart:ui';
+import 'dart:io';
+import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/core/navigation_provider.dart';
-import 'package:squiggly_slider/slider.dart';
 import '../../features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'premium_progress_bar.dart';
 
 class PlayerBar extends ConsumerWidget {
   const PlayerBar({super.key});
@@ -38,6 +39,8 @@ class PlayerBar extends ConsumerWidget {
       onShuffle: () => ref.read(playbackProvider.notifier).toggleShuffle(),
       onRepeat: () => ref.read(playbackProvider.notifier).nextRepeatMode(),
       onSeek: (pos) => ref.read(playbackProvider.notifier).seek(pos),
+      onSeekStart: () => ref.read(playbackProvider.notifier).startScrubbing(),
+      onSeekEnd: () => ref.read(playbackProvider.notifier).stopScrubbing(),
       onVolumeChanged: (vol) =>
           ref.read(playbackProvider.notifier).setVolume(vol),
       onLyricsToggle: () =>
@@ -75,6 +78,8 @@ class _PremiumPlayerBar extends StatelessWidget {
   final VoidCallback onRepeat;
   final VoidCallback onFavoriteToggle;
   final ValueChanged<Duration> onSeek;
+  final VoidCallback? onSeekStart;
+  final VoidCallback? onSeekEnd;
   final ValueChanged<double> onVolumeChanged;
   final VoidCallback onLyricsToggle;
   final VoidCallback onQueueToggle;
@@ -101,6 +106,8 @@ class _PremiumPlayerBar extends StatelessWidget {
     required this.onRepeat,
     required this.onFavoriteToggle,
     required this.onSeek,
+    this.onSeekStart,
+    this.onSeekEnd,
     required this.onVolumeChanged,
     required this.onLyricsToggle,
     required this.onQueueToggle,
@@ -121,20 +128,17 @@ class _PremiumPlayerBar extends StatelessWidget {
         final bool isVeryNarrow = constraints.maxWidth < 600;
 
         return Container(
-          height: 80,
-          margin: const EdgeInsets.only(
-            left: 48,
-            right: 48,
-            bottom: 32,
-            top: 0,
-          ),
+          height: 80.s,
+          margin: Platform.isAndroid || Platform.isIOS
+              ? EdgeInsets.zero
+              : EdgeInsets.only(left: 48.s, right: 48.s, bottom: 32.sp, top: 0),
           decoration: BoxDecoration(
             color: isDynamic
                 ? colorScheme.primary.withOpacity(0.04)
-                // : Colors.white.withOpacity(0.04),
-                : Color(0xFF0E0E0E),
-            borderRadius: BorderRadius.circular(6),
-            // border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
+                : colorScheme.surfaceContainer,
+            borderRadius: Platform.isAndroid || Platform.isIOS
+                ? BorderRadius.zero
+                : BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -151,8 +155,6 @@ class _PremiumPlayerBar extends StatelessWidget {
                 padding: const EdgeInsets.only(left: 14),
                 child: Row(
                   children: [
-                    //Container(color:Colors.red,width: 30,height: 30),
-                    // Left: Album Art + Info
                     Expanded(
                       flex: isVeryNarrow ? 3 : 4,
                       child: _buildSongInfo(context, isVeryNarrow),
@@ -166,48 +168,43 @@ class _PremiumPlayerBar extends StatelessWidget {
                         color: Colors.white10,
                       ),
 
-                    // Center: Playback Controls
                     _buildControls(context, colorScheme, isVeryNarrow),
 
                     const SizedBox(width: 12),
 
-                    // Middle-Right: Animated Progress Bar
                     Expanded(
-                      flex: isNarrow
-                          ? 4
-                          : 6, // Adjusted to balance with song info
-                      child: _ExpressiveSlider(
-                        position: position,
-                        duration: duration,
-                        isPlaying: isPlaying,
-                        onSeek: onSeek,
-                        color: colorScheme.primary,
-                      ),
+                      flex: isNarrow ? 4 : 6,
+                        child: ExpressiveSlider(
+                          position: position,
+                          duration: duration,
+                          isPlaying: isPlaying,
+                          onSeek: onSeek,
+                          onSeekStart: onSeekStart,
+                          onSeekEnd: onSeekEnd,
+                          color: colorScheme.primary,
+                        ),
                     ),
 
                     if (!isVeryNarrow) ...[
-                      SizedBox(width: 24),
+                      const SizedBox(width: 24),
                       Container(
                         height: 40,
                         width: 1,
                         margin: const EdgeInsets.symmetric(horizontal: 12),
                         color: Colors.white10,
                       ),
-                      SizedBox(width: 12),
+                      const SizedBox(width: 12),
                     ],
                     if (!isNarrow) ...[
-                      Flexible(flex: 1, child: SizedBox(width: 24)),
-                      // Right: Volume
+                      Flexible(flex: 1, child: const SizedBox(width: 24)),
                       Flexible(flex: 2, child: _buildVolumeControl(context)),
-                      SizedBox(width: 24),
+                      const SizedBox(width: 24),
                     ],
 
-                    // Far Right: Actions
-                    if (!isNarrow) Spacer(),
-                    if (isLarge) Spacer(),
+                    if (!isNarrow) const Spacer(),
+                    if (isLarge) const Spacer(),
 
                     _buildActions(context, colorScheme, isVeryNarrow),
-                    // Container(color:Colors.red,height: 100,width: 50,)
                   ],
                 ),
               ),
@@ -223,18 +220,10 @@ class _PremiumPlayerBar extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: isVeryNarrow ? 40 : 56,
-          height: isVeryNarrow ? 40 : 56,
+          width: (isVeryNarrow ? 40 : 56).s,
+          height: (isVeryNarrow ? 40 : 56).s,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            //color: Colors.white.withOpacity(0.05),
-            boxShadow: [
-              // BoxShadow(
-              //   color: Colors.black.withOpacity(0.2),
-              //   blurRadius: 8,
-              //   offset: const Offset(0, 4),
-              // ),
-            ],
           ),
           child: OptimizedImage(
             imagePath: artPath,
@@ -243,7 +232,7 @@ class _PremiumPlayerBar extends StatelessWidget {
             placeholder: Icon(
               LucideIcons.music,
               color: Colors.white24,
-              size: isVeryNarrow ? 16 : 24,
+              size: (isVeryNarrow ? 16 : 24).s,
             ),
           ),
         ),
@@ -258,7 +247,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.normal,
-                  fontSize: isVeryNarrow ? 12 : 14,
+                  fontSize: (isVeryNarrow ? 12 : 14).ts,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -267,7 +256,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                 artist,
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.5),
-                  fontSize: isVeryNarrow ? 10 : 12,
+                  fontSize: (isVeryNarrow ? 10 : 12).ts,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -291,8 +280,8 @@ class _PremiumPlayerBar extends StatelessWidget {
           onPressed: onPrevious,
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/prev_track.svg',
-            width: isVeryNarrow ? 12 : 12,
-            height: isVeryNarrow ? 12 : 12,
+            width: 12,
+            height: 12,
             colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
           tooltip: 'Previous',
@@ -301,24 +290,22 @@ class _PremiumPlayerBar extends StatelessWidget {
         GestureDetector(
           onTap: onPlayPause,
           child: Container(
-            width: isVeryNarrow ? 28 : 36,
-            height: isVeryNarrow ? 28 : 36,
+            width: (isVeryNarrow ? 28 : 36).s,
+            height: (isVeryNarrow ? 28 : 36).s,
             decoration: BoxDecoration(
               color: colorScheme.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: isPlaying
                 ? Icon(
-                    // LucideIcons.pause,
                     Icons.pause,
                     color: Colors.white,
-                    size: isVeryNarrow ? 12 : 18,
+                    size: (isVeryNarrow ? 12 : 18).s,
                   )
                 : Icon(
-                    // LucideIcons.play,
                     Icons.play_arrow_sharp,
                     color: Colors.white,
-                    size: isVeryNarrow ? 12 : 18,
+                    size: (isVeryNarrow ? 12 : 18).s,
                   ),
           ),
         ),
@@ -327,8 +314,8 @@ class _PremiumPlayerBar extends StatelessWidget {
           onPressed: onNext,
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/next_track.svg',
-            width: isVeryNarrow ? 12 : 12,
-            height: isVeryNarrow ? 12 : 12,
+            width: 12,
+            height: 12,
             colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
           tooltip: 'Next',
@@ -357,9 +344,7 @@ class _PremiumPlayerBar extends StatelessWidget {
             tooltip: 'Shuffle',
           ),
         ],
-        //const SizedBox(width: 8),
         if (!isVeryNarrow)
-          // SizedBox(width: 8),
           IconButton(
             onPressed: onRepeat,
             icon: SvgPicture.asset(
@@ -411,12 +396,9 @@ class _PremiumPlayerBar extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 120),
               child: SliderTheme(
                 data: SliderTheme.of(context).copyWith(
-                  trackHeight: 2,
-                  trackShape: const RoundedRectSliderTrackShape(),
-                  //  RectangularSliderTrackShape(
-
-                  // ),
-                  thumbShape: const _LineThumbShape(
+                  trackHeight: Platform.isLinux ? 2.0 : 6.0,
+                  trackShape: const EqualHeightTrackShape(),
+                  thumbShape: const LineThumbShape(
                     thumbHeight: 0,
                     thumbWidth: 3,
                   ),
@@ -461,7 +443,7 @@ class _PremiumPlayerBar extends StatelessWidget {
             onPressed: onFavoriteToggle,
             tooltip: 'Favorite',
           ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         IconButton(
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/lyrics.svg',
@@ -475,7 +457,7 @@ class _PremiumPlayerBar extends StatelessWidget {
           onPressed: onLyricsToggle,
           tooltip: 'Lyrics',
         ),
-        SizedBox(width: 4),
+        const SizedBox(width: 4),
         IconButton(
           icon: Icon(
             LucideIcons.listMusic,
@@ -490,166 +472,35 @@ class _PremiumPlayerBar extends StatelessWidget {
   }
 }
 
-class _ExpressiveSlider extends StatelessWidget {
-  final Duration position;
-  final Duration duration;
-  final bool isPlaying;
-  final ValueChanged<Duration> onSeek;
-  final Color color;
-
-  const _ExpressiveSlider({
-    required this.position,
-    required this.duration,
-    required this.isPlaying,
-    required this.onSeek,
-    required this.color,
-  });
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
-  }
-
-  Widget _buildAnimatedDuration(String duration, bool isRightAligned) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: isRightAligned
-          ? MainAxisAlignment.end
-          : MainAxisAlignment.start,
-      children: duration.characters.map((char) {
-        return SizedBox(
-          width: char == ':' ? 4 : 8,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              final isIn = (child as Text).data == char;
-              return ClipRect(
-                child: SlideTransition(
-                  position: Tween<Offset>(
-                    begin: Offset(0.0, isIn ? 0.5 : -0.5),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: FadeTransition(opacity: animation, child: child),
-                ),
-              );
-            },
-            child: Text(
-              char,
-              key: ValueKey(char),
-              style: GoogleFonts.dmSans(
-                color: Colors.white,
-                fontSize: 12,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final double progress = duration.inMilliseconds > 0
-        ? (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0)
-        : 0.0;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool showTimestamps = constraints.maxWidth > 150;
-
-        return Row(
-          children: [
-            if (showTimestamps) ...[
-              SizedBox(
-                width: 45,
-                child: _buildAnimatedDuration(_formatDuration(position), true),
-              ),
-              const SizedBox(width: 12),
-            ],
-            Expanded(
-              child: SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 1.8,
-                  activeTrackColor: color,
-                  inactiveTrackColor: Colors.white10,
-                  thumbShape: const _LineThumbShape(
-                    thumbHeight: 12,
-                    thumbWidth: 3,
-                  ),
-                  overlayShape: SliderComponentShape.noOverlay,
-                ),
-                child: SquigglySlider(
-                  value: progress,
-                  onChanged: (val) {
-                    onSeek(duration * val);
-                    if (val == 0.0 || val == 1.0) {
-                      HapticFeedback.lightImpact();
-                    }
-                  },
-                  activeColor: color,
-                  inactiveColor: Colors.white10,
-                  squiggleAmplitude: isPlaying ? 2.0 : 0.0,
-                  squiggleWavelength: 4.5,
-                  squiggleSpeed: 0.08,
-                  useLineThumb: false,
-                ),
-              ),
-            ),
-            if (showTimestamps) ...[
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 45,
-                child: _buildAnimatedDuration(_formatDuration(duration), false),
-              ),
-            ],
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _LineThumbShape extends SliderComponentShape {
-  final double thumbHeight;
-  final double thumbWidth;
-
-  const _LineThumbShape({this.thumbHeight = 12, this.thumbWidth = 2});
-
-  @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    return Size(thumbWidth, thumbHeight);
-  }
+class EqualHeightTrackShape extends RoundedRectSliderTrackShape {
+  const EqualHeightTrackShape();
 
   @override
   void paint(
     PaintingContext context,
-    Offset center, {
-    required Animation<double> activationAnimation,
-    required Animation<double> enableAnimation,
-    required bool isDiscrete,
-    required TextPainter labelPainter,
+    Offset offset, {
     required RenderBox parentBox,
     required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
     required TextDirection textDirection,
-    required double value,
-    required double textScaleFactor,
-    required Size sizeWithOverflow,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    double additionalActiveTrackHeight = 0,
   }) {
-    final Canvas canvas = context.canvas;
-    final Paint paint = Paint()
-      ..color = sliderTheme.thumbColor ?? Colors.white
-      ..style = PaintingStyle.fill;
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(center: center, width: thumbWidth, height: thumbHeight),
-        Radius.circular(thumbWidth / 2),
-      ),
-      paint,
+    super.paint(
+      context,
+      offset,
+      parentBox: parentBox,
+      sliderTheme: sliderTheme,
+      enableAnimation: enableAnimation,
+      textDirection: textDirection,
+      thumbCenter: thumbCenter,
+      secondaryOffset: secondaryOffset,
+      isDiscrete: isDiscrete,
+      isEnabled: isEnabled,
+      additionalActiveTrackHeight: 0,
     );
   }
 }
