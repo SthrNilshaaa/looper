@@ -164,9 +164,3 @@ Connect with the developers for feature requests, bug reports, or discussion:
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/SthrNilshaaa)
 [![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/neelshy)
 
-<div align="center">
-  <br/>
-  <a href="https://buymeacoffee.com/mkr_infinity" target="_blank">
-    <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="42" />
-  </a>
-</div>
