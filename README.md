@@ -1,4 +1,4 @@
-# <p align="center"><img src="assets/main_logo.svg" width="108" height="96" </p>
+# <p align="center"><img src="assets/main_logo.svg" width="240" height="96" /><br/></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20Android-blueviolet?style=for-the-badge&logo=linux&logoColor=white" />
