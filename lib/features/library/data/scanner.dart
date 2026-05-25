@@ -78,87 +78,109 @@ class LibraryScanner {
 
     print('🎵 Scanner: Found ${filesToProcess.length} audio files in $path');
 
-    if (filesToProcess.isEmpty) return ScanResult(songsCount: 0, musicFolders: {});
+    if (filesToProcess.isEmpty) {
+      // Clean up any songs in Isar that were in this folder
+      await DbService.isar.writeTxn(() async {
+        final prefix = path.endsWith('/') ? path : '$path/';
+        final songsInFolder = await DbService.isar.songs.where().findAll();
+        final toDelete = songsInFolder.where((s) => s.path.startsWith(prefix) || s.path == path).map((s) => s.id).toList();
+        if (toDelete.isNotEmpty) {
+          await DbService.isar.songs.deleteAll(toDelete);
+        }
+      });
+      return ScanResult(songsCount: 0, musicFolders: {});
+    }
+
+    // Get all existing songs in the database that are located under this scan path
+    final prefix = path.endsWith('/') ? path : '$path/';
+    final allSongsInDb = await DbService.isar.songs.where().findAll();
+    final songsInPathDb = allSongsInDb.where((s) => s.path.startsWith(prefix) || s.path == path).toList();
+    final Map<String, Song> dbSongsMap = {for (var s in songsInPathDb) s.path: s};
+
+    // Find deleted files (present in DB but no longer on disk)
+    final Set<String> currentFilePaths = filesToProcess.map((f) => f.path).toSet();
+    final List<int> idsToDelete = [];
+    dbSongsMap.forEach((p, song) {
+      if (!currentFilePaths.contains(p)) {
+        idsToDelete.add(song.id);
+      }
+    });
+
+    if (idsToDelete.isNotEmpty) {
+      await DbService.isar.writeTxn(() async {
+        await DbService.isar.songs.deleteAll(idsToDelete);
+      });
+      print('🗑️ Scanner: Pruned ${idsToDelete.length} deleted songs from database');
+    }
+
+    // Find new files to process (on disk but not in DB)
+    final List<File> newFilesToProcess = filesToProcess.where((f) => !dbSongsMap.containsKey(f.path)).toList();
 
     // If requested, add discovered folders to settings
     if (addFolderToSettings) {
-      // In a real app, you might want to add these to settingsProvider
-      // For now, we print them and ensure they are processed
       print('📂 Scanner: Discovered ${musicFolders.length} folders with music');
     }
 
-    // Process in smaller batches with delays to keep UI responsive
-    const int batchSize = 4;
-    for (int i = 0; i < filesToProcess.length; i += batchSize) {
-      final end = (i + batchSize < filesToProcess.length)
-          ? i + batchSize
-          : filesToProcess.length;
-      final batch = filesToProcess.sublist(i, end);
+    if (newFilesToProcess.isNotEmpty) {
+      print('🆕 Scanner: Parsing metadata for ${newFilesToProcess.length} new files...');
+      // Process in smaller batches with delays to keep UI responsive
+      const int batchSize = 4;
+      for (int i = 0; i < newFilesToProcess.length; i += batchSize) {
+        final end = (i + batchSize < newFilesToProcess.length)
+            ? i + batchSize
+            : newFilesToProcess.length;
+        final batch = newFilesToProcess.sublist(i, end);
 
-      final results = await Future.wait(batch.map((f) => _extractMetadata(f)));
-      
-      // Small pause to allow UI to breathe
-      await Future.delayed(const Duration(milliseconds: 50));
+        final results = await Future.wait(batch.map((f) => _extractMetadata(f)));
+        
+        // Small pause to allow UI to breathe
+        await Future.delayed(const Duration(milliseconds: 50));
 
-      await DbService.isar.writeTxn(() async {
-        for (final data in results) {
-          if (data == null) continue;
-          final song = data['song'] as Song;
-          final metadata = data['metadata'] as Metadata;
-          final artPath = data['artPath'] as String?;
+        await DbService.isar.writeTxn(() async {
+          for (final data in results) {
+            if (data == null) continue;
+            final song = data['song'] as Song;
+            final metadata = data['metadata'] as Metadata;
+            final artPath = data['artPath'] as String?;
 
-          // Merge with existing song to preserve user data (history, favorites, etc.)
-          final existingSong = await DbService.isar.songs
-              .filter()
-              .pathEqualTo(song.path)
-              .findFirst();
-          if (existingSong != null) {
-            // Update metadata only
-            existingSong.title = song.title;
-            existingSong.artist = song.artist;
-            existingSong.album = song.album;
-            existingSong.genre = song.genre;
-            existingSong.duration = song.duration;
-            existingSong.trackNumber = song.trackNumber;
-            existingSong.year = song.year;
-            existingSong.artPath = song.artPath;
-            // dateAdded, isFavorite, lastPlayed, playCount are PRESERVED
-            await DbService.isar.songs.put(existingSong);
-          } else {
+            // Since it's confirmed new (not in dbSongsMap), we can directly put it
             await DbService.isar.songs.put(song);
-          }
 
-          if (metadata.album != null) {
-            final existingAlbum = await DbService.isar.albums
-                .filter()
-                .nameEqualTo(metadata.album!)
-                .findFirst();
-            if (existingAlbum == null) {
-              final album = Album()
-                ..name = metadata.album!
-                ..artist = metadata.artist
-                ..artPath = artPath
-                ..dateAdded = DateTime.now();
-              await DbService.isar.albums.put(album);
-            } else if (existingAlbum.artPath == null && artPath != null) {
-              existingAlbum.artPath = artPath;
-              await DbService.isar.albums.put(existingAlbum);
+            if (metadata.album != null) {
+              final existingAlbum = await DbService.isar.albums
+                  .filter()
+                  .nameEqualTo(metadata.album!)
+                  .findFirst();
+              if (existingAlbum == null) {
+                final album = Album()
+                  ..name = metadata.album!
+                  ..artist = metadata.artist
+                  ..artPath = artPath
+                  ..dateAdded = DateTime.now();
+                await DbService.isar.albums.put(album);
+              } else if (existingAlbum.artPath == null && artPath != null) {
+                existingAlbum.artPath = artPath;
+                await DbService.isar.albums.put(existingAlbum);
+              }
+            }
+
+            if (metadata.artist != null) {
+              final existingArtist = await DbService.isar.artists
+                  .filter()
+                  .nameEqualTo(metadata.artist!)
+                  .findFirst();
+              if (existingArtist == null) {
+                final artist = Artist()..name = metadata.artist!;
+                await DbService.isar.artists.put(artist);
+              }
             }
           }
-
-          if (metadata.artist != null) {
-            final existingArtist = await DbService.isar.artists
-                .filter()
-                .nameEqualTo(metadata.artist!)
-                .findFirst();
-            if (existingArtist == null) {
-              final artist = Artist()..name = metadata.artist!;
-              await DbService.isar.artists.put(artist);
-            }
-          }
-        }
-      });
+        });
+      }
+    } else {
+      print('⚡ Scanner: All ${filesToProcess.length} files are up to date! Skipping parsing.');
     }
+
     return ScanResult(songsCount: filesToProcess.length, musicFolders: musicFolders);
   }
 

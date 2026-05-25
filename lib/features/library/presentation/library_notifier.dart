@@ -233,6 +233,14 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   Future<bool> _requestPermissions() async {
     if (!Platform.isAndroid) return true;
 
+    // Check if standard or manage external storage permissions are already granted
+    // to bypass all slow OS request dialogues entirely.
+    if (await Permission.audio.isGranted || 
+        await Permission.storage.isGranted || 
+        await Permission.manageExternalStorage.isGranted) {
+      return true;
+    }
+
     // 1. Request Notification permission (required for Android 13+)
     await Permission.notification.request();
 

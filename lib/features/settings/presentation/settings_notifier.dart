@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db_service.dart';
 import '../../library/domain/models/models.dart';
@@ -24,7 +25,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       state = settings;
     } else {
       // Initialize default settings
-      final defaultSettings = AppSettings();
+      // Default to off on Android, but enabled on Linux
+      final defaultSettings = AppSettings()
+        ..enableDynamicTheming = !Platform.isAndroid;
       await DbService.isar.writeTxn(() async {
         await DbService.isar.appSettings.put(defaultSettings);
       });

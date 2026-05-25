@@ -141,7 +141,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
     final library = ref.watch(libraryProvider);
     final playbackState = ref.watch(playbackProvider);
 
-    if (library.isScanning) {
+    if (library.isScanning && library.songs.isEmpty) {
       return const PremiumLoadingView();
     }
 

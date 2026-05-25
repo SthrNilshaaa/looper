@@ -85,9 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final library = ref.watch(libraryProvider);
     final nav = ref.watch(appNavigationProvider);
-    final currentSong = ref.watch(
-      playbackProvider.select((s) => s.currentSong),
-    );
+    final playback = ref.watch(playbackProvider);
     final settings = ref.watch(settingsProvider);
     final isDynamic = settings.enableDynamicTheming;
     final l10n = AppLocalizations.of(context)!;
@@ -111,7 +109,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     return Scaffold(
       backgroundColor: isDynamic
-          ? (currentSong != null
+          ? (playback.currentSong != null
                 ? Theme.of(context).colorScheme.surface
                 : Theme.of(context).scaffoldBackgroundColor)
           : Theme.of(context).scaffoldBackgroundColor,
@@ -129,13 +127,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             // Global Background Art (Conditional)
             if (!showWelcome &&
                 settings.enableDynamicTheming &&
-                currentSong?.artPath != null) ...[
+                playback.currentSong?.artPath != null) ...[
               Positioned.fill(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 1000),
                   child: Image.file(
-                    File(currentSong!.artPath!),
-                    key: ValueKey(currentSong!.artPath!),
+                    File(playback.currentSong!.artPath!),
+                    key: ValueKey(playback.currentSong!.artPath!),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -323,7 +321,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BuildContext context,
     AppLocalizations l10n,
   ) {
-    if (library.isScanning) {
+    if (library.isScanning && library.songs.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 

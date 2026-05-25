@@ -1088,52 +1088,76 @@ class _GestureArtworkWithFeedbackState
 
         if (_dragOffset < -threshold || (details.primaryVelocity != null && details.primaryVelocity! < -300)) {
           // Swipe Left -> Skip Next
-          setState(() {
-            _isNext = true;
-            _isSwipeTriggered = true;
-          });
-          HapticFeedback.mediumImpact();
-          final start = _dragOffset;
-          final end = -screenWidth;
-          final animation = Tween<double>(begin: start, end: end).animate(
-            CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
-          );
-          animation.addListener(() {
-            setState(() {
-              _dragOffset = animation.value;
+          if (nextSong == null) {
+            final start = _dragOffset;
+            final animation = Tween<double>(begin: start, end: 0.0).animate(
+              CurvedAnimation(parent: _snapController, curve: Curves.elasticOut),
+            );
+            animation.addListener(() {
+              setState(() {
+                _dragOffset = animation.value;
+              });
             });
-          });
-          _snapController.forward(from: 0.0).then((_) {
-            ref.read(playbackProvider.notifier).skipNext();
-           // _triggerFeedback('next');
+            _snapController.forward(from: 0.0);
+          } else {
             setState(() {
-              _dragOffset = 0.0;
+              _isNext = true;
+              _isSwipeTriggered = true;
             });
-          });
+            HapticFeedback.mediumImpact();
+            final start = _dragOffset;
+            final end = -screenWidth;
+            final animation = Tween<double>(begin: start, end: end).animate(
+              CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
+            );
+            animation.addListener(() {
+              setState(() {
+                _dragOffset = animation.value;
+              });
+            });
+            _snapController.forward(from: 0.0).then((_) {
+              ref.read(playbackProvider.notifier).skipNext();
+              setState(() {
+                _dragOffset = 0.0;
+              });
+            });
+          }
         } else if (_dragOffset > threshold || (details.primaryVelocity != null && details.primaryVelocity! > 300)) {
           // Swipe Right -> Skip Previous
-          setState(() {
-            _isNext = false;
-            _isSwipeTriggered = true;
-          });
-          HapticFeedback.mediumImpact();
-          final start = _dragOffset;
-          final end = screenWidth;
-          final animation = Tween<double>(begin: start, end: end).animate(
-            CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
-          );
-          animation.addListener(() {
-            setState(() {
-              _dragOffset = animation.value;
+          if (prevSong == null) {
+            final start = _dragOffset;
+            final animation = Tween<double>(begin: start, end: 0.0).animate(
+              CurvedAnimation(parent: _snapController, curve: Curves.elasticOut),
+            );
+            animation.addListener(() {
+              setState(() {
+                _dragOffset = animation.value;
+              });
             });
-          });
-          _snapController.forward(from: 0.0).then((_) {
-            ref.read(playbackProvider.notifier).skipPrevious();
-            //_triggerFeedback('previous');
+            _snapController.forward(from: 0.0);
+          } else {
             setState(() {
-              _dragOffset = 0.0;
+              _isNext = false;
+              _isSwipeTriggered = true;
             });
-          });
+            HapticFeedback.mediumImpact();
+            final start = _dragOffset;
+            final end = screenWidth;
+            final animation = Tween<double>(begin: start, end: end).animate(
+              CurvedAnimation(parent: _snapController, curve: Curves.easeOutCubic),
+            );
+            animation.addListener(() {
+              setState(() {
+                _dragOffset = animation.value;
+              });
+            });
+            _snapController.forward(from: 0.0).then((_) {
+              ref.read(playbackProvider.notifier).skipPrevious();
+              setState(() {
+                _dragOffset = 0.0;
+              });
+            });
+          }
         } else {
           // Snap Back
           final start = _dragOffset;

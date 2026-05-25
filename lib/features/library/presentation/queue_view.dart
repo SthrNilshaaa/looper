@@ -11,10 +11,7 @@ class QueueView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final queue = ref.watch(playbackProvider.select((s) => s.queue));
-    final currentSong = ref.watch(
-      playbackProvider.select((s) => s.currentSong),
-    );
+    final playback = ref.watch(playbackProvider);
 
     return Column(
       children: [
@@ -31,7 +28,7 @@ class QueueView extends ConsumerWidget {
                   style: TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
                 ),
               const Spacer(),
-              if (queue.isNotEmpty)
+              if (playback.queue.isNotEmpty)
                 TextButton.icon(
                   onPressed: () =>
                       ref.read(playbackProvider.notifier).clearQueue(),
@@ -57,15 +54,15 @@ class QueueView extends ConsumerWidget {
                     top: 16,
                     bottom: Platform.isAndroid ? 200 : 16,
                   ),
-                  itemCount: queue.length,
+                  itemCount: playback.queue.length,
                   onReorder: (oldIndex, newIndex) {
                     ref
                         .read(playbackProvider.notifier)
                         .reorderQueue(oldIndex, newIndex);
                   },
                   itemBuilder: (context, index) {
-                    final song = queue[index];
-                    final isCurrent = currentSong?.id == song.id;
+                    final song = playback.queue[index];
+                    final isCurrent = playback.currentSong?.id == song.id;
 
                     return Dismissible(
                       key: ValueKey('queue_view_${song.path}_$index'),

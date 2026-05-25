@@ -81,15 +81,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         _allFilesGranted = all;
         _permissionGranted = aud || all; // Sufficient to scan
       });
-
-      // Auto-scan if permissions are granted, database is empty, and we haven't scanned yet
-      if (_permissionGranted &&
-          ref.read(libraryProvider).songs.isEmpty &&
-          _currentState == WelcomeState.initial &&
-          !_autoScanTriggered) {
-        _autoScanTriggered = true;
-        _startStorageScanFlow();
-      }
     }
   }
 
@@ -403,6 +394,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                       } else {
                         // Automatically scan first if database is empty
                         await _startStorageScanFlow();
+                        if (ref.read(libraryProvider).songs.isNotEmpty) {
+                          ref.read(welcomeBypassedProvider.notifier).state = true;
+                        }
                       }
                     }
                   : null,

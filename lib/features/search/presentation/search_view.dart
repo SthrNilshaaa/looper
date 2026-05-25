@@ -252,8 +252,7 @@ class _SongResultCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isCurrent =
-        ref.watch(playbackProvider.select((s) => s.currentSong?.id)) == song.id;
+    final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
 
     String? lyricSnippet;
     if (searchQuery != null && searchQuery!.isNotEmpty && song.lyrics != null) {

@@ -24,7 +24,7 @@ class AndroidSongsTab extends ConsumerWidget {
     final playbackState = ref.watch(playbackProvider);
     final song = playbackState.currentSong;
     
-    if (library.isScanning) {
+    if (library.isScanning && library.songs.isEmpty) {
       return const PremiumLoadingView();
     }
 
