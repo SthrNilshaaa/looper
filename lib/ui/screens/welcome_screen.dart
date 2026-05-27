@@ -4,6 +4,7 @@ import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lottie/lottie.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -132,7 +133,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   center: Alignment.center,
                   radius: 1.5,
                   colors: [
-                    Colors.white.withOpacity(0.01),
+                    Colors.white.withOpacity(0.001),
                     Colors.transparent,
                   ],
                 ),
@@ -572,31 +573,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         // Custom interactive glowing spinner
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            SizedBox(
-              height: 120.s,
-              width: 120.s,
-              child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                valueColor: AlwaysStoppedAnimation<Color>(Color(settings.accentColor)),
-              ),
-            ),
-            Container(
-              height: 90.s,
-              width: 90.s,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(settings.accentColor).withOpacity(0.04),
-              ),
-              child: Icon(
-                LucideIcons.folderHeart,
-                size: 32.s,
-                color: Color(settings.accentColor),
-              ),
-            ),
-          ],
+        SizedBox(
+          width: 250.s,
+          height: 320.s,
+          child: Lottie.asset(
+            'assets/loading.json',
+            fit: BoxFit.contain,
+          ),
         ),
         const SizedBox(height: 48),
         Text(

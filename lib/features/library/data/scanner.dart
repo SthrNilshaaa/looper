@@ -82,10 +82,15 @@ class LibraryScanner {
       // Clean up any songs in Isar that were in this folder
       await DbService.isar.writeTxn(() async {
         final prefix = path.endsWith('/') ? path : '$path/';
-        final songsInFolder = await DbService.isar.songs.where().findAll();
-        final toDelete = songsInFolder.where((s) => s.path.startsWith(prefix) || s.path == path).map((s) => s.id).toList();
-        if (toDelete.isNotEmpty) {
-          await DbService.isar.songs.deleteAll(toDelete);
+        final toDelete = await DbService.isar.songs
+            .filter()
+            .pathStartsWith(prefix)
+            .or()
+            .pathEqualTo(path)
+            .findAll();
+        final idsToDelete = toDelete.map((s) => s.id).toList();
+        if (idsToDelete.isNotEmpty) {
+          await DbService.isar.songs.deleteAll(idsToDelete);
         }
       });
       return ScanResult(songsCount: 0, musicFolders: {});
@@ -93,8 +98,12 @@ class LibraryScanner {
 
     // Get all existing songs in the database that are located under this scan path
     final prefix = path.endsWith('/') ? path : '$path/';
-    final allSongsInDb = await DbService.isar.songs.where().findAll();
-    final songsInPathDb = allSongsInDb.where((s) => s.path.startsWith(prefix) || s.path == path).toList();
+    final songsInPathDb = await DbService.isar.songs
+        .filter()
+        .pathStartsWith(prefix)
+        .or()
+        .pathEqualTo(path)
+        .findAll();
     final Map<String, Song> dbSongsMap = {for (var s in songsInPathDb) s.path: s};
 
     // Find deleted files (present in DB but no longer on disk)
@@ -123,8 +132,10 @@ class LibraryScanner {
 
     if (newFilesToProcess.isNotEmpty) {
       print('🆕 Scanner: Parsing metadata for ${newFilesToProcess.length} new files...');
-      // Process in smaller batches with delays to keep UI responsive
-      const int batchSize = 4;
+      
+      final List<Map<String, dynamic>> allResults = [];
+      const int batchSize = 16; // Process in larger batches of 16 for better parallelism
+      
       for (int i = 0; i < newFilesToProcess.length; i += batchSize) {
         final end = (i + batchSize < newFilesToProcess.length)
             ? i + batchSize
@@ -132,18 +143,25 @@ class LibraryScanner {
         final batch = newFilesToProcess.sublist(i, end);
 
         final results = await Future.wait(batch.map((f) => _extractMetadata(f)));
+        for (final res in results) {
+          if (res != null) {
+            allResults.add(res);
+          }
+        }
         
-        // Small pause to allow UI to breathe
-        await Future.delayed(const Duration(milliseconds: 50));
+        // Small pause to allow the UI to breathe and process input events
+        await Future.delayed(const Duration(milliseconds: 20));
+      }
 
+      if (allResults.isNotEmpty) {
+        print('💾 Scanner: Writing ${allResults.length} parsed items to database in a single transaction...');
         await DbService.isar.writeTxn(() async {
-          for (final data in results) {
-            if (data == null) continue;
+          for (final data in allResults) {
             final song = data['song'] as Song;
             final metadata = data['metadata'] as Metadata;
             final artPath = data['artPath'] as String?;
 
-            // Since it's confirmed new (not in dbSongsMap), we can directly put it
+            // Confirmed new, put it directly
             await DbService.isar.songs.put(song);
 
             if (metadata.album != null) {
@@ -188,9 +206,11 @@ class LibraryScanner {
     try {
       Metadata? metadata;
       try {
-        metadata = await MetadataGod.readMetadata(file: file.path);
+        // Enforce strict 800ms timeout on native metadata read to prevent scanning/UI hangs
+        metadata = await MetadataGod.readMetadata(file: file.path)
+            .timeout(const Duration(milliseconds: 800));
       } catch (e) {
-        print('⚠️ MetadataGod failed for ${file.path}: $e');
+        print('⚠️ MetadataGod failed or timed out for ${file.path}: $e');
       }
 
       String? artPath;

@@ -1,9 +1,9 @@
-import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:lottie/lottie.dart';
 
 class PremiumLoadingView extends ConsumerStatefulWidget {
   final String? message;
@@ -30,7 +30,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 4),
     )..repeat();
 
     // Rotate messages for interactive high-fidelity feedback
@@ -77,80 +77,14 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Sonic Wave / Rotating Ring visualizer
-                AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    return SizedBox(
-                      width: 140,
-                      height: 140,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Pulse Ring 1
-                          Container(
-                            width: 100 + (30 * math.sin(_controller.value * 2 * math.pi)),
-                            height: 100 + (30 * math.sin(_controller.value * 2 * math.pi)),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: accentColor.withOpacity(0.12 * (1 - _controller.value)),
-                                width: 2,
-                              ),
-                            ),
-                          ),
-                          // Pulse Ring 2
-                          Container(
-                            width: 80 + (40 * math.cos(_controller.value * 2 * math.pi)),
-                            height: 80 + (40 * math.cos(_controller.value * 2 * math.pi)),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: accentColor.withOpacity(0.18 * _controller.value),
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                          // Main Rotating Segment Ring
-                          Transform.rotate(
-                            angle: _controller.value * 2 * math.pi,
-                            child: SizedBox(
-                              width: 86,
-                              height: 86,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                value: 0.38,
-                                valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-                              ),
-                            ),
-                          ),
-                          // Center Rotating Core Icon
-                          Transform.rotate(
-                            angle: -_controller.value * 2 * math.pi,
-                            child: Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: accentColor.withOpacity(0.08),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: accentColor.withOpacity(0.15),
-                                  width: 1,
-                                ),
-                              ),
-                              child: Center(
-                                child: Icon(
-                                  LucideIcons.loader,
-                                  color: accentColor,
-                                  size: 24,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                // Sonic Wave / Rotating SVG loader animation
+                SizedBox(
+                  width: 250.s,
+                  height: 320.s,
+                  child: Lottie.asset(
+                    'assets/loading.json',
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 const SizedBox(height: 36),
 

@@ -108,6 +108,14 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> updateDynamicTheming(bool enabled) async {
     final newState = _clone(state)..enableDynamicTheming = enabled;
+    if (!enabled) {
+      // If dynamic theming is disabled, ensure accent color resets to default Green (0xFF41C25E)
+      // if the current color is not one of the manual selection options.
+      const allowedColors = [0xFF41C25E, 0xFFF7EAA6, 0xFF448AFF]; // Green, Yellow, Blue Accent
+      if (!allowedColors.contains(newState.accentColor)) {
+        newState.accentColor = 0xFF41C25E;
+      }
+    }
     await DbService.isar.writeTxn(() async {
       await DbService.isar.appSettings.put(newState);
     });

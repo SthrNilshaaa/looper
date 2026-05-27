@@ -111,16 +111,16 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
 
     final sliderWidget = SliderTheme(
       data: SliderTheme.of(context).copyWith(
-        trackHeight: Platform.isLinux ? 2.0 : 8.0,
+        trackHeight: Platform.isLinux ? 3.0 : 8.0,
         activeTrackColor: widget.color,
         trackShape: PremiumGapTrackShape(
-          gap: Platform.isLinux ? 3 : 6,
+          gap: Platform.isLinux ? 4 : 6,
         ),
         inactiveTrackColor: Colors.white10,
         
          thumbShape:  LineThumbShape(
-          thumbHeight: Platform.isLinux ? 10 : 16,
-          thumbWidth: Platform.isLinux ? 2 : 6,
+          thumbHeight: Platform.isLinux ? 12 : 16,
+          thumbWidth: Platform.isLinux ? 3 : 6,
         ),
         overlayShape: SliderComponentShape.noOverlay,
       ),

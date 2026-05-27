@@ -65,12 +65,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return;
       }
 
-      // If we are on Android and the library is currently empty,
-      // we DO NOT scan automatically at startup because we want the WelcomeScreen to serve as an intro 
-      // where the user must manually trigger permissions/scanning via interaction!
+      // If the library is currently empty, we DO NOT scan automatically at startup
+      // because we want the WelcomeScreen to serve as an intro where the user must manually trigger
+      // permissions/scanning via interaction!
       final initialSongsEmpty = ref.read(libraryProvider).songs.isEmpty;
-      if (Platform.isAndroid && initialSongsEmpty) {
-        print('ℹ️ Welcome screen mode: skipping auto-scan at startup to prevent premature permission popups');
+      if (initialSongsEmpty) {
+        print('ℹ️ Welcome screen mode: skipping auto-scan at startup to prevent premature permission popups/scanning');
       } else {
         ref.read(libraryProvider.notifier).scanSavedFolders();
       }
@@ -126,6 +126,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             // Global Background Art (Conditional)
             if (!showWelcome &&
+                nav.activeItem != NavItem.settings &&
                 settings.enableDynamicTheming &&
                 playback.currentSong?.artPath != null) ...[
               Positioned.fill(
@@ -571,7 +572,7 @@ class _HeaderButton extends StatelessWidget {
           children: [
             if (icon == LucideIcons.arrowLeft)
               SvgPicture.asset(
-                AppIcons.backVector,
+                AppIcons.back,
                 width: AppIcons.headerIcon.s,
                 height: AppIcons.headerIcon.s,
                 colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),

@@ -123,7 +123,6 @@ class _PremiumPlayerBar extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isLarge = constraints.maxWidth < 1100;
         final bool isNarrow = constraints.maxWidth < 900;
         final bool isVeryNarrow = constraints.maxWidth < 600;
 
@@ -196,13 +195,12 @@ class _PremiumPlayerBar extends StatelessWidget {
                       const SizedBox(width: 12),
                     ],
                     if (!isNarrow) ...[
-                      Flexible(flex: 1, child: const SizedBox(width: 24)),
-                      Flexible(flex: 2, child: _buildVolumeControl(context)),
-                      const SizedBox(width: 24),
+                      const SizedBox(width: 16),
+                      _buildVolumeControl(context),
+                      const SizedBox(width: 16),
                     ],
 
-                    if (!isNarrow) const Spacer(),
-                    if (isLarge) const Spacer(),
+                    const Spacer(),
 
                     _buildActions(context, colorScheme, isVeryNarrow),
                   ],
@@ -217,7 +215,7 @@ class _PremiumPlayerBar extends StatelessWidget {
 
   Widget _buildSongInfo(BuildContext context, bool isVeryNarrow) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: MainAxisSize.max,
       children: [
         Container(
           width: (isVeryNarrow ? 40 : 56).s,
@@ -374,6 +372,7 @@ class _PremiumPlayerBar extends StatelessWidget {
   Widget _buildVolumeControl(BuildContext context) {
     return ClipRect(
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
             padding: EdgeInsets.zero,
@@ -391,28 +390,27 @@ class _PremiumPlayerBar extends StatelessWidget {
               ),
             ),
           ),
-          Flexible(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 120),
-              child: SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: Platform.isLinux ? 2.0 : 6.0,
-                  trackShape: const EqualHeightTrackShape(),
-                  thumbShape: const LineThumbShape(
-                    thumbHeight: 0,
-                    thumbWidth: 3,
-                  ),
-                  overlayShape: const RoundSliderOverlayShape(
-                    overlayRadius: 14,
-                  ),
-                  activeTrackColor: Theme.of(context).colorScheme.primary,
-                  inactiveTrackColor: Theme.of(
-                    context,
-                  ).colorScheme.primary.withOpacity(0.1),
-                  thumbColor: Colors.white,
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 100,
+            child: SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: Platform.isLinux ? 4.0 : 6.0,
+                trackShape: const EqualHeightTrackShape(),
+                thumbShape: LineThumbShape(
+                  thumbHeight: Platform.isLinux ? 8 : 0,
+                  thumbWidth: 3,
                 ),
-                child: Slider(value: volume, onChanged: onVolumeChanged),
+                overlayShape: const RoundSliderOverlayShape(
+                  overlayRadius: 14,
+                ),
+                activeTrackColor: Theme.of(context).colorScheme.primary,
+                inactiveTrackColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withOpacity(0.1),
+                thumbColor: Colors.white,
               ),
+              child: Slider(value: volume, onChanged: onVolumeChanged),
             ),
           ),
         ],

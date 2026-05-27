@@ -1059,7 +1059,9 @@ class _GestureArtworkWithFeedbackState
 
     final screenWidth = MediaQuery.of(context).size.width;
     final dragPercent = (_dragOffset / screenWidth).abs().clamp(0.0, 1.0);
-    final Song? bgSong = _dragOffset < 0 ? nextSong : (_dragOffset > 0 ? prevSong : null);
+    final Song? bgSong = _dragOffset < 0
+        ? (nextSong ?? widget.song)
+        : (_dragOffset > 0 ? (prevSong ?? widget.song) : null);
 
     return GestureDetector(
       onTap: widget.onTap,

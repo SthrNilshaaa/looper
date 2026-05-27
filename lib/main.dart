@@ -41,7 +41,7 @@ void main(List<String> args) async {
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = const WindowOptions(
-      size: Size(1300, 700),
+      size: Size(1150, 700),
       center: true,
       skipTaskbar: false,
       titleBarStyle: TitleBarStyle.hidden,
