@@ -49,6 +49,10 @@ class PremiumSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final bool disableBlur = settings.disableBlur;
+    final bool isBlurActive = (useBlur || forceBlur) && !disableBlur;
+
     final borderSide = BorderSide(
       color: Colors.white.withValues(alpha: 0.05),
       width: 1.2,
@@ -61,7 +65,7 @@ class PremiumSection extends ConsumerWidget {
       width: width,
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? (useBlur || forceBlur ? Colors.white.withValues(alpha: 0.05) : Theme.of(context).colorScheme.surfaceContainer),
+        color: backgroundColor ?? (isBlurActive ? Colors.white.withValues(alpha: 0.05) : Theme.of(context).colorScheme.surfaceContainer),
         borderRadius: borderRadius,
         border: Border(
           top: borderSide,
@@ -83,7 +87,7 @@ class PremiumSection extends ConsumerWidget {
       child: Center(child: child),
     );
 
-    final bool shouldBlur = useBlur && !forceNoBlur;
+    final bool shouldBlur = useBlur && !forceNoBlur && !disableBlur;
 
     if (shouldBlur == true) {
       containerBody = ClipRRect(
@@ -97,7 +101,7 @@ class PremiumSection extends ConsumerWidget {
         ),
       );
     }
-    if (forceBlur) {
+    if (forceBlur && !disableBlur) {
       containerBody = ClipRRect(
         borderRadius: borderRadius,
         child: BackdropFilter(

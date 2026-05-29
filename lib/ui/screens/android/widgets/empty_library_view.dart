@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'premium_section.dart';
 
 class EmptyLibraryView extends ConsumerWidget {
@@ -17,6 +18,7 @@ class EmptyLibraryView extends ConsumerWidget {
     final library = ref.watch(libraryProvider);
     final settings = ref.watch(settingsProvider);
     final isScanning = library.isScanning;
+    final l10n = AppLocalizations.of(context)!;
 
     return Center(
       child: Padding(
@@ -69,7 +71,7 @@ class EmptyLibraryView extends ConsumerWidget {
               // Title
               Text(
                 isScanning
-                    ? UiUtils.tr(context, "SCANNING STORAGE...", "स्टोरेज स्कैन किया जा रहा है...")
+                    ? l10n.scanningStorage
                     : title.toUpperCase(),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
@@ -84,16 +86,8 @@ class EmptyLibraryView extends ConsumerWidget {
               // Subtitle
               Text(
                 isScanning
-                    ? UiUtils.tr(
-                        context,
-                        "Traversing directory trees to discover audio tracks. Please hold on...",
-                        "ऑडियो ट्रैक्स खोजने के लिए डायरेक्टरी स्कैन की जा रही है। कृपया प्रतीक्षा करें..."
-                      )
-                    : UiUtils.tr(
-                        context,
-                        "We couldn't find any supported music files in your library. Add folders or run a search scan.",
-                        "हमें आपकी लाइब्रेरी में कोई समर्थित संगीत फ़ाइल नहीं मिली। फ़ोल्डर जोड़ें या स्कैन करें।"
-                      ),
+                    ? l10n.scanningStorageDesc
+                    : l10n.emptyLibraryDesc,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
@@ -111,7 +105,7 @@ class EmptyLibraryView extends ConsumerWidget {
                     HapticFeedback.mediumImpact();
                     ref.read(libraryProvider.notifier).scanSavedFolders();
                   },
-                  label: UiUtils.tr(context, "SCAN FOR MUSIC", "संगीत के लिए स्कैन करें"),
+                  label: l10n.scanForMusic,
                   icon: LucideIcons.searchCode,
                   isPrimary: true,
                   accentColor: Color(settings.accentColor),
@@ -126,7 +120,7 @@ class EmptyLibraryView extends ConsumerWidget {
                       ref.read(libraryProvider.notifier).scanLibrary(path);
                     }
                   },
-                  label: UiUtils.tr(context, "SELECT CUSTOM FOLDER", "कस्टम फ़ोल्डर चुनें"),
+                  label: l10n.selectCustomFolder,
                   icon: LucideIcons.folderPlus,
                   isPrimary: false,
                   accentColor: Color(settings.accentColor),
@@ -134,7 +128,7 @@ class EmptyLibraryView extends ConsumerWidget {
               ] else ...[
                 // Loading indicator auxiliary status
                 Text(
-                  UiUtils.tr(context, "Scanning in background...", "पृष्ठभूमि में स्कैन हो रहा है..."),
+                  l10n.scanningInBackground,
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,

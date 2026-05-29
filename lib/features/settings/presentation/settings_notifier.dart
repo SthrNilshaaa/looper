@@ -79,7 +79,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..accentColor = s.accentColor
       ..audioFocus = s.audioFocus
       ..disableSquiggle = s.disableSquiggle
-      ..disableAnimatedDuration = s.disableAnimatedDuration;
+      ..disableAnimatedDuration = s.disableAnimatedDuration
+      ..disableBlur = s.disableBlur
+      ..enableInternet = s.enableInternet;
   }
 
   Future<void> updateDisableSquiggle(bool disabled) async {
@@ -92,6 +94,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> updateDisableAnimatedDuration(bool disabled) async {
     final newState = _clone(state)..disableAnimatedDuration = disabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateDisableBlur(bool disabled) async {
+    final newState = _clone(state)..disableBlur = disabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateEnableInternet(bool enabled) async {
+    final newState = _clone(state)..enableInternet = enabled;
     await DbService.isar.writeTxn(() async {
       await DbService.isar.appSettings.put(newState);
     });

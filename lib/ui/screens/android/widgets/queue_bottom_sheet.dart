@@ -4,6 +4,8 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 
+import 'package:looper_player/l10n/app_localizations.dart';
+
 class QueueBottomSheet extends ConsumerWidget {
   const QueueBottomSheet({super.key});
 
@@ -11,6 +13,7 @@ class QueueBottomSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final playback = ref.watch(playbackProvider);
     final queue = playback.queue;
+    final l10n = AppLocalizations.of(context)!;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -34,16 +37,16 @@ class QueueBottomSheet extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Playing Queue',
-                  style: TextStyle(
+                Text(
+                  l10n.playQueue,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 Text(
-                  '${queue.length} songs',
+                  '${queue.length} ${l10n.songs.toLowerCase()}',
                   style: const TextStyle(color: Colors.grey),
                 ),
               ],

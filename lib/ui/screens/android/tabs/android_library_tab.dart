@@ -5,10 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/ui_utils.dart';
 
@@ -17,6 +17,7 @@ class AndroidLibraryTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -32,7 +33,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      UiUtils.tr(context, 'Library', 'लाइब्रेरी'),
+                      l10n.library,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 38,
@@ -107,7 +108,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       useExpanded: false,
                       child: Text(
-                        UiUtils.tr(context, 'Recent Played', 'हाल ही में चलाए गए'),
+                        l10n.recentPlayed,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -144,7 +145,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       useExpanded: false,
                       child: Text(
-                        UiUtils.tr(context, 'Categories', 'श्रेणियां'),
+                        l10n.categories,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
@@ -388,31 +389,32 @@ class AndroidLibraryTab extends ConsumerWidget {
     required VoidCallback onTap,
     required bool isLast,
   }) {
+    final l10n = AppLocalizations.of(context)!;
     String translatedTitle = title;
     switch (title) {
       case 'Favorites':
-        translatedTitle = UiUtils.tr(context, 'Favorites', 'पसंदीदा');
+        translatedTitle = l10n.favorites;
         break;
       case 'Albums':
-        translatedTitle = UiUtils.tr(context, 'Albums', 'एल्बम');
+        translatedTitle = l10n.albums;
         break;
       case 'Artists':
-        translatedTitle = UiUtils.tr(context, 'Artists', 'कलाकार');
+        translatedTitle = l10n.artists;
         break;
       case 'Playlists':
-        translatedTitle = UiUtils.tr(context, 'Playlists', 'प्लेलिस्ट');
+        translatedTitle = l10n.playlists;
         break;
       case 'Folders':
-        translatedTitle = UiUtils.tr(context, 'Folders', 'फ़ोल्डर');
+        translatedTitle = l10n.folders;
         break;
       case 'Genres':
-        translatedTitle = UiUtils.tr(context, 'Genres', 'शैलियां');
+        translatedTitle = l10n.genres;
         break;
       case 'Queue':
-        translatedTitle = UiUtils.tr(context, 'Queue', 'कतार');
+        translatedTitle = l10n.queue;
         break;
       case 'History':
-        translatedTitle = UiUtils.tr(context, 'History', 'इतिहास');
+        translatedTitle = l10n.history;
         break;
     }
 

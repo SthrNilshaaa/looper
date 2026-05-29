@@ -5,11 +5,18 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
 
+import 'package:looper_player/core/db_service.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+
 class ArtistImageService {
   static const String baseUrl = 'https://api.deezer.com';
 
   Future<String?> getArtistImage(String artistName) async {
     try {
+      final settings = await DbService.isar.appSettings.get(0);
+      if (settings != null && !settings.enableInternet) {
+        return null;
+      }
       final url = Uri.parse(
         '$baseUrl/search/artist',
       ).replace(queryParameters: {'q': artistName, 'limit': '1'});

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
@@ -12,6 +13,7 @@ class QueueView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playback = ref.watch(playbackProvider);
+    final l10n = AppLocalizations.of(context)!;
 
     return Column(
       children: [
@@ -23,9 +25,9 @@ class QueueView extends ConsumerWidget {
           child: Row(
             children: [
               if (!Platform.isAndroid)
-                const Text(
-                  'Play Queue',
-                  style: TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
+                Text(
+                  l10n.playQueue,
+                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
                 ),
               const Spacer(),
               if (playback.queue.isNotEmpty)
@@ -33,7 +35,7 @@ class QueueView extends ConsumerWidget {
                   onPressed: () =>
                       ref.read(playbackProvider.notifier).clearQueue(),
                   icon: const Icon(LucideIcons.trash2, size: 18),
-                  label: Text(UiUtils.tr(context, 'Clear', 'साफ़ करें')),
+                  label: Text(l10n.clearQueue),
                   style: TextButton.styleFrom(foregroundColor: Colors.red),
                 ),
             ],
@@ -43,7 +45,7 @@ class QueueView extends ConsumerWidget {
           child: playback.queue.isEmpty
               ? Center(
                   child: Text(
-                    UiUtils.tr(context, 'Queue is empty', 'कतार खाली है'),
+                    l10n.queueIsEmpty,
                     style: const TextStyle(color: Colors.grey, fontSize: 16),
                   ),
                 )

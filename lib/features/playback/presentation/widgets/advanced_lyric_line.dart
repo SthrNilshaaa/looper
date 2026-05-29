@@ -56,7 +56,7 @@ class AdvancedLyricLine extends ConsumerWidget {
               color: isActive ? activeColor : Colors.white.withOpacity(lineOpacity),
               shadows: isActive ? [
                 Shadow(
-                  color: activeColor.withOpacity(0.3),
+                  color: activeColor.withOpacity(0.01),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 )

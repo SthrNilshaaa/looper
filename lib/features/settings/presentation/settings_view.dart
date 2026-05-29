@@ -13,6 +13,8 @@ import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 
+import 'package:flutter_hsvcolor_picker/flutter_hsvcolor_picker.dart';
+
 class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({super.key});
 
@@ -35,11 +37,95 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     });
   }
 
+  void _showCustomColorPicker(BuildContext context, WidgetRef ref, Color initialColor) {
+    showModalBottomSheet(
+      context: context,
+
+      useRootNavigator: true,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final currentAccent = ref.watch(settingsProvider).accentColor;
+            return Container(
+              padding:  EdgeInsets.symmetric(horizontal: 24,vertical:12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Custom Accent Color',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: 'DMSans',
+                        ),
+                      ),
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Color(currentAccent),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: ColorPicker(
+                        color: Color(currentAccent),
+                        onChanged: (color) {
+                          ref.read(settingsProvider.notifier).updateAccentColor(color.value);
+                          setModalState(() {});
+                        },
+                        initialPicker: Picker.paletteHue,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          HapticFeedback.mediumImpact();
+                          Navigator.pop(context);
+                        },
+                        child: Text(
+                          'Done',
+                          style: TextStyle(
+                            color: Color(currentAccent),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
-    final useBlur = settings.enableDynamicTheming;
+    final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
 
     return Material(
       color: Colors.transparent,
@@ -68,7 +154,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               _buildCategoryGroup(
                 id: 'theme',
                 title: l10n.theme,
-                subtitle: UiUtils.tr(context, 'Customize app colors, theme, and lyrics backgrounds', 'ऐप के रंग, थीम और बोल के बैकग्राउंड बदलें'),
+                subtitle: l10n.customizeColorsTheme,
                 icon: LucideIcons.palette,
                 colorScheme: Theme.of(context).colorScheme,
                 useBlur: useBlur,
@@ -76,11 +162,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   SwitchListTile(
                     secondary: const Icon(LucideIcons.palette, color: Colors.white70),
                     title: Text(
-                      UiUtils.tr(context, 'Dynamic Theming', 'डायनामिक थीमिंग'),
+                      l10n.dynamicTheming,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(
-                      UiUtils.tr(context, 'Adapt app colors to album artwork', 'एल्बम आर्टवर्क के अनुसार ऐप के रंग बदलें'),
+                      l10n.adaptColorsArtwork,
                       style: const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                     activeColor: Color(settings.accentColor),
@@ -89,16 +175,35 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ref.read(settingsProvider.notifier).updateDynamicTheming(value);
                     },
                   ),
+                  if (settings.enableDynamicTheming) ...[
+                    const Divider(height: 1, indent: 72, color: Colors.white10),
+                    SwitchListTile(
+                      secondary: const Icon(LucideIcons.eyeOff, color: Colors.white70),
+                      title: Text(
+                        l10n.disableBlurEffects,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        l10n.turnOffBlursOptimize,
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      activeColor: Color(settings.accentColor),
+                      value: settings.disableBlur,
+                      onChanged: (value) {
+                        ref.read(settingsProvider.notifier).updateDisableBlur(value);
+                      },
+                    ),
+                  ],
                   if (!settings.enableDynamicTheming) ...[
                     const Divider(height: 1, indent: 72, color: Colors.white10),
                     SwitchListTile(
                       secondary: const Icon(LucideIcons.moon, color: Colors.white70),
                       title: Text(
-                        UiUtils.tr(context, 'Pure Black (OLED)', 'गहरा काला (OLED)'),
+                        l10n.pureBlackOled,
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                       ),
                       subtitle: Text(
-                        UiUtils.tr(context, 'Use absolute black for backgrounds', 'बैकग्राउंड के लिए पूरी तरह से काले रंग का उपयोग करें'),
+                        l10n.useAbsoluteBlackBg,
                         style: const TextStyle(color: Colors.white54, fontSize: 12),
                       ),
                       activeColor: Color(settings.accentColor),
@@ -111,7 +216,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     ListTile(
                       leading: const Icon(LucideIcons.droplet, color: Colors.white70),
                       title: Text(
-                        UiUtils.tr(context, 'Accent Color', 'एक्सेंट रंग'),
+                        l10n.accentColor,
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                       ),
                       trailing: Row(
@@ -137,17 +242,37 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         ],
                       ),
                     ),
+                    const Divider(height: 1, indent: 72, color: Colors.white10),
+                    ListTile(
+                      leading: const Icon(LucideIcons.palette, color: Colors.white70),
+                      title: Text(
+                        l10n.customAccentColor,
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                      ),
+                      subtitle: Text(
+                        l10n.selectCustomColor,
+                        style: const TextStyle(color: Colors.white54, fontSize: 12),
+                      ),
+                      trailing: _ColorCircle(
+                        color: Color(settings.accentColor),
+                        isSelected: settings.accentColor != 0xFF41C25E &&
+                            settings.accentColor != 0xFFF7EAA6 &&
+                            settings.accentColor != Colors.blueAccent.value,
+                        onTap: () => _showCustomColorPicker(context, ref, Color(settings.accentColor)),
+                      ),
+                      onTap: () => _showCustomColorPicker(context, ref, Color(settings.accentColor)),
+                    ),
                   ],
                   if (!settings.enableDynamicTheming) ...[
                     const Divider(height: 1, indent: 72, color: Colors.white10),
                     SwitchListTile(
                       secondary: const Icon(LucideIcons.music, color: Colors.white70),
                       title: Text(
-                        UiUtils.tr(context, 'Dynamic Lyrics BG', 'डायनामिक बोल बैकग्राउंड'),
+                        l10n.dynamicLyricsBg,
                         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                       ),
                       subtitle: Text(
-                        UiUtils.tr(context, 'Dynamic background only for lyrics', 'केवल बोल के लिए डायनामिक बैकग्राउंड'),
+                        l10n.dynamicBgOnlyLyrics,
                         style: const TextStyle(color: Colors.white54, fontSize: 12),
                       ),
                       activeColor: Color(settings.accentColor),
@@ -161,11 +286,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   SwitchListTile(
                     secondary: const Icon(LucideIcons.sliders, color: Colors.white70),
                     title: Text(
-                      UiUtils.tr(context, 'Flat Progress Bar', 'समतल प्रगति बार'),
+                      l10n.flatProgressBar,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(
-                      UiUtils.tr(context, 'Disable squiggly wave progress bar animation', 'लहरदार लहर प्रगति बार एनीमेशन अक्षम करें'),
+                      l10n.disableSquigglyProgressBar,
                       style: const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                     activeColor: Color(settings.accentColor),
@@ -178,11 +303,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   SwitchListTile(
                     secondary: const Icon(LucideIcons.clock, color: Colors.white70),
                     title: Text(
-                      UiUtils.tr(context, 'Plain Timestamps', 'सादा टाइमस्टैम्प'),
+                      l10n.plainTimestamps,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(
-                      UiUtils.tr(context, 'Use static text instead of rolling animation for progress duration', 'रोलिंग एनीमेशन के बजाय स्थिर पाठ का उपयोग करें'),
+                      l10n.useStaticTextTimestamps,
                       style: const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                     activeColor: Color(settings.accentColor),
@@ -197,8 +322,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               // 2. Playback & Language Group
               _buildCategoryGroup(
                 id: 'playback',
-                title: UiUtils.tr(context, 'Playback & Audio', 'प्लेबैक और ऑडियो'),
-                subtitle: UiUtils.tr(context, 'Manage language preferences and caller focus state', 'भाषा प्राथमिकताएं और कॉलर फ़ोकस प्रबंधित करें'),
+                title: l10n.playbackAudio,
+                subtitle: l10n.manageLanguageAndFocus,
                 icon: LucideIcons.playCircle,
                 colorScheme: Theme.of(context).colorScheme,
                 useBlur: useBlur,
@@ -213,6 +338,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       items: const [
                         DropdownMenuItem(value: 'en', child: Text('English', style: TextStyle(color: Colors.white))),
                         DropdownMenuItem(value: 'hi', child: Text('हिन्दी', style: TextStyle(color: Colors.white))),
+                        DropdownMenuItem(value: 'es', child: Text('Español', style: TextStyle(color: Colors.white))),
+                        DropdownMenuItem(value: 'fr', child: Text('Français', style: TextStyle(color: Colors.white))),
                       ],
                       onChanged: (lang) {
                         if (lang != null) {
@@ -221,15 +348,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       },
                     ),
                   ),
-                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                   const Divider(height: 1, indent: 72, color: Colors.white10),
                   SwitchListTile(
                     secondary: const Icon(LucideIcons.phoneCall, color: Colors.white70),
                     title: Text(
-                      UiUtils.tr(context, 'Manage Audio Focus', 'ऑडियो फ़ोकस प्रबंधित करें'),
+                      l10n.manageAudioFocus,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                     subtitle: Text(
-                      UiUtils.tr(context, 'Mute or pause during calls and other audio activity', 'कॉल और अन्य ऑडियो गतिविधि के दौरान म्यूट या पॉज करें'),
+                      l10n.muteOrPauseCalls,
                       style: const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                     activeColor: Color(settings.accentColor),
@@ -238,14 +365,31 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ref.read(settingsProvider.notifier).updateAudioFocus(value);
                     },
                   ),
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                  SwitchListTile(
+                    secondary: const Icon(LucideIcons.globe, color: Colors.white70),
+                    title: Text(
+                      l10n.internetMode,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      l10n.enableNetworkLyricsArt,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    activeColor: Color(settings.accentColor),
+                    value: settings.enableInternet,
+                    onChanged: (value) {
+                      ref.read(settingsProvider.notifier).updateEnableInternet(value);
+                    },
+                  ),
                 ],
               ),
 
               // 3. Music Library Group
               _buildCategoryGroup(
                 id: 'library',
-                title: UiUtils.tr(context, 'Music Library', 'संगीत लाइब्रेरी'),
-                subtitle: UiUtils.tr(context, 'Folders, rescan triggers, reset database, and offline sync', 'फ़ोल्डर, रीस्कैन, रीसेट डेटाबेस और ऑफ़लाइन सिंक'),
+                title: l10n.musicLibrary,
+                subtitle: l10n.libraryFoldersSync,
                 icon: LucideIcons.database,
                 colorScheme: Theme.of(context).colorScheme,
                 useBlur: useBlur,
@@ -273,7 +417,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   ListTile(
                     leading: const Icon(LucideIcons.downloadCloud, color: Colors.white70),
                     title: Text(
-                      UiUtils.tr(context, 'Sync Lyrics (Offline)', 'ऑफ़लाइन बोल सिंक करें'),
+                      l10n.syncLyricsOffline,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                     trailing: const Icon(LucideIcons.chevronRight, color: Colors.white30, size: 18),
@@ -283,7 +427,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            UiUtils.tr(context, 'Downloading lyrics for offline use...', 'ऑफ़लाइन उपयोग के लिए बोल डाउनलोड किए जा रहे हैं...'),
+                            l10n.downloadingLyricsOffline,
                           ),
                         ),
                       );
@@ -295,7 +439,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   ListTile(
                     leading: const Icon(LucideIcons.refreshCcw, color: Colors.white70),
                     title: Text(
-                      UiUtils.tr(context, 'Rescan Library', 'लाइब्रेरी रीस्कैन करें'),
+                      l10n.rescanLibrary,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                     trailing: const Icon(LucideIcons.chevronRight, color: Colors.white30, size: 18),
@@ -305,7 +449,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            UiUtils.tr(context, 'Scanning library...', 'लाइब्रेरी स्कैन की जा रही है...'),
+                            l10n.scanningLibrary,
                           ),
                         ),
                       );
@@ -332,8 +476,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
               // 4. About & Creators Group
               _buildCategoryGroup(
                 id: 'about',
-                title: UiUtils.tr(context, 'About & Maintainers', 'हमारे बारे में और डेवलपर्स'),
-                subtitle: UiUtils.tr(context, 'Application details, creator, and design team info', 'एप्लिकेशन विवरण, निर्माता और डिज़ाइन टीम की जानकारी'),
+                title: l10n.aboutAndMaintainers,
+                subtitle: l10n.appDetailsCreator,
                 icon: LucideIcons.info,
                 colorScheme: Theme.of(context).colorScheme,
                 useBlur: useBlur,
@@ -341,7 +485,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   ListTile(
                     leading: const Icon(LucideIcons.info, color: Colors.white70),
                     title: const Text('Looper Player', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                    subtitle: const Text('Version 1.5.1', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    subtitle: const Text('Version 1.7.0', style: TextStyle(color: Colors.white54, fontSize: 12)),
                     onTap: () async {
                       final Uri uri = Uri.parse('https://github.com/SthrNilshaaa/looper');
                       try {
@@ -355,7 +499,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   ListTile(
                     leading: const Icon(LucideIcons.music, color: Colors.white70),
                     title: Text(
-                      UiUtils.tr(context, 'Lyrics Provider', 'बोल प्रदाता'),
+                      l10n.lyricsProvider,
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
                     ),
                     subtitle: const Text('lrclib.net', style: TextStyle(color: Colors.white54, fontSize: 12)),
@@ -372,7 +516,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   const Divider(height: 1, indent: 72, color: Colors.white10),
                   _MaintainerTile(
                     name: 'Nilesh Suthar',
-                    role: UiUtils.tr(context, 'Creator and Maintainer', 'निर्माता और डेवलपर'),
+                    role: l10n.creatorAndMaintainer,
                     avatar: 'assets/about/maintainer_avatar.png',
                     github: 'https://github.com/SthrNilshaaa',
                     telegram: 'https://t.me/neelshy',
@@ -380,7 +524,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   const Divider(height: 1, indent: 72, color: Colors.white10),
                   _MaintainerTile(
                     name: 'Karan Suthar',
-                    role: UiUtils.tr(context, 'Designer and Maintainer', 'डिज़ाइनर और डेवलपर'),
+                    role: l10n.designerAndMaintainer,
                     avatar: 'assets/about/designer_avatar.png',
                     github: 'https://github.com/sthrkaran',
                     telegram: 'https://t.me/karanwhy',
@@ -394,7 +538,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          UiUtils.tr(context, 'APP INFO & PRIVACY', 'ऐप की जानकारी और गोपनीयता'),
+                          l10n.appInfoPrivacy,
                           style: TextStyle(
                             fontSize: 11.ts,
                             fontWeight: FontWeight.bold,
@@ -407,48 +551,32 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         _buildInfoSubTile(
                           context: context,
                           icon: LucideIcons.music,
-                          title: UiUtils.tr(context, 'Core Purpose', 'मुख्य उद्देश्य'),
-                          description: UiUtils.tr(
-                            context,
-                            'Looper Player is an offline-first, high-fidelity audio player designed for music enthusiasts who want absolute control over their local library, gapless playback, and fluid, synchronized lyrics scrolling.',
-                            'लूपर प्लेयर एक ऑफ़लाइन-फ़र्स्ट, उच्च-गुणवत्ता वाला ऑडियो प्लेयर है जिसे उन संगीत प्रेमियों के लिए डिज़ाइन किया गया है जो अपनी स्थानीय लाइब्रेरी, गैपलेस प्लेबैक और सिंक किए गए बोल पर पूरा नियंत्रण चाहते हैं।'
-                          ),
+                          title: l10n.corePurpose,
+                          description: l10n.corePurposeDesc,
                         ),
                         const SizedBox(height: 12),
                         // Permissions Explanation
                         _buildInfoSubTile(
                           context: context,
                           icon: LucideIcons.shieldCheck,
-                          title: UiUtils.tr(context, 'Why Permissions are Used', 'अनुमतियों का उपयोग क्यों किया जाता है'),
-                          description: UiUtils.tr(
-                            context,
-                            '• Storage / Media Access: Required to discover, read, and index local audio tracks stored on your device.\n• Notifications: Required to display active playback control widgets in your status bar and system drawer.',
-                            '• स्टोरेज / मीडिया एक्सेस: आपके डिवाइस में स्टोर किए गए स्थानीय ऑडियो ट्रैक्स को खोजने, पढ़ने और इंडेक्स करने के लिए आवश्यक है।\n• नोटिफिकेशन: आपके स्टेटस बार और सिस्टम ड्रावर में सक्रिय प्लेबैक नियंत्रण विजेट दिखाने के लिए आवश्यक है।'
-                          ),
+                          title: l10n.whyPermissionsUsed,
+                          description: l10n.whyPermissionsUsedDesc,
                         ),
                         const SizedBox(height: 12),
                         // Internet Explanation
                         _buildInfoSubTile(
                           context: context,
                           icon: LucideIcons.globe,
-                          title: UiUtils.tr(context, 'Why Internet is Used', 'इंटरनेट का उपयोग क्यों किया जाता है'),
-                          description: UiUtils.tr(
-                            context,
-                            '• Dynamic Lyrics Syncing: Used solely to securely fetch and download synchronized lyrics (LRC formats) from online databases. No personal data, settings, or media files are ever uploaded or shared.',
-                            '• डायनामिक बोल सिंक: ऑनलाइन डेटाबेस से गानों के सिंक किए गए बोल (LRC प्रारूप) को सुरक्षित रूप से खोजने और डाउनलोड करने के लिए किया जाता है। कोई भी व्यक्तिगत डेटा, सेटिंग्स या मीडिया फाइलें कभी भी अपलोड या साझा नहीं की जाती हैं।'
-                          ),
+                          title: l10n.whyInternetUsed,
+                          description: l10n.whyInternetUsedDesc,
                         ),
                         const SizedBox(height: 12),
                         // Privacy Policy
                         _buildInfoSubTile(
                           context: context,
                           icon: LucideIcons.lock,
-                          title: UiUtils.tr(context, 'Privacy & Safety', 'गोपनीयता और सुरक्षा'),
-                          description: UiUtils.tr(
-                            context,
-                            '100% private and offline-first. Your tracks, playback history, favorites, and configuration stay strictly inside a secure Isar database on your local device. We do not track, collect, or share your usage data or preferences.',
-                            '100% निजी और ऑफ़लाइन-फ़र्स्ट। आपके गाने, प्लेबैक इतिहास, पसंदीदा और सेटिंग्स केवल आपके स्थानीय डिवाइस पर एक सुरक्षित इसार डेटाबेस के अंदर रहते हैं। हम आपके किसी भी उपयोग डेटा या संगीत प्राथमिकताओं को ट्रैक, एकत्र या साझा नहीं करते हैं।'
-                          ),
+                          title: l10n.privacySafety,
+                          description: l10n.privacySafetyDesc,
                         ),
                       ],
                     ),

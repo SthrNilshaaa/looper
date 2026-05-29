@@ -6,6 +6,7 @@ import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'premium_section.dart';
 
 class PremiumNavbar extends ConsumerWidget {
@@ -24,6 +25,7 @@ class PremiumNavbar extends ConsumerWidget {
     final accentColor = Color(settings.accentColor);
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final useBlur = settings.enableDynamicTheming;
+    final l10n = AppLocalizations.of(context)!;
    
     
 
@@ -37,21 +39,21 @@ class PremiumNavbar extends ConsumerWidget {
 
             final home = _NavItem(
               iconPath: AppIcons.home,
-              label: 'Home',
+              label: l10n.home,
               isSelected: currentIndex == 0,
               accentColor: accentColor,
             );
 
             final songs = _NavItem(
               iconPath: AppIcons.songs,
-              label: 'Songs',
+              label: l10n.songs,
               isSelected: currentIndex == 1,
               accentColor: accentColor,
             );
 
             final library = _NavItem(
               iconPath: AppIcons.library,
-              label: 'Library',
+              label: l10n.library,
               isSelected: currentIndex == 2,
               accentColor: accentColor,
             );
@@ -105,7 +107,11 @@ class PremiumNavbar extends ConsumerWidget {
                             HapticFeedback.lightImpact();
                             onTap(1);
                           },
-                          child: songs,
+                          child: Container(
+                            height: double.infinity,
+                            alignment: Alignment.center,
+                            child: songs,
+                          ),
                         ),
                       ),
                       Expanded(
@@ -115,7 +121,11 @@ class PremiumNavbar extends ConsumerWidget {
                             HapticFeedback.lightImpact();
                             onTap(2);
                           },
-                          child: library,
+                          child: Container(
+                            height: double.infinity,
+                            alignment: Alignment.center,
+                            child: library,
+                          ),
                         ),
                       ),
                     ],
@@ -210,7 +220,11 @@ class PremiumNavbar extends ConsumerWidget {
                             HapticFeedback.lightImpact();
                             onTap(0);
                           },
-                          child: home,
+                          child: Container(
+                            height: double.infinity,
+                            alignment: Alignment.center,
+                            child: home,
+                          ),
                         ),
                       ),
                       Expanded(
@@ -220,7 +234,11 @@ class PremiumNavbar extends ConsumerWidget {
                             HapticFeedback.lightImpact();
                             onTap(1);
                           },
-                          child: songs,
+                          child: Container(
+                            height: double.infinity,
+                            alignment: Alignment.center,
+                            child: songs,
+                          ),
                         ),
                       ),
                     ],

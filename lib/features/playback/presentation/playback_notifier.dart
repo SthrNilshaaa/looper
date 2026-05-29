@@ -372,6 +372,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> seek(Duration position) async {
     await player.seek(position);
+    state = state.copyWith(position: position);
   }
 
   void startScrubbing() {
@@ -380,7 +381,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   void stopScrubbing() {
-    state = state.copyWith(isScrubbing: false);
+    state = state.copyWith(
+      isScrubbing: false,
+      position: player.state.position,
+    );
     player.setVolume(state.volume * 100);
   }
 

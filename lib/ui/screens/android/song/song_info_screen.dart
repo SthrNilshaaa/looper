@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/data/audio_analyzer.dart';
 import 'package:looper_player/features/playback/data/lyrics_fetcher.dart';
@@ -65,6 +66,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
     final settings = ref.watch(settingsProvider);
     final theme = Theme.of(context);
     final primaryColor = theme.colorScheme.primary;
+    final l10n = AppLocalizations.of(context)!;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -125,7 +127,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                               children: [
                                 // Complete Metadata details card
                                 _buildInfoSection(
-                                  title: 'Metadata Details',
+                                  title: l10n.metadataDetails,
                                   icon: LucideIcons.tags,
                                   isLoading: isLoading,
                                   items: [
@@ -147,7 +149,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
 
                                 // File info card
                                 _buildInfoSection(
-                                  title: 'File Information',
+                                  title: l10n.fileInformation,
                                   icon: LucideIcons.fileText,
                                   isLoading: false,
                                   items: [
@@ -169,9 +171,9 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                         const SizedBox(height: 24),
 
                         // Live audio quality analysis card
-                        const Text(
-                          "ACOUSTIC & SPECTRAL ANALYSIS",
-                          style: TextStyle(
+                        Text(
+                          l10n.acousticSpectralAnalysis,
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -193,6 +195,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
   }
 
   Widget _buildTopBar(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
@@ -202,7 +205,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           Text(
-            'Song Details',
+            l10n.songDetails,
             style: GoogleFonts.plusJakartaSans(
               color: Colors.white,
               fontSize: 18,
@@ -280,6 +283,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
   }
 
   Widget _buildLyricsSection() {
+    final l10n = AppLocalizations.of(context)!;
     return FutureBuilder<String?>(
       future: _lyricsFuture,
       builder: (context, snapshot) {
@@ -340,7 +344,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                       Icon(LucideIcons.fileKey, color: Colors.white.withOpacity(0.5), size: 20),
                       const SizedBox(width: 12),
                       Text(
-                        'Lyrics',
+                        l10n.lyrics,
                         style: GoogleFonts.plusJakartaSans(
                           color: Colors.white.withOpacity(0.9),
                           fontSize: 16,
@@ -375,7 +379,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              _lyricsExpanded ? 'Show Less' : 'Show More',
+                              _lyricsExpanded ? l10n.showLess : l10n.showMore,
                               style: TextStyle(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.bold,

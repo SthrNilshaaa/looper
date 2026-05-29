@@ -18,6 +18,7 @@ import 'package:looper_player/features/playback/presentation/lyrics_view.dart';
 import 'package:looper_player/ui/widgets/premium_progress_bar.dart';
 import '../widgets/premium_section.dart';
 import 'android_lyrics_screen.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import '../song/song_info_screen.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
@@ -60,63 +61,69 @@ class AndroidExpandedPlayer extends ConsumerWidget {
     final controller = TextEditingController(text: song.title);
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-        title: const Text('Rename Song', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            labelText: 'New Title',
-            labelStyle: TextStyle(color: Colors.grey),
-            enabledBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.grey),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+          title: Text(l10n.renameSong, style: const TextStyle(color: Colors.white)),
+          content: TextField(
+            controller: controller,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              labelText: l10n.newTitle,
+              labelStyle: const TextStyle(color: Colors.grey),
+              enabledBorder: const UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.grey),
+              ),
             ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () {
-              ref
-                  .read(playbackProvider.notifier)
-                  .renameSong(song, controller.text);
-              Navigator.pop(context);
-            },
-            child: const Text('Rename', style: TextStyle(color: Colors.yellow)),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                ref
+                    .read(playbackProvider.notifier)
+                    .renameSong(song, controller.text);
+                Navigator.pop(context);
+              },
+              child: Text(l10n.rename, style: const TextStyle(color: Colors.yellow)),
+            ),
+          ],
+        );
+      },
     );
   }
 
   void _showDeleteDialog(BuildContext context, WidgetRef ref, Song song) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-        title: const Text('Delete Song', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Are you sure you want to delete this song from disk?',
-          style: TextStyle(color: Colors.grey),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+          title: Text(l10n.deleteSong, style: const TextStyle(color: Colors.white)),
+          content: Text(
+            l10n.deleteSongConfirm,
+            style: const TextStyle(color: Colors.grey),
           ),
-          TextButton(
-            onPressed: () {
-              ref.read(playbackProvider.notifier).deleteSong(song);
-              Navigator.pop(context);
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () {
+                ref.read(playbackProvider.notifier).deleteSong(song);
+                Navigator.pop(context);
+              },
+              child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -140,6 +147,7 @@ class AndroidExpandedPlayer extends ConsumerWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -149,9 +157,9 @@ class AndroidExpandedPlayer extends ConsumerWidget {
                   LucideIcons.listOrdered,
                   color: Colors.white,
                 ),
-                title: const Text(
-                  'Add to Queue',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  l10n.addToQueue,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 onTap: () {
                   final currentSong = ref.read(playbackProvider).currentSong;
@@ -163,9 +171,9 @@ class AndroidExpandedPlayer extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(LucideIcons.heart, color: Colors.white),
-                title: const Text(
-                  'Toggle Favorite',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  l10n.toggleFavorite,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 onTap: () {
                   final currentSong = ref.read(playbackProvider).currentSong;
@@ -177,9 +185,9 @@ class AndroidExpandedPlayer extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(LucideIcons.edit2, color: Colors.white),
-                title: const Text(
-                  'Rename File',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  l10n.renameFile,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 onTap: () {
                   final currentSong = ref.read(playbackProvider).currentSong;
@@ -190,9 +198,9 @@ class AndroidExpandedPlayer extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(LucideIcons.share2, color: Colors.white),
-                title: const Text(
-                  'Share File',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  l10n.shareFile,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 onTap: () {
                   final currentSong = ref.read(playbackProvider).currentSong;
@@ -204,9 +212,9 @@ class AndroidExpandedPlayer extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(LucideIcons.trash2, color: Colors.white),
-                title: const Text(
-                  'Delete File',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  l10n.deleteFile,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 onTap: () {
                   final currentSong = ref.read(playbackProvider).currentSong;
@@ -217,9 +225,9 @@ class AndroidExpandedPlayer extends ConsumerWidget {
               ),
               ListTile(
                 leading: const Icon(LucideIcons.info, color: Colors.white),
-                title: const Text(
-                  'Song Details & Frequency',
-                  style: TextStyle(color: Colors.white),
+                title: Text(
+                  l10n.songDetailsAndFrequency,
+                  style: const TextStyle(color: Colors.white),
                 ),
                 onTap: () {
                   final currentSong = ref.read(playbackProvider).currentSong;

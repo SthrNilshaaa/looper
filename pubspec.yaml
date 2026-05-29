@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.6.2+3
+version: 1.7.0+5
 
 environment:
   sdk: ^3.11.0
@@ -86,6 +86,7 @@ dependencies:
   ffmpeg_kit_flutter_new_full:
   marqueer: ^2.5.0
   wakelock_plus: ^1.2.8
+  flutter_hsvcolor_picker: ^1.5.1
 
 dev_dependencies:
   flutter_test:
@@ -114,3 +115,32 @@ flutter:
     - assets/side_bar/
     - assets/about/
     - assets/android_icons/
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins/Poppins-Bold.ttf
+          weight: 700
+    - family: Space Grotesk
+      fonts:
+        - asset: assets/fonts/Space_Grotesk/static/SpaceGrotesk-Regular.ttf
+        - asset: assets/fonts/Space_Grotesk/static/SpaceGrotesk-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Space_Grotesk/static/SpaceGrotesk-Bold.ttf
+          weight: 700
+    - family: DM Sans
+      fonts:
+        - asset: assets/fonts/DM_Sans/static/DMSans-Regular.ttf
+        - asset: assets/fonts/DM_Sans/static/DMSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/DM_Sans/static/DMSans-Bold.ttf
+          weight: 700
+    - family: Plus Jakarta Sans
+      fonts:
+        - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Regular.ttf
+        - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Bold.ttf
+          weight: 700

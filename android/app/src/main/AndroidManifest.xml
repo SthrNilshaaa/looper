@@ -12,7 +12,8 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:extractNativeLibs="true"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        android:requestLegacyExternalStorage="true">
 
         <!-- ADD THIS FOR AUDIO_SERVICE -->
         <service android:name="com.ryanheise.audioservice.AudioService"

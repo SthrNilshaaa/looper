@@ -120,7 +120,7 @@ class SquigglySliderTrackShape extends SliderTrackShape
         .width;
 
     final thumbGap = thumbWidth * 0.75; 
-    final lr = thumbCenter.dx - thumbGap;
+    final lr = max(ll, thumbCenter.dx - thumbGap);
     final lb = (textDirection == TextDirection.ltr)
         ? trackRect.bottom + (additionalActiveTrackHeight / 2)
         : trackRect.bottom;
@@ -175,10 +175,10 @@ class SquigglySliderTrackShape extends SliderTrackShape
       );
     }
 
+    final rr = min(trackRect.right, thumbCenter.dx + thumbGap);
     context.canvas.drawRRect(
       RRect.fromLTRBAndCorners(
-        //thumbCenter.dx,
-        thumbCenter.dx + thumbGap,
+        rr,
         (textDirection == TextDirection.rtl)
             ? trackRect.top - (additionalActiveTrackHeight / 2)
             : trackRect.top,

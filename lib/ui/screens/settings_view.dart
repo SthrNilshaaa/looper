@@ -60,6 +60,18 @@ class SettingsView extends ConsumerWidget {
                       },
                       isLast: false,
                     ),
+                    if (settings.enableDynamicTheming)
+                      _PremiumSwitchRow(
+                        icon: LucideIcons.eyeOff,
+                        title: 'Disable Blur Effects',
+                        subtitle: 'Turn off heavy backdrop blurs to optimize system performance',
+                        value: settings.disableBlur,
+                        onChanged: (value) {
+                          HapticFeedback.lightImpact();
+                          ref.read(settingsProvider.notifier).updateDisableBlur(value);
+                        },
+                        isLast: false,
+                      ),
                     if (!settings.enableDynamicTheming)
                       _PremiumAccentColorRow(
                         icon: LucideIcons.droplet,
@@ -182,6 +194,17 @@ class SettingsView extends ConsumerWidget {
                       },
                       isLast: false,
                     ),
+                    _PremiumSwitchRow(
+                      icon: LucideIcons.globe,
+                      title: 'Internet Mode',
+                      subtitle: 'Enable network use for online lyrics & artist art',
+                      value: settings.enableInternet,
+                      onChanged: (value) {
+                        HapticFeedback.lightImpact();
+                        ref.read(settingsProvider.notifier).updateEnableInternet(value);
+                      },
+                      isLast: false,
+                    ),
                     _PremiumActionRow(
                       icon: LucideIcons.trash2,
                       title: l10n.resetLibrary,
@@ -208,10 +231,10 @@ class SettingsView extends ConsumerWidget {
                     _PremiumActionRow(
                       icon: LucideIcons.info,
                       title: 'Looper Player',
-                      subtitle: 'Version 1.0.0 (Premium OS Edition)',
+                      subtitle: 'Version 1.7.0',
                       onTap: () {},
                       trailing: const Text(
-                        'v1.0.0',
+                        'v1.7.0',
                         style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                       isLast: false,

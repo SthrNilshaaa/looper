@@ -233,7 +233,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                UiUtils.tr(context, 'Press back again to exit', 'बाहर निकलने के लिए फिर से वापस दबाएं'),
+                l10n.pressBackExit,
                 style: const TextStyle(color: Colors.white),
               ),
               backgroundColor: Colors.black87,
@@ -254,6 +254,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         backgroundColor: settings.enableDynamicTheming ? Colors.transparent : Theme.of(context).colorScheme.surface,
         // drawer: Drawer(
         //   child: Container(
@@ -416,48 +417,61 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
 
             // Mini Player & Navbar with Gradient
             Positioned(
-              bottom: 0,
+              bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? -150 : 0,
               left: 0,
               right: 0,
-              child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(opacity: animation, child: child);
-                      },
-                      child: song != null
-                          ? const PremiumMusicBar(key: ValueKey('music_bar'))
-                          : const SizedBox(key: ValueKey('no_music')),
-                    ),
-                    const SizedBox(height: 4),
-                    PremiumNavbar(
-                      currentIndex: rootItem == NavItem.home
-                          ? 0
-                          : (rootItem == NavItem.songs ? 1 : 2),
-                      onTap: (index) {
-                        NavItem target;
-                        switch (index) {
-                          case 1:
-                            target = NavItem.songs;
-                            break;
-                          case 2:
-                            target = NavItem.playlists;
-                            break;
-                          case 0:
-                          default:
-                            target = NavItem.home;
-                            break;
-                        }
-                        ref
-                            .read(appNavigationProvider.notifier)
-                            .setItem(target);
-                      },
-                    ),
-                  ],
+              child: AnimatedOpacity(
+                opacity: MediaQuery.of(context).viewInsets.bottom > 0 ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  transform: Matrix4.translationValues(
+                    0,
+                    MediaQuery.of(context).viewInsets.bottom > 0 ? 150 : 0,
+                    0,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(opacity: animation, child: child);
+                        },
+                        child: song != null
+                            ? const PremiumMusicBar(key: ValueKey('music_bar'))
+                            : const SizedBox(key: ValueKey('no_music')),
+                      ),
+                      const SizedBox(height: 4),
+                      PremiumNavbar(
+                        currentIndex: rootItem == NavItem.home
+                            ? 0
+                            : (rootItem == NavItem.songs ? 1 : 2),
+                        onTap: (index) {
+                          NavItem target;
+                          switch (index) {
+                            case 1:
+                              target = NavItem.songs;
+                              break;
+                            case 2:
+                              target = NavItem.playlists;
+                              break;
+                            case 0:
+                            default:
+                              target = NavItem.home;
+                              break;
+                          }
+                          ref
+                              .read(appNavigationProvider.notifier)
+                              .setItem(target);
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
+            ),
              
           ],
         ),

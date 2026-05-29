@@ -10,7 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as p;
-import '../../../l10n/app_localizations.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import '../../features/library/presentation/library_notifier.dart';
 import '../../features/settings/presentation/settings_notifier.dart';
 
@@ -178,9 +178,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
   Widget _buildStateContent(ColorScheme colorScheme, AppLocalizations l10n) {
     switch (_currentState) {
       case WelcomeState.scanning:
-        return _buildScanningState(colorScheme);
+        return _buildScanningState(colorScheme, l10n);
       case WelcomeState.noSongs:
-        return _buildNoSongsState(colorScheme);
+        return _buildNoSongsState(colorScheme, l10n);
       case WelcomeState.initial:
       default:
         return _buildInitialState(colorScheme, l10n);
@@ -262,7 +262,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    UiUtils.tr(context, "ABOUT LOOPER PLAYER", "लूपर प्लेयर के बारे में"),
+                    l10n.aboutLooperPlayer.toUpperCase(),
                     style: TextStyle(
                       fontSize: 12.ts,
                       fontWeight: FontWeight.bold,
@@ -274,11 +274,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
               ),
               const SizedBox(height: 12),
               Text(
-                UiUtils.tr(
-                  context,
-                  "Looper Player is a next-generation Music-OS built for premium offline audio playback. Features real-time dynamic lyrics generation, advanced audio session management with call mute handling, adaptive background theming, and multi-format music library support. Fully optimized for maximum battery efficiency.",
-                  "लूपर प्लेयर एक अगली पीढ़ी का म्यूजिक-ओएस है जिसे प्रीमियम ऑफ़लाइन ऑडियो प्लेबैक के लिए बनाया गया है। इसमें रियल-टाइम डायनामिक बोल, कॉल म्यूट हैंडलिंग के साथ उन्नत ऑडियो सेशन प्रबंधन, एडेप्टिव बैकग्राउंड थीमिंग और मल्टी-फॉर्मेट म्यूजिक लाइब्रेरी शामिल है। इसे बैटरी दक्षता के लिए अनुकूलित किया गया है।"
-                ),
+                l10n.welcomeAboutDesc,
                 style: TextStyle(
                   fontSize: 13.ts,
                   height: 1.6,
@@ -315,7 +311,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      UiUtils.tr(context, "SYSTEM PERMISSION CHECKLIST", "सिस्टम अनुमति चेकलिस्ट"),
+                      l10n.systemPermissionChecklist.toUpperCase(),
                       style: TextStyle(
                         fontSize: 12.ts,
                         fontWeight: FontWeight.bold,
@@ -329,16 +325,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                 
                 // 1. Notification Permission Row
                 _buildPermissionRow(
-                  title: UiUtils.tr(context, "NOTIFICATION ACCESS", "नोटिफिकेशन एक्सेस"),
-                  description: UiUtils.tr(
-                    context, 
-                    "Required to show playback controls and active notification widgets in your system bar.",
-                    "आपके सिस्टम बार में प्लेबैक कंट्रोल और एक्टिव नोटिफिकेशन विजेट दिखाने के लिए आवश्यक है।"
-                  ),
+                  title: l10n.notificationAccess.toUpperCase(),
+                  description: l10n.welcomeNotificationDesc,
                   isGranted: _notificationGranted,
                   onGrant: _requestNotificationPermission,
                   colorScheme: colorScheme,
                   accentColor: Color(settings.accentColor),
+                  l10n: l10n,
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12.0),
@@ -347,16 +340,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                 
                 // 2. Music & Audio Permission Row
                 _buildPermissionRow(
-                  title: UiUtils.tr(context, "MUSIC & AUDIO ACCESS", "म्यूजिक और ऑडियो एक्सेस"),
-                  description: UiUtils.tr(
-                    context,
-                    "Required to discover and play standard offline audio tracks on your device memory.",
-                    "आपके डिवाइस की मेमोरी में ऑफ़लाइन ऑडियो ट्रैक्स को खोजने और चलाने के लिए आवश्यक है।"
-                  ),
+                  title: l10n.musicAudioAccess.toUpperCase(),
+                  description: l10n.welcomeMusicAudioDesc,
                   isGranted: _audioGranted,
                   onGrant: _requestAudioPermission,
                   colorScheme: colorScheme,
                   accentColor: Color(settings.accentColor),
+                  l10n: l10n,
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 12.0),
@@ -365,16 +355,14 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                 
                 // 3. All Files Permission Row (Highly recommended)
                 _buildPermissionRow(
-                  title: UiUtils.tr(context, "ALL FILES ACCESS (RECOMMENDED)", "सभी फाइलों का एक्सेस (अनुशंसित)"),
-                  description: UiUtils.tr(
-                    context,
-                    "Highly recommended for professional scanning to locate songs in non-standard directories (Downloads, Telegram, custom folders).",
-                    "डाउनलोड, टेलीग्राम और कस्टम फ़ोल्डर जैसी गैर-मानक निर्देशिकाओं में गाने खोजने के लिए अत्यधिक अनुशंसित है।"
-                  ),
+                  title: l10n.allFilesAccess.toUpperCase(),
+                  description: l10n.welcomeAllFilesDesc,
                   isGranted: _allFilesGranted,
                   onGrant: _requestAllFilesPermission,
                   colorScheme: colorScheme,
-                  accentColor: Color(settings.accentColor),
+                  accentColor: Color(settings.accentColor), 
+                  l10n: l10n,
+                  
                 ),
               ],
             ),
@@ -401,7 +389,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                       }
                     }
                   : null,
-              label: UiUtils.tr(context, "GO START", "शुरू करें"),
+              label: l10n.goStart,
               icon: LucideIcons.playCircle,
               gradientColors: _permissionGranted
                   ? [
@@ -431,11 +419,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                     Icon(LucideIcons.checkCircle2, color: Color(settings.accentColor), size: 18.s),
                     const SizedBox(width: 10),
                     Text(
-                      UiUtils.tr(
-                        context,
-                        "SCAN COMPLETE: ${librarySongs.length} SONGS DETECTED!",
-                        "स्कैन पूर्ण: ${librarySongs.length} गाने मिले!"
-                      ),
+                      l10n.scanCompleteSongsDetected(librarySongs.length),
                       style: TextStyle(
                         fontSize: 12.ts,
                         fontWeight: FontWeight.bold,
@@ -457,7 +441,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                 color: _permissionGranted ? Colors.white60 : Colors.white24,
               ),
               label: Text(
-                UiUtils.tr(context, "SELECT SPECIFIC FOLDER", "विशिष्ट फ़ोल्डर चुनें"),
+                l10n.selectSpecificFolder,
                 style: TextStyle(
                   fontSize: 12.ts,
                   color: _permissionGranted ? Colors.white70 : Colors.white24,
@@ -479,6 +463,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
     required VoidCallback onGrant,
     required ColorScheme colorScheme,
     required Color accentColor,
+    required AppLocalizations l10n,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -536,7 +521,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
               ),
               onPressed: onGrant,
               child: Text(
-                UiUtils.tr(context, "GRANT", "स्वीकृत करें"),
+                l10n.grant,
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 11.ts,
@@ -553,7 +538,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              UiUtils.tr(context, "GRANTED", "स्वीकृत"),
+              l10n.granted,
               style: TextStyle(
                 color: accentColor,
                 fontSize: 11.ts,
@@ -566,7 +551,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
   }
 
   // State 2: Deep Scanning State
-  Widget _buildScanningState(ColorScheme colorScheme) {
+  Widget _buildScanningState(ColorScheme colorScheme, AppLocalizations l10n) {
     final settings = ref.watch(settingsProvider);
     return Column(
       key: const ValueKey('scanning_state'),
@@ -574,16 +559,16 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
       children: [
         // Custom interactive glowing spinner
         SizedBox(
-          width: 250.s,
-          height: 320.s,
+          width: 400.s,
+          height: 300.s,
           child: Lottie.asset(
             'assets/loading.json',
             fit: BoxFit.contain,
           ),
         ),
-        const SizedBox(height: 48),
+        const SizedBox(height: 24),
         Text(
-          UiUtils.tr(context, "DEEP STORAGE SCAN IN PROGRESS...", "गहरा स्टोरेज स्कैन चल रहा है..."),
+          l10n.deepStorageScanProgress,
           style: TextStyle(
             fontSize: 16.ts,
             fontWeight: FontWeight.bold,
@@ -595,11 +580,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Text(
-            UiUtils.tr(
-              context,
-              "Scanning all folders and subfolders for audio files.",
-              "ऑडियो फाइलों के लिए सभी फ़ोल्डर और सब-फ़ोल्डर को स्कैन किया जा रहा है।"
-            ),
+            l10n.welcomeScanningFoldersDesc,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.ts,
@@ -613,7 +594,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
   }
 
   // State 3: User Information / Instructions State when No Songs are Found
-  Widget _buildNoSongsState(ColorScheme colorScheme) {
+  Widget _buildNoSongsState(ColorScheme colorScheme, AppLocalizations l10n) {
     final settings = ref.watch(settingsProvider);
     return Column(
       key: const ValueKey('no_songs_state'),
@@ -639,7 +620,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         const SizedBox(height: 24),
 
         Text(
-          UiUtils.tr(context, "NO MUSIC DETECTED", "कोई संगीत फ़ाइल नहीं मिली"),
+          l10n.noMusicDetected,
           style: TextStyle(
             fontSize: 18.ts,
             fontWeight: FontWeight.bold,
@@ -649,11 +630,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         ),
         const SizedBox(height: 12),
         Text(
-          UiUtils.tr(
-            context,
-            "We couldn't find any supported audio files (MP3, FLAC, WAV, M4A, OGG) on your device storage.",
-            "हमें आपके डिवाइस स्टोरेज पर कोई समर्थित ऑडियो फाइलें (MP3, FLAC, WAV, M4A, OGG) नहीं मिलीं।"
-          ),
+          l10n.welcomeNoSongsDesc,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13.ts,
@@ -666,36 +643,24 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         // Custom Step-by-Step Instruction Cards
         _buildInstructionStep(
           stepNumber: "1",
-          title: UiUtils.tr(context, "CONNECT DEVICE", "डिवाइस कनेक्ट करें"),
-          description: UiUtils.tr(
-            context,
-            "Plug your phone or device into a personal computer using a standard USB data cable.",
-            "यूएसबी डेटा केबल का उपयोग करके अपने फोन को कंप्यूटर से कनेक्ट करें।"
-          ),
+          title: l10n.connectDevice,
+          description: l10n.welcomeInstructionConnectDesc,
           icon: LucideIcons.usb,
           colorScheme: colorScheme,
         ),
         const SizedBox(height: 16),
         _buildInstructionStep(
           stepNumber: "2",
-          title: UiUtils.tr(context, "TRANSFER MUSIC FILES", "संगीत फाइलें ट्रांसफर करें"),
-          description: UiUtils.tr(
-            context,
-            "Copy your offline music files (supports .mp3, .flac, .m4a, .wav) directly into the standard 'Music' or 'Download' folder of your device.",
-            "अपने गानों को फोन के 'Music' या 'Download' फोल्डर में कॉपी करें।"
-          ),
+          title: l10n.transferMusicFiles,
+          description: l10n.welcomeInstructionTransferDesc,
           icon: LucideIcons.arrowDownToLine,
           colorScheme: colorScheme,
         ),
         const SizedBox(height: 16),
         _buildInstructionStep(
           stepNumber: "3",
-          title: UiUtils.tr(context, "DOWNLOAD AUDIO DIRECTLY", "संगीत सीधे डाउनलोड करें"),
-          description: UiUtils.tr(
-            context,
-            "Alternatively, download files directly using a web browser or other downloader utility on the device itself.",
-            "या फिर वेब ब्राउज़र का उपयोग करके सीधे फोन में संगीत डाउनलोड करें।"
-          ),
+          title: l10n.downloadAudioDirectly,
+          description: l10n.welcomeInstructionDownloadDesc,
           icon: LucideIcons.chrome,
           colorScheme: colorScheme,
         ),
@@ -704,7 +669,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         // Quick Retry/Actions
         _PremiumButton(
           onPressed: _startStorageScanFlow,
-          label: UiUtils.tr(context, "RESCAN STORAGE", "स्टोरेज दोबारा स्कैन करें"),
+          label: l10n.rescanStorage,
           icon: LucideIcons.refreshCw,
           gradientColors: [
             Color(settings.accentColor),
@@ -719,7 +684,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             });
           },
           child: Text(
-            UiUtils.tr(context, "BACK TO MAIN VIEW", "मुख्य स्क्रीन पर जाएं"),
+            l10n.backToMainView,
             style: TextStyle(
               fontSize: 12.ts,
               color: Colors.white60,
@@ -812,9 +777,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
 
     if (Platform.isAndroid && !_permissionGranted) {
       if (mounted) {
+        final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(UiUtils.tr(context, 'Storage permissions are required to scan device memory.', 'डिवाइस मेमोरी को स्कैन करने के लिए स्टोरेज अनुमतियों की आवश्यकता है।')),
+            content: Text(localizations.storagePermissionRequired),
           ),
         );
         setState(() {

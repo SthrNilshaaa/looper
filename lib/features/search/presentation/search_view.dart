@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
@@ -50,7 +51,43 @@ final searchResultsProvider = StreamProvider<SearchResults>((ref) {
             .filter()
             .nameContains(query, caseSensitive: false)
             .findAll();
-        return SearchResults(songs: songs, albums: albums, artists: artists);
+
+        // Sort songs: top match songs name > lyrics match > others
+        final lowerQuery = query.toLowerCase();
+        final sortedSongs = List<Song>.from(songs);
+        sortedSongs.sort((a, b) {
+          int getSongScore(Song song) {
+            final title = song.title.toLowerCase();
+            final lyrics = (song.lyrics ?? '').toLowerCase();
+            final artist = (song.artist ?? '').toLowerCase();
+            final album = (song.album ?? '').toLowerCase();
+
+            // 1. Top Match Songs Name
+            if (title == lowerQuery) return 100;
+            if (title.startsWith(lowerQuery)) return 90;
+            if (title.contains(lowerQuery)) return 80;
+
+            // 2. Lyrics Match
+            if (lyrics.contains(lowerQuery)) return 50;
+
+            // 3. Others (Artist or Album contain query)
+            if (artist.contains(lowerQuery) || album.contains(lowerQuery)) return 30;
+
+            return 0;
+          }
+
+          final scoreA = getSongScore(a);
+          final scoreB = getSongScore(b);
+          
+          if (scoreA != scoreB) {
+            return scoreB.compareTo(scoreA); // Higher score first
+          }
+          
+          // Secondary sort: alphabetical by title
+          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        });
+
+        return SearchResults(songs: sortedSongs, albums: albums, artists: artists);
       });
 });
 
@@ -79,6 +116,7 @@ class SearchView extends ConsumerWidget {
   }
 
   Widget _buildRecentSearches(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -90,7 +128,7 @@ class SearchView extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            UiUtils.tr(context, 'Search your entire library', 'अपनी पूरी लाइब्रेरी खोजें'),
+            l10n.searchLibraryHint,
             style: const TextStyle(color: Colors.grey),
           ),
         ],
@@ -103,27 +141,40 @@ class SearchView extends ConsumerWidget {
     WidgetRef ref,
     BuildContext context,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     if (results.songs.isEmpty &&
         results.albums.isEmpty &&
         results.artists.isEmpty) {
-      return Center(child: Text(UiUtils.tr(context, 'No results found', 'कोई परिणाम नहीं मिला')));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Text(l10n.noResultsFound),
+        ),
+      );
     }
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(0, 16, 0, 180),
       children: [
-        _buildTopResult(results, ref, context),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildTopResult(results, ref, context),
+        ),
         const SizedBox(height: 16),
         if (results.artists.isNotEmpty) ...[
-          Text(
-            UiUtils.tr(context, 'Artists', 'कलाकार'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              l10n.artists,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(
             height: 140,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: results.artists.length,
               itemBuilder: (context, index) =>
                   _ArtistResultCard(artist: results.artists[index]),
@@ -132,15 +183,19 @@ class SearchView extends ConsumerWidget {
           const SizedBox(height: 24),
         ],
         if (results.albums.isNotEmpty) ...[
-          Text(
-            UiUtils.tr(context, 'Albums', 'एल्बम'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              l10n.albums,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+            ),
           ),
           const SizedBox(height: 12),
           SizedBox(
             height: 180,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               itemCount: results.albums.length,
               itemBuilder: (context, index) =>
                   _AlbumResultCard(album: results.albums[index]),
@@ -149,11 +204,6 @@ class SearchView extends ConsumerWidget {
           const SizedBox(height: 24),
         ],
         if (results.songs.length > 1) ...[
-          Text(
-            UiUtils.tr(context, 'Songs', 'गाने'),
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
-          ),
-          const SizedBox(height: 12),
           SongsList(
             songs: results.songs.sublist(1),
             shrinkWrap: true,
@@ -170,6 +220,7 @@ class SearchView extends ConsumerWidget {
     WidgetRef ref,
     BuildContext context,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     if (results.songs.isEmpty) return const SizedBox.shrink();
     final topSong = results.songs.first;
 
@@ -177,7 +228,7 @@ class SearchView extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          UiUtils.tr(context, 'Top Result', 'शीर्ष परिणाम'),
+          l10n.topResult,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
         ),
         const SizedBox(height: 12),
@@ -253,6 +304,7 @@ class _SongResultCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
+    final l10n = AppLocalizations.of(context)!;
 
     String? lyricSnippet;
     if (searchQuery != null && searchQuery!.isNotEmpty && song.lyrics != null) {
@@ -320,13 +372,13 @@ class _SongResultCard extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        song.artist ?? UiUtils.tr(context, 'Unknown Artist', 'अज्ञात कलाकार'),
+                        song.artist ?? l10n.unknownArtist,
                         style: const TextStyle(fontSize: 14, color: Colors.grey),
                       ),
                       if (lyricSnippet == null) ...[
                         const SizedBox(height: 2),
                         Text(
-                          song.album ?? UiUtils.tr(context, 'Unknown Album', 'अज्ञात एल्बम'),
+                          song.album ?? l10n.unknownAlbum,
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey.withOpacity(0.7),
@@ -371,7 +423,7 @@ class _SongResultCard extends ConsumerWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          UiUtils.tr(context, 'MATCHING LYRICS', 'मैचिंग लिरिक्स'),
+                          l10n.matchingLyrics,
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -448,6 +500,7 @@ class _ArtistResultCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: () async {
         final songs = await DbService.isar.songs
@@ -458,7 +511,7 @@ class _ArtistResultCard extends ConsumerWidget {
             .read(appNavigationProvider.notifier)
             .showCollection(
               title: artist.name,
-              subtitle: UiUtils.tr(context, 'Artist', 'कलाकार'),
+              subtitle: l10n.artist,
               songs: songs,
               art: artist.artPath,
             );
@@ -499,6 +552,7 @@ class _AlbumResultCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return InkWell(
       onTap: () async {
         final songs = await DbService.isar.songs
@@ -509,7 +563,7 @@ class _AlbumResultCard extends ConsumerWidget {
             .read(appNavigationProvider.notifier)
             .showCollection(
               title: album.name,
-              subtitle: album.artist ?? UiUtils.tr(context, 'Unknown Artist', 'अज्ञात कलाकार'),
+              subtitle: album.artist ?? l10n.unknownArtist,
               songs: songs,
               art: album.artPath,
             );
@@ -549,7 +603,7 @@ class _AlbumResultCard extends ConsumerWidget {
               ),
             ),
             Text(
-              album.artist ?? UiUtils.tr(context, 'Unknown Artist', 'अज्ञात कलाकार'),
+              album.artist ?? l10n.unknownArtist,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.grey, fontSize: 11),

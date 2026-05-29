@@ -95,7 +95,7 @@ class MyApp extends ConsumerWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        supportedLocales: const [Locale('en'), Locale('hi')],
+        supportedLocales: AppLocalizations.supportedLocales,
         home: const KeyboardHandler(child: HomeScreen()),
       );
     }

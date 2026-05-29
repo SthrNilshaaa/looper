@@ -18,10 +18,6 @@ class UiUtils {
   /// Returns a smaller spacing for Android.
   static double spacing(double value) => isAndroid ? value * 0.7 : value;
 
-  /// Helper to translate custom strings on the fly
-  static String tr(BuildContext context, String en, String hi) {
-    return Localizations.localeOf(context).languageCode == 'hi' ? hi : en;
-  }
 }
 
 extension UiScalingExtension on num {

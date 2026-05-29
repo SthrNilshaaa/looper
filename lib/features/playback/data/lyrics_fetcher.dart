@@ -87,6 +87,11 @@ class LyricsFetcher {
     }
 
     // 5. Online service search (LRCLIB) - LAST FALLBACK
+    final settings = await DbService.isar.appSettings.get(0);
+    if (settings != null && !settings.enableInternet) {
+      return lrc;
+    }
+
     try {
       final response = await _service.getLyrics(
         trackName: title,

@@ -12,6 +12,7 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/navigation_provider.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 
@@ -78,6 +79,9 @@ class HomeDashboard extends ConsumerWidget {
             const SizedBox(height: 16),
 
             _buildTopArtists(ref, isNarrow, isDynamic),
+            const SizedBox(height: 16),
+            _buildFeaturedAlbums(ref, isNarrow, isDynamic, context),
+            const SizedBox(height: 120),
           ],
         );
       },
@@ -402,6 +406,127 @@ class HomeDashboard extends ConsumerWidget {
                   return _FeaturedArtistCard(
                     artist: artist,
                     isNarrow: isNarrow,
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildFeaturedAlbums(WidgetRef ref, bool isNarrow, bool isDynamic, BuildContext context) {
+    final albumsAsync = ref.watch(albumsProvider);
+    final l10n = AppLocalizations.of(context)!;
+
+    return albumsAsync.when(
+      data: (albums) {
+        if (albums.isEmpty) return const SizedBox.shrink();
+
+        // Take a slice for featured albums (max 10)
+        final featuredAlbums = albums.take(10).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.albums,
+                  style: TextStyle(
+                    fontSize: isNarrow ? 14 : 18,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    ref.read(appNavigationProvider.notifier).setItem(NavItem.albums);
+                  },
+                  child: Text(
+                    l10n.viewAll,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: isNarrow ? 200 : 230,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: featuredAlbums.length,
+                itemBuilder: (context, index) {
+                  final album = featuredAlbums[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: InkWell(
+                      onTap: () async {
+                        final songs = await DbService.isar.songs
+                            .filter()
+                            .albumEqualTo(album.name)
+                            .findAll();
+                        ref
+                            .read(appNavigationProvider.notifier)
+                            .showCollection(
+                              title: album.name,
+                              subtitle: album.artist,
+                              art: album.artPath,
+                              songs: songs,
+                            );
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: isNarrow ? 120 : 140,
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            OptimizedImage(
+                              imagePath: album.artPath,
+                              height: isNarrow ? 104 : 124,
+                              width: isNarrow ? 104 : 124,
+                              borderRadius: BorderRadius.circular(12),
+                              placeholder: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.withOpacity(
+                                    isDynamic ? 0.8 : 0.1,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Center(child: Icon(LucideIcons.disc)),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              album.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              album.artist ?? 'Unknown',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),

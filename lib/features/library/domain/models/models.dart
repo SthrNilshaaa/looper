@@ -93,4 +93,6 @@ class AppSettings {
   bool audioFocus = true;
   bool disableSquiggle = false;
   bool disableAnimatedDuration = false;
+  bool disableBlur = false;
+  bool enableInternet = true;
 }

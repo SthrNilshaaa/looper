@@ -65,6 +65,7 @@ class LibraryState {
 class LibraryNotifier extends StateNotifier<LibraryState> {
   final Ref _ref;
   StreamSubscription<List<Song>>? _songsSubscription;
+  bool _isFetchingArtistImages = false;
 
   LibraryNotifier(this._ref) : super(LibraryState()) {
     _loadLibrary();
@@ -192,19 +193,36 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   }
 
   Future<void> _fetchMissingArtistImages() async {
-    final allArtists = await DbService.isar.artists.where().findAll();
-    final artists = allArtists.where((a) => a.artistImageUrl == null).toList();
-    final service = ArtistImageService();
+    if (_isFetchingArtistImages) return;
+    if (state.isScanning) return;
 
-    for (final artist in artists) {
-      if (artist.name == 'Unknown Artist') continue;
-      final localPath = await service.getArtistImage(artist.name);
-      if (localPath != null) {
-        await DbService.isar.writeTxn(() async {
-          artist.artistImageUrl = localPath;
-          await DbService.isar.artists.put(artist);
-        });
+    _isFetchingArtistImages = true;
+    try {
+      final allArtists = await DbService.isar.artists.where().findAll();
+      final artists = allArtists.where((a) => a.artistImageUrl == null).toList();
+      final service = ArtistImageService();
+
+      for (final artist in artists) {
+        // Yield/stop fetching immediately if a library scan starts
+        if (state.isScanning) break;
+        if (artist.name == 'Unknown Artist') continue;
+
+        final localPath = await service.getArtistImage(artist.name);
+        if (localPath != null) {
+          await DbService.isar.writeTxn(() async {
+            artist.artistImageUrl = localPath;
+            await DbService.isar.artists.put(artist);
+          });
+        }
+
+        // Wait 2.0 seconds between queries to prevent high CPU, power, and bandwidth usage,
+        // and to fully comply with Deezer API rate limits.
+        await Future.delayed(const Duration(milliseconds: 2000));
       }
+    } catch (e) {
+      print('Error in background artist image fetch: $e');
+    } finally {
+      _isFetchingArtistImages = false;
     }
   }
 

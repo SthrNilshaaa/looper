@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lottie/lottie.dart';
 
 class PremiumLoadingView extends ConsumerStatefulWidget {
@@ -18,12 +19,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
   late AnimationController _controller;
   int _loadingPhase = 0;
 
-  final List<String> _loadingMessages = [
-    "INTERROGATING AUDIO STORAGE...",
-    "REFRESHING MUSIC ENGINE...",
-    "EXTRACTING COUSTIC DATA...",
-    "OPTIMIZING PLAYBACK MEMORY...",
-  ];
+  final int _loadingMessagesCount = 4;
 
   @override
   void initState() {
@@ -42,7 +38,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
       await Future.delayed(const Duration(seconds: 4));
       if (mounted) {
         setState(() {
-          _loadingPhase = (_loadingPhase + 1) % _loadingMessages.length;
+          _loadingPhase = (_loadingPhase + 1) % _loadingMessagesCount;
         });
       }
     }
@@ -54,10 +50,19 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
     super.dispose();
   }
 
+  List<String> _getLoadingMessages(AppLocalizations l10n) => [
+    l10n.loadingPhase1,
+    l10n.loadingPhase2,
+    l10n.loadingPhase3,
+    l10n.loadingPhase4,
+  ];
+
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
     final accentColor = Color(settings.accentColor);
+    final l10n = AppLocalizations.of(context)!;
+    final loadingMessages = _getLoadingMessages(l10n);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -79,8 +84,8 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
               children: [
                 // Sonic Wave / Rotating SVG loader animation
                 SizedBox(
-                  width: 250.s,
-                  height: 320.s,
+                  width: 400.s,
+                  height: 300.s,
                   child: Lottie.asset(
                     'assets/loading.json',
                     fit: BoxFit.contain,
@@ -90,7 +95,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
 
                 // Main Loading Text
                 Text(
-                  widget.message ?? UiUtils.tr(context, "LOADING MUSIC LIBRARY", "संगीत लाइब्रेरी लोड हो रही है"),
+                  widget.message ?? l10n.loadingMusicLibrary,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 15,
@@ -105,11 +110,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 500),
                   child: Text(
-                    UiUtils.tr(
-                      context,
-                      _loadingMessages[_loadingPhase],
-                      "कृपया प्रतीक्षा करें...",
-                    ),
+                    loadingMessages[_loadingPhase],
                     key: ValueKey<int>(_loadingPhase),
                     textAlign: TextAlign.center,
                     style: TextStyle(

@@ -8,10 +8,12 @@ import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class GlobalSearchBar extends ConsumerStatefulWidget {
-  const GlobalSearchBar({super.key});
+  final bool autofocus;
+  const GlobalSearchBar({super.key, this.autofocus = false});
 
   @override
   ConsumerState<GlobalSearchBar> createState() => _GlobalSearchBarState();
@@ -24,6 +26,11 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
   void initState() {
     super.initState();
     _controller = TextEditingController(text: ref.read(searchQueryProvider));
+    if (widget.autofocus) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(searchFocusNodeProvider).requestFocus();
+      });
+    }
   }
 
   @override
@@ -49,6 +56,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
     final settings = ref.watch(settingsProvider);
     final isDynamic = settings.enableDynamicTheming;
     final nav = ref.watch(appNavigationProvider);
+    final l10n = AppLocalizations.of(context)!;
     // Remove global watch of searchQueryProvider to prevent rebuilds on every keystroke
     // final query = ref.watch(searchQueryProvider);
 
@@ -110,7 +118,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                     }
                   },
                   decoration: InputDecoration(
-                    hintText: UiUtils.tr(context, 'Search songs', 'गाने खोजें'),
+                    hintText: l10n.searchSongsHint,
                     hintStyle: TextStyle(
                       color: Colors.white.withOpacity(0.5),
                       fontSize: 14,

@@ -6,6 +6,7 @@ import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -18,28 +19,29 @@ class CategoryDetailWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     String translatedTitle = title;
     switch (title) {
       case 'Albums':
-        translatedTitle = UiUtils.tr(context, 'Albums', 'एल्बम');
+        translatedTitle = l10n.albums;
         break;
       case 'Artists':
-        translatedTitle = UiUtils.tr(context, 'Artists', 'कलाकार');
+        translatedTitle = l10n.artists;
         break;
       case 'Genres':
-        translatedTitle = UiUtils.tr(context, 'Genres', 'शैलियां');
+        translatedTitle = l10n.genres;
         break;
       case 'Folders':
-        translatedTitle = UiUtils.tr(context, 'Folders', 'फ़ोल्डर');
+        translatedTitle = l10n.folders;
         break;
       case 'Queue':
-        translatedTitle = UiUtils.tr(context, 'Queue', 'कतार');
+        translatedTitle = l10n.queue;
         break;
       case 'History':
-        translatedTitle = UiUtils.tr(context, 'History', 'इतिहास');
+        translatedTitle = l10n.history;
         break;
       case 'Favorites':
-        translatedTitle = UiUtils.tr(context, 'Favorites', 'पसंदीदा');
+        translatedTitle = l10n.favorites;
         break;
     }
 
@@ -64,12 +66,13 @@ class AlbumsGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<List<Album>>(
       stream: DbService.isar.albums.where().sortByName().watch(fireImmediately: true),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
         final albums = snapshot.data!;
-        if (albums.isEmpty) return Center(child: Text(UiUtils.tr(context, 'No albums found', 'कोई एल्बम नहीं मिला')));
+        if (albums.isEmpty) return Center(child: Text(l10n.noAlbumsFound));
 
         return GridView.builder(
           padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
@@ -87,7 +90,7 @@ class AlbumsGridView extends ConsumerWidget {
                 final songs = await DbService.isar.songs.filter().albumEqualTo(album.name).findAll();
                 ref.read(appNavigationProvider.notifier).showCollection(
                   title: album.name,
-                  subtitle: album.artist ?? UiUtils.tr(context, 'Unknown Artist', 'अज्ञात कलाकार'),
+                  subtitle: album.artist ?? l10n.unknownArtist,
                   art: album.artPath,
                   songs: songs,
                 );
@@ -106,7 +109,7 @@ class AlbumsGridView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(album.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text(album.artist ?? UiUtils.tr(context, 'Unknown Artist', 'अज्ञात कलाकार'), style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(album.artist ?? l10n.unknownArtist, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             );
@@ -124,8 +127,9 @@ class ArtistsGridView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final library = ref.watch(libraryProvider);
     final artists = library.artists;
+    final l10n = AppLocalizations.of(context)!;
 
-    if (artists.isEmpty) return Center(child: Text(UiUtils.tr(context, 'No artists found', 'कोई कलाकार नहीं मिला')));
+    if (artists.isEmpty) return Center(child: Text(l10n.noArtistsFound));
 
     return GridView.builder(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
@@ -143,7 +147,7 @@ class ArtistsGridView extends ConsumerWidget {
             final songs = await DbService.isar.songs.filter().artistEqualTo(artist.name).findAll();
             ref.read(appNavigationProvider.notifier).showCollection(
               title: artist.name,
-              subtitle: UiUtils.tr(context, 'Artist', 'कलाकार'),
+              subtitle: l10n.artist,
               art: artist.artPath,
               imageUrl: artist.artistImageUrl,
               songs: songs,
@@ -177,9 +181,10 @@ class GenresGridView extends ConsumerWidget {
     // Isar doesn't have a distinct query easily for genres if they are just strings in Songs.
     // We'll fetch all songs and group them. For larger libraries, we should cache this.
     final songs = ref.watch(libraryProvider).songs;
+    final l10n = AppLocalizations.of(context)!;
     final genresMap = <String, List<Song>>{};
     for (var song in songs) {
-      final genre = song.genre ?? UiUtils.tr(context, 'Unknown', 'अज्ञात');
+      final genre = song.genre ?? l10n.unknown;
       genresMap.putIfAbsent(genre, () => []).add(song);
     }
     final genres = genresMap.keys.toList()..sort();
@@ -199,7 +204,7 @@ class GenresGridView extends ConsumerWidget {
         return InkWell(
           onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
             title: genre,
-            subtitle: UiUtils.tr(context, 'Genre', 'शैली'),
+            subtitle: l10n.genre,
             songs: genreSongs,
           ),
           child: Container(
@@ -215,7 +220,7 @@ class GenresGridView extends ConsumerWidget {
                 const Icon(LucideIcons.music, color: Colors.blueAccent),
                 const SizedBox(height: 8),
                 Text(genre, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                Text('${genreSongs.length} ${UiUtils.tr(context, 'songs', 'गाने')}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                Text('${genreSongs.length} ${l10n.songs}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
               ],
             ),
           ),
@@ -231,6 +236,7 @@ class FoldersListView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final songs = ref.watch(libraryProvider).songs;
+    final l10n = AppLocalizations.of(context)!;
     final foldersMap = <String, List<Song>>{};
     for (var song in songs) {
       final folder = Directory(song.path).parent.path;
@@ -249,7 +255,7 @@ class FoldersListView extends ConsumerWidget {
           leading: const Icon(LucideIcons.folder, color: Colors.amberAccent),
           title: Text(folderName),
           subtitle: Text(folderPath, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-          trailing: Text('${folderSongs.length} ${UiUtils.tr(context, 'songs', 'गाने')}'),
+          trailing: Text('${folderSongs.length} ${l10n.songs}'),
           onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
             title: folderName,
             subtitle: folderPath,

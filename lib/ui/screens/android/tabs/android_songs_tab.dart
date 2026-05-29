@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/core/navigation_provider.dart';
@@ -23,6 +24,7 @@ class AndroidSongsTab extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final playbackState = ref.watch(playbackProvider);
     final song = playbackState.currentSong;
+    final l10n = AppLocalizations.of(context)!;
     
     if (library.isScanning && library.songs.isEmpty) {
       return const PremiumLoadingView();
@@ -30,7 +32,7 @@ class AndroidSongsTab extends ConsumerWidget {
 
     return library.songs.isEmpty
         ? EmptyLibraryView(
-            title: UiUtils.tr(context, 'No songs found', 'कोई गाना नहीं मिला'),
+            title: l10n.noSongsFound,
           )
         : Scaffold(
             backgroundColor: settings.enableDynamicTheming
@@ -46,7 +48,7 @@ class AndroidSongsTab extends ConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          UiUtils.tr(context, 'All Songs', 'सभी गाने'),
+                          l10n.allSongs,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 38,
