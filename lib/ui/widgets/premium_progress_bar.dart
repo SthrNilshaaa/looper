@@ -51,7 +51,7 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
         style: GoogleFonts.dmSans(
           color: Colors.white70,
           fontWeight: Platform.isLinux ? FontWeight.w300 : FontWeight.w600,
-          fontSize: 12,
+          fontSize: 14,
           fontFeatures: const [FontFeature.tabularFigures()],
         ),
       );
@@ -170,7 +170,7 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
       children: [
         sliderWidget,
         if (widget.showTimestamps) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 2),
             child: Row(

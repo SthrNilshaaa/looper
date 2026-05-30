@@ -146,6 +146,8 @@ class SettingsView extends ConsumerWidget {
                       items: const [
                         DropdownMenuItem(value: 'en', child: Text('English')),
                         DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
+                        DropdownMenuItem(value: 'es', child: Text('Español')),
+                        DropdownMenuItem(value: 'fr', child: Text('Français')),
                       ],
                       onChanged: (lang) {
                         if (lang != null) {

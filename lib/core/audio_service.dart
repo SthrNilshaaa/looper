@@ -324,7 +324,11 @@ class AudioService {
   Future<void> play(String path, {Map<String, dynamic>? metadata}) async {
     _playOnInterruptionEnd = false; // Reset auto-resume on fresh manual play
     if (Platform.isAndroid) {
-      _requestAudioFocus(); // Request focus, but don't let transient delay block the user
+      final hasFocus = await _requestAudioFocus();
+      if (!hasFocus) {
+        debugPrint('🎵 Playback aborted: Failed to acquire Audio Focus.');
+        return;
+      }
     }
 
     final extras = metadata?.map((k, v) => MapEntry(k, v.toString()));
@@ -398,7 +402,11 @@ class AudioService {
   Future<void> resume() async {
     _playOnInterruptionEnd = false; // Reset auto-resume on manual resume
     if (Platform.isAndroid) {
-      _requestAudioFocus(); // Request focus, but don't let transient delay block the user
+      final hasFocus = await _requestAudioFocus();
+      if (!hasFocus) {
+        debugPrint('🎵 Resume aborted: Failed to acquire Audio Focus.');
+        return;
+      }
     }
     await player.play();
   }
