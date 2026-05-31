@@ -477,7 +477,7 @@ class _SongTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     
-    final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
+    final isCurrent = ref.watch(playbackProvider).currentSong?.path == song.path;
 
     String? lyricSnippet;
     if (searchQuery != null && searchQuery!.isNotEmpty && song.lyrics != null) {
@@ -613,7 +613,7 @@ class _SongTile extends ConsumerWidget {
         onPressed: () => _showSongOptions(context, ref, song, l10n),
       ),
       onTap: () {
-        final index = songs.indexWhere((s) => s.id == song.id);
+        final index = songs.indexWhere((s) => s.path == song.path);
         if (index != -1) {
           ref
               .read(playbackProvider.notifier)

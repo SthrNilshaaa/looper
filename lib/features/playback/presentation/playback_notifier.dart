@@ -109,8 +109,15 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       state = state.copyWith(duration: duration);
     });
 
+    DateTime? lastCompletedTime;
     player.stream.completed.listen((completed) {
       if (completed) {
+        final now = DateTime.now();
+        if (lastCompletedTime != null && now.difference(lastCompletedTime!).inMilliseconds < 1000) {
+          return;
+        }
+        lastCompletedTime = now;
+
         if (state.repeatMode == RepeatMode.one) {
           player.seek(Duration.zero);
           ref.read(audioServiceProvider).resume();
@@ -151,7 +158,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     if (state.isShuffle) {
       _playlist.shuffle();
       _currentIndex = _playlist.indexWhere(
-        (s) => s.id == songs[initialIndex].id,
+        (s) => s.path == songs[initialIndex].path,
       );
     } else {
       _currentIndex = initialIndex;
@@ -212,7 +219,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       await DbService.isar.songs.put(songToUpdate);
     });
 
-    final idx = _playlist.indexWhere((s) => s.id == song.id);
+    final idx = _playlist.indexWhere((s) => s.path == song.path);
     if (idx != -1) {
       _currentIndex = idx;
     } else {
@@ -230,14 +237,14 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   void addToQueue(Song song) {
-    if (_playlist.any((s) => s.id == song.id)) return;
+    if (_playlist.any((s) => s.path == song.path)) return;
     _playlist.add(song);
     state = state.copyWith(queue: List.from(_playlist));
   }
 
   void addNext(Song song) {
     // Remove if already in queue to avoid duplicates/unexpected behavior
-    _playlist.removeWhere((s) => s.id == song.id);
+    _playlist.removeWhere((s) => s.path == song.path);
 
     final insertIndex = _currentIndex + 1;
     if (insertIndex >= _playlist.length) {
@@ -348,7 +355,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     state = state.copyWith(queue: _playlist);
     if (state.currentSong != null) {
       _currentIndex = _playlist.indexWhere(
-        (s) => s.id == songId(state.currentSong!),
+        (s) => s.path == state.currentSong!.path,
       );
     }
     ref.read(settingsProvider.notifier).updateShuffle(newState);
@@ -394,7 +401,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _playlist.insert(newIndex, song);
     state = state.copyWith(queue: List.from(_playlist));
     if (state.currentSong != null) {
-      _currentIndex = _playlist.indexOf(state.currentSong!);
+      _currentIndex = _playlist.indexWhere((s) => s.path == state.currentSong!.path);
     }
   }
 
@@ -405,7 +412,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _playlist.removeAt(index);
     state = state.copyWith(queue: List.from(_playlist));
     if (state.currentSong != null) {
-      _currentIndex = _playlist.indexOf(state.currentSong!);
+      _currentIndex = _playlist.indexWhere((s) => s.path == state.currentSong!.path);
     }
   }
 
@@ -463,7 +470,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       });
 
       // Update state if it's the current song
-      if (state.currentSong?.id == song.id) {
+      if (state.currentSong?.path == song.path) {
         state = state.copyWith(currentSong: song);
       }
     } catch (e) {
@@ -482,11 +489,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         await DbService.isar.songs.delete(song.id);
       });
 
-      if (state.currentSong?.id == song.id) {
+      if (state.currentSong?.path == song.path) {
         await skipNext();
       }
 
-      _playlist.removeWhere((s) => s.id == song.id);
+      _playlist.removeWhere((s) => s.path == song.path);
       state = state.copyWith(queue: List.from(_playlist));
     } catch (e) {
       print('Error deleting file: $e');

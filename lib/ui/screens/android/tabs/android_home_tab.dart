@@ -349,7 +349,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                 itemBuilder: (context, index) {
                                   final song = pageItems[index];
                                   final isPlaying =
-                                      playbackState.currentSong?.id == song.id;
+                                      playbackState.currentSong?.path == song.path;
 
                                   return GestureDetector(
                                     onTap: () {
@@ -516,7 +516,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
                   final song = dateAddedSongs[index];
-                  final isCurrent = playbackState.currentSong?.id == song.id;
+                  final isCurrent = playbackState.currentSong?.path == song.path;
 
                   return ListTile(
                     contentPadding: const EdgeInsets.symmetric(

@@ -60,7 +60,7 @@ class QueueBottomSheet extends ConsumerWidget {
               },
               itemBuilder: (context, index) {
                 final song = queue[index];
-                final isCurrent = playback.currentSong?.id == song.id;
+                final isCurrent = playback.currentSong?.path == song.path;
 
                 return ListTile(
                   key: ValueKey('queue_sheet_${song.path}_$index'),

@@ -303,7 +303,7 @@ class _SongResultCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isCurrent = ref.watch(playbackProvider).currentSong?.id == song.id;
+    final isCurrent = ref.watch(playbackProvider).currentSong?.path == song.path;
     final l10n = AppLocalizations.of(context)!;
 
     String? lyricSnippet;

@@ -64,7 +64,7 @@ class QueueView extends ConsumerWidget {
                   },
                   itemBuilder: (context, index) {
                     final song = playback.queue[index];
-                    final isCurrent = playback.currentSong?.id == song.id;
+                    final isCurrent = playback.currentSong?.path == song.path;
 
                     return Dismissible(
                       key: ValueKey('queue_view_${song.path}_$index'),

@@ -44,11 +44,7 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
         }
       });
 
-      player.stream.completed.listen((completed) {
-        if (completed && onNext != null) {
-          onNext!();
-        }
-      });
+
 
       // Initial state
       updateControls(
