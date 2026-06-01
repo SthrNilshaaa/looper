@@ -944,6 +944,13 @@ class _GestureArtworkWithFeedbackState
       }
     }
 
+    if (nextSong?.artPath != null && File(nextSong!.artPath!).existsSync()) {
+      precacheImage(FileImage(File(nextSong.artPath!)), context);
+    }
+    if (prevSong?.artPath != null && File(prevSong!.artPath!).existsSync()) {
+      precacheImage(FileImage(File(prevSong.artPath!)), context);
+    }
+
     final screenWidth = MediaQuery.of(context).size.width;
     final dragPercent = (_dragOffset / screenWidth).abs().clamp(0.0, 1.0);
     final Song? bgSong = _dragOffset < 0
@@ -1005,9 +1012,6 @@ class _GestureArtworkWithFeedbackState
               });
             });
             _snapController.forward(from: 0.0).then((_) {
-              setState(() {
-                _dragOffset = 0.0;
-              });
               ref.read(playbackProvider.notifier).skipNext();
             });
           }
@@ -1041,9 +1045,6 @@ class _GestureArtworkWithFeedbackState
               });
             });
             _snapController.forward(from: 0.0).then((_) {
-              setState(() {
-                _dragOffset = 0.0;
-              });
               ref.read(playbackProvider.notifier).skipPrevious();
             });
           }
@@ -1107,17 +1108,18 @@ class _GestureArtworkWithFeedbackState
                       );
                     },
                     transitionBuilder: (Widget child, Animation<double> animation) {
-                      if (_skipSlideTransition) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: child,
-                        );
-                      }
-
                       final keyVal = child.key is ValueKey<String>
                           ? (child.key as ValueKey<String>).value
                           : '';
                       final isIncoming = keyVal == widget.song.path;
+
+                      if (_skipSlideTransition) {
+                        if (isIncoming) {
+                          return child;
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      }
 
                       Offset beginOffset;
                       Offset endOffset;

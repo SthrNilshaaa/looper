@@ -69,14 +69,23 @@ class CollectionDetailView extends ConsumerWidget {
                   // Header - Now always a Row for cover and name
                   Container(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        _buildArt(context, true),
-                        const SizedBox(width: 20),
-                        Expanded(child: _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, songsToRender)),
-                      ],
-                    ),
+                    child: constraints.maxWidth < 450
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Center(child: _buildArt(context, true)),
+                              const SizedBox(height: 20),
+                              _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, songsToRender),
+                            ],
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              _buildArt(context, true),
+                              const SizedBox(width: 20),
+                              Expanded(child: _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, songsToRender)),
+                            ],
+                          ),
                   ),
                   // Songs List
                   SongsList(

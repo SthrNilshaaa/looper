@@ -1,4 +1,4 @@
-# <p align="center"><img src="assets/main_logo.svg" width="240" height="96" /><br/></p>
+# <p align="center"><img src="assets/main_logo.svg" width="240" height="96" style="background-color: #2e2e2e; padding: 12px; border-radius: 16px;" /><br/></p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20Android-blueviolet?style=for-the-badge&logo=linux&logoColor=white" />
@@ -37,11 +37,12 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 └───────────────────────────────────────┴────────────────────────────────┘
 ```
 
-- **Dynamic Theme Adapting**: The entire interface—buttons, borders, and ambient background blurs—morphicly shifts accent color tones to blend beautifully with your current song's album art.
-- **Advanced Lyrics Engine**: Synchronized scrolling LRC lyrics with dynamic line-by-line animations and tap-to-seek playback integration.
-- **Sub-Second Global Search**: Search instantly by song name, album, artist, or even specific **lyric lines** with custom matching snippets highlighted.
-- **Interactive Android Experience**: Modernized Android build with sequential, interactive permission onboarding cards and automatic playback resume during system audio focus transitions.
-- **Robust Linux Integration**: Complete native title-bar options, keyboard media controls, and lightweight background playback using `libmpv`.
+- **Dynamic Theme & Neo-Blur Aesthetics**: The entire interface—buttons, borders, text accents, and ambient background blurs—morphs dynamically to blend beautifully with the album art of the active song, featuring smooth crossfade transitions.
+- **Advanced Lyrics Engine**: Synchronized scrolling LRC lyrics with dynamic, tactile line-by-line animations, interactive tap-to-seek playback integration, font scaling, and display keep-awake modes.
+- **Resilient Offline File Operations**: Full audio engine state release and file-lock management when renaming or deleting tracks on local storage, backed by immediate, colorful alerts through custom glassmorphic SnackBars.
+- **Fully Responsive & Adaptive Layouts**: The dashboard and detail pages (such as the playlist header) intelligently reflow between horizontal rows and vertical columns to fit perfectly on standard, large, and extremely narrow devices alike.
+- **Sub-Second Search & Local Library Scans**: Instant global scanning and indexing of 50k+ local libraries, with micro-latency search matching song titles, artists, albums, and even specific lyric phrases.
+- **Interactive Android & Linux Parity**: Native media keys, MPRIS controls on Linux, automatic audio focus transitions, and beautiful permission onboarding on Android.
 
 ---
 
