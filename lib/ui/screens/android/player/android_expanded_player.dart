@@ -4,11 +4,12 @@ import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:looper_player/ui/widgets/song_options_bottom_sheet.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/core/ui_utils.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:squiggly_slider/slider.dart';
@@ -139,114 +140,14 @@ class AndroidExpandedPlayer extends ConsumerWidget {
   }
 
   void _showMoreOptionsBottomSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(
-                  LucideIcons.listOrdered,
-                  color: Colors.white,
-                ),
-                title: Text(
-                  l10n.addToQueue,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  final currentSong = ref.read(playbackProvider).currentSong;
-                  if (currentSong != null) {
-                    ref.read(playbackProvider.notifier).addToQueue(currentSong);
-                  }
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(LucideIcons.heart, color: Colors.white),
-                title: Text(
-                  l10n.toggleFavorite,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  final currentSong = ref.read(playbackProvider).currentSong;
-                  if (currentSong != null) {
-                    ref.read(playbackProvider.notifier).toggleFavorite();
-                  }
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(LucideIcons.edit2, color: Colors.white),
-                title: Text(
-                  l10n.renameFile,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  final currentSong = ref.read(playbackProvider).currentSong;
-                  if (currentSong != null) {
-                    _showRenameDialog(context, ref, currentSong);
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(LucideIcons.share2, color: Colors.white),
-                title: Text(
-                  l10n.shareFile,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  final currentSong = ref.read(playbackProvider).currentSong;
-                  if (currentSong != null) {
-                    ref.read(playbackProvider.notifier).shareSong(currentSong);
-                  }
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(LucideIcons.trash2, color: Colors.white),
-                title: Text(
-                  l10n.deleteFile,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  final currentSong = ref.read(playbackProvider).currentSong;
-                  if (currentSong != null) {
-                    _showDeleteDialog(context, ref, currentSong);
-                  }
-                },
-              ),
-              ListTile(
-                leading: const Icon(LucideIcons.info, color: Colors.white),
-                title: Text(
-                  l10n.songDetailsAndFrequency,
-                  style: const TextStyle(color: Colors.white),
-                ),
-                onTap: () {
-                  final currentSong = ref.read(playbackProvider).currentSong;
-                  if (currentSong != null) {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SongInfoScreen(song: currentSong),
-                      ),
-                    );
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
+    final currentSong = ref.read(playbackProvider).currentSong;
+    if (currentSong != null) {
+      showSongOptionsBottomSheet(
+        context: context,
+        ref: ref,
+        song: currentSong,
+      );
+    }
   }
 
   @override
@@ -363,43 +264,19 @@ class AndroidExpandedPlayer extends ConsumerWidget {
               //     ),
               //   ),
               // ),
-              Positioned.fill(
-                child: TweenAnimationBuilder<double>(
-                  key: ValueKey(song!.artPath),
-                  tween: Tween(begin: 1.0, end: 1.08),
-                  duration: const Duration(seconds: 30),
-                  curve: Curves.linear,
-                  builder: (context, scale, child) {
-                    return Transform.scale(
-                      scale: scale,
-                      child: ImageFiltered(
-                        imageFilter: ImageFilter.blur(
-                          sigmaX: 18,
-                          sigmaY: 18,
-                        ),
-                        child: RepaintBoundary(
-                          child: Image.file(
-                            File(song.artPath!),
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-
-                            // VERY IMPORTANT
-                            filterQuality: FilterQuality.low,
-
-                            // Massive optimization
-                            cacheWidth: 80,
-                            cacheHeight: 80,
-
-                            gaplessPlayback: true,
-
-                            errorBuilder: (_, __, ___) =>
-                                const SizedBox.shrink(),
-                          ),
-                        ),
-                      ),
+                Positioned.fill(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 800),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
                     );
                   },
+                  child: BlurredBackgroundArt(
+                    key: ValueKey(song!.artPath),
+                    song: song,
+                  ),
                 ),
               ),
 
@@ -411,7 +288,9 @@ class AndroidExpandedPlayer extends ConsumerWidget {
               ),
             ] else ...[
               Positioned.fill(
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOut,
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       center: Alignment.topRight,
@@ -1126,10 +1005,10 @@ class _GestureArtworkWithFeedbackState
               });
             });
             _snapController.forward(from: 0.0).then((_) {
-              ref.read(playbackProvider.notifier).skipNext();
               setState(() {
                 _dragOffset = 0.0;
               });
+              ref.read(playbackProvider.notifier).skipNext();
             });
           }
         } else if (_dragOffset > threshold || (details.primaryVelocity != null && details.primaryVelocity! > 300)) {
@@ -1162,10 +1041,10 @@ class _GestureArtworkWithFeedbackState
               });
             });
             _snapController.forward(from: 0.0).then((_) {
-              ref.read(playbackProvider.notifier).skipPrevious();
               setState(() {
                 _dragOffset = 0.0;
               });
+              ref.read(playbackProvider.notifier).skipPrevious();
             });
           }
         } else {
@@ -1259,21 +1138,9 @@ class _GestureArtworkWithFeedbackState
                         child: child,
                       );
                     },
-                    child: AspectRatio(
+                    child: ForegroundAlbumArt(
                       key: ValueKey<String>(widget.song.path),
-                      aspectRatio: 1.0,
-                      child: OptimizedImage(
-                        imagePath: widget.song.artPath != null &&
-                                !widget.song.artPath!.startsWith('http')
-                            ? widget.song.artPath
-                            : null,
-                        imageUrl: widget.song.artPath != null &&
-                                widget.song.artPath!.startsWith('http')
-                            ? widget.song.artPath
-                            : null,
-                        borderRadius: BorderRadius.circular(24),
-                        fit: BoxFit.cover,
-                      ),
+                      song: widget.song,
                     ),
                   ),
                 ),
@@ -1426,4 +1293,66 @@ TextStyle _getHeroStyle(Hero hero, TextStyle fallback) {
     return child.style ?? fallback;
   }
   return fallback;
+}
+
+class BlurredBackgroundArt extends StatelessWidget {
+  final Song song;
+  const BlurredBackgroundArt({required this.song, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final path = song.artPath;
+    if (path == null) return const SizedBox.shrink();
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 1.0, end: 1.08),
+      duration: const Duration(seconds: 30),
+      curve: Curves.linear,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(
+              sigmaX: 18,
+              sigmaY: 18,
+            ),
+            child: RepaintBoundary(
+              child: Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                filterQuality: FilterQuality.low,
+                cacheWidth: 80,
+                cacheHeight: 80,
+                gaplessPlayback: true,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class ForegroundAlbumArt extends StatelessWidget {
+  final Song song;
+  const ForegroundAlbumArt({required this.song, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 1.0,
+      child: OptimizedImage(
+        imagePath: song.artPath != null && !song.artPath!.startsWith('http')
+            ? song.artPath
+            : null,
+        imageUrl: song.artPath != null && song.artPath!.startsWith('http')
+            ? song.artPath
+            : null,
+        borderRadius: BorderRadius.circular(24),
+        fit: BoxFit.cover,
+      ),
+    );
+  }
 }

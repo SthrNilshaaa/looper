@@ -67,6 +67,7 @@ class PremiumNavbar extends ConsumerWidget {
                   //  useblur true,
                   isSelected: true,
                    useBlur: useBlur,
+                  keepSurfaceOnDisableBlur: true,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(0);
@@ -92,6 +93,7 @@ class PremiumNavbar extends ConsumerWidget {
                   showLeftBorder: true,
                   showShadow: false,
                    useBlur: useBlur,
+                  keepSurfaceOnDisableBlur: true,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(12),
                     bottomLeft: Radius.circular(12),
@@ -140,6 +142,7 @@ class PremiumNavbar extends ConsumerWidget {
                 //  useblur true,
                   isSelected: false,
                    useBlur: useBlur,
+                  keepSurfaceOnDisableBlur: true,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(0);
@@ -163,6 +166,7 @@ class PremiumNavbar extends ConsumerWidget {
                   // use/////blur true,
                   isSelected: true,
                    useBlur: useBlur,
+                  keepSurfaceOnDisableBlur: true,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(1);
@@ -181,6 +185,7 @@ class PremiumNavbar extends ConsumerWidget {
                    //useblur true,
                   isSelected: false,
                    useBlur: useBlur,
+                  keepSurfaceOnDisableBlur: true,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(2);
@@ -205,6 +210,7 @@ class PremiumNavbar extends ConsumerWidget {
                   showRightBorder: true,
                   showShadow: false,
                   useBlur: useBlur,
+                  keepSurfaceOnDisableBlur: true,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(36),
                     bottomLeft: Radius.circular(36),
@@ -256,6 +262,7 @@ class PremiumNavbar extends ConsumerWidget {
                   heroTag: 'nav_morph_2',
                   isSelected: true,
                    useBlur: useBlur,
+                  keepSurfaceOnDisableBlur: true,
                   onTap: () {
                     HapticFeedback.lightImpact();
                     onTap(2);

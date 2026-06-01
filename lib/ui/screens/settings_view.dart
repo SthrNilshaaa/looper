@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
@@ -233,10 +233,10 @@ class SettingsView extends ConsumerWidget {
                     _PremiumActionRow(
                       icon: LucideIcons.info,
                       title: 'Looper Player',
-                      subtitle: 'Version 1.7.0',
+                      subtitle: 'Version 1.8.0',
                       onTap: () {},
                       trailing: const Text(
-                        'v1.7.0',
+                        'v1.8.0',
                         style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                       isLast: false,
@@ -254,7 +254,7 @@ class SettingsView extends ConsumerWidget {
                       isLast: false,
                     ),
                     _PremiumActionRow(
-                      icon: LucideIcons.github,
+                      icon: LucideIcons.gitFork,
                       title: 'Source Code',
                       subtitle: 'Visit official repository on GitHub',
                       onTap: () async {

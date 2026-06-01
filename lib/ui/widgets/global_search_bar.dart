@@ -9,7 +9,7 @@ import 'package:looper_player/features/settings/presentation/settings_notifier.d
 import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class GlobalSearchBar extends ConsumerStatefulWidget {
   final bool autofocus;
@@ -103,7 +103,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 2,
+                 // vertical: 2,
                 ),
                 child: TextField(
                   focusNode: ref.watch(searchFocusNodeProvider),
@@ -172,4 +172,5 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
       ),
     );
   }
+  
 }

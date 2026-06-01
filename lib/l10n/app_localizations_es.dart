@@ -497,4 +497,69 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get delete => 'Eliminar';
+
+  @override
+  String get downloadMissingArtwork => 'Descargar arte faltante';
+
+  @override
+  String get downloadMissingArtworkDesc =>
+      'Descarga automáticamente arte de portada de alta resolución de iTunes';
+
+  @override
+  String get keepBackgroundGradient => 'Mantener gradiente de fondo';
+
+  @override
+  String get keepBackgroundGradientDesc =>
+      'Mantener el gradiente de fondo en todas las pantallas de la aplicación';
+
+  @override
+  String get homeDashboardSettings => 'Ajustes del panel de inicio';
+
+  @override
+  String get homeDashboardSettingsDesc =>
+      'Personaliza las filas horizontales en tu pantalla de inicio';
+
+  @override
+  String get showArtistsRow => 'Mostrar fila de artistas';
+
+  @override
+  String get showArtistsRowDesc =>
+      'Muestra una lista horizontal de artistas en tu pantalla de inicio';
+
+  @override
+  String get showAlbumsRow => 'Mostrar fila de álbumes';
+
+  @override
+  String get showAlbumsRowDesc =>
+      'Muestra una lista horizontal de álbumes en tu pantalla de inicio';
+
+  @override
+  String get showGenresRow => 'Mostrar fila de géneros';
+
+  @override
+  String get showGenresRowDesc =>
+      'Muestra una lista horizontal de géneros en tu pantalla de inicio';
+
+  @override
+  String get reorderDashboardSections => 'Reordenar secciones del panel';
+
+  @override
+  String get reorderDashboardSectionsDesc =>
+      'Arrastra y suelta para establecer el orden preferido';
+
+  @override
+  String get quickPicksRowDesc => 'Tu cuadrícula de canciones más reproducidas';
+
+  @override
+  String get recentlyAddedSongsRowDesc =>
+      'Una lista de tus últimas importaciones';
+
+  @override
+  String get albumsRowDesc => 'Estante horizontal de álbumes';
+
+  @override
+  String get artistsRowDesc => 'Estante horizontal de artistas';
+
+  @override
+  String get genresRowDesc => 'Estante horizontal de géneros musicales';
 }

@@ -498,4 +498,70 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get delete => 'Supprimer';
+
+  @override
+  String get downloadMissingArtwork => 'Télécharger l\'art manquant';
+
+  @override
+  String get downloadMissingArtworkDesc =>
+      'Télécharger automatiquement les pochettes haute résolution depuis iTunes';
+
+  @override
+  String get keepBackgroundGradient => 'Garder le dégradé de fond';
+
+  @override
+  String get keepBackgroundGradientDesc =>
+      'Garder le dégradé de fond sur tous les écrans de l\'application';
+
+  @override
+  String get homeDashboardSettings => 'Paramètres du tableau de bord';
+
+  @override
+  String get homeDashboardSettingsDesc =>
+      'Personnaliser les lignes horizontales de votre écran d\'accueil';
+
+  @override
+  String get showArtistsRow => 'Afficher la ligne Artistes';
+
+  @override
+  String get showArtistsRowDesc =>
+      'Afficher une liste horizontale d\'artistes sur votre écran d\'accueil';
+
+  @override
+  String get showAlbumsRow => 'Afficher la ligne Albums';
+
+  @override
+  String get showAlbumsRowDesc =>
+      'Afficher une liste horizontale d\'albums sur votre écran d\'accueil';
+
+  @override
+  String get showGenresRow => 'Afficher la ligne Genres';
+
+  @override
+  String get showGenresRowDesc =>
+      'Afficher une liste horizontale de genres sur votre écran d\'accueil';
+
+  @override
+  String get reorderDashboardSections =>
+      'Réorganiser les sections du tableau de bord';
+
+  @override
+  String get reorderDashboardSectionsDesc =>
+      'Glisser-déposer pour définir l\'ordre préféré';
+
+  @override
+  String get quickPicksRowDesc => 'Votre grille de chansons les plus écoutées';
+
+  @override
+  String get recentlyAddedSongsRowDesc =>
+      'Une liste de vos dernières importations';
+
+  @override
+  String get albumsRowDesc => 'Étagère horizontale d\'albums';
+
+  @override
+  String get artistsRowDesc => 'Étagère horizontale d\'artistes';
+
+  @override
+  String get genresRowDesc => 'Étagère horizontale de genres musicaux';
 }

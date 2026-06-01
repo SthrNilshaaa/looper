@@ -12,6 +12,7 @@ import 'package:local_notifier/local_notifier.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 enum RepeatMode { off, all, one }
 
@@ -170,6 +171,15 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   Future<void> play(Song song) async {
+    final settings = ref.read(settingsProvider);
+    if (settings.audioFocus) {
+      final onCall = await ref.read(audioServiceProvider).isOnCall();
+      if (onCall) {
+        print('🎵 Cannot play song: Device is currently on a call.');
+        return;
+      }
+    }
+
     state = state.copyWith(currentSong: song);
     final metadata = {
       'title': song.title,
@@ -291,6 +301,17 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   Future<void> togglePlay() async {
+    if (!state.isPlaying) {
+      final settings = ref.read(settingsProvider);
+      if (settings.audioFocus) {
+        final onCall = await ref.read(audioServiceProvider).isOnCall();
+        if (onCall) {
+          print('🎵 Cannot play/resume: Device is currently on a call.');
+          return;
+        }
+      }
+    }
+
     if (state.isPlaying) {
       await ref.read(audioServiceProvider).pause();
     } else {
@@ -452,51 +473,168 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
   }
 
-  Future<void> renameSong(Song song, String newTitle) async {
+  Future<bool> _requestStoragePermissions() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      // Check if we already have permissions
+      if (await Permission.audio.isGranted ||
+          await Permission.storage.isGranted ||
+          await Permission.manageExternalStorage.isGranted) {
+        return true;
+      }
+
+      // Request permissions
+      Map<Permission, PermissionStatus> statuses = await [
+        Permission.audio,
+        Permission.storage,
+      ].request();
+
+      bool isGranted = (statuses[Permission.audio]?.isGranted ?? false) ||
+                       (statuses[Permission.storage]?.isGranted ?? false);
+
+      if (!isGranted && await Permission.manageExternalStorage.request().isGranted) {
+        isGranted = true;
+      }
+
+      return isGranted;
+    } catch (e) {
+      print('Error requesting storage permissions: $e');
+      return true; // Fallback to let the app try physical operations
+    }
+  }
+
+  Future<bool> renameSong(Song song, String newTitle) async {
+    try {
+      await _requestStoragePermissions();
+    } catch (e) {
+      print('Permission request failed: $e');
+    }
+
+    final isCurrent = state.currentSong?.id == song.id;
+    if (isCurrent) {
+      // Temporarily pause playback to release the file handle lock
+      await player.pause();
+      // Wait for player to completely release the file handle
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
     final file = File(song.path);
     final dir = file.parent.path;
     final ext = p.extension(song.path);
     final newPath = p.join(dir, '$newTitle$ext');
 
+    bool fileRenamed = false;
     try {
       if (await file.exists()) {
         await file.rename(newPath);
+        fileRenamed = true;
       }
+    } catch (e) {
+      print('Physical file rename failed (continuing with DB update): $e');
+    }
 
+    bool dbSuccess = false;
+    try {
       await DbService.isar.writeTxn(() async {
         song.title = newTitle;
         song.path = newPath;
         await DbService.isar.songs.put(song);
       });
+      dbSuccess = true;
+
+      // Update in-memory queue
+      final index = _playlist.indexWhere((s) => s.id == song.id);
+      if (index != -1) {
+        _playlist[index] = song;
+      }
 
       // Update state if it's the current song
-      if (state.currentSong?.path == song.path) {
-        state = state.copyWith(currentSong: song);
+      if (isCurrent) {
+        state = state.copyWith(
+          currentSong: song,
+          queue: List.from(_playlist),
+        );
+        // Resume playing track from the new path
+        await playAtIndex(_currentIndex);
+      } else {
+        state = state.copyWith(queue: List.from(_playlist));
       }
     } catch (e) {
-      print('Error renaming file: $e');
+      print('Error renaming in DB: $e');
     }
+
+    return dbSuccess;
   }
 
-  Future<void> deleteSong(Song song) async {
+  Future<bool> deleteSong(Song song) async {
     try {
-      final file = File(song.path);
+      await _requestStoragePermissions();
+    } catch (e) {
+      print('Permission request failed: $e');
+    }
+
+    final isCurrent = state.currentSong?.id == song.id;
+    if (isCurrent) {
+      if (_playlist.length > 1) {
+        await skipNext();
+      } else {
+        clearQueue();
+      }
+      // Wait for player to completely release the file handle
+      await Future.delayed(const Duration(milliseconds: 500));
+    }
+
+    final file = File(song.path);
+    bool fileDeleted = false;
+    try {
       if (await file.exists()) {
         await file.delete();
+        fileDeleted = true;
       }
+    } catch (e) {
+      print('Physical file delete failed (continuing with DB delete): $e');
+    }
 
+    bool dbSuccess = false;
+    try {
       await DbService.isar.writeTxn(() async {
         await DbService.isar.songs.delete(song.id);
       });
+      dbSuccess = true;
 
-      if (state.currentSong?.path == song.path) {
-        await skipNext();
-      }
-
-      _playlist.removeWhere((s) => s.path == song.path);
+      _playlist.removeWhere((s) => s.id == song.id);
       state = state.copyWith(queue: List.from(_playlist));
+
+      // Clean up orphaned artists and albums
+      await _cleanUpOrphanedArtistsAndAlbums();
     } catch (e) {
-      print('Error deleting file: $e');
+      print('Error deleting from DB: $e');
+    }
+
+    return dbSuccess;
+  }
+
+  Future<void> _cleanUpOrphanedArtistsAndAlbums() async {
+    try {
+      await DbService.isar.writeTxn(() async {
+        final remainingSongs = await DbService.isar.songs.where().findAll();
+        final activeAlbumNames = remainingSongs.map((s) => s.album).toSet();
+        final activeArtistNames = remainingSongs.map((s) => s.artist).toSet();
+
+        final allAlbums = await DbService.isar.albums.where().findAll();
+        final albumsToDelete = allAlbums.where((a) => !activeAlbumNames.contains(a.name)).map((a) => a.id).toList();
+        if (albumsToDelete.isNotEmpty) {
+          await DbService.isar.albums.deleteAll(albumsToDelete);
+        }
+
+        final allArtists = await DbService.isar.artists.where().findAll();
+        final artistsToDelete = allArtists.where((art) => !activeArtistNames.contains(art.name)).map((art) => art.id).toList();
+        if (artistsToDelete.isNotEmpty) {
+          await DbService.isar.artists.deleteAll(artistsToDelete);
+        }
+      });
+    } catch (e) {
+      print('Error cleaning up orphaned artists/albums: $e');
     }
   }
 

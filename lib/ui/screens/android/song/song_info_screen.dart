@@ -9,7 +9,7 @@ import 'package:looper_player/features/playback/data/audio_analyzer.dart';
 import 'package:looper_player/features/playback/data/lyrics_fetcher.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:intl/intl.dart';
 import 'package:looper_player/core/ui_utils.dart';

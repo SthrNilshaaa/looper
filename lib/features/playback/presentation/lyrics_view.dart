@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'widgets/advanced_lyric_renderer.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'overlay_service.dart';

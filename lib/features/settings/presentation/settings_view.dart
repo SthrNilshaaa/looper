@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:file_picker/file_picker.dart';
@@ -40,8 +41,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   void _showCustomColorPicker(BuildContext context, WidgetRef ref, Color initialColor) {
     showModalBottomSheet(
       context: context,
-
       useRootNavigator: true,
+      isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -51,9 +52,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           builder: (context, setModalState) {
             final currentAccent = ref.watch(settingsProvider).accentColor;
             return Container(
-              padding:  EdgeInsets.symmetric(horizontal: 24,vertical:12),
+              height: 650,
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
@@ -111,6 +112,191 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         ),
                       ),
                     ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showReorderBottomSheet(BuildContext context, WidgetRef ref, AppSettings settings) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final currentSettings = ref.watch(settingsProvider);
+            final currentOrder = List<String>.from(currentSettings.homeSectionOrder.isEmpty
+                ? ['quick_picks', 'songs', 'albums', 'artists', 'genres']
+                : currentSettings.homeSectionOrder);
+
+            final itemMeta = {
+              'quick_picks': {
+                'title': l10n.quickPicks,
+                'description': l10n.quickPicksRowDesc,
+                'icon': LucideIcons.sparkles,
+              },
+              'songs': {
+                'title': l10n.songs,
+                'description': l10n.recentlyAddedSongsRowDesc,
+                'icon': LucideIcons.music,
+              },
+              'albums': {
+                'title': l10n.albums,
+                'description': l10n.albumsRowDesc,
+                'icon': LucideIcons.disc,
+              },
+              'artists': {
+                'title': l10n.artists,
+                'description': l10n.artistsRowDesc,
+                'icon': LucideIcons.user,
+              },
+              'genres': {
+                'title': l10n.genres,
+                'description': l10n.genresRowDesc,
+                'icon': LucideIcons.library,
+              },
+            };
+
+            return Container(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 20),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  Text(
+                    l10n.reorderDashboardSections,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: 'DMSans',
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    l10n.reorderDashboardSectionsDesc,
+                    style: const TextStyle(
+                      color: Colors.white54,
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Flexible(
+                    child: ReorderableListView.builder(
+                      shrinkWrap: true,
+                      physics: const BouncingScrollPhysics(),
+                      buildDefaultDragHandles: false,
+                      itemCount: currentOrder.length,
+                      onReorder: (oldIndex, newIndex) {
+                        HapticFeedback.lightImpact();
+                        setModalState(() {
+                          if (oldIndex < newIndex) {
+                            newIndex -= 1;
+                          }
+                          final String item = currentOrder.removeAt(oldIndex);
+                          currentOrder.insert(newIndex, item);
+                          ref.read(settingsProvider.notifier).updateHomeSectionOrder(currentOrder);
+                        });
+                      },
+                      itemBuilder: (context, index) {
+                        final key = currentOrder[index];
+                        final meta = itemMeta[key] ?? {
+                          'title': key,
+                          'description': '',
+                          'icon': LucideIcons.layers,
+                        };
+
+                        final title = meta['title'] as String;
+                        final desc = meta['description'] as String;
+                        final icon = meta['icon'] as IconData;
+
+                        return Container(
+                          key: ValueKey(key),
+                          margin: const EdgeInsets.symmetric(vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.04),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withOpacity(0.06)),
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            leading: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Color(currentSettings.accentColor).withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(icon, color: Color(currentSettings.accentColor), size: 20),
+                            ),
+                            title: Text(
+                              title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            subtitle: Text(
+                              desc,
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 12,
+                              ),
+                            ),
+                            trailing: ReorderableDragStartListener(
+                              index: index,
+                              child: const Icon(LucideIcons.gripVertical, color: Colors.white30, size: 20),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        backgroundColor: Color(currentSettings.accentColor),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'Done',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -316,6 +502,103 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       ref.read(settingsProvider.notifier).updateDisableAnimatedDuration(value);
                     },
                   ),
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                  // Background Personalization
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                   SwitchListTile(
+                    secondary: const Icon(LucideIcons.layers, color: Colors.white70),
+                    title: Text(
+                      l10n.keepBackgroundGradient,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      l10n.keepBackgroundGradientDesc,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    activeColor: Color(settings.accentColor),
+                    value: settings.keepBackgroundGradient,
+                    onChanged: (value) {
+                      ref.read(settingsProvider.notifier).updateKeepBackgroundGradient(value);
+                    },
+                  ),
+                ],
+              ),
+
+              // 1b. Home Screen Customization Group
+              _buildCategoryGroup(
+                id: 'dashboard',
+                title: l10n.homeDashboardSettings,
+                subtitle: l10n.homeDashboardSettingsDesc,
+                icon: LucideIcons.layout,
+                colorScheme: Theme.of(context).colorScheme,
+                useBlur: useBlur,
+                children: [
+                  SwitchListTile(
+                    secondary: const Icon(LucideIcons.user, color: Colors.white70),
+                    title: Text(
+                      l10n.showArtistsRow,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      l10n.showArtistsRowDesc,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    activeColor: Color(settings.accentColor),
+                    value: settings.showHomeArtists,
+                    onChanged: (value) {
+                      ref.read(settingsProvider.notifier).updateShowHomeArtists(value);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                  SwitchListTile(
+                    secondary: const Icon(LucideIcons.disc, color: Colors.white70),
+                    title: Text(
+                      l10n.showAlbumsRow,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      l10n.showAlbumsRowDesc,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    activeColor: Color(settings.accentColor),
+                    value: settings.showHomeAlbums,
+                    onChanged: (value) {
+                      ref.read(settingsProvider.notifier).updateShowHomeAlbums(value);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                  SwitchListTile(
+                    secondary: const Icon(LucideIcons.music, color: Colors.white70),
+                    title: Text(
+                      l10n.showGenresRow,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      l10n.showGenresRowDesc,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    activeColor: Color(settings.accentColor),
+                    value: settings.showHomeGenres,
+                    onChanged: (value) {
+                      ref.read(settingsProvider.notifier).updateShowHomeGenres(value);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                  ListTile(
+                    leading: const Icon(LucideIcons.listOrdered, color: Colors.white70),
+                    title: Text(
+                      l10n.reorderDashboardSections,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      l10n.reorderDashboardSectionsDesc,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    trailing: const Icon(LucideIcons.chevronRight, color: Colors.white30),
+                    onTap: () {
+                      _showReorderBottomSheet(context, ref, settings);
+                    },
+                  ),
                 ],
               ),
 
@@ -380,6 +663,23 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     value: settings.enableInternet,
                     onChanged: (value) {
                       ref.read(settingsProvider.notifier).updateEnableInternet(value);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                  SwitchListTile(
+                    secondary: const Icon(LucideIcons.image, color: Colors.white70),
+                    title: Text(
+                      l10n.downloadMissingArtwork,
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: Text(
+                      l10n.downloadMissingArtworkDesc,
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    activeColor: Color(settings.accentColor),
+                    value: settings.downloadArtwork,
+                    onChanged: (value) {
+                      ref.read(settingsProvider.notifier).updateDownloadArtwork(value);
                     },
                   ),
                 ],
@@ -485,7 +785,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   ListTile(
                     leading: const Icon(LucideIcons.info, color: Colors.white70),
                     title: const Text('Looper Player', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
-                    subtitle: const Text('Version 1.7.0', style: TextStyle(color: Colors.white54, fontSize: 12)),
+                    subtitle: const Text('Version 1.8.0', style: TextStyle(color: Colors.white54, fontSize: 12)),
                     onTap: () async {
                       final Uri uri = Uri.parse('https://github.com/SthrNilshaaa/looper');
                       try {
@@ -866,7 +1166,12 @@ class _MaintainerTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            icon: const Icon(LucideIcons.github, size: 18, color: Colors.white54),
+            icon: SvgPicture.asset(
+              'assets/about/github_icon.svg',
+              width: 18,
+              height: 18,
+              colorFilter: const ColorFilter.mode(Colors.white54, BlendMode.srcIn),
+            ),
             onPressed: () => _launchUrl(github),
           ),
           IconButton(

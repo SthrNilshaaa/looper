@@ -498,4 +498,70 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get delete => 'हटाएं';
+
+  @override
+  String get downloadMissingArtwork => 'लापता आर्टवर्क डाउनलोड करें';
+
+  @override
+  String get downloadMissingArtworkDesc =>
+      'आईट्यून्स से गानों के लिए स्वचालित रूप से उच्च-रिज़ॉल्यूशन कवर आर्टवर्क डाउनलोड करें';
+
+  @override
+  String get keepBackgroundGradient => 'बैकग्राउंड ग्रेडिएंट रखें';
+
+  @override
+  String get keepBackgroundGradientDesc =>
+      'सभी एप्लिकेशन स्क्रीन पर बैकग्राउंड ग्रेडिएंट बनाए रखें';
+
+  @override
+  String get homeDashboardSettings => 'होम डैशबोर्ड सेटिंग्स';
+
+  @override
+  String get homeDashboardSettingsDesc =>
+      'अपनी होम स्क्रीन पर क्षैतिज पंक्तियों को कस्टमाइज़ करें';
+
+  @override
+  String get showArtistsRow => 'कलाकार पंक्ति दिखाएं';
+
+  @override
+  String get showArtistsRowDesc =>
+      'अपनी होम स्क्रीन पर कलाकारों की एक क्षैतिज सूची प्रदर्शित करें';
+
+  @override
+  String get showAlbumsRow => 'एल्बम पंक्ति दिखाएं';
+
+  @override
+  String get showAlbumsRowDesc =>
+      'अपनी होम स्क्रीन पर एल्बम की एक क्षैतिज सूची प्रदर्शित करें';
+
+  @override
+  String get showGenresRow => 'शैली पंक्ति दिखाएं';
+
+  @override
+  String get showGenresRowDesc =>
+      'अपनी होम स्क्रीन पर शैलियों की एक क्षैतिज सूची प्रदर्शित करें';
+
+  @override
+  String get reorderDashboardSections =>
+      'डैशबोर्ड अनुभागों को पुनर्व्यवस्थित करें';
+
+  @override
+  String get reorderDashboardSectionsDesc =>
+      'पसंदीदा डैशबोर्ड क्रम सेट करने के लिए खींचें और छोड़ें';
+
+  @override
+  String get quickPicksRowDesc =>
+      'आपके सबसे ज्यादा खेले जाने वाले गानों का ग्रिड';
+
+  @override
+  String get recentlyAddedSongsRowDesc => 'आपके नवीनतम आयातित गानों की सूची';
+
+  @override
+  String get albumsRowDesc => 'एल्बमों की क्षैतिज शेल्फ';
+
+  @override
+  String get artistsRowDesc => 'कलाकारों की क्षैतिज शेल्फ';
+
+  @override
+  String get genresRowDesc => 'संगीत शैलियों की क्षैतिज शेल्फ';
 }

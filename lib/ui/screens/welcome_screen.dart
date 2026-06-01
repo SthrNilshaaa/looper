@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lottie/lottie.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -661,7 +661,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           stepNumber: "3",
           title: l10n.downloadAudioDirectly,
           description: l10n.welcomeInstructionDownloadDesc,
-          icon: LucideIcons.chrome,
+          icon: LucideIcons.globe,
           colorScheme: colorScheme,
         ),
         const SizedBox(height: 48),

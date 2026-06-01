@@ -1019,6 +1019,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
+
+  /// No description provided for @downloadMissingArtwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Missing Artwork'**
+  String get downloadMissingArtwork;
+
+  /// No description provided for @downloadMissingArtworkDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatically download high-resolution cover artwork for songs from iTunes'**
+  String get downloadMissingArtworkDesc;
+
+  /// No description provided for @keepBackgroundGradient.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Background Gradient'**
+  String get keepBackgroundGradient;
+
+  /// No description provided for @keepBackgroundGradientDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep the background gradient across all application screens'**
+  String get keepBackgroundGradientDesc;
+
+  /// No description provided for @homeDashboardSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Home Dashboard Settings'**
+  String get homeDashboardSettings;
+
+  /// No description provided for @homeDashboardSettingsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize horizontal rows on your Home screen'**
+  String get homeDashboardSettingsDesc;
+
+  /// No description provided for @showArtistsRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Artists Row'**
+  String get showArtistsRow;
+
+  /// No description provided for @showArtistsRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display a horizontal list of artists on your Home screen'**
+  String get showArtistsRowDesc;
+
+  /// No description provided for @showAlbumsRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Albums Row'**
+  String get showAlbumsRow;
+
+  /// No description provided for @showAlbumsRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display a horizontal list of albums on your Home screen'**
+  String get showAlbumsRowDesc;
+
+  /// No description provided for @showGenresRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Genres Row'**
+  String get showGenresRow;
+
+  /// No description provided for @showGenresRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display a horizontal list of genres on your Home screen'**
+  String get showGenresRowDesc;
+
+  /// No description provided for @reorderDashboardSections.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Dashboard Sections'**
+  String get reorderDashboardSections;
+
+  /// No description provided for @reorderDashboardSectionsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag and drop to set preferred dashboard order'**
+  String get reorderDashboardSectionsDesc;
+
+  /// No description provided for @quickPicksRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Your most played grid of songs'**
+  String get quickPicksRowDesc;
+
+  /// No description provided for @recentlyAddedSongsRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'A list of your latest imports'**
+  String get recentlyAddedSongsRowDesc;
+
+  /// No description provided for @albumsRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal shelf of albums'**
+  String get albumsRowDesc;
+
+  /// No description provided for @artistsRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal shelf of artists'**
+  String get artistsRowDesc;
+
+  /// No description provided for @genresRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal shelf of music genres'**
+  String get genresRowDesc;
 }
 
 class _AppLocalizationsDelegate

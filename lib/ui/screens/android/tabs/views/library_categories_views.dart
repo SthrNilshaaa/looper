@@ -9,16 +9,16 @@ import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:isar/isar.dart';
 
-class CategoryDetailWrapper extends StatelessWidget {
+class CategoryDetailWrapper extends ConsumerWidget {
   final String title;
   final Widget child;
   const CategoryDetailWrapper({super.key, required this.title, required this.child});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     String translatedTitle = title;
     switch (title) {
@@ -43,17 +43,20 @@ class CategoryDetailWrapper extends StatelessWidget {
       case 'Favorites':
         translatedTitle = l10n.favorites;
         break;
+      case 'Playlists':
+        translatedTitle = l10n.playlists;
+        break;
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(translatedTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
         leading: IconButton(
           icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => ref.read(appNavigationProvider.notifier).goBack(),
         ),
       ),
       body: child,

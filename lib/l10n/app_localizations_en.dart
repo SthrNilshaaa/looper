@@ -496,4 +496,68 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get delete => 'Delete';
+
+  @override
+  String get downloadMissingArtwork => 'Download Missing Artwork';
+
+  @override
+  String get downloadMissingArtworkDesc =>
+      'Automatically download high-resolution cover artwork for songs from iTunes';
+
+  @override
+  String get keepBackgroundGradient => 'Keep Background Gradient';
+
+  @override
+  String get keepBackgroundGradientDesc =>
+      'Keep the background gradient across all application screens';
+
+  @override
+  String get homeDashboardSettings => 'Home Dashboard Settings';
+
+  @override
+  String get homeDashboardSettingsDesc =>
+      'Customize horizontal rows on your Home screen';
+
+  @override
+  String get showArtistsRow => 'Show Artists Row';
+
+  @override
+  String get showArtistsRowDesc =>
+      'Display a horizontal list of artists on your Home screen';
+
+  @override
+  String get showAlbumsRow => 'Show Albums Row';
+
+  @override
+  String get showAlbumsRowDesc =>
+      'Display a horizontal list of albums on your Home screen';
+
+  @override
+  String get showGenresRow => 'Show Genres Row';
+
+  @override
+  String get showGenresRowDesc =>
+      'Display a horizontal list of genres on your Home screen';
+
+  @override
+  String get reorderDashboardSections => 'Reorder Dashboard Sections';
+
+  @override
+  String get reorderDashboardSectionsDesc =>
+      'Drag and drop to set preferred dashboard order';
+
+  @override
+  String get quickPicksRowDesc => 'Your most played grid of songs';
+
+  @override
+  String get recentlyAddedSongsRowDesc => 'A list of your latest imports';
+
+  @override
+  String get albumsRowDesc => 'Horizontal shelf of albums';
+
+  @override
+  String get artistsRowDesc => 'Horizontal shelf of artists';
+
+  @override
+  String get genresRowDesc => 'Horizontal shelf of music genres';
 }

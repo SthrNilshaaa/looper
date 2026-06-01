@@ -6347,73 +6347,118 @@ const AppSettingsSchema = CollectionSchema(
       name: r'audioFocus',
       type: IsarType.bool,
     ),
-    r'darkTheme': PropertySchema(
+    r'bgBrightness': PropertySchema(
       id: 2,
+      name: r'bgBrightness',
+      type: IsarType.double,
+    ),
+    r'bgOpacity': PropertySchema(
+      id: 3,
+      name: r'bgOpacity',
+      type: IsarType.double,
+    ),
+    r'customBackgroundImagePath': PropertySchema(
+      id: 4,
+      name: r'customBackgroundImagePath',
+      type: IsarType.string,
+    ),
+    r'darkTheme': PropertySchema(
+      id: 5,
       name: r'darkTheme',
       type: IsarType.bool,
     ),
     r'disableAnimatedDuration': PropertySchema(
-      id: 3,
+      id: 6,
       name: r'disableAnimatedDuration',
       type: IsarType.bool,
     ),
     r'disableBlur': PropertySchema(
-      id: 4,
+      id: 7,
       name: r'disableBlur',
       type: IsarType.bool,
     ),
     r'disableSquiggle': PropertySchema(
-      id: 5,
+      id: 8,
       name: r'disableSquiggle',
       type: IsarType.bool,
     ),
+    r'downloadArtwork': PropertySchema(
+      id: 9,
+      name: r'downloadArtwork',
+      type: IsarType.bool,
+    ),
     r'dynamicLyrics': PropertySchema(
-      id: 6,
+      id: 10,
       name: r'dynamicLyrics',
       type: IsarType.bool,
     ),
     r'enableDynamicTheming': PropertySchema(
-      id: 7,
+      id: 11,
       name: r'enableDynamicTheming',
       type: IsarType.bool,
     ),
     r'enableInternet': PropertySchema(
-      id: 8,
+      id: 12,
       name: r'enableInternet',
       type: IsarType.bool,
     ),
+    r'homeSectionOrder': PropertySchema(
+      id: 13,
+      name: r'homeSectionOrder',
+      type: IsarType.stringList,
+    ),
+    r'keepBackgroundGradient': PropertySchema(
+      id: 14,
+      name: r'keepBackgroundGradient',
+      type: IsarType.bool,
+    ),
     r'language': PropertySchema(
-      id: 9,
+      id: 15,
       name: r'language',
       type: IsarType.string,
     ),
     r'lastPlayedSongId': PropertySchema(
-      id: 10,
+      id: 16,
       name: r'lastPlayedSongId',
       type: IsarType.long,
     ),
     r'libraryFolders': PropertySchema(
-      id: 11,
+      id: 17,
       name: r'libraryFolders',
       type: IsarType.stringList,
     ),
     r'repeatMode': PropertySchema(
-      id: 12,
+      id: 18,
       name: r'repeatMode',
       type: IsarType.long,
     ),
     r'saveDynamicColor': PropertySchema(
-      id: 13,
+      id: 19,
       name: r'saveDynamicColor',
       type: IsarType.bool,
     ),
+    r'showHomeAlbums': PropertySchema(
+      id: 20,
+      name: r'showHomeAlbums',
+      type: IsarType.bool,
+    ),
+    r'showHomeArtists': PropertySchema(
+      id: 21,
+      name: r'showHomeArtists',
+      type: IsarType.bool,
+    ),
+    r'showHomeGenres': PropertySchema(
+      id: 22,
+      name: r'showHomeGenres',
+      type: IsarType.bool,
+    ),
     r'shuffle': PropertySchema(
-      id: 14,
+      id: 23,
       name: r'shuffle',
       type: IsarType.bool,
     ),
     r'volume': PropertySchema(
-      id: 15,
+      id: 24,
       name: r'volume',
       type: IsarType.double,
     )
@@ -6438,6 +6483,19 @@ int _appSettingsEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.customBackgroundImagePath;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  bytesCount += 3 + object.homeSectionOrder.length * 3;
+  {
+    for (var i = 0; i < object.homeSectionOrder.length; i++) {
+      final value = object.homeSectionOrder[i];
+      bytesCount += value.length * 3;
+    }
+  }
   bytesCount += 3 + object.language.length * 3;
   bytesCount += 3 + object.libraryFolders.length * 3;
   {
@@ -6457,20 +6515,29 @@ void _appSettingsSerialize(
 ) {
   writer.writeLong(offsets[0], object.accentColor);
   writer.writeBool(offsets[1], object.audioFocus);
-  writer.writeBool(offsets[2], object.darkTheme);
-  writer.writeBool(offsets[3], object.disableAnimatedDuration);
-  writer.writeBool(offsets[4], object.disableBlur);
-  writer.writeBool(offsets[5], object.disableSquiggle);
-  writer.writeBool(offsets[6], object.dynamicLyrics);
-  writer.writeBool(offsets[7], object.enableDynamicTheming);
-  writer.writeBool(offsets[8], object.enableInternet);
-  writer.writeString(offsets[9], object.language);
-  writer.writeLong(offsets[10], object.lastPlayedSongId);
-  writer.writeStringList(offsets[11], object.libraryFolders);
-  writer.writeLong(offsets[12], object.repeatMode);
-  writer.writeBool(offsets[13], object.saveDynamicColor);
-  writer.writeBool(offsets[14], object.shuffle);
-  writer.writeDouble(offsets[15], object.volume);
+  writer.writeDouble(offsets[2], object.bgBrightness);
+  writer.writeDouble(offsets[3], object.bgOpacity);
+  writer.writeString(offsets[4], object.customBackgroundImagePath);
+  writer.writeBool(offsets[5], object.darkTheme);
+  writer.writeBool(offsets[6], object.disableAnimatedDuration);
+  writer.writeBool(offsets[7], object.disableBlur);
+  writer.writeBool(offsets[8], object.disableSquiggle);
+  writer.writeBool(offsets[9], object.downloadArtwork);
+  writer.writeBool(offsets[10], object.dynamicLyrics);
+  writer.writeBool(offsets[11], object.enableDynamicTheming);
+  writer.writeBool(offsets[12], object.enableInternet);
+  writer.writeStringList(offsets[13], object.homeSectionOrder);
+  writer.writeBool(offsets[14], object.keepBackgroundGradient);
+  writer.writeString(offsets[15], object.language);
+  writer.writeLong(offsets[16], object.lastPlayedSongId);
+  writer.writeStringList(offsets[17], object.libraryFolders);
+  writer.writeLong(offsets[18], object.repeatMode);
+  writer.writeBool(offsets[19], object.saveDynamicColor);
+  writer.writeBool(offsets[20], object.showHomeAlbums);
+  writer.writeBool(offsets[21], object.showHomeArtists);
+  writer.writeBool(offsets[22], object.showHomeGenres);
+  writer.writeBool(offsets[23], object.shuffle);
+  writer.writeDouble(offsets[24], object.volume);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -6482,21 +6549,30 @@ AppSettings _appSettingsDeserialize(
   final object = AppSettings();
   object.accentColor = reader.readLong(offsets[0]);
   object.audioFocus = reader.readBool(offsets[1]);
-  object.darkTheme = reader.readBool(offsets[2]);
-  object.disableAnimatedDuration = reader.readBool(offsets[3]);
-  object.disableBlur = reader.readBool(offsets[4]);
-  object.disableSquiggle = reader.readBool(offsets[5]);
-  object.dynamicLyrics = reader.readBool(offsets[6]);
-  object.enableDynamicTheming = reader.readBool(offsets[7]);
-  object.enableInternet = reader.readBool(offsets[8]);
+  object.bgBrightness = reader.readDouble(offsets[2]);
+  object.bgOpacity = reader.readDouble(offsets[3]);
+  object.customBackgroundImagePath = reader.readStringOrNull(offsets[4]);
+  object.darkTheme = reader.readBool(offsets[5]);
+  object.disableAnimatedDuration = reader.readBool(offsets[6]);
+  object.disableBlur = reader.readBool(offsets[7]);
+  object.disableSquiggle = reader.readBool(offsets[8]);
+  object.downloadArtwork = reader.readBool(offsets[9]);
+  object.dynamicLyrics = reader.readBool(offsets[10]);
+  object.enableDynamicTheming = reader.readBool(offsets[11]);
+  object.enableInternet = reader.readBool(offsets[12]);
+  object.homeSectionOrder = reader.readStringList(offsets[13]) ?? [];
   object.id = id;
-  object.language = reader.readString(offsets[9]);
-  object.lastPlayedSongId = reader.readLongOrNull(offsets[10]);
-  object.libraryFolders = reader.readStringList(offsets[11]) ?? [];
-  object.repeatMode = reader.readLong(offsets[12]);
-  object.saveDynamicColor = reader.readBool(offsets[13]);
-  object.shuffle = reader.readBool(offsets[14]);
-  object.volume = reader.readDouble(offsets[15]);
+  object.keepBackgroundGradient = reader.readBool(offsets[14]);
+  object.language = reader.readString(offsets[15]);
+  object.lastPlayedSongId = reader.readLongOrNull(offsets[16]);
+  object.libraryFolders = reader.readStringList(offsets[17]) ?? [];
+  object.repeatMode = reader.readLong(offsets[18]);
+  object.saveDynamicColor = reader.readBool(offsets[19]);
+  object.showHomeAlbums = reader.readBool(offsets[20]);
+  object.showHomeArtists = reader.readBool(offsets[21]);
+  object.showHomeGenres = reader.readBool(offsets[22]);
+  object.shuffle = reader.readBool(offsets[23]);
+  object.volume = reader.readDouble(offsets[24]);
   return object;
 }
 
@@ -6512,11 +6588,11 @@ P _appSettingsDeserializeProp<P>(
     case 1:
       return (reader.readBool(offset)) as P;
     case 2:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 3:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 4:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 5:
       return (reader.readBool(offset)) as P;
     case 6:
@@ -6526,18 +6602,36 @@ P _appSettingsDeserializeProp<P>(
     case 8:
       return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
-    case 10:
-      return (reader.readLongOrNull(offset)) as P;
-    case 11:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 12:
-      return (reader.readLong(offset)) as P;
-    case 13:
       return (reader.readBool(offset)) as P;
+    case 10:
+      return (reader.readBool(offset)) as P;
+    case 11:
+      return (reader.readBool(offset)) as P;
+    case 12:
+      return (reader.readBool(offset)) as P;
+    case 13:
+      return (reader.readStringList(offset) ?? []) as P;
     case 14:
       return (reader.readBool(offset)) as P;
     case 15:
+      return (reader.readString(offset)) as P;
+    case 16:
+      return (reader.readLongOrNull(offset)) as P;
+    case 17:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 18:
+      return (reader.readLong(offset)) as P;
+    case 19:
+      return (reader.readBool(offset)) as P;
+    case 20:
+      return (reader.readBool(offset)) as P;
+    case 21:
+      return (reader.readBool(offset)) as P;
+    case 22:
+      return (reader.readBool(offset)) as P;
+    case 23:
+      return (reader.readBool(offset)) as P;
+    case 24:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -6704,6 +6798,294 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      bgBrightnessEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'bgBrightness',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      bgBrightnessGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'bgBrightness',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      bgBrightnessLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'bgBrightness',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      bgBrightnessBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'bgBrightness',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      bgOpacityEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'bgOpacity',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      bgOpacityGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'bgOpacity',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      bgOpacityLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'bgOpacity',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      bgOpacityBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'bgOpacity',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'customBackgroundImagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'customBackgroundImagePath',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customBackgroundImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customBackgroundImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customBackgroundImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customBackgroundImagePath',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'customBackgroundImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'customBackgroundImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'customBackgroundImagePath',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'customBackgroundImagePath',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customBackgroundImagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customBackgroundImagePathIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'customBackgroundImagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       darkThemeEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -6744,6 +7126,16 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      downloadArtworkEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'downloadArtwork',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       dynamicLyricsEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -6770,6 +7162,233 @@ extension AppSettingsQueryFilter
         property: r'enableInternet',
         value: value,
       ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'homeSectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'homeSectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'homeSectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'homeSectionOrder',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'homeSectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'homeSectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'homeSectionOrder',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'homeSectionOrder',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'homeSectionOrder',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderElementIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'homeSectionOrder',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'homeSectionOrder',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'homeSectionOrder',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'homeSectionOrder',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'homeSectionOrder',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'homeSectionOrder',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      homeSectionOrderLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'homeSectionOrder',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -6822,6 +7441,16 @@ extension AppSettingsQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      keepBackgroundGradientEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'keepBackgroundGradient',
+        value: value,
       ));
     });
   }
@@ -7327,6 +7956,36 @@ extension AppSettingsQueryFilter
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      showHomeAlbumsEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'showHomeAlbums',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      showHomeArtistsEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'showHomeArtists',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      showHomeGenresEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'showHomeGenres',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> shuffleEqualTo(
       bool value) {
     return QueryBuilder.apply(this, (query) {
@@ -7433,6 +8092,45 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByBgBrightness() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bgBrightness', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByBgBrightnessDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bgBrightness', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByBgOpacity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bgOpacity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByBgOpacityDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bgOpacity', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomBackgroundImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customBackgroundImagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomBackgroundImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customBackgroundImagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByDarkTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'darkTheme', Sort.asc);
@@ -7484,6 +8182,19 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByDownloadArtwork() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'downloadArtwork', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByDownloadArtworkDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'downloadArtwork', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByDynamicLyrics() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'dynamicLyrics', Sort.asc);
@@ -7521,6 +8232,20 @@ extension AppSettingsQuerySortBy
       sortByEnableInternetDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'enableInternet', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByKeepBackgroundGradient() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'keepBackgroundGradient', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByKeepBackgroundGradientDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'keepBackgroundGradient', Sort.desc);
     });
   }
 
@@ -7576,6 +8301,45 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByShowHomeAlbums() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeAlbums', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByShowHomeAlbumsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeAlbums', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByShowHomeArtists() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeArtists', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByShowHomeArtistsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeArtists', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByShowHomeGenres() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeGenres', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByShowHomeGenresDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeGenres', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByShuffle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'shuffle', Sort.asc);
@@ -7627,6 +8391,45 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByBgBrightness() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bgBrightness', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByBgBrightnessDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bgBrightness', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByBgOpacity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bgOpacity', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByBgOpacityDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'bgOpacity', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomBackgroundImagePath() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customBackgroundImagePath', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomBackgroundImagePathDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customBackgroundImagePath', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByDarkTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'darkTheme', Sort.asc);
@@ -7675,6 +8478,19 @@ extension AppSettingsQuerySortThenBy
       thenByDisableSquiggleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'disableSquiggle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByDownloadArtwork() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'downloadArtwork', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByDownloadArtworkDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'downloadArtwork', Sort.desc);
     });
   }
 
@@ -7730,6 +8546,20 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByKeepBackgroundGradient() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'keepBackgroundGradient', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByKeepBackgroundGradientDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'keepBackgroundGradient', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByLanguage() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'language', Sort.asc);
@@ -7782,6 +8612,45 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByShowHomeAlbums() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeAlbums', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByShowHomeAlbumsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeAlbums', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByShowHomeArtists() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeArtists', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByShowHomeArtistsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeArtists', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByShowHomeGenres() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeGenres', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByShowHomeGenresDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'showHomeGenres', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByShuffle() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'shuffle', Sort.asc);
@@ -7821,6 +8690,26 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByBgBrightness() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'bgBrightness');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByBgOpacity() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'bgOpacity');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByCustomBackgroundImagePath({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customBackgroundImagePath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByDarkTheme() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'darkTheme');
@@ -7847,6 +8736,13 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByDownloadArtwork() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'downloadArtwork');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByDynamicLyrics() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'dynamicLyrics');
@@ -7863,6 +8759,20 @@ extension AppSettingsQueryWhereDistinct
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByEnableInternet() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'enableInternet');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByHomeSectionOrder() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'homeSectionOrder');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByKeepBackgroundGradient() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'keepBackgroundGradient');
     });
   }
 
@@ -7899,6 +8809,25 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByShowHomeAlbums() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'showHomeAlbums');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByShowHomeArtists() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'showHomeArtists');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByShowHomeGenres() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'showHomeGenres');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByShuffle() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'shuffle');
@@ -7932,6 +8861,25 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, double, QQueryOperations> bgBrightnessProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'bgBrightness');
+    });
+  }
+
+  QueryBuilder<AppSettings, double, QQueryOperations> bgOpacityProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'bgOpacity');
+    });
+  }
+
+  QueryBuilder<AppSettings, String?, QQueryOperations>
+      customBackgroundImagePathProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customBackgroundImagePath');
+    });
+  }
+
   QueryBuilder<AppSettings, bool, QQueryOperations> darkThemeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'darkTheme');
@@ -7957,6 +8905,12 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, bool, QQueryOperations> downloadArtworkProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'downloadArtwork');
+    });
+  }
+
   QueryBuilder<AppSettings, bool, QQueryOperations> dynamicLyricsProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'dynamicLyrics');
@@ -7973,6 +8927,20 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, bool, QQueryOperations> enableInternetProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'enableInternet');
+    });
+  }
+
+  QueryBuilder<AppSettings, List<String>, QQueryOperations>
+      homeSectionOrderProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'homeSectionOrder');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+      keepBackgroundGradientProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'keepBackgroundGradient');
     });
   }
 
@@ -8004,6 +8972,24 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, bool, QQueryOperations> saveDynamicColorProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'saveDynamicColor');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> showHomeAlbumsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'showHomeAlbums');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> showHomeArtistsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'showHomeArtists');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> showHomeGenresProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'showHomeGenres');
     });
   }
 

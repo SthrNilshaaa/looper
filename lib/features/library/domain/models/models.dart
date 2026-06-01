@@ -93,6 +93,15 @@ class AppSettings {
   bool audioFocus = true;
   bool disableSquiggle = false;
   bool disableAnimatedDuration = false;
-  bool disableBlur = false;
+  bool disableBlur = true;
   bool enableInternet = true;
+  bool downloadArtwork = false;
+  bool keepBackgroundGradient = false;
+  String? customBackgroundImagePath;
+  double bgBrightness = 0.5;
+  double bgOpacity = 0.3;
+  bool showHomeArtists = true;
+  bool showHomeAlbums = false;
+  bool showHomeGenres = false;
+  List<String> homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres'];
 }

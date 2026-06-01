@@ -20,6 +20,7 @@ enum NavItem {
   mostPlayed,
   downloads,
   smartCollections,
+  library,
 }
 
 class NavigationState {
@@ -29,6 +30,7 @@ class NavigationState {
   final String? collectionArt;
   final String? collectionImageUrl;
   final List<Song> collectionSongs;
+  final Playlist? activePlaylist;
   final List<NavigationState> history;
   final bool isPlayerExpanded;
 
@@ -39,6 +41,7 @@ class NavigationState {
     this.collectionArt,
     this.collectionImageUrl,
     this.collectionSongs = const [],
+    this.activePlaylist,
     this.history = const [],
     this.isPlayerExpanded = false,
   });
@@ -50,6 +53,7 @@ class NavigationState {
     String? collectionArt,
     String? collectionImageUrl,
     List<Song>? collectionSongs,
+    Playlist? activePlaylist,
     List<NavigationState>? history,
     bool? isPlayerExpanded,
   }) {
@@ -60,6 +64,7 @@ class NavigationState {
       collectionArt: collectionArt ?? this.collectionArt,
       collectionImageUrl: collectionImageUrl ?? this.collectionImageUrl,
       collectionSongs: collectionSongs ?? this.collectionSongs,
+      activePlaylist: activePlaylist ?? this.activePlaylist,
       history: history ?? this.history,
       isPlayerExpanded: isPlayerExpanded ?? this.isPlayerExpanded,
     );
@@ -81,15 +86,10 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     final newHistory = List<NavigationState>.from(state.history)
       ..add(_captureCurrentState());
 
-    state = state.copyWith(
+    state = NavigationState(
       activeItem: item,
       history: newHistory,
-      // Clear collection data when switching to a main nav item
-      collectionTitle: null,
-      collectionSubtitle: null,
-      collectionArt: null,
-      collectionImageUrl: null,
-      collectionSongs: [],
+      isPlayerExpanded: state.isPlayerExpanded,
     );
   }
 
@@ -107,19 +107,22 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     String? art,
     String? imageUrl,
     required List<Song> songs,
+    Playlist? playlist,
   }) {
     // Push current state to history
     final newHistory = List<NavigationState>.from(state.history)
       ..add(_captureCurrentState());
 
-    state = state.copyWith(
+    state = NavigationState(
       activeItem: NavItem.collectionDetail,
       collectionTitle: title,
       collectionSubtitle: subtitle,
       collectionArt: art,
       collectionImageUrl: imageUrl,
       collectionSongs: songs,
+      activePlaylist: playlist,
       history: newHistory,
+      isPlayerExpanded: state.isPlayerExpanded,
     );
   }
 
@@ -143,6 +146,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       collectionArt: state.collectionArt,
       collectionImageUrl: state.collectionImageUrl,
       collectionSongs: state.collectionSongs,
+      activePlaylist: state.activePlaylist,
       isPlayerExpanded: state.isPlayerExpanded,
     );
   }

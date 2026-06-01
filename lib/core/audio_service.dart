@@ -17,6 +17,19 @@ class AudioService {
   MyAudioHandler? _audioHandler;
   bool _playOnInterruptionEnd = false;
 
+  static const _broadcastChannel = MethodChannel('com.looper.player/broadcast');
+
+  Future<bool> isOnCall() async {
+    if (!Platform.isAndroid) return false;
+    try {
+      final bool? result = await _broadcastChannel.invokeMethod<bool>('isOnCall');
+      return result ?? false;
+    } catch (e) {
+      debugPrint('Error checking call state: $e');
+      return false;
+    }
+  }
+
   // Callbacks for controls
   void Function()? onNext;
   void Function()? onPrevious;

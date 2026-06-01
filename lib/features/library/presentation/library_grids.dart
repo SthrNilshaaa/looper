@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/core/navigation_provider.dart';

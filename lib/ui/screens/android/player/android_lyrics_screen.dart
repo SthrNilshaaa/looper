@@ -12,7 +12,7 @@ import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/core/app_icons.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -155,32 +155,20 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
             // Dynamic Background with Slow Motion (Optimized)
             if ((settings.enableDynamicTheming || settings.dynamicLyrics) &&
                 song.artPath != null) ...[
-              TweenAnimationBuilder<double>(
-                tween: Tween<double>(
-                  begin: _zoomIn ? 1.0 : 2.0,
-                  end: _zoomIn ? 2.0 : 1.0,
+              Positioned.fill(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 800),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    );
+                  },
+                  child: BlurredBackgroundLyricsArt(
+                    key: ValueKey(song.artPath),
+                    song: song,
+                  ),
                 ),
-                duration: const Duration(seconds: 30),
-                curve: Curves.linear,
-                onEnd: () {
-                  setState(() {
-                    _zoomIn = !_zoomIn;
-                  });
-                },
-                builder: (context, scale, child) {
-                  return Transform.scale(
-                    scale: scale,
-                    child: OptimizedImage(
-                      imagePath: !song.artPath!.startsWith('http') ? song.artPath : null,
-                      imageUrl: song.artPath!.startsWith('http') ? song.artPath : null,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: double.infinity,
-                      cacheWidth: 100, // Tiny resolution is perfect for blur
-                      cacheHeight: 100,
-                    ),
-                  );
-                },
               ),
               Positioned.fill(
                 child: BackdropFilter(
@@ -190,7 +178,9 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
               ),
             ] else ...[
               Positioned.fill(
-                child: Container(
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 600),
+                  curve: Curves.easeInOut,
                   decoration: BoxDecoration(
                     gradient: RadialGradient(
                       center: Alignment.topRight,
@@ -343,6 +333,63 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class BlurredBackgroundLyricsArt extends StatefulWidget {
+  final Song song;
+  const BlurredBackgroundLyricsArt({required this.song, super.key});
+
+  @override
+  State<BlurredBackgroundLyricsArt> createState() => _BlurredBackgroundLyricsArtState();
+}
+
+class _BlurredBackgroundLyricsArtState extends State<BlurredBackgroundLyricsArt> {
+  bool _zoomIn = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final path = widget.song.artPath;
+    if (path == null) return const SizedBox.shrink();
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(
+        begin: _zoomIn ? 1.0 : 2.0,
+        end: _zoomIn ? 2.0 : 1.0,
+      ),
+      duration: const Duration(seconds: 30),
+      curve: Curves.linear,
+      onEnd: () {
+        if (mounted) {
+          setState(() {
+            _zoomIn = !_zoomIn;
+          });
+        }
+      },
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(
+              sigmaX: 25,
+              sigmaY: 25,
+            ),
+            child: RepaintBoundary(
+              child: Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                filterQuality: FilterQuality.low,
+                cacheWidth: 80,
+                cacheHeight: 80,
+                gaplessPlayback: true,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

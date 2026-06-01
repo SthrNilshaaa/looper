@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +9,7 @@ import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
 import 'package:looper_player/features/library/presentation/library_grids.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
@@ -23,6 +25,15 @@ class HomeDashboard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final bool isDynamic = settings.enableDynamicTheming;
+    final library = ref.watch(libraryProvider);
+    final l10n = AppLocalizations.of(context)!;
+
+    final genresMap = <String, List<Song>>{};
+    for (var song in library.songs) {
+      final genre = song.genre ?? l10n.unknown;
+      genresMap.putIfAbsent(genre, () => []).add(song);
+    }
+    final genres = genresMap.keys.toList()..sort();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -30,59 +41,102 @@ class HomeDashboard extends ConsumerWidget {
         final bool isMedium = constraints.maxWidth < 1000;
         final bool showLogo = MediaQuery.of(context).size.width < 800;
 
+        final orderedChildren = <Widget>[];
+
+        if (showLogo) {
+          orderedChildren.add(
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 50.s,
+                  child: SvgPicture.asset(
+                    'assets/main_logo.svg',
+                    fit: BoxFit.contain,
+                    colorMapper: AccentColorMapper(
+                      Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
+          );
+        }
+
+        // Support desktop-specific helper rows at the very top
+        orderedChildren.add(_buildRecentlyPlayed(ref, isNarrow, isDynamic));
+        orderedChildren.add(const SizedBox(height: 16));
+        orderedChildren.add(_buildAlbumsIfSmall(ref, isNarrow, isDynamic));
+        orderedChildren.add(const SizedBox(height: 16));
+
+        // Render sections dynamically in user's customized order
+        for (final section in settings.homeSectionOrder) {
+          if (section == 'quick_picks') {
+            orderedChildren.add(_buildQuickPicks(ref, isNarrow, isMedium, isDynamic));
+            orderedChildren.add(const SizedBox(height: 16));
+          } else if (section == 'songs') {
+            // Render Featured Artists and Albums for the "songs" slot on desktop
+            orderedChildren.add(_buildTopArtists(ref, isNarrow, isDynamic));
+            orderedChildren.add(const SizedBox(height: 16));
+            orderedChildren.add(_buildFeaturedAlbums(ref, isNarrow, isDynamic, context));
+            orderedChildren.add(const SizedBox(height: 16));
+          } else if (section == 'artists') {
+            if (settings.showHomeArtists && library.artists.isNotEmpty) {
+              orderedChildren.add(
+                _buildDesktopHorizontalSection(
+                  title: 'Artists',
+                  onViewAll: () => ref.read(appNavigationProvider.notifier).setItem(NavItem.artists),
+                  itemCount: library.artists.length,
+                  itemBuilder: (context, index) {
+                    return _buildDesktopArtistItem(ref, library.artists[index], l10n);
+                  },
+                ),
+              );
+              orderedChildren.add(const SizedBox(height: 16));
+            }
+          } else if (section == 'albums') {
+            if (settings.showHomeAlbums && library.albums.isNotEmpty) {
+              orderedChildren.add(
+                _buildDesktopHorizontalSection(
+                  title: 'Albums',
+                  onViewAll: () => ref.read(appNavigationProvider.notifier).setItem(NavItem.albums),
+                  itemCount: library.albums.length,
+                  itemBuilder: (context, index) {
+                    return _buildDesktopAlbumItem(ref, library.albums[index], l10n);
+                  },
+                ),
+              );
+              orderedChildren.add(const SizedBox(height: 16));
+            }
+          } else if (section == 'genres') {
+            if (settings.showHomeGenres && genres.isNotEmpty) {
+              orderedChildren.add(
+                _buildDesktopHorizontalSection(
+                  title: 'Genres',
+                  onViewAll: () => ref.read(appNavigationProvider.notifier).setItem(NavItem.genres),
+                  itemCount: genres.length,
+                  itemBuilder: (context, index) {
+                    final genre = genres[index];
+                    return _buildDesktopGenreItem(ref, genre, genresMap[genre]!, l10n);
+                  },
+                ),
+              );
+              orderedChildren.add(const SizedBox(height: 16));
+            }
+          }
+        }
+
+        orderedChildren.add(const SizedBox(height: 120));
+
         return ListView(
           padding: EdgeInsets.only(
             top: (isNarrow ? 4 : 8).s,
             left: (isNarrow ? 16 : 32).s,
             right: (isNarrow ? 16 : 32).s,
           ),
-          children: [
-            if (showLogo)
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 50.s,
-                    child: SvgPicture.asset(
-                      'assets/main_logo.svg',
-                      fit: BoxFit.contain,
-                      colorMapper: AccentColorMapper(
-                        Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                ],
-              ),
-
-            // Row(
-            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //   children: [
-            //      Text(
-            //       'Welcome Back',
-            //       style: TextStyle(
-            //         fontSize: isNarrow ? 24 : 32,
-            //         fontWeight: FontWeight.w400
-            //       )
-            //     ),
-            //   ],
-            // ),
-            // const SizedBox(height: 16),
-            _buildQuickPicks(ref, isNarrow, isMedium, isDynamic),
-            const SizedBox(height: 16),
-
-            _buildRecentlyPlayed(ref, isNarrow, isDynamic),
-
-            //const SizedBox(height: 16),
-            _buildAlbumsIfSmall(ref, isNarrow, isDynamic),
-            const SizedBox(height: 16),
-
-            _buildTopArtists(ref, isNarrow, isDynamic),
-            const SizedBox(height: 16),
-            _buildFeaturedAlbums(ref, isNarrow, isDynamic, context),
-            const SizedBox(height: 120),
-          ],
+          children: orderedChildren,
         );
       },
     );
@@ -536,6 +590,207 @@ class HomeDashboard extends ConsumerWidget {
       },
       loading: () => const SizedBox.shrink(),
       error: (_, __) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildDesktopHorizontalSection({
+    required String title,
+    required VoidCallback onViewAll,
+    required int itemCount,
+    required Widget Function(BuildContext, int) itemBuilder,
+  }) {
+    if (itemCount == 0) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            TextButton(
+              onPressed: onViewAll,
+              child: const Row(
+                children: [
+                  Text(
+                    'View All',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                  SizedBox(width: 4),
+                  Icon(LucideIcons.chevronRight, size: 16, color: Colors.white70),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 180,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: itemCount,
+            itemBuilder: itemBuilder,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDesktopArtistItem(WidgetRef ref, Artist artist, AppLocalizations l10n) {
+    return Container(
+      width: 120,
+      margin: const EdgeInsets.only(right: 16),
+      child: InkWell(
+        onTap: () async {
+          final songs = await DbService.isar.songs.filter().artistEqualTo(artist.name).findAll();
+          ref.read(appNavigationProvider.notifier).showCollection(
+            title: artist.name,
+            subtitle: l10n.artist,
+            art: artist.artPath,
+            imageUrl: artist.artistImageUrl,
+            songs: songs,
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundColor: Colors.white.withOpacity(0.05),
+              backgroundImage: artist.artistImageUrl != null ? FileImage(File(artist.artistImageUrl!)) : null,
+              child: artist.artistImageUrl == null
+                  ? const Icon(LucideIcons.user, size: 32, color: Colors.white38)
+                  : null,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              artist.name,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopAlbumItem(WidgetRef ref, Album album, AppLocalizations l10n) {
+    return Container(
+      width: 130,
+      margin: const EdgeInsets.only(right: 16),
+      child: InkWell(
+        onTap: () async {
+          final songs = await DbService.isar.songs.filter().albumEqualTo(album.name).findAll();
+          ref.read(appNavigationProvider.notifier).showCollection(
+            title: album.name,
+            subtitle: album.artist ?? l10n.unknownArtist,
+            art: album.artPath,
+            songs: songs,
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            AspectRatio(
+              aspectRatio: 1.0,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: OptimizedImage(
+                  imagePath: album.artPath,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              album.name,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            Text(
+              album.artist ?? l10n.unknownArtist,
+              style: const TextStyle(
+                color: Colors.white38,
+                fontSize: 11,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopGenreItem(WidgetRef ref, String genre, List<Song> genreSongs, AppLocalizations l10n) {
+    return Container(
+      width: 140,
+      margin: const EdgeInsets.only(right: 16),
+      child: InkWell(
+        onTap: () {
+          ref.read(appNavigationProvider.notifier).showCollection(
+            title: genre,
+            subtitle: l10n.genre,
+            songs: genreSongs,
+          );
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.04),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(LucideIcons.music, color: Colors.blueAccent, size: 28),
+              const SizedBox(height: 10),
+              Text(
+                genre,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '${genreSongs.length} ${l10n.songs}',
+                style: const TextStyle(
+                  color: Colors.white38,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

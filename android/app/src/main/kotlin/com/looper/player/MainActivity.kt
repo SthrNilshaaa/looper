@@ -5,6 +5,8 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.content.Intent
 import android.os.Bundle
+import android.media.AudioManager
+import android.content.Context
 
 class MainActivity : AudioServiceActivity() {
     private val CHANNEL = "com.looper.player/broadcast"
@@ -22,6 +24,13 @@ class MainActivity : AudioServiceActivity() {
 
                 sendPlaybackBroadcast(title, artist, album, duration, isPlaying)
                 result.success(null)
+            } else if (call.method == "isOnCall") {
+                val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+                val mode = audioManager.mode
+                val isOnCall = (mode == AudioManager.MODE_IN_CALL || 
+                                mode == AudioManager.MODE_IN_COMMUNICATION || 
+                                mode == AudioManager.MODE_RINGTONE)
+                result.success(isOnCall)
             } else {
                 result.notImplemented()
             }

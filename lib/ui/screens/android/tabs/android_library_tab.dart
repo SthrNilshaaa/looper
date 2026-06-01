@@ -8,7 +8,7 @@ import 'package:looper_player/features/settings/presentation/settings_notifier.d
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/ui_utils.dart';
 
@@ -54,6 +54,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                           width: 44,
                           height: 44,
                           useExpanded: false,
+                          useBlur: true,
                           onTap: () {
                             HapticFeedback.lightImpact();
                             ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
@@ -75,6 +76,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                           width: 44,
                           height: 44,
                           useExpanded: false,
+                          useBlur: true,
                           onTap: () {
                             HapticFeedback.lightImpact();
                             ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);

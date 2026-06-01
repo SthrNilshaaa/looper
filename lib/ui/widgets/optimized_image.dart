@@ -50,6 +50,7 @@ class OptimizedImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
+        gaplessPlayback: true,
         cacheWidth: cacheWidth ?? (width != null ? (width! * 2.5).toInt() : 800),
         cacheHeight: cacheHeight,
         errorBuilder: (context, error, stackTrace) => fallback,

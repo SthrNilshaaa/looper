@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
@@ -15,7 +16,9 @@ import 'package:looper_player/ui/screens/android/widgets/premium_music_bar.dart'
 import 'package:looper_player/ui/screens/home_screen.dart';
 import 'package:looper_player/ui/screens/welcome_screen.dart';
 import 'package:looper_player/ui/widgets/collection_detail_view.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/features/playlists/presentation/playlist_view.dart';
+import 'package:looper_player/ui/screens/android/tabs/views/library_categories_views.dart';
 
 import 'tabs/android_home_tab.dart';
 import 'tabs/android_search_tab.dart';
@@ -65,14 +68,14 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
     final rootItem = () {
       if (activeItem == NavItem.home ||
           activeItem == NavItem.songs ||
-          activeItem == NavItem.playlists) {
+          activeItem == NavItem.library) {
         return activeItem;
       }
       for (final histState in nav.history.reversed) {
         final histActive = histState.activeItem;
         if (histActive == NavItem.home ||
             histActive == NavItem.songs ||
-            histActive == NavItem.playlists) {
+            histActive == NavItem.library) {
           return histActive;
         }
       }
@@ -81,38 +84,43 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
 
     // Handle Sub-view Navigation via Navigator (to enable Hero)
     ref.listen(appNavigationProvider, (previous, next) {
+      final isForward = next.history.length >= (previous?.history.length ?? 0);
+
       if (next.activeItem == NavItem.home) {
         navigatorKey.currentState?.popUntil((route) => route.isFirst);
       } else if (next.activeItem == NavItem.songs) {
         navigatorKey.currentState?.popUntil((route) => route.isFirst);
-      } else if (next.activeItem == NavItem.playlists) {
-        navigatorKey.currentState?.popUntil((route) => route.isFirst);
-      } else if (next.activeItem == NavItem.collectionDetail &&
-          next.collectionTitle != null &&
-          previous?.collectionTitle != next.collectionTitle) {
+      } else if (isForward && next.activeItem == NavItem.playlists) {
+        navigatorKey.currentState?.push(
+          _createPremiumRoute(
+            CategoryDetailWrapper(
+              title: 'Playlists',
+              child: PlaylistView(),
+            ),
+          ),
+        );
+      } else if (isForward && next.activeItem == NavItem.collectionDetail) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             CollectionDetailView(
-              title: next.collectionTitle!,
+              title: next.collectionTitle ?? 'Unknown',
               subtitle: next.collectionSubtitle,
               artPath: next.collectionArt,
               imageUrl: next.collectionImageUrl,
               songs: next.collectionSongs,
+              playlist: next.activePlaylist,
             ),
           ),
         );
-      } else if (next.activeItem == NavItem.search &&
-          previous?.activeItem != NavItem.search) {
+      } else if (isForward && next.activeItem == NavItem.search) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(const AndroidSearchTab()),
         );
-      } else if (next.activeItem == NavItem.settings &&
-          previous?.activeItem != NavItem.settings) {
+      } else if (isForward && next.activeItem == NavItem.settings) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(const SettingsView()),
         );
-      } else if (next.activeItem == NavItem.favorites &&
-          previous?.activeItem != NavItem.favorites) {
+      } else if (isForward && next.activeItem == NavItem.favorites) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             const CategoryDetailWrapper(
@@ -121,8 +129,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             ),
           ),
         );
-      } else if (next.activeItem == NavItem.albums &&
-          previous?.activeItem != NavItem.albums) {
+      } else if (isForward && next.activeItem == NavItem.albums) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             const CategoryDetailWrapper(
@@ -131,8 +138,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             ),
           ),
         );
-      } else if (next.activeItem == NavItem.artists &&
-          previous?.activeItem != NavItem.artists) {
+      } else if (isForward && next.activeItem == NavItem.artists) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             const CategoryDetailWrapper(
@@ -141,8 +147,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             ),
           ),
         );
-      } else if (next.activeItem == NavItem.genres &&
-          previous?.activeItem != NavItem.genres) {
+      } else if (isForward && next.activeItem == NavItem.genres) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             const CategoryDetailWrapper(
@@ -151,8 +156,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             ),
           ),
         );
-      } else if (next.activeItem == NavItem.folders &&
-          previous?.activeItem != NavItem.folders) {
+      } else if (isForward && next.activeItem == NavItem.folders) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             const CategoryDetailWrapper(
@@ -161,8 +165,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             ),
           ),
         );
-      } else if (next.activeItem == NavItem.queue &&
-          previous?.activeItem != NavItem.queue) {
+      } else if (isForward && next.activeItem == NavItem.queue) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             const CategoryDetailWrapper(
@@ -171,8 +174,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             ),
           ),
         );
-      } else if (next.activeItem == NavItem.history &&
-          previous?.activeItem != NavItem.history) {
+      } else if (isForward && next.activeItem == NavItem.history) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             const CategoryDetailWrapper(
@@ -181,7 +183,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             ),
           ),
         );
-      } else if (next.history.length < (previous?.history.length ?? 0)) {
+      } else if (!isForward) {
         if (navigatorKey.currentState?.canPop() ?? false) {
           navigatorKey.currentState?.pop();
         }
@@ -210,10 +212,11 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
           return;
         }
 
-        // 2. If we have navigation history or are in a sub-view (search/settings)
+        // 2. If we have navigation history or are in a sub-view (search/settings/playlists)
         if (nav.history.isNotEmpty ||
             nav.activeItem == NavItem.search ||
             nav.activeItem == NavItem.settings ||
+            nav.activeItem == NavItem.playlists ||
             nav.activeItem == NavItem.collectionDetail) {
           ref.read(appNavigationProvider.notifier).goBack();
           return;
@@ -255,7 +258,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: settings.enableDynamicTheming ? Colors.transparent : Theme.of(context).colorScheme.surface,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         // drawer: Drawer(
         //   child: Container(
         //     color: Theme.of(context).colorScheme.surface,
@@ -264,46 +267,22 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
         // ),
         body: Stack(
           children: [
-            // Dynamic Background (Matched exactly with Lyrics Screen for consistency)
-            if (settings.enableDynamicTheming) ...[
-              if (song?.artPath != null) ...[
+            // Dynamic Background / Gradient Layer
+            if (settings.enableDynamicTheming || settings.keepBackgroundGradient) ...[
+              if (song?.artPath != null && settings.enableDynamicTheming) ...[
                 Positioned.fill(
-                  child: TweenAnimationBuilder<double>(
-                    key: ValueKey(song!.artPath),
-                    tween: Tween(begin: 1.0, end: 1.08),
-                    duration: const Duration(seconds: 30),
-                    curve: Curves.linear,
-                    builder: (context, scale, child) {
-                      return Transform.scale(
-                        scale: scale,
-                        child: ImageFiltered(
-                          imageFilter: ImageFilter.blur(
-                            sigmaX: 18,
-                            sigmaY: 18,
-                          ),
-                          child: RepaintBoundary(
-                            child: Image.file(
-                              File(song.artPath!),
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                              height: double.infinity,
-
-                              // VERY IMPORTANT
-                              filterQuality: FilterQuality.low,
-
-                              // Massive optimization
-                              cacheWidth: 80,
-                              cacheHeight: 80,
-
-                              gaplessPlayback: true,
-
-                              errorBuilder: (_, __, ___) =>
-                                  const SizedBox.shrink(),
-                            ),
-                          ),
-                        ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 800),
+                    transitionBuilder: (child, animation) {
+                      return FadeTransition(
+                        opacity: animation,
+                        child: child,
                       );
                     },
+                    child: BlurredBackgroundArt(
+                      key: ValueKey(song!.artPath),
+                      song: song,
+                    ),
                   ),
                 ),
 
@@ -315,7 +294,9 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                 ),
               ] else ...[
                 Positioned.fill(
-                  child: Container(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeInOut,
                     decoration: BoxDecoration(
                       gradient: RadialGradient(
                         center: Alignment.topRight,
@@ -331,6 +312,8 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                 ),
               ],
             ],
+
+
             Positioned.fill(
               child: Navigator(
                 key: navigatorKey,
@@ -344,14 +327,14 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                             final active = nav.activeItem;
                             if (active == NavItem.home ||
                                 active == NavItem.songs ||
-                                active == NavItem.playlists) {
+                                active == NavItem.library) {
                               return active;
                             }
                             for (final histState in nav.history.reversed) {
                               final histActive = histState.activeItem;
                               if (histActive == NavItem.home ||
                                   histActive == NavItem.songs ||
-                                  histActive == NavItem.playlists) {
+                                  histActive == NavItem.library) {
                                 return histActive;
                               }
                             }
@@ -455,7 +438,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                               target = NavItem.songs;
                               break;
                             case 2:
-                              target = NavItem.playlists;
+                              target = NavItem.library;
                               break;
                             case 0:
                             default:
@@ -481,6 +464,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
 
   Route _createPremiumRoute(Widget page) {
     return PageRouteBuilder(
+      opaque: false,
       transitionDuration: const Duration(milliseconds: 500),
       reverseTransitionDuration: const Duration(milliseconds: 400),
       pageBuilder: (context, animation, secondaryAnimation) => page,
@@ -490,6 +474,46 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
           secondaryAnimation: secondaryAnimation,
           transitionType: SharedAxisTransitionType.horizontal,
           child: child,
+        );
+      },
+    );
+  }
+}
+
+class BlurredBackgroundArt extends StatelessWidget {
+  final Song song;
+  const BlurredBackgroundArt({required this.song, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final path = song.artPath;
+    if (path == null) return const SizedBox.shrink();
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 1.0, end: 1.08),
+      duration: const Duration(seconds: 30),
+      curve: Curves.linear,
+      builder: (context, scale, child) {
+        return Transform.scale(
+          scale: scale,
+          child: ImageFiltered(
+            imageFilter: ImageFilter.blur(
+              sigmaX: 18,
+              sigmaY: 18,
+            ),
+            child: RepaintBoundary(
+              child: Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                filterQuality: FilterQuality.low,
+                cacheWidth: 80,
+                cacheHeight: 80,
+                gaplessPlayback: true,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          ),
         );
       },
     );

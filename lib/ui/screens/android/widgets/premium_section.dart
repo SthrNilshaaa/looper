@@ -24,6 +24,7 @@ class PremiumSection extends ConsumerWidget {
   final bool useBlur;
   final bool forceNoBlur;
   final bool forceBlur;
+  final bool keepSurfaceOnDisableBlur;
 
   const PremiumSection({
     super.key,
@@ -45,6 +46,7 @@ class PremiumSection extends ConsumerWidget {
     this.useBlur = false,
     this.forceNoBlur = false,
     this.forceBlur = false,
+    this.keepSurfaceOnDisableBlur = false,
   });
 
   @override
@@ -65,7 +67,11 @@ class PremiumSection extends ConsumerWidget {
       width: width,
       padding: padding,
       decoration: BoxDecoration(
-        color: backgroundColor ?? (isBlurActive ? Colors.white.withValues(alpha: 0.05) : Theme.of(context).colorScheme.surfaceContainer),
+        color: backgroundColor ?? (isBlurActive 
+            ? Colors.white.withValues(alpha: 0.05) 
+            : (((useBlur || forceBlur) && disableBlur && !keepSurfaceOnDisableBlur) 
+                ? Colors.white.withValues(alpha: 0.05)
+                : Theme.of(context).colorScheme.surfaceContainer)),
         borderRadius: borderRadius,
         border: Border(
           top: borderSide,

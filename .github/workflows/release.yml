@@ -29,14 +29,14 @@ jobs:
 
       - name: Decode Keystore
         run: |
-          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
 
       - name: Create key.properties
         run: |
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
-          echo "storeFile=../upload-keystore.jks" >> android/key.properties
+          echo "storeFile=app/upload-keystore.jks" >> android/key.properties
 
       - name: Install dependencies
         run: flutter pub get
@@ -59,6 +59,8 @@ jobs:
 
   build-linux:
     runs-on: ubuntu-latest
+    env:
+      APPIMAGE_EXTRACT_AND_RUN: 1
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -74,7 +76,7 @@ jobs:
 
       - name: Install appimagetool for AppImage Packaging
         run: |
-          sudo wget -O /usr/local/bin/appimagetool https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+          sudo wget -q -O /usr/local/bin/appimagetool https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
           sudo chmod +x /usr/local/bin/appimagetool
 
       - name: Set up Flutter

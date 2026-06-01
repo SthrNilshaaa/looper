@@ -8,7 +8,7 @@ import 'package:looper_player/ui/screens/android/player/android_expanded_player.
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
 
 import 'premium_section.dart';
@@ -170,6 +170,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                   PremiumSection(
                     flex: 8,
                     useBlur: useBlur,
+                    keepSurfaceOnDisableBlur: true,
                     //forceBlur true,
                     useExpanded: true,
                     onTap: null, // Handled by parent GestureDetector
@@ -261,6 +262,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                   PremiumSection(
                     flex: 2, 
                     useBlur: useBlur,
+                    keepSurfaceOnDisableBlur: true,
                     //forceBlur true,
                     useExpanded: true,
                     onTap: null, // Handled by parent GestureDetector

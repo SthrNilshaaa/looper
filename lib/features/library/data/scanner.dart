@@ -6,6 +6,7 @@ import '../../../core/db_service.dart';
 import '../domain/models/models.dart';
 import 'package:isar/isar.dart';
 import '../../playback/data/metadata_service.dart';
+import 'artwork_downloader_service.dart';
 
 class ScanResult {
   final int songsCount;
@@ -133,6 +134,9 @@ class LibraryScanner {
     if (newFilesToProcess.isNotEmpty) {
       print('🆕 Scanner: Parsing metadata for ${newFilesToProcess.length} new files...');
       
+      final settings = await DbService.isar.appSettings.get(0);
+      final downloadIfMissing = (settings?.downloadArtwork ?? false) && (settings?.enableInternet ?? true);
+      
       final List<Map<String, dynamic>> allResults = [];
       const int batchSize = 16; // Process in larger batches of 16 for better parallelism
       
@@ -142,7 +146,7 @@ class LibraryScanner {
             : newFilesToProcess.length;
         final batch = newFilesToProcess.sublist(i, end);
 
-        final results = await Future.wait(batch.map((f) => _extractMetadata(f)));
+        final results = await Future.wait(batch.map((f) => _extractMetadata(f, downloadArtworkIfMissing: downloadIfMissing)));
         for (final res in results) {
           if (res != null) {
             allResults.add(res);
@@ -202,7 +206,7 @@ class LibraryScanner {
     return ScanResult(songsCount: filesToProcess.length, musicFolders: musicFolders);
   }
 
-  Future<Map<String, dynamic>?> _extractMetadata(File file) async {
+  Future<Map<String, dynamic>?> _extractMetadata(File file, {bool downloadArtworkIfMissing = false}) async {
     try {
       Metadata? metadata;
       try {
@@ -235,6 +239,11 @@ class LibraryScanner {
         ..artPath = artPath
         ..lyrics = lyrics
         ..dateAdded = DateTime.now();
+
+      if (artPath == null && downloadArtworkIfMissing) {
+        artPath = await ArtworkDownloaderService().downloadArtworkForSong(song);
+        song.artPath = artPath;
+      }
 
       return {
         'song': song,

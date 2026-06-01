@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
@@ -13,6 +13,7 @@ import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
 
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/playlists/presentation/playlist_view.dart';
+import 'package:looper_player/features/playlists/data/playlist_service.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 
@@ -20,12 +21,15 @@ import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/song/song_info_screen.dart';
 import 'package:looper_player/ui/screens/android/widgets/song_details_bottom_sheet.dart';
+import 'package:looper_player/ui/widgets/song_options_bottom_sheet.dart';
 
 class SongsList extends ConsumerWidget {
   final List<Song> songs;
   final bool shrinkWrap;
   final ScrollPhysics? physics;
   final String? searchQuery;
+  final Playlist? playlist;
+  final ScrollController? controller;
 
   const SongsList({
     super.key,
@@ -33,6 +37,8 @@ class SongsList extends ConsumerWidget {
     this.shrinkWrap = false,
     this.physics,
     this.searchQuery,
+    this.playlist,
+    this.controller,
   });
 
   @override
@@ -107,6 +113,7 @@ class SongsList extends ConsumerWidget {
         ),
         if (shrinkWrap)
           ListView.builder(
+            controller: controller,
             shrinkWrap: true,
             physics: physics ?? const BouncingScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(0, 8, 0, 180),
@@ -118,6 +125,7 @@ class SongsList extends ConsumerWidget {
                 l10n: l10n,
                 songs: songs,
                 searchQuery: searchQuery,
+                playlist: playlist,
               );
             },
           )
@@ -130,6 +138,7 @@ class SongsList extends ConsumerWidget {
               backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
               color: Theme.of(context).colorScheme.primary,
               child: ListView.builder(
+                controller: controller,
                 shrinkWrap: false,
                 physics: physics ??
                     const AlwaysScrollableScrollPhysics(
@@ -144,6 +153,7 @@ class SongsList extends ConsumerWidget {
                     l10n: l10n,
                     songs: songs,
                     searchQuery: searchQuery,
+                    playlist: playlist,
                   );
                 },
               ),
@@ -154,270 +164,21 @@ class SongsList extends ConsumerWidget {
   }
 }
 
-void _showSongOptions(
-  BuildContext context,
-  WidgetRef ref,
-  Song song,
-  AppLocalizations l10n,
-) {
-  showModalBottomSheet(
-    context: context,
-    useRootNavigator: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (context) => SafeArea(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            child: Row(
-              children: [
-                OptimizedImage(
-                  imagePath: song.artPath,
-                  width: 50,
-                  height: 50,
-                  borderRadius: BorderRadius.circular(8),
-                  placeholder: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(LucideIcons.music),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        song.title,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.normal,
-                          color: Colors.white,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        song.artist ?? l10n.unknownArtist,
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(color: Colors.white10, height: 1),
-          Flexible(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.playCircle,
-                      color: Colors.blueAccent,
-                    ),
-                    title: const Text(
-                      'Play Next',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      ref.read(playbackProvider.notifier).addNext(song);
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Will play next'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.listPlus,
-                      color: Colors.greenAccent,
-                    ),
-                    title: const Text(
-                      'Add to Queue',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      ref.read(playbackProvider.notifier).addToQueue(song);
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Added to queue'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.listMusic,
-                      color: Colors.orangeAccent,
-                    ),
-                    title: Text(
-                      'Add to ${l10n.playlists}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showPlaylistSelector(context, ref, song, l10n);
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      song.isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: song.isFavorite ? Colors.red : Colors.white70,
-                    ),
-                    title: Text(
-                      song.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    onTap: () {
-                      ref.read(libraryProvider.notifier).toggleFavorite(song);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.info,
-                      color: Colors.white70,
-                    ),
-                    title: const Text(
-                      'Song Details',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      showModalBottomSheet(
-                        context: context,
-                        useRootNavigator: true,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => SongDetailsBottomSheet(song: song),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.activity,
-                      color: Colors.white70,
-                    ),
-                    title: const Text(
-                      'Technical Info & Frequency',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SongInfoScreen(song: song),
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.share2,
-                      color: Colors.white70,
-                    ),
-                    title: const Text(
-                      'Share',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      ref.read(playbackProvider.notifier).shareSong(song);
-                      Navigator.pop(context);
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-        ],
-      ),
-    ),
-  );
-}
 
-void _showPlaylistSelector(
-  BuildContext context,
-  WidgetRef ref,
-  Song song,
-  AppLocalizations l10n,
-) {
-  final playlists = ref.watch(playlistProvider);
-
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-      title: Text('Add to ${l10n.playlists}'),
-      content: playlists.isEmpty
-          ? const Text('No playlists created yet.')
-          : SizedBox(
-              width: double.maxFinite,
-              child: ListView.builder(
-                shrinkWrap: true,
-                itemCount: playlists.length,
-                itemBuilder: (context, index) {
-                  final playlist = playlists[index];
-                  return ListTile(
-                    leading: const Icon(LucideIcons.listMusic),
-                    title: Text(playlist.name),
-                    onTap: () async {
-                      if (!playlist.songPaths.contains(song.path)) {
-                        playlist.songPaths = [...playlist.songPaths, song.path];
-                        playlist.dateModified = DateTime.now();
-                        await DbService.isar.writeTxn(
-                          () => DbService.isar.playlists.put(playlist),
-                        );
-                      }
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Added to ${playlist.name}')),
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
-        ),
-      ],
-    ),
-  );
-}
 
 class _SongTile extends ConsumerWidget {
   final Song song;
   final List<Song> songs;
   final AppLocalizations l10n;
   final String? searchQuery;
+  final Playlist? playlist;
 
   const _SongTile({
     required this.song,
     required this.songs,
     required this.l10n,
     this.searchQuery,
+    this.playlist,
   });
 
   Widget _buildHighlightedText({
@@ -610,7 +371,12 @@ class _SongTile extends ConsumerWidget {
       ),
       trailing: IconButton(
         icon: const Icon(Icons.more_vert, color: Colors.grey),
-        onPressed: () => _showSongOptions(context, ref, song, l10n),
+        onPressed: () => showSongOptionsBottomSheet(
+          context: context,
+          ref: ref,
+          song: song,
+          playlist: playlist,
+        ),
       ),
       onTap: () {
         final index = songs.indexWhere((s) => s.path == song.path);

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
@@ -42,12 +43,33 @@ final playlistProvider =
       return PlaylistNotifier();
     });
 
+final playlistSongsProvider = StreamProvider.family<List<Song>, int>((ref, playlistId) {
+  return DbService.isar.playlists
+      .watchObject(playlistId, fireImmediately: true)
+      .asyncMap((playlist) async {
+        if (playlist == null || playlist.songPaths.isEmpty) return <Song>[];
+        
+        final songs = await DbService.isar.songs
+            .filter()
+            .anyOf(playlist.songPaths, (q, path) => q.pathEqualTo(path))
+            .findAll();
+            
+        final songMap = {for (var s in songs) s.path: s};
+        return playlist.songPaths
+            .map((path) => songMap[path])
+            .whereType<Song>()
+            .toList();
+      });
+});
+
 class PlaylistView extends ConsumerWidget {
   const PlaylistView({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playlists = ref.watch(playlistProvider);
+    final playbackState = ref.watch(playbackProvider);
+    final song = playbackState.currentSong;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -72,7 +94,7 @@ class PlaylistView extends ConsumerWidget {
               ),
             )
           : GridView.builder(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 180),
               gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
                 maxCrossAxisExtent: 200,
                 childAspectRatio: 0.85,
@@ -83,9 +105,14 @@ class PlaylistView extends ConsumerWidget {
               itemBuilder: (context, index) =>
                   _PlaylistCard(playlist: playlists[index]),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateDialog(context, ref),
-        child: const Icon(LucideIcons.plus),
+      floatingActionButton: AnimatedPadding(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+        padding: EdgeInsets.only(bottom: song != null ? 160 : 90),
+        child: FloatingActionButton(
+          onPressed: () => _showCreateDialog(context, ref),
+          child: const Icon(LucideIcons.plus),
+        ),
       ),
     );
   }
@@ -135,12 +162,20 @@ class _PlaylistCard extends ConsumerWidget {
             .filter()
             .anyOf(playlist.songPaths, (q, path) => q.pathEqualTo(path))
             .findAll();
+
+        final songMap = {for (var s in songs) s.path: s};
+        final orderedSongs = playlist.songPaths
+            .map((path) => songMap[path])
+            .whereType<Song>()
+            .toList();
+
         ref
             .read(appNavigationProvider.notifier)
             .showCollection(
               title: playlist.name,
               subtitle: 'Playlist',
-              songs: songs,
+              songs: orderedSongs,
+              playlist: playlist,
             );
       },
       borderRadius: BorderRadius.circular(12),

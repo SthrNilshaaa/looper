@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:animations/animations.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:file_picker/file_picker.dart';
@@ -107,12 +107,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       );
     }
 
+    final bool hasBgLayer = settings.enableDynamicTheming || settings.keepBackgroundGradient;
+
     return Scaffold(
-      backgroundColor: isDynamic
-          ? (playback.currentSong != null
-                ? Theme.of(context).colorScheme.surface
-                : Theme.of(context).scaffoldBackgroundColor)
-          : Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: hasBgLayer ? Colors.transparent : Theme.of(context).scaffoldBackgroundColor,
       drawer: isNarrow
           ? Drawer(
               child: Container(
@@ -124,28 +122,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Global Background Art (Conditional)
-            if (!showWelcome &&
-                nav.activeItem != NavItem.settings &&
-                settings.enableDynamicTheming &&
-                playback.currentSong?.artPath != null) ...[
-              Positioned.fill(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 1000),
-                  child: Image.file(
-                    File(playback.currentSong!.artPath!),
-                    key: ValueKey(playback.currentSong!.artPath!),
-                    fit: BoxFit.cover,
+            // Global Background Art / persistent gradient
+            if (!showWelcome && (settings.enableDynamicTheming || settings.keepBackgroundGradient)) ...[
+              if (playback.currentSong?.artPath != null && settings.enableDynamicTheming && (settings.keepBackgroundGradient || nav.activeItem != NavItem.settings)) ...[
+                Positioned.fill(
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 1000),
+                    child: Image.file(
+                      File(playback.currentSong!.artPath!),
+                      key: ValueKey(playback.currentSong!.artPath!),
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
-              ),
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                  child: Container(color: Colors.black.withOpacity(0.8)),
+                Positioned.fill(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                    child: Container(color: Colors.black.withOpacity(0.8)),
+                  ),
                 ),
-              ),
+              ] else ...[
+                Positioned.fill(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeInOut,
+                    decoration: BoxDecoration(
+                      gradient: RadialGradient(
+                        center: Alignment.topRight,
+                        radius: 1.5,
+                        colors: [
+                          Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                          Theme.of(context).scaffoldBackgroundColor,
+                        ],
+                        stops: const [0.0, 1.0],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
+
+
 
             Column(
               children: [

@@ -172,7 +172,7 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
         if (widget.showTimestamps) ...[
           const SizedBox(height: 8),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 3),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
