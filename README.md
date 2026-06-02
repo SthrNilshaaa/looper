@@ -1,13 +1,21 @@
-# <p align="center"><img src="assets/main_logo.svg" width="240" height="96" style="background-color: #2e2e2e; padding: 12px; border-radius: 16px;" /><br/></p>
+<p align="center">
+  <table align="center">
+    <tr>
+      <td bgcolor="#2e2e2e" align="center" style="padding: 12px; border-radius: 16px;">
+        <img src="assets/main_logo.svg" width="240" height="96" />
+      </td>
+    </tr>
+  </table>
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20Android-blueviolet?style=for-the-badge&logo=linux&logoColor=white" />
   <img src="https://img.shields.io/badge/UI--UX-Glassmorphism%20%2F%20Neo--Blur-FF007F?style=for-the-badge&logo=figma&logoColor=white" />
   <img src="https://img.shields.io/badge/Built%20With-Flutter%20%26%20Dart-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
-  <img src="https://img.shields.io/github/v/release/OpenAppsLabs/5G?style=for-the-badge&logo=GitHub&color=%23000000"/>
-  <img src="https://img.shields.io/github/downloads/OpenAppsLabs/5G/total?style=for-the-badge&logo=GitHub&color=%23000000"/>
-  <img src="https://img.shields.io/github/stars/OpenAppsLabs/5G?style=for-the-badge&logo=GitHub&color=%23000000"/>
-  <img src="https://img.shields.io/github/forks/OpenAppsLabs/5G?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/v/release/SthrNilshaaa/looper?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/downloads/SthrNilshaaa/looper/total?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/stars/SthrNilshaaa/looper?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/forks/SthrNilshaaa/looper?style=for-the-badge&logo=GitHub&color=%23000000"/>
   <img src="https://img.shields.io/badge/License-GPL--3.0-green?style=for-the-badge" />
 </p>
 
@@ -102,7 +110,7 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 
 ## 📦 Installation & Setup
 
-Download the signed production build for your specific platform from our [Releases](https://github.com/SthrNilshaaa/one_player/releases) page.
+Download the signed production build for your specific platform from our [Releases](https://github.com/SthrNilshaaa/looper/releases) page.
 
 ### 📱 Android (`.apk`)
 We distribute clean, cryptographically signed production APKs built directly on our automated pipeline:
