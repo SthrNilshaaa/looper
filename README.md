@@ -4,6 +4,10 @@
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20Android-blueviolet?style=for-the-badge&logo=linux&logoColor=white" />
   <img src="https://img.shields.io/badge/UI--UX-Glassmorphism%20%2F%20Neo--Blur-FF007F?style=for-the-badge&logo=figma&logoColor=white" />
   <img src="https://img.shields.io/badge/Built%20With-Flutter%20%26%20Dart-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
+  <img src="https://img.shields.io/github/v/release/OpenAppsLabs/5G?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/downloads/OpenAppsLabs/5G/total?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/stars/OpenAppsLabs/5G?style=for-the-badge&logo=GitHub&color=%23000000"/>
+  <img src="https://img.shields.io/github/forks/OpenAppsLabs/5G?style=for-the-badge&logo=GitHub&color=%23000000"/>
   <img src="https://img.shields.io/badge/License-GPL--3.0-green?style=for-the-badge" />
 </p>
 
