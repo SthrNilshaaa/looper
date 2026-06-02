@@ -1,11 +1,5 @@
 <p align="center">
-  <table align="center">
-    <tr>
-      <td bgcolor="#2e2e2e" align="center" style="padding: 12px; border-radius: 16px;">
-        <img src="assets/main_logo.svg" width="240" height="96" />
-      </td>
-    </tr>
-  </table>
+  <img src="assets/main_logo.svg" width="240" height="96" />
 </p>
 
 <p align="center">
