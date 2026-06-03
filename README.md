@@ -54,8 +54,20 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 
 ## 📸 Gallery
 
+### 📱 Android
+
+<p align="center">
+  <img src="assets/android_ss/screenshot_01.jpg" width="19%" />
+  <img src="assets/android_ss/screensho_02.jpg" width="19%" />
+  <img src="assets/android_ss/screenshot_03.jpg" width="19%" />
+  <img src="assets/android_ss/screenshot_04.jpg" width="19%" />
+  <img src="assets/android_ss/screenshot_05.jpg" width="19%" />
+</p>
+
+### 💻 Linux
+
 <details>
-<summary><b>📐 Click to View App Design & Screenshots</b></summary>
+<summary><b>📐 Click to View Linux Screenshots</b></summary>
 <br/>
 
 <p align="center">

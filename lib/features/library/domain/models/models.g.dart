@@ -6402,63 +6402,73 @@ const AppSettingsSchema = CollectionSchema(
       name: r'enableInternet',
       type: IsarType.bool,
     ),
-    r'homeSectionOrder': PropertySchema(
+    r'enableSlideGesture': PropertySchema(
       id: 13,
+      name: r'enableSlideGesture',
+      type: IsarType.bool,
+    ),
+    r'homeSectionOrder': PropertySchema(
+      id: 14,
       name: r'homeSectionOrder',
       type: IsarType.stringList,
     ),
     r'keepBackgroundGradient': PropertySchema(
-      id: 14,
+      id: 15,
       name: r'keepBackgroundGradient',
       type: IsarType.bool,
     ),
     r'language': PropertySchema(
-      id: 15,
+      id: 16,
       name: r'language',
       type: IsarType.string,
     ),
     r'lastPlayedSongId': PropertySchema(
-      id: 16,
+      id: 17,
       name: r'lastPlayedSongId',
       type: IsarType.long,
     ),
     r'libraryFolders': PropertySchema(
-      id: 17,
+      id: 18,
       name: r'libraryFolders',
       type: IsarType.stringList,
     ),
     r'repeatMode': PropertySchema(
-      id: 18,
+      id: 19,
       name: r'repeatMode',
       type: IsarType.long,
     ),
     r'saveDynamicColor': PropertySchema(
-      id: 19,
+      id: 20,
       name: r'saveDynamicColor',
       type: IsarType.bool,
     ),
     r'showHomeAlbums': PropertySchema(
-      id: 20,
+      id: 21,
       name: r'showHomeAlbums',
       type: IsarType.bool,
     ),
     r'showHomeArtists': PropertySchema(
-      id: 21,
+      id: 22,
       name: r'showHomeArtists',
       type: IsarType.bool,
     ),
     r'showHomeGenres': PropertySchema(
-      id: 22,
+      id: 23,
       name: r'showHomeGenres',
       type: IsarType.bool,
     ),
     r'shuffle': PropertySchema(
-      id: 23,
+      id: 24,
       name: r'shuffle',
       type: IsarType.bool,
     ),
+    r'stopOnTaskRemoved': PropertySchema(
+      id: 25,
+      name: r'stopOnTaskRemoved',
+      type: IsarType.bool,
+    ),
     r'volume': PropertySchema(
-      id: 24,
+      id: 26,
       name: r'volume',
       type: IsarType.double,
     )
@@ -6526,18 +6536,20 @@ void _appSettingsSerialize(
   writer.writeBool(offsets[10], object.dynamicLyrics);
   writer.writeBool(offsets[11], object.enableDynamicTheming);
   writer.writeBool(offsets[12], object.enableInternet);
-  writer.writeStringList(offsets[13], object.homeSectionOrder);
-  writer.writeBool(offsets[14], object.keepBackgroundGradient);
-  writer.writeString(offsets[15], object.language);
-  writer.writeLong(offsets[16], object.lastPlayedSongId);
-  writer.writeStringList(offsets[17], object.libraryFolders);
-  writer.writeLong(offsets[18], object.repeatMode);
-  writer.writeBool(offsets[19], object.saveDynamicColor);
-  writer.writeBool(offsets[20], object.showHomeAlbums);
-  writer.writeBool(offsets[21], object.showHomeArtists);
-  writer.writeBool(offsets[22], object.showHomeGenres);
-  writer.writeBool(offsets[23], object.shuffle);
-  writer.writeDouble(offsets[24], object.volume);
+  writer.writeBool(offsets[13], object.enableSlideGesture);
+  writer.writeStringList(offsets[14], object.homeSectionOrder);
+  writer.writeBool(offsets[15], object.keepBackgroundGradient);
+  writer.writeString(offsets[16], object.language);
+  writer.writeLong(offsets[17], object.lastPlayedSongId);
+  writer.writeStringList(offsets[18], object.libraryFolders);
+  writer.writeLong(offsets[19], object.repeatMode);
+  writer.writeBool(offsets[20], object.saveDynamicColor);
+  writer.writeBool(offsets[21], object.showHomeAlbums);
+  writer.writeBool(offsets[22], object.showHomeArtists);
+  writer.writeBool(offsets[23], object.showHomeGenres);
+  writer.writeBool(offsets[24], object.shuffle);
+  writer.writeBool(offsets[25], object.stopOnTaskRemoved);
+  writer.writeDouble(offsets[26], object.volume);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -6560,19 +6572,21 @@ AppSettings _appSettingsDeserialize(
   object.dynamicLyrics = reader.readBool(offsets[10]);
   object.enableDynamicTheming = reader.readBool(offsets[11]);
   object.enableInternet = reader.readBool(offsets[12]);
-  object.homeSectionOrder = reader.readStringList(offsets[13]) ?? [];
+  object.enableSlideGesture = reader.readBool(offsets[13]);
+  object.homeSectionOrder = reader.readStringList(offsets[14]) ?? [];
   object.id = id;
-  object.keepBackgroundGradient = reader.readBool(offsets[14]);
-  object.language = reader.readString(offsets[15]);
-  object.lastPlayedSongId = reader.readLongOrNull(offsets[16]);
-  object.libraryFolders = reader.readStringList(offsets[17]) ?? [];
-  object.repeatMode = reader.readLong(offsets[18]);
-  object.saveDynamicColor = reader.readBool(offsets[19]);
-  object.showHomeAlbums = reader.readBool(offsets[20]);
-  object.showHomeArtists = reader.readBool(offsets[21]);
-  object.showHomeGenres = reader.readBool(offsets[22]);
-  object.shuffle = reader.readBool(offsets[23]);
-  object.volume = reader.readDouble(offsets[24]);
+  object.keepBackgroundGradient = reader.readBool(offsets[15]);
+  object.language = reader.readString(offsets[16]);
+  object.lastPlayedSongId = reader.readLongOrNull(offsets[17]);
+  object.libraryFolders = reader.readStringList(offsets[18]) ?? [];
+  object.repeatMode = reader.readLong(offsets[19]);
+  object.saveDynamicColor = reader.readBool(offsets[20]);
+  object.showHomeAlbums = reader.readBool(offsets[21]);
+  object.showHomeArtists = reader.readBool(offsets[22]);
+  object.showHomeGenres = reader.readBool(offsets[23]);
+  object.shuffle = reader.readBool(offsets[24]);
+  object.stopOnTaskRemoved = reader.readBool(offsets[25]);
+  object.volume = reader.readDouble(offsets[26]);
   return object;
 }
 
@@ -6610,19 +6624,19 @@ P _appSettingsDeserializeProp<P>(
     case 12:
       return (reader.readBool(offset)) as P;
     case 13:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 14:
-      return (reader.readBool(offset)) as P;
-    case 15:
-      return (reader.readString(offset)) as P;
-    case 16:
-      return (reader.readLongOrNull(offset)) as P;
-    case 17:
       return (reader.readStringList(offset) ?? []) as P;
-    case 18:
-      return (reader.readLong(offset)) as P;
-    case 19:
+    case 15:
       return (reader.readBool(offset)) as P;
+    case 16:
+      return (reader.readString(offset)) as P;
+    case 17:
+      return (reader.readLongOrNull(offset)) as P;
+    case 18:
+      return (reader.readStringList(offset) ?? []) as P;
+    case 19:
+      return (reader.readLong(offset)) as P;
     case 20:
       return (reader.readBool(offset)) as P;
     case 21:
@@ -6632,6 +6646,10 @@ P _appSettingsDeserializeProp<P>(
     case 23:
       return (reader.readBool(offset)) as P;
     case 24:
+      return (reader.readBool(offset)) as P;
+    case 25:
+      return (reader.readBool(offset)) as P;
+    case 26:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -7160,6 +7178,16 @@ extension AppSettingsQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'enableInternet',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      enableSlideGestureEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'enableSlideGesture',
         value: value,
       ));
     });
@@ -7996,6 +8024,16 @@ extension AppSettingsQueryFilter
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      stopOnTaskRemovedEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'stopOnTaskRemoved',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> volumeEqualTo(
     double value, {
     double epsilon = Query.epsilon,
@@ -8236,6 +8274,20 @@ extension AppSettingsQuerySortBy
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByEnableSlideGesture() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableSlideGesture', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByEnableSlideGestureDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableSlideGesture', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
       sortByKeepBackgroundGradient() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'keepBackgroundGradient', Sort.asc);
@@ -8349,6 +8401,20 @@ extension AppSettingsQuerySortBy
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByShuffleDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'shuffle', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByStopOnTaskRemoved() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'stopOnTaskRemoved', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByStopOnTaskRemovedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'stopOnTaskRemoved', Sort.desc);
     });
   }
 
@@ -8534,6 +8600,20 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByEnableSlideGesture() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableSlideGesture', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByEnableSlideGestureDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableSlideGesture', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -8663,6 +8743,20 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByStopOnTaskRemoved() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'stopOnTaskRemoved', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByStopOnTaskRemovedDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'stopOnTaskRemoved', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByVolume() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'volume', Sort.asc);
@@ -8763,6 +8857,13 @@ extension AppSettingsQueryWhereDistinct
   }
 
   QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByEnableSlideGesture() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'enableSlideGesture');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
       distinctByHomeSectionOrder() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'homeSectionOrder');
@@ -8831,6 +8932,13 @@ extension AppSettingsQueryWhereDistinct
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByShuffle() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'shuffle');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByStopOnTaskRemoved() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'stopOnTaskRemoved');
     });
   }
 
@@ -8930,6 +9038,13 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+      enableSlideGestureProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'enableSlideGesture');
+    });
+  }
+
   QueryBuilder<AppSettings, List<String>, QQueryOperations>
       homeSectionOrderProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -8996,6 +9111,13 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, bool, QQueryOperations> shuffleProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'shuffle');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+      stopOnTaskRemovedProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'stopOnTaskRemoved');
     });
   }
 

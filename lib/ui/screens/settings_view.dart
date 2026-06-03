@@ -125,6 +125,28 @@ class SettingsView extends ConsumerWidget {
                         HapticFeedback.lightImpact();
                         ref.read(settingsProvider.notifier).updateDisableAnimatedDuration(value);
                       },
+                      isLast: false,
+                    ),
+                    _PremiumSwitchRow(
+                      icon: LucideIcons.move,
+                      title: 'Vertical Motion Effect Player',
+                      subtitle: 'Swipe down on the expanded player to dismiss it',
+                      value: settings.enableSlideGesture,
+                      onChanged: (value) {
+                        HapticFeedback.lightImpact();
+                        ref.read(settingsProvider.notifier).updateEnableSlideGesture(value);
+                      },
+                      isLast: false,
+                    ),
+                    _PremiumSwitchRow(
+                      icon: LucideIcons.power,
+                      title: 'Stop Service on App Dismissal',
+                      subtitle: 'Stop background service and close app when dismissed',
+                      value: settings.stopOnTaskRemoved,
+                      onChanged: (value) {
+                        HapticFeedback.lightImpact();
+                        ref.read(settingsProvider.notifier).updateStopOnTaskRemoved(value);
+                      },
                       isLast: true,
                     ),
                   ],

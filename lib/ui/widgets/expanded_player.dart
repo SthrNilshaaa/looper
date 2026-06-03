@@ -82,8 +82,13 @@ class ExpandedPlayer extends ConsumerWidget {
               const Spacer(),
 
               // Album Art
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 48.s),
+              AnimatedPadding(
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOutCubic,
+                padding: EdgeInsets.symmetric(
+                  horizontal: 48.s + (playback.isPlaying ? 0.0 : 5.0),
+                  vertical: playback.isPlaying ? 0.0 : 5.0,
+                ),
                 child: AspectRatio(
                   aspectRatio: 1,
                   child: Container(

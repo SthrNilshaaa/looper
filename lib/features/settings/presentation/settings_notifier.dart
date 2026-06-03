@@ -138,7 +138,25 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..showHomeArtists = s.showHomeArtists
       ..showHomeAlbums = s.showHomeAlbums
       ..showHomeGenres = s.showHomeGenres
-      ..homeSectionOrder = List.from(s.homeSectionOrder.isEmpty ? ['quick_picks', 'songs', 'albums', 'artists', 'genres'] : s.homeSectionOrder);
+      ..homeSectionOrder = List.from(s.homeSectionOrder.isEmpty ? ['quick_picks', 'songs', 'albums', 'artists', 'genres'] : s.homeSectionOrder)
+      ..enableSlideGesture = s.enableSlideGesture
+      ..stopOnTaskRemoved = s.stopOnTaskRemoved;
+  }
+
+  Future<void> updateEnableSlideGesture(bool value) async {
+    final newState = _clone(state)..enableSlideGesture = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateStopOnTaskRemoved(bool value) async {
+    final newState = _clone(state)..stopOnTaskRemoved = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
   }
 
   Future<void> updateDownloadArtwork(bool enabled) async {

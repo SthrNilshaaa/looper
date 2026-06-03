@@ -1,6 +1,8 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:media_kit/media_kit.dart';
 import 'dart:io';
+import 'db_service.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
 
 class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   final Player player;
@@ -147,5 +149,20 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
     } else {
       await player.seek(position);
     }
+  }
+
+  @override
+  Future<void> onTaskRemoved() async {
+    try {
+      final settings = await DbService.isar.appSettings.get(0);
+      if (settings != null && settings.stopOnTaskRemoved) {
+        await player.stop();
+        await stop();
+        exit(0);
+      }
+    } catch (e) {
+      // ignore
+    }
+    await super.onTaskRemoved();
   }
 }

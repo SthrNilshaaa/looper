@@ -104,4 +104,6 @@ class AppSettings {
   bool showHomeAlbums = false;
   bool showHomeGenres = false;
   List<String> homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres'];
+  bool enableSlideGesture = true;
+  bool stopOnTaskRemoved = false;
 }

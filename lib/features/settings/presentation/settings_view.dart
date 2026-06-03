@@ -650,6 +650,40 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   ),
                   const Divider(height: 1, indent: 72, color: Colors.white10),
                   SwitchListTile(
+                    secondary: const Icon(LucideIcons.move, color: Colors.white70),
+                    title: const Text(
+                      'Vertical Motion Effect Player',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: const Text(
+                      'Swipe down on the expanded player to dismiss it',
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    activeColor: Color(settings.accentColor),
+                    value: settings.enableSlideGesture,
+                    onChanged: (value) {
+                      ref.read(settingsProvider.notifier).updateEnableSlideGesture(value);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                  SwitchListTile(
+                    secondary: const Icon(LucideIcons.power, color: Colors.white70),
+                    title: const Text(
+                      'Stop Service on App Dismissal',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                    ),
+                    subtitle: const Text(
+                      'Stop playback and close the app when swiped away from recent panel',
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                    activeColor: Color(settings.accentColor),
+                    value: settings.stopOnTaskRemoved,
+                    onChanged: (value) {
+                      ref.read(settingsProvider.notifier).updateStopOnTaskRemoved(value);
+                    },
+                  ),
+                  const Divider(height: 1, indent: 72, color: Colors.white10),
+                  SwitchListTile(
                     secondary: const Icon(LucideIcons.globe, color: Colors.white70),
                     title: Text(
                       l10n.internetMode,
