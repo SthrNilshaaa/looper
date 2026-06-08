@@ -42,7 +42,7 @@ class PremiumSection extends ConsumerWidget {
     this.showLeftBorder = true,
     this.showRightBorder = true,
     this.showShadow = false,
-    this.blurAmount = 10,
+    this.blurAmount = 3,
     this.useBlur = false,
     this.forceNoBlur = false,
     this.forceBlur = false,

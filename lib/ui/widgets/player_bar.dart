@@ -19,107 +19,35 @@ class PlayerBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final playback = ref.watch(playbackProvider);
-    final song = playback.currentSong;
+    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
     if (song == null) return const SizedBox.shrink();
 
-    return _PremiumPlayerBar(
-      title: song.title,
-      artist: song.artist ?? AppLocalizations.of(context)!.unknownArtist,
-      artPath: song.artPath,
-      position: playback.position,
-      duration: playback.duration,
-      isPlaying: playback.isPlaying,
-      isShuffle: playback.isShuffle,
-      repeatMode: playback.repeatMode,
-      volume: playback.volume,
-      onPlayPause: () => ref.read(playbackProvider.notifier).togglePlay(),
-      onNext: () => ref.read(playbackProvider.notifier).skipNext(),
-      onPrevious: () => ref.read(playbackProvider.notifier).skipPrevious(),
-      onShuffle: () => ref.read(playbackProvider.notifier).toggleShuffle(),
-      onRepeat: () => ref.read(playbackProvider.notifier).nextRepeatMode(),
-      onSeek: (pos) => ref.read(playbackProvider.notifier).seek(pos),
-      onSeekStart: () => ref.read(playbackProvider.notifier).startScrubbing(),
-      onSeekEnd: () => ref.read(playbackProvider.notifier).stopScrubbing(),
-      onVolumeChanged: (vol) =>
-          ref.read(playbackProvider.notifier).setVolume(vol),
-      onLyricsToggle: () =>
-          ref.read(appNavigationProvider.notifier).toggleItem(NavItem.lyrics),
-      onQueueToggle: () =>
-          ref.read(appNavigationProvider.notifier).toggleItem(NavItem.queue),
-      onMuteToggle: () => ref.read(playbackProvider.notifier).toggleMute(),
-      onFavoriteToggle: () =>
-          ref.read(playbackProvider.notifier).toggleFavorite(),
-      isFavorite: song.isFavorite,
-      isLyricsActive:
-          ref.watch(appNavigationProvider).activeItem == NavItem.lyrics,
-      isQueueActive:
-          ref.watch(appNavigationProvider).activeItem == NavItem.queue,
-      isDynamic: ref.watch(settingsProvider).enableDynamicTheming,
-    );
+    return const _PremiumPlayerBar();
   }
 }
 
-class _PremiumPlayerBar extends StatelessWidget {
-  final String title;
-  final String artist;
-  final String? artPath;
-  final Duration position;
-  final Duration duration;
-  final bool isPlaying;
-  final bool isShuffle;
-  final bool isFavorite;
-  final RepeatMode repeatMode;
-  final double volume;
-  final VoidCallback onPlayPause;
-  final VoidCallback onNext;
-  final VoidCallback onPrevious;
-  final VoidCallback onShuffle;
-  final VoidCallback onRepeat;
-  final VoidCallback onFavoriteToggle;
-  final ValueChanged<Duration> onSeek;
-  final VoidCallback? onSeekStart;
-  final VoidCallback? onSeekEnd;
-  final ValueChanged<double> onVolumeChanged;
-  final VoidCallback onLyricsToggle;
-  final VoidCallback onQueueToggle;
-  final VoidCallback onMuteToggle;
-  final bool isLyricsActive;
-  final bool isQueueActive;
-  final bool isDynamic;
-
-  const _PremiumPlayerBar({
-    required this.title,
-    required this.artist,
-    this.artPath,
-    required this.position,
-    required this.duration,
-    required this.isPlaying,
-    required this.isShuffle,
-    required this.isFavorite,
-    required this.repeatMode,
-    required this.volume,
-    required this.onPlayPause,
-    required this.onNext,
-    required this.onPrevious,
-    required this.onShuffle,
-    required this.onRepeat,
-    required this.onFavoriteToggle,
-    required this.onSeek,
-    this.onSeekStart,
-    this.onSeekEnd,
-    required this.onVolumeChanged,
-    required this.onLyricsToggle,
-    required this.onQueueToggle,
-    required this.onMuteToggle,
-    this.isLyricsActive = false,
-    this.isQueueActive = false,
-    this.isDynamic = false,
-  });
+class _PremiumPlayerBar extends ConsumerWidget {
+  const _PremiumPlayerBar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
+    if (song == null) return const SizedBox.shrink();
+
+    final isFavorite = ref.watch(playbackProvider.select((s) => s.currentSong?.isFavorite ?? false));
+    final isShuffle = ref.watch(playbackProvider.select((s) => s.isShuffle));
+    final repeatMode = ref.watch(playbackProvider.select((s) => s.repeatMode));
+    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
+    final volume = ref.watch(playbackProvider.select((s) => s.volume));
+
+    final isLyricsActive = ref.watch(appNavigationProvider.select((s) => s.activeItem == NavItem.lyrics));
+    final isQueueActive = ref.watch(appNavigationProvider.select((s) => s.activeItem == NavItem.queue));
+    final isDynamic = ref.watch(settingsProvider.select((s) => s.enableDynamicTheming));
+
+    final title = song.title;
+    final artist = song.artist ?? AppLocalizations.of(context)!.unknownArtist;
+    final artPath = song.artPath;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -133,14 +61,14 @@ class _PremiumPlayerBar extends StatelessWidget {
               : EdgeInsets.only(left: 48.s, right: 48.s, bottom: 32.sp, top: 0),
           decoration: BoxDecoration(
             color: isDynamic
-                ? colorScheme.primary.withOpacity(0.04)
+                ? colorScheme.primary.withValues(alpha: 0.04)
                 : colorScheme.surfaceContainer,
             borderRadius: Platform.isAndroid || Platform.isIOS
                 ? BorderRadius.zero
                 : BorderRadius.circular(6),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 blurRadius: 24,
                 spreadRadius: -4,
               ),
@@ -156,7 +84,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: isVeryNarrow ? 3 : 4,
-                      child: _buildSongInfo(context, isVeryNarrow),
+                      child: _buildSongInfo(context, title, artist, artPath, isVeryNarrow),
                     ),
 
                     if (!isVeryNarrow)
@@ -167,21 +95,28 @@ class _PremiumPlayerBar extends StatelessWidget {
                         color: Colors.white10,
                       ),
 
-                    _buildControls(context, colorScheme, isVeryNarrow),
+                    _buildControls(context, ref, colorScheme, isPlaying, isShuffle, repeatMode, isVeryNarrow),
 
                     const SizedBox(width: 12),
 
                     Expanded(
                       flex: isNarrow ? 4 : 6,
-                        child: ExpressiveSlider(
-                          position: position,
-                          duration: duration,
-                          isPlaying: isPlaying,
-                          onSeek: onSeek,
-                          onSeekStart: onSeekStart,
-                          onSeekEnd: onSeekEnd,
-                          color: colorScheme.primary,
-                        ),
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          final position = ref.watch(playbackProvider.select((s) => s.position));
+                          final duration = ref.watch(playbackProvider.select((s) => s.duration));
+                          final isPlayingVal = ref.watch(playbackProvider.select((s) => s.isPlaying));
+                          return ExpressiveSlider(
+                            position: position,
+                            duration: duration,
+                            isPlaying: isPlayingVal,
+                            onSeek: (pos) => ref.read(playbackProvider.notifier).seek(pos),
+                            onSeekStart: () => ref.read(playbackProvider.notifier).startScrubbing(),
+                            onSeekEnd: () => ref.read(playbackProvider.notifier).stopScrubbing(),
+                            color: colorScheme.primary,
+                          );
+                        },
+                      ),
                     ),
 
                     if (!isVeryNarrow) ...[
@@ -196,13 +131,13 @@ class _PremiumPlayerBar extends StatelessWidget {
                     ],
                     if (!isNarrow) ...[
                       const SizedBox(width: 16),
-                      _buildVolumeControl(context),
+                      _buildVolumeControl(context, ref, volume),
                       const SizedBox(width: 16),
                     ],
 
                     const Spacer(),
 
-                    _buildActions(context, colorScheme, isVeryNarrow),
+                    _buildActions(context, ref, colorScheme, isFavorite, isLyricsActive, isQueueActive, isVeryNarrow),
                   ],
                 ),
               ),
@@ -213,7 +148,7 @@ class _PremiumPlayerBar extends StatelessWidget {
     );
   }
 
-  Widget _buildSongInfo(BuildContext context, bool isVeryNarrow) {
+  Widget _buildSongInfo(BuildContext context, String title, String artist, String? artPath, bool isVeryNarrow) {
     return Row(
       mainAxisSize: MainAxisSize.max,
       children: [
@@ -253,7 +188,7 @@ class _PremiumPlayerBar extends StatelessWidget {
               Text(
                 artist,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                   fontSize: (isVeryNarrow ? 10 : 12).ts,
                 ),
                 maxLines: 1,
@@ -268,14 +203,18 @@ class _PremiumPlayerBar extends StatelessWidget {
 
   Widget _buildControls(
     BuildContext context,
+    WidgetRef ref,
     ColorScheme colorScheme,
+    bool isPlaying,
+    bool isShuffle,
+    RepeatMode repeatMode,
     bool isVeryNarrow,
   ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          onPressed: onPrevious,
+          onPressed: () => ref.read(playbackProvider.notifier).skipPrevious(),
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/prev_track.svg',
             width: 12,
@@ -286,12 +225,12 @@ class _PremiumPlayerBar extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         GestureDetector(
-          onTap: onPlayPause,
+          onTap: () => ref.read(playbackProvider.notifier).togglePlay(),
           child: Container(
             width: (isVeryNarrow ? 28 : 36).s,
             height: (isVeryNarrow ? 28 : 36).s,
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
+              color: colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: isPlaying
@@ -309,7 +248,7 @@ class _PremiumPlayerBar extends StatelessWidget {
         ),
         const SizedBox(width: 4),
         IconButton(
-          onPressed: onNext,
+          onPressed: () => ref.read(playbackProvider.notifier).skipNext(),
           icon: SvgPicture.asset(
             'assets/music_bar_Icons/next_track.svg',
             width: 12,
@@ -329,7 +268,7 @@ class _PremiumPlayerBar extends StatelessWidget {
         if (!isVeryNarrow) ...[
           const SizedBox(width: 12),
           IconButton(
-            onPressed: onShuffle,
+            onPressed: () => ref.read(playbackProvider.notifier).toggleShuffle(),
             icon: SvgPicture.asset(
               'assets/music_bar_Icons/shuffle.svg',
               width: 12,
@@ -344,7 +283,7 @@ class _PremiumPlayerBar extends StatelessWidget {
         ],
         if (!isVeryNarrow)
           IconButton(
-            onPressed: onRepeat,
+            onPressed: () => ref.read(playbackProvider.notifier).nextRepeatMode(),
             icon: SvgPicture.asset(
               repeatMode == RepeatMode.one
                   ? 'assets/music_bar_Icons/repeat_1.svg'
@@ -369,7 +308,7 @@ class _PremiumPlayerBar extends StatelessWidget {
     );
   }
 
-  Widget _buildVolumeControl(BuildContext context) {
+  Widget _buildVolumeControl(BuildContext context, WidgetRef ref, double volume) {
     return ClipRect(
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -377,7 +316,7 @@ class _PremiumPlayerBar extends StatelessWidget {
           IconButton(
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
-            onPressed: onMuteToggle,
+            onPressed: () => ref.read(playbackProvider.notifier).toggleMute(),
             icon: SvgPicture.asset(
               volume == 0
                   ? 'assets/music_bar_Icons/mute.svg'
@@ -407,10 +346,13 @@ class _PremiumPlayerBar extends StatelessWidget {
                 activeTrackColor: Theme.of(context).colorScheme.primary,
                 inactiveTrackColor: Theme.of(
                   context,
-                ).colorScheme.primary.withOpacity(0.1),
+                ).colorScheme.primary.withValues(alpha: 0.1),
                 thumbColor: Colors.white,
               ),
-              child: Slider(value: volume, onChanged: onVolumeChanged),
+              child: Slider(
+                value: volume,
+                onChanged: (vol) => ref.read(playbackProvider.notifier).setVolume(vol),
+              ),
             ),
           ),
         ],
@@ -420,7 +362,11 @@ class _PremiumPlayerBar extends StatelessWidget {
 
   Widget _buildActions(
     BuildContext context,
+    WidgetRef ref,
     ColorScheme colorScheme,
+    bool isFavorite,
+    bool isLyricsActive,
+    bool isQueueActive,
     bool isVeryNarrow,
   ) {
     return Row(
@@ -438,7 +384,7 @@ class _PremiumPlayerBar extends StatelessWidget {
                 BlendMode.srcIn,
               ),
             ),
-            onPressed: onFavoriteToggle,
+            onPressed: () => ref.read(playbackProvider.notifier).toggleFavorite(),
             tooltip: 'Favorite',
           ),
         const SizedBox(width: 4),
@@ -452,7 +398,7 @@ class _PremiumPlayerBar extends StatelessWidget {
               BlendMode.srcIn,
             ),
           ),
-          onPressed: onLyricsToggle,
+          onPressed: () => ref.read(appNavigationProvider.notifier).toggleItem(NavItem.lyrics),
           tooltip: 'Lyrics',
         ),
         const SizedBox(width: 4),
@@ -462,7 +408,7 @@ class _PremiumPlayerBar extends StatelessWidget {
             size: 16,
             color: isQueueActive ? colorScheme.primary : Colors.white54,
           ),
-          onPressed: onQueueToggle,
+          onPressed: () => ref.read(appNavigationProvider.notifier).toggleItem(NavItem.queue),
           tooltip: 'Queue',
         ),
       ],

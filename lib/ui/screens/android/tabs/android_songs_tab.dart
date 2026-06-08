@@ -70,8 +70,7 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
   Widget build(BuildContext context) {
     final library = ref.watch(libraryProvider);
     final settings = ref.watch(settingsProvider);
-    final playbackState = ref.watch(playbackProvider);
-    final song = playbackState.currentSong;
+    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
     final l10n = AppLocalizations.of(context)!;
     
     if (library.isScanning && library.songs.isEmpty) {
@@ -82,115 +81,125 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
         ? EmptyLibraryView(
             title: l10n.noSongsFound,
           )
-        : Scaffold(
-            backgroundColor: (settings.enableDynamicTheming || settings.keepBackgroundGradient)
+        : Container(
+            color: (settings.enableDynamicTheming || settings.keepBackgroundGradient)
                 ? Colors.transparent
                 : Theme.of(context).colorScheme.surface,
-            body: SafeArea(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          l10n.allSongs,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 38,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
+            child: Stack(
+              children: [
+                SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            PremiumSection(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(20),
-                                bottomLeft: Radius.circular(20),
-                                topRight: Radius.circular(8),
-                                bottomRight: Radius.circular(8),
-                              ),
-                              width: 44,
-                              height: 44,
-                              useBlur: true,
-                              useExpanded: false,
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
-                              },
-                              child: const Icon(
-                                LucideIcons.search,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            PremiumSection(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(8),
-                                bottomLeft: Radius.circular(8),
-                                topRight: Radius.circular(20),
-                                bottomRight: Radius.circular(20),
-                              ),
-                              width: 44,
-                              height: 44,
-                              useExpanded: false,
-                              useBlur: true,
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
-                              },
-                              child: const Icon(
-                                LucideIcons.settings,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
+                             PremiumSection(
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(32),
+                                    bottomLeft: Radius.circular(32),
+                                    topRight: Radius.circular(10),
+                                    bottomRight: Radius.circular(10),
+                                  ),
+                                  width: 48,
+                                  height: 48,
+                                  useBlur: true,
+                                  useExpanded: false,
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
+                                  },
+                                  child: const Icon(
+                                    LucideIcons.search,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                Text(
+                                  l10n.allSongs,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                PremiumSection(
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(10),
+                                    bottomLeft: Radius.circular(10),
+                                    topRight: Radius.circular(32),
+                                    bottomRight: Radius.circular(32),
+                                  ),
+                                  width: 48,
+                                  height: 48,
+                                  useExpanded: false,
+                                  useBlur: true,
+                                  onTap: () {
+                                    HapticFeedback.lightImpact();
+                                    ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
+                                  },
+                                  child: const Icon(
+                                    LucideIcons.settings,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
                           ],
                         ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    child: SongsList(
-                      songs: library.songs,
-                      controller: _scrollController,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            floatingActionButton: AnimatedSlide(
-              duration: const Duration(milliseconds: 300),
-              offset: _isButtonVisible ? Offset.zero : const Offset(0, 2),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: _isButtonVisible ? 1.0 : 0.0,
-                child: AnimatedPadding(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  padding: EdgeInsets.only(bottom: song != null ? 160 : 90, right: 20),
-                  child: PremiumSection(
-                    width: 48,
-                    height: 48,
-                    borderRadius: BorderRadius.circular(24),
-                    useBlur: true,
-                    useExpanded: false,
-                    onTap: () {
-                      HapticFeedback.mediumImpact();
-                      final songs = library.songs;
-                      if (songs.isNotEmpty) {
-                        final randomSongList = List<Song>.from(songs)..shuffle();
-                        ref.read(playbackProvider.notifier).setPlaylist(randomSongList, initialIndex: 0);
-                      }
-                    },
-                    child: const Icon(LucideIcons.shuffle, color: Colors.white, size: 18),
+                      ),
+                      // Thin divider below the header
+                      Container(
+                        height: 0.5,
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        color: Colors.white.withValues(alpha: 0.15),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: SongsList(
+                          songs: library.songs,
+                          controller: _scrollController,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: AnimatedSlide(
+                    duration: const Duration(milliseconds: 300),
+                    offset: _isButtonVisible ? Offset.zero : const Offset(0, 2),
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: _isButtonVisible ? 1.0 : 0.0,
+                      child: AnimatedPadding(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        padding: EdgeInsets.only(bottom: song != null ? 200 : 120, right: 40),
+                        child: PremiumSection(
+                          width: 48,
+                          height: 48,
+                          borderRadius: BorderRadius.circular(24),
+                          useBlur: true,
+                          useExpanded: false,
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            final songs = library.songs;
+                            if (songs.isNotEmpty) {
+                              final randomSongList = List<Song>.from(songs)..shuffle();
+                              ref.read(playbackProvider.notifier).setPlaylist(randomSongList, initialIndex: 0);
+                            }
+                          },
+                          child: const Icon(LucideIcons.shuffle, color: Colors.white, size: 18),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           );
   }

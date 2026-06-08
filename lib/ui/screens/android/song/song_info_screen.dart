@@ -88,7 +88,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                   BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
                     child: Container(
-                      color: Colors.black.withOpacity(0.85),
+                      color: Colors.black.withValues(alpha: 0.85),
                     ),
                   ),
                 ],
@@ -227,7 +227,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: primaryColor.withOpacity(0.3),
+                color: primaryColor.withValues(alpha: 0.3),
                 blurRadius: 30,
                 spreadRadius: 2,
               ),
@@ -296,7 +296,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
-              color: Colors.white.withOpacity(0.04),
+              color: Colors.white.withValues(alpha: 0.04),
               child: const Center(
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
@@ -322,15 +322,15 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 width: 1,
               ),
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withOpacity(0.04),
-                  Colors.white.withOpacity(0.01),
+                  Colors.white.withValues(alpha: 0.04),
+                  Colors.white.withValues(alpha: 0.01),
                 ],
               ),
             ),
@@ -341,12 +341,12 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                 children: [
                   Row(
                     children: [
-                      Icon(LucideIcons.fileKey, color: Colors.white.withOpacity(0.5), size: 20),
+                      Icon(LucideIcons.fileKey, color: Colors.white.withValues(alpha: 0.5), size: 20),
                       const SizedBox(width: 12),
                       Text(
                         l10n.lyrics,
                         style: GoogleFonts.plusJakartaSans(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -357,14 +357,14 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                   Text(
                     displayedLines.join('\n'),
                     style: GoogleFonts.plusJakartaSans(
-                      color: Colors.white.withOpacity(0.7),
+                      color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 14,
                       height: 1.6,
                     ),
                   ),
                   if (hasManyLines) ...[
                     const SizedBox(height: 16),
-                    Divider(color: Colors.white.withOpacity(0.08)),
+                    Divider(color: Colors.white.withValues(alpha: 0.08)),
                     const SizedBox(height: 8),
                     InkWell(
                       onTap: () {
@@ -421,15 +421,15 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Colors.white.withOpacity(0.08),
+              color: Colors.white.withValues(alpha: 0.08),
               width: 1,
             ),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withOpacity(0.04),
-                Colors.white.withOpacity(0.01),
+                Colors.white.withValues(alpha: 0.04),
+                Colors.white.withValues(alpha: 0.01),
               ],
             ),
           ),
@@ -440,12 +440,12 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(icon, color: Colors.white.withOpacity(0.5), size: 20),
+                    Icon(icon, color: Colors.white.withValues(alpha: 0.5), size: 20),
                     const SizedBox(width: 12),
                     Text(
                       title,
                       style: GoogleFonts.plusJakartaSans(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -469,7 +469,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                           Text(
                             item.label.toUpperCase(),
                             style: GoogleFonts.plusJakartaSans(
-                              color: Colors.white.withOpacity(0.4),
+                              color: Colors.white.withValues(alpha: 0.4),
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 1.2,

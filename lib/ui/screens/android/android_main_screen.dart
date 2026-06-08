@@ -60,8 +60,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final playback = ref.watch(playbackProvider);
-    final song = playback.currentSong;
+    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
     final nav = ref.watch(appNavigationProvider);
     final activeItem = nav.activeItem;
     final navigatorKey = ref.read(androidNavigatorKeyProvider);
@@ -190,9 +189,19 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
       }
     });
 
-    final library = ref.watch(libraryProvider);
     final settings = ref.watch(settingsProvider);
     final isWelcomeBypassed = ref.watch(welcomeBypassedProvider);
+
+    final activeDarkness = () {
+      final val = rootItem == NavItem.home
+          ? settings.homeDarkness
+          : rootItem == NavItem.songs
+              ? settings.songsDarkness
+              : rootItem == NavItem.library
+                  ? settings.libraryDarkness
+                  : 0.72;
+      return (val.isNaN || val == 0.0) ? 0.72 : val;
+    }();
 
     final isSetupComplete = isWelcomeBypassed ||
                             settings.libraryFolders.isNotEmpty;
@@ -212,7 +221,18 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
           return;
         }
 
-        // 2. If we have navigation history or are in a sub-view (search/settings/playlists)
+        // 2. If we are on a settings sub-page, pop it locally without modifying app navigation state
+        Route? currentRoute;
+        navigatorKey.currentState?.popUntil((route) {
+          currentRoute = route;
+          return true;
+        });
+        if (currentRoute?.settings.name == 'settings_subpage') {
+          navigatorKey.currentState?.pop();
+          return;
+        }
+
+        // 3. If we have navigation history or are in a sub-view (search/settings/playlists)
         if (nav.history.isNotEmpty ||
             nav.activeItem == NavItem.search ||
             nav.activeItem == NavItem.settings ||
@@ -289,7 +309,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                 // Dark overlay
                 Positioned.fill(
                   child: Container(
-                    color: Colors.black.withOpacity(0.72),
+                    color: Colors.black.withValues(alpha: activeDarkness),
                   ),
                 ),
               ] else ...[
@@ -302,7 +322,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                         center: Alignment.topRight,
                         radius: 1.5,
                         colors: [
-                          Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
                           Theme.of(context).colorScheme.surface,
                         ],
                         stops: const [0.0, 1.0],
@@ -368,34 +388,35 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                 },
               ),
             ),
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: IgnorePointer(
-                child: Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.1),
-                        Colors.black.withOpacity(0.4),
-                        Colors.black.withOpacity(0.8),
-                      ],
-                      stops: const [
-                        0.0,
-                        0.35,
-                        0.7,
-                        1.0,
-                      ],
+            if (nav.activeItem != NavItem.settings)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withValues(alpha: 0.1),
+                          Colors.black.withValues(alpha: 0.4),
+                          Colors.black.withValues(alpha: 0.8),
+                        ],
+                        stops: const [
+                          0.0,
+                          0.35,
+                          0.7,
+                          1.0,
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
            
 
             // Mini Player & Navbar with Gradient
@@ -426,30 +447,34 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                             ? const PremiumMusicBar(key: ValueKey('music_bar'))
                             : const SizedBox(key: ValueKey('no_music')),
                       ),
-                      const SizedBox(height: 4),
-                      PremiumNavbar(
-                        currentIndex: rootItem == NavItem.home
-                            ? 0
-                            : (rootItem == NavItem.songs ? 1 : 2),
-                        onTap: (index) {
-                          NavItem target;
-                          switch (index) {
-                            case 1:
-                              target = NavItem.songs;
-                              break;
-                            case 2:
-                              target = NavItem.library;
-                              break;
-                            case 0:
-                            default:
-                              target = NavItem.home;
-                              break;
-                          }
-                          ref
-                              .read(appNavigationProvider.notifier)
-                              .setItem(target);
-                        },
-                      ),
+                      if (nav.activeItem != NavItem.settings) ...[
+                        const SizedBox(height: 4),
+                        PremiumNavbar(
+                          currentIndex: rootItem == NavItem.home
+                              ? 0
+                              : (rootItem == NavItem.songs ? 1 : 2),
+                          onTap: (index) {
+                            NavItem target;
+                            switch (index) {
+                              case 1:
+                                target = NavItem.songs;
+                                break;
+                              case 2:
+                                target = NavItem.library;
+                                break;
+                              case 0:
+                              default:
+                                target = NavItem.home;
+                                break;
+                            }
+                            ref
+                                .read(appNavigationProvider.notifier)
+                                .setItem(target);
+                          },
+                        ),
+                      ] else if (song != null) ...[
+                        SizedBox(height: 16 + MediaQuery.of(context).padding.bottom),
+                      ],
                     ],
                   ),
                 ),
@@ -488,34 +513,24 @@ class BlurredBackgroundArt extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = song.artPath;
     if (path == null) return const SizedBox.shrink();
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 1.0, end: 1.08),
-      duration: const Duration(seconds: 30),
-      curve: Curves.linear,
-      builder: (context, scale, child) {
-        return Transform.scale(
-          scale: scale,
-          child: ImageFiltered(
-            imageFilter: ImageFilter.blur(
-              sigmaX: 18,
-              sigmaY: 18,
-            ),
-            child: RepaintBoundary(
-              child: Image.file(
-                File(path),
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                filterQuality: FilterQuality.low,
-                cacheWidth: 80,
-                cacheHeight: 80,
-                gaplessPlayback: true,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-            ),
-          ),
-        );
-      },
+    return ImageFiltered(
+      imageFilter: ImageFilter.blur(
+        sigmaX: 18,
+        sigmaY: 18,
+      ),
+      child: RepaintBoundary(
+        child: Image.file(
+          File(path),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          filterQuality: FilterQuality.low,
+          cacheWidth: 80,
+          cacheHeight: 80,
+          gaplessPlayback: true,
+          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+        ),
+      ),
     );
   }
 }

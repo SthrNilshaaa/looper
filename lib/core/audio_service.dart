@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 import 'package:media_kit/media_kit.dart';
@@ -9,13 +10,17 @@ import 'package:audio_session/audio_session.dart' as asrv_sess;
 import 'audio_handler.dart';
 import 'db_service.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/core/providers.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 class AudioService {
   late final Player player;
+  late final Player player2;
   MPRISPlayer? _mprisPlayer;
   DBusClient? _dBusClient;
   MyAudioHandler? _audioHandler;
   bool _playOnInterruptionEnd = false;
+  bool _pausedByCall = false;
 
   static const _broadcastChannel = MethodChannel('com.looper.player/broadcast');
 
@@ -36,6 +41,9 @@ class AudioService {
   void Function(Duration)? onSeek;
   void Function()? onFavoriteToggle;
   void Function()? onShuffleToggle;
+  void Function()? onPlay;
+  void Function()? onPause;
+  void Function()? onPlayPause;
 
   AudioService() {
     player = Player(
@@ -43,11 +51,17 @@ class AudioService {
         title: 'Looper Player',
       ),
     );
+    player2 = Player(
+      configuration: const PlayerConfiguration(
+        title: 'Looper Player Crossfade',
+      ),
+    );
     // Set high-precision position updates for lyrics sync (15ms)
     if (Platform.isAndroid || Platform.isIOS || Platform.isLinux || Platform.isWindows) {
       try {
         // Using dynamic as some versions of media_kit don't expose setProperty in the interface
         (player as dynamic).setProperty('playback-time-update-interval', '0.015');
+        (player2 as dynamic).setProperty('playback-time-update-interval', '0.015');
       } catch (e) {
         debugPrint('Failed to set playback-time-update-interval: $e');
       }
@@ -56,6 +70,35 @@ class AudioService {
     _initAndroidAudioHandler();
     _initAndroidBroadcasts();
     _initAudioSession();
+  }
+
+  final Map<Player, int> _activeFadeIds = {};
+
+  void cancelFade(Player p) {
+    _activeFadeIds[p] = (_activeFadeIds[p] ?? 0) + 1;
+  }
+
+  Future<void> fadeVolume(Player p, double start, double end, Duration duration) async {
+    final fadeId = (_activeFadeIds[p] ?? 0) + 1;
+    _activeFadeIds[p] = fadeId;
+
+    final steps = 20;
+    final interval = duration.inMilliseconds ~/ steps;
+    if (interval <= 0) {
+      if (_activeFadeIds[p] == fadeId) {
+        p.setVolume(end * 100);
+      }
+      return;
+    }
+    for (int i = 0; i <= steps; i++) {
+      if (_activeFadeIds[p] != fadeId) {
+        return;
+      }
+      final t = i / steps;
+      final currentVol = start + (end - start) * t;
+      p.setVolume(currentVol * 100);
+      await Future.delayed(Duration(milliseconds: interval));
+    }
   }
 
   void _initAndroidBroadcasts() {
@@ -127,11 +170,19 @@ class AudioService {
       };
 
       _audioHandler?.onPlay = () {
-        resume();
+        if (onPlay != null) {
+          onPlay!();
+        } else {
+          resume();
+        }
       };
 
       _audioHandler?.onPause = () {
-        pause();
+        if (onPause != null) {
+          onPause!();
+        } else {
+          pause();
+        }
       };
     } catch (e) {
       debugPrint('Failed to init audio handler: $e');
@@ -169,6 +220,11 @@ class AudioService {
       final settings = await DbService.isar.appSettings.get(0);
       if (settings == null || !settings.audioFocus) return;
 
+      bool isCall = false;
+      if (Platform.isAndroid) {
+        isCall = await isOnCall();
+      }
+
       if (event.begin) {
         switch (event.type) {
           case asrv_sess.AudioInterruptionType.duck:
@@ -176,13 +232,28 @@ class AudioService {
             break;
           case asrv_sess.AudioInterruptionType.pause:
           case asrv_sess.AudioInterruptionType.unknown:
-            if (player.state.playing) {
-              _playOnInterruptionEnd = true;
-              debugPrint('🎵 AudioSession: Interruption began. Will auto-resume on finish.');
+            if (isCall) {
+              if (player.state.playing) {
+                _pausedByCall = true;
+                _playOnInterruptionEnd = true;
+                debugPrint('🎵 AudioSession: Paused by call. Will auto-resume on call end if setting enabled.');
+              } else {
+                _pausedByCall = false;
+                _playOnInterruptionEnd = false;
+              }
+              await player.pause();
             } else {
-              _playOnInterruptionEnd = false;
+              _pausedByCall = false;
+              if (settings.permanentAudioFocusChange) {
+                if (player.state.playing) {
+                  _playOnInterruptionEnd = (event.type == asrv_sess.AudioInterruptionType.pause);
+                  debugPrint('🎵 AudioSession: Interruption began (non-call). Pausing playback.');
+                } else {
+                  _playOnInterruptionEnd = false;
+                }
+                await player.pause();
+              }
             }
-            await player.pause();
             break;
         }
       } else {
@@ -192,10 +263,19 @@ class AudioService {
             break;
           case asrv_sess.AudioInterruptionType.pause:
           case asrv_sess.AudioInterruptionType.unknown:
-            if (_playOnInterruptionEnd) {
-              _playOnInterruptionEnd = false;
-              debugPrint('🎵 AudioSession: Interruption ended. Auto-resuming playback...');
-              await resume();
+            if (_pausedByCall) {
+              _pausedByCall = false;
+              if (settings.resumeAfterCall && _playOnInterruptionEnd) {
+                _playOnInterruptionEnd = false;
+                debugPrint('🎵 AudioSession: Call ended. Auto-resuming playback...');
+                await resume();
+              }
+            } else {
+              if (_playOnInterruptionEnd) {
+                _playOnInterruptionEnd = false;
+                debugPrint('🎵 AudioSession: Interruption ended. Auto-resuming playback...');
+                await resume();
+              }
             }
             break;
         }
@@ -214,6 +294,40 @@ class AudioService {
       final success = await session.setActive(true);
       if (!success) {
         debugPrint('Audio focus request denied (e.g., active call).');
+        
+        final context = scaffoldMessengerKey.currentContext;
+        String message = 'Playback paused: Audio focus denied by system';
+        if (context != null) {
+          try {
+            final l10n = AppLocalizations.of(context);
+            if (l10n != null) {
+              message = l10n.audioFocusDenied;
+            }
+          } catch (e) {
+            debugPrint('Failed to get AppLocalizations: $e');
+          }
+        }
+        
+        scaffoldMessengerKey.currentState?.clearSnackBars();
+        scaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text(
+              message,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+            ),
+            backgroundColor: Colors.redAccent.shade700,
+            duration: const Duration(seconds: 4),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: const EdgeInsets.only(
+              bottom: 24,
+              left: 24,
+              right: 24,
+            ),
+          ),
+        );
       }
       return success;
     } catch (e) {
@@ -242,9 +356,27 @@ class AudioService {
       _dBusClient = DBusClient.session();
       _mprisPlayer = MPRISPlayer();
 
-      _mprisPlayer!.onPlay = () => player.play();
-      _mprisPlayer!.onPause = () => player.pause();
-      _mprisPlayer!.onPlayPause = () => player.playOrPause();
+      _mprisPlayer!.onPlay = () {
+        if (onPlay != null) {
+          onPlay!();
+        } else {
+          player.play();
+        }
+      };
+      _mprisPlayer!.onPause = () {
+        if (onPause != null) {
+          onPause!();
+        } else {
+          player.pause();
+        }
+      };
+      _mprisPlayer!.onPlayPause = () {
+        if (onPlayPause != null) {
+          onPlayPause!();
+        } else {
+          player.playOrPause();
+        }
+      };
       _mprisPlayer!.onSeek = (offset) {
         final current = player.state.position;
         player.seek(current + Duration(microseconds: offset));
@@ -445,6 +577,7 @@ class AudioService {
 
   void dispose() {
     player.dispose();
+    player2.dispose();
     _dBusClient?.close();
   }
 }

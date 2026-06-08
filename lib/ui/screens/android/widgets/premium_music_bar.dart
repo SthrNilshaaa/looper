@@ -49,8 +49,8 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
 
   @override
   Widget build(BuildContext context) {
-    final playback = ref.watch(playbackProvider);
-    final song = playback.currentSong;
+    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
+    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
     final settings = ref.watch(settingsProvider);
     final useBlur = settings.enableDynamicTheming;
 
@@ -202,9 +202,9 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                                     Positioned.fill(
                                       child: AnimatedOpacity(
                                         duration: const Duration(milliseconds: 300),
-                                        opacity: playback.isPlaying ? 1.0 : 0.0,
+                                        opacity: isPlaying ? 1.0 : 0.0,
                                         child: Container(
-                                          color: Colors.black.withOpacity(0.4),
+                                          color: Colors.black.withValues(alpha: 0.4),
                                           child: Center(
                                             child: Image.asset(
                                               'assets/android_icons/Playing.gif',
@@ -245,7 +245,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                                 child: ScrollingText(
                                   text: song.artist ?? 'Unknown Artist',
                                   style: TextStyle(
-                                    color: Colors.white.withOpacity(0.5),
+                                    color: Colors.white.withValues(alpha: 0.5),
                                     fontSize: 16.ts,
                                     letterSpacing: 0.2,
                                   ),
@@ -275,22 +275,25 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                     child: Center(
                       child: Hero(
                         tag: 'play_pause_icon',
-                        child: AnimatedScale(
-                          scale: playback.isPlaying ? 0.9 : 1.0,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOutBack,
-                          child: TweenAnimationBuilder<double>(
-                            tween: Tween<double>(begin: 0.0, end: playback.isPlaying ? 1.0 : 0.0),
+                        child: Padding(
+                          padding: const EdgeInsets.only(right: 2.0),
+                          child: AnimatedScale(
+                            scale:  1.0,
                             duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOutCubic,
-                            builder: (context, value, child) {
-                              return AnimatedIcon(
-                                icon: AnimatedIcons.play_pause,
-                                progress: AlwaysStoppedAnimation(value),
-                                color: Colors.white,
-                                size: AppIcons.expandedPlayerPlayPauseIcon.s,
-                              );
-                            },
+                            curve: Curves.easeOutBack,
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween<double>(end: isPlaying ? 1.0 : 0.0),
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOutCubic,
+                              builder: (context, value, child) {
+                                return AnimatedIcon(
+                                  icon: AnimatedIcons.play_pause,
+                                  progress: AlwaysStoppedAnimation(value),
+                                  color: Colors.white,
+                                  size: AppIcons.expandedPlayerPlayPauseIcon.s,
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),  

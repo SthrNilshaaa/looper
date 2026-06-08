@@ -11,8 +11,8 @@ class QueueBottomSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final playback = ref.watch(playbackProvider);
-    final queue = playback.queue;
+    final queue = ref.watch(playbackProvider.select((s) => s.queue));
+    final currentSongPath = ref.watch(playbackProvider.select((s) => s.currentSong?.path));
     final l10n = AppLocalizations.of(context)!;
 
     return Container(
@@ -56,11 +56,13 @@ class QueueBottomSheet extends ConsumerWidget {
             child: ReorderableListView.builder(
               itemCount: queue.length,
               onReorder: (oldIndex, newIndex) {
-                ref.read(playbackProvider.notifier).reorderQueue(oldIndex, newIndex);
+                ref
+                    .read(playbackProvider.notifier)
+                    .reorderQueue(oldIndex, newIndex);
               },
               itemBuilder: (context, index) {
                 final song = queue[index];
-                final isCurrent = playback.currentSong?.path == song.path;
+                final isCurrent = currentSongPath == song.path;
 
                 return ListTile(
                   key: ValueKey('queue_sheet_${song.path}_$index'),
@@ -68,8 +70,8 @@ class QueueBottomSheet extends ConsumerWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: OptimizedImage(
                       imagePath: song.artPath,
-                      width: 48,
-                      height: 48,
+                      width: 50,
+                      height: 50,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -77,7 +79,9 @@ class QueueBottomSheet extends ConsumerWidget {
                     song.title,
                     style: TextStyle(
                       color: isCurrent ? Colors.yellow[200] : Colors.white,
-                      fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isCurrent
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -92,12 +96,22 @@ class QueueBottomSheet extends ConsumerWidget {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (isCurrent)
-                        const Icon(LucideIcons.volume2, color: Colors.yellow, size: 20),
+                        const Icon(
+                          LucideIcons.volume2,
+                          color: Colors.yellow,
+                          size: 20,
+                        ),
                       const SizedBox(width: 8),
                       IconButton(
-                        icon: const Icon(LucideIcons.x, color: Colors.grey, size: 20),
+                        icon: const Icon(
+                          LucideIcons.x,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
                         onPressed: () {
-                          ref.read(playbackProvider.notifier).removeFromQueue(index);
+                          ref
+                              .read(playbackProvider.notifier)
+                              .removeFromQueue(index);
                         },
                       ),
                       const Icon(LucideIcons.gripVertical, color: Colors.grey),

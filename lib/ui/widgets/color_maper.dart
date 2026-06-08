@@ -15,7 +15,7 @@ class AccentColorMapper extends ColorMapper {
   ) {
     // Only replace colors where green is significantly dominant
     if (color.green > color.red * 1.2 && color.green > color.blue * 1.2) {
-      return accentColor.withOpacity(color.opacity);
+      return accentColor.withValues(alpha: color.opacity);
     }
 
     return color;

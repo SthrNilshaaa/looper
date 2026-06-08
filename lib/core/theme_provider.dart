@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:palette_generator/palette_generator.dart';
+import 'package:adaptive_palette/adaptive_palette.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 
 class ThemeState {
@@ -55,6 +55,9 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
           oldSettings.darkTheme != newSettings.darkTheme ||
           oldSettings.accentColor != newSettings.accentColor) {
         _resetTheme();
+      } else if (!oldSettings.dynamicAccentColor && newSettings.dynamicAccentColor) {
+        final playback = _ref.read(playbackProvider);
+        updateFromImage(playback.currentSong?.artPath);
       }
     } else {
       if (!oldSettings.enableDynamicTheming) {
@@ -82,38 +85,43 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
         return;
       }
 
-      final palette = await PaletteGenerator.fromImageProvider(
-        ResizeImage(FileImage(file), width: 100, height: 100),
-        maximumColorCount: 8,
+      final colors = await FluidPaletteExtractor.extractColors(
+        FileImage(file),
+        count: 1,
       );
 
-      final Color? color =
-          palette.vibrantColor?.color ??
-          palette.lightVibrantColor?.color ??
-          palette.darkVibrantColor?.color ??
-          palette.dominantColor?.color;
+      Color? vibrantColor = colors.isNotEmpty ? colors.first : null;
 
-      if (color != null) {
-        final hsv = HSVColor.fromColor(color);
-        final vibrantColor = hsv
-            .withSaturation((hsv.saturation * 1.2).clamp(0.6, 1.0))
-            .withValue((hsv.value * 1.1).clamp(0.8, 1.0))
-            .toColor();
+      if (vibrantColor != null) {
+        // Brighten the extracted color to make it pop as an accent color on dark backgrounds
+        final HSLColor hsl = HSLColor.fromColor(vibrantColor);
+        double newLightness = hsl.lightness + 0.15;
+        if (newLightness < 0.60) {
+          newLightness = 0.60;
+        }
+        newLightness = newLightness.clamp(0.0, 0.95);
+        final brighterColor = hsl.withLightness(newLightness).toColor();
 
-        debugPrint('🎨 Extracted vibrant color: $vibrantColor');
+        debugPrint('🎨 Extracted vibrant color (adaptive_palette): $vibrantColor -> Brightened: $brighterColor');
+        vibrantColor = brighterColor;
 
         // Update the state
+        final surfaceColor = _settings.darkTheme ? Colors.black : const Color(0xFF11110E);
+        final containerColor = _settings.darkTheme ? const Color(0xFF0A0A0A) : const Color(0xFF1E1E1E);
+
         state = state.copyWith(
           colorScheme: ColorScheme.fromSeed(
             seedColor: vibrantColor,
             primary: vibrantColor,
             onPrimary: Colors.white,
+            surface: surfaceColor,
+            surfaceContainer: containerColor,
             brightness: Brightness.dark,
           ),
         );
 
         // PERSIST the color to database if enabled
-        if (_settings.saveDynamicColor) {
+        if (_settings.saveDynamicColor || _settings.dynamicAccentColor) {
           debugPrint('💾 Requesting database save for color: $vibrantColor');
           await _ref
               .read(settingsProvider.notifier)
@@ -154,10 +162,10 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeState>((ref) {
   final initialSettings = ref.read(settingsProvider);
   final notifier = ThemeNotifier(ref, initialSettings);
 
-  // Watch current song and update theme only if dynamic theming is enabled
+  // Watch current song and update theme if dynamic theming or dynamic accent color is enabled
   ref.listen(playbackProvider, (previous, next) {
     final currentSettings = ref.read(settingsProvider);
-    if (currentSettings.enableDynamicTheming &&
+    if ((currentSettings.enableDynamicTheming || currentSettings.dynamicAccentColor) &&
         next.currentSong?.artPath != previous?.currentSong?.artPath) {
       notifier.updateFromImage(next.currentSong?.artPath);
     }

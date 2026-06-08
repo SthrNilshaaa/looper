@@ -34,7 +34,7 @@ class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
         ref.read(overlayServiceProvider).toggleOverlay();
       },
       child: Container(
-        color: Colors.black.withOpacity(0.5),
+        color: Colors.black.withValues(alpha: 0.5),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Stack(
           children: [

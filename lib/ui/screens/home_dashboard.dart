@@ -195,7 +195,7 @@ class HomeDashboard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                           placeholder: Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(
+                              color: Colors.grey.withValues(alpha: 
                                 isDynamic ? 0.8 : 0.1,
                               ),
                               borderRadius: BorderRadius.circular(12),
@@ -276,7 +276,7 @@ class HomeDashboard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(12),
                           placeholder: Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey.withOpacity(
+                              color: Colors.grey.withValues(alpha: 
                                 isDynamic ? 0.8 : 0.1,
                               ),
                               borderRadius: BorderRadius.circular(12),
@@ -359,7 +359,9 @@ class HomeDashboard extends ConsumerWidget {
               itemBuilder: (context, index) {
                 final song = songs[index];
                 final isCurrent =
-                    ref.watch(playbackProvider).currentSong?.path == song.path;
+                    ref.watch(playbackProvider.select((s) => s.currentSong?.path == song.path));
+                final isPlaying =
+                    ref.watch(playbackProvider.select((s) => s.isPlaying));
 
                 return InkWell(
                   onTap: () => ref.read(playbackProvider.notifier).play(song),
@@ -371,14 +373,14 @@ class HomeDashboard extends ConsumerWidget {
                       color: isCurrent
                           ? Theme.of(
                               context,
-                            ).colorScheme.primary.withOpacity(0.5)
-                          : Colors.white.withOpacity(0.02),
+                            ).colorScheme.primary.withValues(alpha: 0.5)
+                          : Colors.white.withValues(alpha: 0.02),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       children: [
                         PlayingOverlay(
-                          isPlaying: isCurrent && ref.watch(playbackProvider).isPlaying,
+                          isPlaying: isCurrent && isPlaying,
                           borderRadius: 4,
                           child: OptimizedImage(
                             imagePath: song.artPath,
@@ -549,7 +551,7 @@ class HomeDashboard extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(12),
                               placeholder: Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.grey.withOpacity(
+                                  color: Colors.grey.withValues(alpha: 
                                     isDynamic ? 0.8 : 0.1,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
@@ -664,7 +666,7 @@ class HomeDashboard extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 50,
-              backgroundColor: Colors.white.withOpacity(0.05),
+              backgroundColor: Colors.white.withValues(alpha: 0.05),
               backgroundImage: artist.artistImageUrl != null ? FileImage(File(artist.artistImageUrl!)) : null,
               child: artist.artistImageUrl == null
                   ? const Icon(LucideIcons.user, size: 32, color: Colors.white38)
@@ -758,9 +760,9 @@ class HomeDashboard extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -834,7 +836,7 @@ class _FeaturedArtistCard extends ConsumerWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
+                      color: Colors.black.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, 4),
                     ),
@@ -846,7 +848,7 @@ class _FeaturedArtistCard extends ConsumerWidget {
                     imagePath: artist.artPath,
                     fit: BoxFit.cover,
                     placeholder: Container(
-                      color: Colors.grey.withOpacity(0.1),
+                      color: Colors.grey.withValues(alpha: 0.1),
                       child: const Icon(LucideIcons.user, color: Colors.grey),
                     ),
                   ),

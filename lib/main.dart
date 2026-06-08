@@ -8,6 +8,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:lottie/lottie.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
+import 'package:flutter_performance_optimizer/flutter_performance_optimizer.dart';
 
 import 'core/db_service.dart';
 import 'ui/screens/home_screen.dart';
@@ -18,6 +21,10 @@ import 'package:looper_player/ui/widgets/keyboard_handler.dart';
 import 'package:looper_player/core/providers.dart';
 import 'package:local_notifier/local_notifier.dart';
 import 'core/ui_utils.dart';
+
+final dbInitializerProvider = FutureProvider<void>((ref) async {
+  await DbService.init();
+});
 
 void main(List<String> args) async {
   final String? initialFile = args.isNotEmpty ? args.first : null;
@@ -33,9 +40,6 @@ void main(List<String> args) async {
 
   // Initialize MediaKit
   MediaKit.ensureInitialized();
-
-  // Initialize Database
-  await DbService.init();
 
   // Initialize Window Manager
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
@@ -54,6 +58,11 @@ void main(List<String> args) async {
       await windowManager.focus();
     });
   }
+  try {
+    await FlutterDisplayMode.setHighRefreshRate();
+  } catch (e) {
+    debugPrint('Error setting high refresh rate: $e');
+  }
 
   runApp(
     ProviderScope(
@@ -68,11 +77,35 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final dbInit = ref.watch(dbInitializerProvider);
+
+    return dbInit.when(
+      data: (_) => const MainApp(),
+      loading: () => const PreAppLoadingScreen(),
+      error: (err, stack) => MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark(),
+        home: Scaffold(
+          body: Center(
+            child: Text('Error initializing database: $err'),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class MainApp extends ConsumerWidget {
+  const MainApp({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final themeState = ref.watch(themeProvider);
     final settings = ref.watch(settingsProvider);
 
     Widget buildMaterialApp(ColorScheme colorScheme) {
       return MaterialApp(
+        scaffoldMessengerKey: scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
         title: 'Looper Player',
         color: Colors.transparent,
@@ -88,7 +121,7 @@ class MyApp extends ConsumerWidget {
         ),
         themeAnimationDuration: const Duration(milliseconds: 1000),
         themeAnimationCurve: Curves.easeInOut,
-        locale: Locale(settings.language.isEmpty ? 'en' : settings.language),
+        locale: settings.language.isEmpty || settings.language == 'system' ? null : Locale(settings.language),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -96,6 +129,14 @@ class MyApp extends ConsumerWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) {
+          return PerformanceOptimizer(
+            enabled: settings.showPerformanceOptimizer,
+            showDashboard: settings.showPerformanceOptimizer,
+            enableInReleaseMode: true,
+            child: child!,
+          );
+        },
         home: const KeyboardHandler(child: HomeScreen()),
       );
     }
@@ -111,6 +152,72 @@ class MyApp extends ConsumerWidget {
         // If themeState.isDynamic is false (no song playing), we could fallback to system
         return buildMaterialApp(themeState.colorScheme);
       },
+    );
+  }
+}
+
+class PreAppLoadingScreen extends StatelessWidget {
+  const PreAppLoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(),
+      home: Scaffold(
+        backgroundColor: const Color(0xFF0F0F0C),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            child: Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.02),
+                borderRadius: BorderRadius.circular(30),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.05),
+                  width: 1,
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 300,
+                    height: 250,
+                    child: Lottie.asset(
+                      'assets/loading.json',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'LOOPER PLAYER',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      letterSpacing: 3.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Initializing System...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withValues(alpha: 0.35),
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -125,7 +125,8 @@ class SquigglySliderTrackShape extends SliderTrackShape
         ? trackRect.bottom + (additionalActiveTrackHeight / 2)
         : trackRect.bottom;
 
-    if (squiggleAmplitude == 0) {
+    final double radius = (lt - lb).abs() / 2;
+    if (squiggleAmplitude == 0 || (lr - ll) < 2 * radius) {
       context.canvas.drawRRect(
         RRect.fromLTRBAndCorners(
           ll,
@@ -144,27 +145,30 @@ class SquigglySliderTrackShape extends SliderTrackShape
     } else {
       final phase = squiggleWavelength * squigglePhaseFactor;
       final double heightCenter = (lt + lb) / 2;
+      final double startX = ll + radius;
+      final double endX = lr - radius;
+      final double totalLength = endX - startX;
 
       const ppp = 1.0; // pixels per point -- the resolution of the curve
       context.canvas.drawPoints(
         PointMode.polygon,
         List.generate(
-          ((lr - ll) / ppp).ceil(),
+          (totalLength / ppp).ceil() + 1,
           (index) {
             final double xOff = index * ppp;
-            final double x = ll + xOff;
+            final double x = min(endX, startX + xOff);
             final double easeLength = squiggleWavelength * 3;
             final double easeFactor = (xOff < easeLength
                 ? xOff / easeLength
-                : xOff > lr - ll - easeLength
-                    ? (lr - ll - xOff) / easeLength
+                : xOff > totalLength - easeLength
+                    ? (totalLength - xOff) / easeLength
                     : 1);
             return Offset(
               x,
               heightCenter +
                   (sin(x / squiggleWavelength + phase * 2 * pi) *
                           squiggleAmplitude) *
-                      easeFactor,
+                      easeFactor.clamp(0.0, 1.0),
             );
           },
         ),

@@ -72,10 +72,10 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
           child: Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.02),
+              color: Colors.white.withValues(alpha: 0.02),
               borderRadius: BorderRadius.circular(30),
               border: Border.all(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 width: 1,
               ),
             ),
@@ -116,7 +116,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: Colors.white.withOpacity(0.35),
+                      color: Colors.white.withValues(alpha: 0.35),
                       letterSpacing: 1.5,
                     ),
                   ),

@@ -1,26 +1,59 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:adaptive_palette/adaptive_palette.dart';
+import '../playback_notifier.dart';
 import '../lyrics_search_provider.dart';
 import '../../domain/lyric_models.dart';
 import '../lyrics_view.dart';
+import '../../../settings/presentation/settings_notifier.dart';
+
+final artworkColorProvider = FutureProvider<Color?>((ref) async {
+  final currentSong = ref.watch(playbackProvider.select((s) => s.currentSong));
+  final artPath = currentSong?.artPath;
+  if (artPath == null) return null;
+
+  final file = File(artPath);
+  if (!await file.exists()) return null;
+
+  try {
+    final colors = await FluidPaletteExtractor.extractColors(
+      FileImage(file),
+      count: 1,
+    );
+    if (colors.isNotEmpty) {
+      final extractedColor = colors.first;
+      final HSLColor hsl = HSLColor.fromColor(extractedColor);
+      double newLightness = hsl.lightness + 0.15;
+      if (newLightness < 0.60) {
+        newLightness = 0.60;
+      }
+      newLightness = newLightness.clamp(0.0, 0.95);
+      return hsl.withLightness(newLightness).toColor();
+    }
+  } catch (e) {
+    debugPrint('Error extracting color in artworkColorProvider: $e');
+  }
+  return null;
+});
 
 class AdvancedLyricLine extends ConsumerWidget {
   final LyricLine line;
-  final Duration currentPosition;
   final LyricsSyncMode mode;
   final bool isActive;
   final int relativeIndex;
   final VoidCallback onTap;
+  final double fontScale;
 
   const AdvancedLyricLine({
     super.key,
     required this.line,
-    required this.currentPosition,
     required this.mode,
     required this.isActive,
     required this.relativeIndex,
     required this.onTap,
+    this.fontScale = 1.0,
   });
 
   bool _isHindi(String text) {
@@ -29,8 +62,14 @@ class AdvancedLyricLine extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Only watch position if this line is active and in word/char sync modes, avoiding rebuilds of all other lines
+    final needsPosition = isActive && (mode == LyricsSyncMode.word || mode == LyricsSyncMode.char);
+    final currentPosition = needsPosition
+        ? ref.watch(playbackProvider.select((s) => s.position))
+        : Duration.zero;
+
     final progress = line.getProgress(currentPosition);
-    final isPast = currentPosition > line.endTime;
+    final isPast = isActive ? false : (ref.read(playbackProvider).position > line.endTime);
 
     // Calculate absolute distance for opacity and duration
     final absIndex = relativeIndex.abs();
@@ -38,25 +77,55 @@ class AdvancedLyricLine extends ConsumerWidget {
     // Calculate dynamic opacity based on distance from active line
     double lineOpacity = 1.0;
     if (!isActive) {
-      lineOpacity = (0.5 / (absIndex * 0.9)).clamp(0.3, 0.5);
+      lineOpacity = (0.6 / (absIndex * 0.3)).clamp(0.3, 0.5);
     }
 
-    // Active color (Theme Primary)
-    final activeColor = Theme.of(context).colorScheme.primary;
+    final settings = ref.watch(settingsProvider);
+    final alignmentString = settings.lyricsAlignment;
+    final useDynamicColor = settings.dynamicColorActiveLyrics && 
+        (settings.enableDynamicTheming || settings.dynamicLyrics);
+
+    final textAlign = alignmentString == 'left'
+        ? TextAlign.left
+        : alignmentString == 'right'
+            ? TextAlign.right
+            : TextAlign.center;
+
+    final iconAlignment = alignmentString == 'left'
+        ? Alignment.centerLeft
+        : alignmentString == 'right'
+            ? Alignment.centerRight
+            : Alignment.center;
+
+    final wrapAlignment = alignmentString == 'left'
+        ? WrapAlignment.start
+        : alignmentString == 'right'
+            ? WrapAlignment.end
+            : WrapAlignment.center;
+
+    // Extract dynamic color from artwork or fallback to Theme primary / white
+    final artworkColorAsync = ref.watch(artworkColorProvider);
+    final artworkColor = artworkColorAsync.valueOrNull;
+
+    final activeColor = useDynamicColor 
+        ? (artworkColor ?? Theme.of(context).colorScheme.primary) 
+        : ((!settings.dynamicLyrics && !settings.dynamicColorActiveLyrics)
+            ? Color(settings.accentColor)
+            : Colors.white);
 
     // Language-aware font selection
     final bool isHindiText = _isHindi(line.text);
     final baseStyle =
         (isHindiText ? GoogleFonts.poppins() : GoogleFonts.spaceGrotesk())
             .copyWith(
-              fontSize: isActive ? 32 : 30, // Increased active size, no scale
+              fontSize: (isActive ? 30.5 : 30) * fontScale,
               fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
               letterSpacing: isHindiText ? 0.0 : -0.5,
               height: 1.2,
-              color: isActive ? activeColor : Colors.white.withOpacity(lineOpacity),
-              shadows: isActive ? [
+              color: isActive ? activeColor : Colors.white.withValues(alpha: lineOpacity),
+              shadows: isActive && useDynamicColor ? [
                 Shadow(
-                  color: activeColor.withOpacity(0.01),
+                  color: activeColor.withValues(alpha: 0.01),
                   blurRadius: 20,
                   offset: const Offset(0, 4),
                 )
@@ -76,37 +145,29 @@ class AdvancedLyricLine extends ConsumerWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onTap,
-        child: AnimatedContainer(
+        child: AnimatedPadding(
           duration: animDuration,
           curve: curve,
-          transformAlignment: Alignment.centerLeft,
-          transform: Matrix4.identity()..translate(0.0, isActive ? -4.0 : 0.0),
-          child: AnimatedPadding(
+          padding: EdgeInsets.only(
+            top: (isActive ? 12 : 8) * fontScale,
+            bottom: (isActive ? 20 : 8) * fontScale,
+          ),
+          child: AnimatedDefaultTextStyle(
             duration: animDuration,
             curve: curve,
-            padding: EdgeInsets.symmetric(
-              vertical: isActive ? 24 : 10,
-              horizontal: 0,
-            ),
-            child: AnimatedOpacity(
-              duration: animDuration,
-              curve: curve,
-              opacity: isActive ? 1.0 : (lineOpacity * 1.5).clamp(0.1, 1.0),
-              child: AnimatedDefaultTextStyle(
-                duration: animDuration,
-                curve: curve,
-                style: baseStyle,
-                softWrap: true,
-                textAlign: TextAlign.start,
-                child: _buildModeContent(
-                  context,
-                  progress,
-                  isPast,
-                  baseStyle,
-                  activeColor,
-                  searchQuery,
-                ),
-              ),
+            style: baseStyle,
+            softWrap: true,
+            textAlign: textAlign,
+            child: _buildModeContent(
+              context,
+              progress,
+              isPast,
+              baseStyle,
+              activeColor,
+              searchQuery,
+              textAlign,
+              iconAlignment,
+              wrapAlignment,
             ),
           ),
         ),
@@ -121,6 +182,9 @@ class AdvancedLyricLine extends ConsumerWidget {
     TextStyle baseStyle,
     Color activeColor,
     String searchQuery,
+    TextAlign textAlign,
+    Alignment iconAlignment,
+    WrapAlignment wrapAlignment,
   ) {
     final String text = line.text;
     final bool isInstrumental =
@@ -134,14 +198,14 @@ class AdvancedLyricLine extends ConsumerWidget {
 
     if (!isActive && !isPast) {
       return isInstrumental
-          ? const Align(
-              alignment: Alignment.centerLeft,
-              child: Icon(Icons.music_note, color: Colors.white24, size: 30),
+          ? Align(
+              alignment: iconAlignment,
+              child: Icon(Icons.music_note, color: Colors.white24, size: 30 * fontScale),
             )
           : Text(
               text,
-              style: isSearchMatch ? baseStyle.copyWith(color: activeColor.withOpacity(0.9)) : null,
-              textAlign: TextAlign.start,
+              style: isSearchMatch ? baseStyle.copyWith(color: activeColor.withValues(alpha: 0.9)) : null,
+              textAlign: textAlign,
               softWrap: true,
               overflow: TextOverflow.visible,
             );
@@ -149,16 +213,15 @@ class AdvancedLyricLine extends ConsumerWidget {
 
     if (isPast) {
       return isInstrumental
-          ? const Align(
-              alignment: Alignment.centerLeft,
-              child: Icon(Icons.music_note, color: Colors.white10, size: 30),
+          ? Align(
+              alignment: iconAlignment,
+              child: Icon(Icons.music_note, color: Colors.white10, size: 30 * fontScale),
             )
           : Text(
               text,
-              textAlign: TextAlign.start,
+              textAlign: textAlign,
               softWrap: true,
               overflow: TextOverflow.visible,
-              // Inherits muted color from baseStyle
             );
     }
 
@@ -171,12 +234,12 @@ class AdvancedLyricLine extends ConsumerWidget {
           children: [
             Expanded(
               child: isInstrumental
-                  ? const Align(
-                      alignment: Alignment.centerLeft,
+                  ? Align(
+                      alignment: iconAlignment,
                       child: Icon(
                         Icons.music_note,
                         color: Colors.white,
-                        size: 40,
+                        size: 40 * fontScale,
                       ),
                     )
                   : Hero(
@@ -185,7 +248,7 @@ class AdvancedLyricLine extends ConsumerWidget {
                         type: MaterialType.transparency,
                         child: Text(
                           displayText,
-                          textAlign: TextAlign.start,
+                          textAlign: textAlign,
                           softWrap: true,
                           overflow: TextOverflow.visible,
                           style: baseStyle.copyWith(decoration: TextDecoration.none),
@@ -197,10 +260,10 @@ class AdvancedLyricLine extends ConsumerWidget {
         );
 
       case LyricsSyncMode.word:
-        return _buildWordMode(displayText, progress, baseStyle, activeColor);
+        return _buildWordMode(displayText, progress, baseStyle, activeColor, wrapAlignment);
 
       case LyricsSyncMode.char:
-        return _buildCharMode(displayText, progress, baseStyle, activeColor);
+        return _buildCharMode(displayText, progress, baseStyle, activeColor, textAlign);
     }
   }
 
@@ -209,6 +272,7 @@ class AdvancedLyricLine extends ConsumerWidget {
     double progress,
     TextStyle baseStyle,
     Color activeColor,
+    WrapAlignment wrapAlignment,
   ) {
     final words = text.split(' ');
     if (words.isEmpty) return const SizedBox.shrink();
@@ -222,20 +286,20 @@ class AdvancedLyricLine extends ConsumerWidget {
       children: [
         Expanded(
           child: Wrap(
-            alignment: WrapAlignment.start,
-            spacing: 12,
+            alignment: wrapAlignment,
+            spacing: 12 * fontScale,
             children: List.generate(words.length, (index) {
               final isWordActive = index <= activeWordIndex;
               return AnimatedDefaultTextStyle(
-                duration: const Duration(milliseconds: 250), // Smoother word transition
+                duration: const Duration(milliseconds: 250),
                 curve: Curves.easeOutCubic,
                 style: baseStyle.copyWith(
-                  color: isWordActive ? activeColor : baseStyle.color?.withOpacity(0.5),
+                  color: isWordActive ? activeColor : baseStyle.color?.withValues(alpha: 0.5),
                   shadows: isWordActive
                       ? [
                           Shadow(
-                            color: activeColor.withOpacity(0.3),
-                            blurRadius: 16,
+                            color: activeColor.withValues(alpha: 0.3),
+                            blurRadius: 16 * fontScale,
                           ),
                         ]
                       : null,
@@ -254,6 +318,7 @@ class AdvancedLyricLine extends ConsumerWidget {
     double progress,
     TextStyle baseStyle,
     Color activeColor,
+    TextAlign textAlign,
   ) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -271,7 +336,7 @@ class AdvancedLyricLine extends ConsumerWidget {
                 end: Alignment.centerRight,
                 colors: [
                   activeColor,
-                  activeColor.withOpacity(0.8),
+                  activeColor.withValues(alpha: 0.8),
                   baseStyle.color ?? Colors.white24,
                 ],
                 stops: [start, progress, end],
@@ -280,7 +345,7 @@ class AdvancedLyricLine extends ConsumerWidget {
             child: Text(
               text,
               style: baseStyle.copyWith(color: Colors.white),
-              textAlign: TextAlign.start,
+              textAlign: textAlign,
               softWrap: true,
               overflow: TextOverflow.visible,
             ),

@@ -12,7 +12,8 @@ class QueueView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final playback = ref.watch(playbackProvider);
+    final queue = ref.watch(playbackProvider.select((s) => s.queue));
+    final currentSongPath = ref.watch(playbackProvider.select((s) => s.currentSong?.path));
     final l10n = AppLocalizations.of(context)!;
 
     return Column(
@@ -30,7 +31,7 @@ class QueueView extends ConsumerWidget {
                   style: const TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
                 ),
               const Spacer(),
-              if (playback.queue.isNotEmpty)
+              if (queue.isNotEmpty)
                 TextButton.icon(
                   onPressed: () =>
                       ref.read(playbackProvider.notifier).clearQueue(),
@@ -42,7 +43,7 @@ class QueueView extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: playback.queue.isEmpty
+          child: queue.isEmpty
               ? Center(
                   child: Text(
                     l10n.queueIsEmpty,
@@ -56,15 +57,15 @@ class QueueView extends ConsumerWidget {
                     top: 16,
                     bottom: Platform.isAndroid ? 200 : 16,
                   ),
-                  itemCount: playback.queue.length,
+                  itemCount: queue.length,
                   onReorder: (oldIndex, newIndex) {
                     ref
                         .read(playbackProvider.notifier)
                         .reorderQueue(oldIndex, newIndex);
                   },
                   itemBuilder: (context, index) {
-                    final song = playback.queue[index];
-                    final isCurrent = playback.currentSong?.path == song.path;
+                    final song = queue[index];
+                    final isCurrent = currentSongPath == song.path;
 
                     return Dismissible(
                       key: ValueKey('queue_view_${song.path}_$index'),
@@ -77,7 +78,7 @@ class QueueView extends ConsumerWidget {
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 24),
-                        color: Colors.red.withOpacity(0.1),
+                        color: Colors.red.withValues(alpha: 0.1),
                         child: const Icon(LucideIcons.x, color: Colors.red),
                       ),
                       child: AnimatedContainer(
@@ -88,8 +89,8 @@ class QueueView extends ConsumerWidget {
                           color: isCurrent
                               ? Theme.of(
                                   context,
-                                ).colorScheme.primary.withOpacity(0.5)
-                              : Colors.white.withOpacity(0.02),
+                                ).colorScheme.primary.withValues(alpha: 0.5)
+                              : Colors.white.withValues(alpha: 0.02),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: ListTile(

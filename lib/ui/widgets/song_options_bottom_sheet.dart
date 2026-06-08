@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
@@ -10,7 +12,10 @@ import 'package:looper_player/ui/screens/android/song/song_info_screen.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/features/playlists/data/playlist_service.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/core/providers.dart';
 
 void showSongOptionsBottomSheet({
   required BuildContext context,
@@ -23,15 +28,15 @@ void showSongOptionsBottomSheet({
   showModalBottomSheet(
     context: context,
     useRootNavigator: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (context) => _SongOptionsSheetContent(
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black54,
+    isScrollControlled: true,
+    builder: (modalContext) => _SongOptionsSheetContent(
       song: song,
       playlist: playlist,
       showDeleteOption: showDeleteOption,
       showRenameOption: showRenameOption,
+      parentContext: context,
     ),
   );
 }
@@ -41,22 +46,24 @@ class _SongOptionsSheetContent extends ConsumerWidget {
   final Playlist? playlist;
   final bool showDeleteOption;
   final bool showRenameOption;
+  final BuildContext parentContext;
 
   const _SongOptionsSheetContent({
     required this.song,
     this.playlist,
     required this.showDeleteOption,
     required this.showRenameOption,
+    required this.parentContext,
   });
 
   void _showRenameDialog(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController(text: song.title);
     showDialog(
       context: context,
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
+      builder: (dialogContext) {
+        final l10n = AppLocalizations.of(dialogContext)!;
         return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+          backgroundColor: Theme.of(dialogContext).colorScheme.surfaceContainer,
           title: Text(l10n.renameSong, style: const TextStyle(color: Colors.white)),
           content: TextField(
             controller: controller,
@@ -71,24 +78,36 @@ class _SongOptionsSheetContent extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey)),
             ),
             TextButton(
               onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                final success = await ref
+                final result = await ref
                     .read(playbackProvider.notifier)
                     .renameSong(song, controller.text);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  messenger.showSnackBar(
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                  String message = '';
+                  Color bgColor = Colors.transparent;
+                  if (result == FileActionResult.success) {
+                    message = l10n.songRenamedSuccess;
+                    bgColor = Colors.green.shade800;
+                  } else if (result == FileActionResult.dbOnly) {
+                    message = l10n.songRenamedDbOnly;
+                    bgColor = Colors.orange.shade800;
+                  } else {
+                    message = l10n.songRenameFailed;
+                    bgColor = Colors.red.shade800;
+                  }
+                  scaffoldMessengerKey.currentState?.clearSnackBars();
+                  scaffoldMessengerKey.currentState?.showSnackBar(
                     SnackBar(
                       content: Text(
-                        success ? 'Song renamed successfully' : 'Failed to rename song',
+                        message,
                         style: const TextStyle(color: Colors.white),
                       ),
-                      backgroundColor: success ? Colors.green.shade800 : Colors.red.shade800,
+                      backgroundColor: bgColor,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -105,10 +124,10 @@ class _SongOptionsSheetContent extends ConsumerWidget {
   void _showDeleteDialog(BuildContext context, WidgetRef ref) {
     showDialog(
       context: context,
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
+      builder: (dialogContext) {
+        final l10n = AppLocalizations.of(dialogContext)!;
         return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+          backgroundColor: Theme.of(dialogContext).colorScheme.surfaceContainer,
           title: Text(l10n.deleteSong, style: const TextStyle(color: Colors.white)),
           content: Text(
             l10n.deleteSongConfirm,
@@ -116,22 +135,34 @@ class _SongOptionsSheetContent extends ConsumerWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: Text(l10n.cancel, style: const TextStyle(color: Colors.grey)),
             ),
             TextButton(
               onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                final success = await ref.read(playbackProvider.notifier).deleteSong(song);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  messenger.showSnackBar(
+                final result = await ref.read(playbackProvider.notifier).deleteSong(song);
+                if (dialogContext.mounted) {
+                  Navigator.pop(dialogContext);
+                  String message = '';
+                  Color bgColor = Colors.transparent;
+                  if (result == FileActionResult.success) {
+                    message = l10n.songDeletedSuccess;
+                    bgColor = Colors.green.shade800;
+                  } else if (result == FileActionResult.dbOnly) {
+                    message = l10n.songDeletedDbOnly;
+                    bgColor = Colors.orange.shade800;
+                  } else {
+                    message = l10n.songDeleteFailed;
+                    bgColor = Colors.red.shade800;
+                  }
+                  scaffoldMessengerKey.currentState?.clearSnackBars();
+                  scaffoldMessengerKey.currentState?.showSnackBar(
                     SnackBar(
                       content: Text(
-                        success ? 'Song deleted successfully' : 'Failed to delete song',
+                        message,
                         style: const TextStyle(color: Colors.white),
                       ),
-                      backgroundColor: success ? Colors.green.shade800 : Colors.red.shade800,
+                      backgroundColor: bgColor,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
@@ -154,23 +185,22 @@ class _SongOptionsSheetContent extends ConsumerWidget {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-        title: Text('Add to ${l10n.playlists}'),
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: Theme.of(dialogContext).colorScheme.surfaceContainer,
+        title: Text('${l10n.addToFavorites.split(' ')[0]} ${l10n.playlists}'),
         content: playlists.isEmpty
-            ? const Text('No playlists created yet.')
+            ? Text(l10n.noPlaylistsCreated)
             : SizedBox(
                 width: double.maxFinite,
                 child: ListView.builder(
                   shrinkWrap: true,
                   itemCount: playlists.length,
-                  itemBuilder: (context, index) {
+                  itemBuilder: (dialogContext, index) {
                     final p = playlists[index];
                     return ListTile(
                       leading: const Icon(LucideIcons.listMusic),
                       title: Text(p.name),
                       onTap: () async {
-                        final messenger = ScaffoldMessenger.of(context);
                         if (!p.songPaths.contains(song.path)) {
                           p.songPaths = [...p.songPaths, song.path];
                           p.dateModified = DateTime.now();
@@ -178,10 +208,14 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                             () => DbService.isar.playlists.put(p),
                           );
                         }
-                        if (context.mounted) {
-                          Navigator.pop(context);
-                          messenger.showSnackBar(
-                            SnackBar(content: Text('Added to ${p.name}')),
+                        if (dialogContext.mounted) {
+                          Navigator.pop(dialogContext);
+                          scaffoldMessengerKey.currentState?.clearSnackBars();
+                          scaffoldMessengerKey.currentState?.showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.addedTo(p.name)),
+                              behavior: SnackBarBehavior.floating,
+                            ),
                           );
                         }
                       },
@@ -191,8 +225,8 @@ class _SongOptionsSheetContent extends ConsumerWidget {
               ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.cancel),
           ),
         ],
       ),
@@ -202,26 +236,55 @@ class _SongOptionsSheetContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    return SafeArea(
+    final settings = ref.watch(settingsProvider);
+    final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
+    final isPureBlack = settings.darkTheme;
+    final accentColor = Color(settings.accentColor);
+
+    final sheetBg = isPureBlack 
+        ? Colors.black 
+        : (useBlur ? Colors.black.withValues(alpha: 0.6) : const Color(0xFF1E1E1E));
+
+    Widget sheetContent = Container(
+      decoration: BoxDecoration(
+        color: sheetBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border.all(
+          color: isPureBlack ? Colors.white10 : Colors.white.withValues(alpha: 0.08),
+          width: 1,
+        ),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const SizedBox(height: 12),
+          // Drag handle
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           // Beautiful Standardized Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
             child: Row(
               children: [
                 OptimizedImage(
                   imagePath: song.artPath,
-                  width: 50,
-                  height: 50,
-                  borderRadius: BorderRadius.circular(8),
+                  width: 52,
+                  height: 52,
+                  borderRadius: BorderRadius.circular(12),
                   placeholder: Container(
                     decoration: BoxDecoration(
                       color: Colors.white10,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(LucideIcons.music),
+                    child: const Icon(LucideIcons.music, color: Colors.white54),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -233,18 +296,23 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                         song.title,
                         style: const TextStyle(
                           fontSize: 16,
-                          fontWeight: FontWeight.normal,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
+                          fontFamily: 'DMSans',
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
+                      const SizedBox(height: 4),
                       Text(
                         song.artist ?? l10n.unknownArtist,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.grey,
+                          color: Colors.white54,
+                          fontFamily: 'DMSans',
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -255,184 +323,234 @@ class _SongOptionsSheetContent extends ConsumerWidget {
           const Divider(color: Colors.white10, height: 1),
           Flexible(
             child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.playCircle,
-                      color: Colors.blueAccent,
-                    ),
-                    title: const Text(
-                      'Play Next',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      ref.read(playbackProvider.notifier).addNext(song);
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Will play next'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.listPlus,
-                      color: Colors.greenAccent,
-                    ),
-                    title: const Text(
-                      'Add to Queue',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      ref.read(playbackProvider.notifier).addToQueue(song);
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Added to queue'),
-                          behavior: SnackBarBehavior.floating,
-                        ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.listMusic,
-                      color: Colors.orangeAccent,
-                    ),
-                    title: Text(
-                      'Add to ${l10n.playlists}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showPlaylistSelector(context, ref, l10n);
-                    },
-                  ),
-                  ListTile(
-                    leading: Icon(
-                      song.isFavorite ? Icons.favorite : Icons.favorite_border,
-                      color: song.isFavorite ? Colors.red : Colors.white70,
-                    ),
-                    title: Text(
-                      song.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                    onTap: () {
-                      ref.read(libraryProvider.notifier).toggleFavorite(song);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  if (playlist != null)
-                    ListTile(
-                      leading: const Icon(
-                        LucideIcons.trash2,
-                        color: Colors.redAccent,
-                      ),
-                      title: const Text(
-                        'Remove from Playlist',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                      ),
-                      onTap: () async {
-                        final messenger = ScaffoldMessenger.of(context);
-                        await PlaylistService.removeSongFromPlaylist(playlist!, song);
-                        if (context.mounted) {
+              physics: const BouncingScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                child: Builder(
+                  builder: (context) {
+                    final options = <Widget>[
+                      _MenuOptionTile(
+                        label: l10n.playNext,
+                        icon: LucideIcons.playCircle,
+                        iconColor: accentColor,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          ref.read(playbackProvider.notifier).addNext(song);
                           Navigator.pop(context);
-                          messenger.showSnackBar(
-                            const SnackBar(content: Text('Removed from Playlist')),
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.willPlayNext),
+                              behavior: SnackBarBehavior.floating,
+                            ),
                           );
-                        }
-                      },
-                    ),
-                  if (showRenameOption)
-                    ListTile(
-                      leading: const Icon(LucideIcons.edit2, color: Colors.white70),
-                      title: const Text(
-                        'Rename File',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                        },
                       ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showRenameDialog(context, ref);
-                      },
-                    ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.info,
-                      color: Colors.white70,
-                    ),
-                    title: const Text(
-                      'Song Details',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      showModalBottomSheet(
-                        context: context,
-                        useRootNavigator: true,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) => SongDetailsBottomSheet(song: song),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.activity,
-                      color: Colors.white70,
-                    ),
-                    title: const Text(
-                      'Technical Info & Frequency',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SongInfoScreen(song: song),
+                      _MenuOptionTile(
+                        label: l10n.addToQueue,
+                        icon: LucideIcons.listPlus,
+                        iconColor: accentColor,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          ref.read(playbackProvider.notifier).addToQueue(song);
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(l10n.addedToQueue),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        },
+                      ),
+                      _MenuOptionTile(
+                        label: l10n.addToPlaylists,
+                        icon: LucideIcons.listMusic,
+                        iconColor: accentColor,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                          _showPlaylistSelector(parentContext, ref, l10n);
+                        },
+                      ),
+                      _MenuOptionTile(
+                        label: song.isFavorite ? l10n.removeFromFavorites : l10n.addToFavorites,
+                        icon: song.isFavorite ? Icons.favorite : Icons.favorite_border,
+                        iconColor: song.isFavorite ? Colors.redAccent : Colors.white70,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          ref.read(libraryProvider.notifier).toggleFavorite(song);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      if (playlist != null)
+                        _MenuOptionTile(
+                          label: l10n.removeFromPlaylist,
+                          icon: LucideIcons.trash2,
+                          iconColor: Colors.redAccent,
+                          onTap: () async {
+                            HapticFeedback.mediumImpact();
+                            final messenger = ScaffoldMessenger.of(context);
+                            await PlaylistService.removeSongFromPlaylist(playlist!, song);
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              messenger.showSnackBar(
+                                SnackBar(content: Text(l10n.removedFromPlaylist)),
+                              );
+                            }
+                          },
                         ),
-                      );
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(
-                      LucideIcons.share2,
-                      color: Colors.white70,
-                    ),
-                    title: const Text(
-                      'Share',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      ref.read(playbackProvider.notifier).shareSong(song);
-                      Navigator.pop(context);
-                    },
-                  ),
-                  if (showDeleteOption)
-                    ListTile(
-                      leading: const Icon(
-                        LucideIcons.trash2,
-                        color: Colors.redAccent,
+                      if (showRenameOption)
+                        _MenuOptionTile(
+                          label: l10n.renameFile,
+                          icon: LucideIcons.edit2,
+                          iconColor: Colors.white70,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pop(context);
+                            _showRenameDialog(parentContext, ref);
+                          },
+                        ),
+                      _MenuOptionTile(
+                        label: l10n.songDetails,
+                        icon: LucideIcons.info,
+                        iconColor: Colors.white70,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                          showModalBottomSheet(
+                            context: context,
+                            useRootNavigator: true,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => SongDetailsBottomSheet(song: song),
+                          );
+                        },
                       ),
-                      title: const Text(
-                        'Delete File',
-                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                      _MenuOptionTile(
+                        label: l10n.technicalInfoFrequency,
+                        icon: LucideIcons.activity,
+                        iconColor: Colors.white70,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SongInfoScreen(song: song),
+                            ),
+                          );
+                        },
                       ),
-                      onTap: () {
-                        Navigator.pop(context);
-                        _showDeleteDialog(context, ref);
-                      },
-                    ),
-                ],
+                      _MenuOptionTile(
+                        label: l10n.share,
+                        icon: LucideIcons.share2,
+                        iconColor: Colors.white70,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          ref.read(playbackProvider.notifier).shareSong(song);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      if (showDeleteOption)
+                        _MenuOptionTile(
+                          label: l10n.deleteFile,
+                          icon: LucideIcons.trash2,
+                          iconColor: Colors.redAccent,
+                          onTap: () {
+                            HapticFeedback.heavyImpact();
+                            Navigator.pop(context);
+                            _showDeleteDialog(parentContext, ref);
+                          },
+                        ),
+                    ];
+
+                    return PremiumSection(
+                      borderRadius: BorderRadius.circular(20),
+                      padding: EdgeInsets.zero,
+                      useExpanded: false,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(options.length * 2 - 1, (index) {
+                          if (index.isOdd) {
+                            return Divider(
+                              height: 1,
+                              thickness: 0.8,
+                              color: Colors.white.withValues(alpha: 0.04),
+                              indent: 20,
+                              endIndent: 20,
+                            );
+                          }
+                          return options[index ~/ 2];
+                        }),
+                      ),
+                    );
+                  }
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 8),
         ],
+      ),
+    );
+
+    if (useBlur && !isPureBlack) {
+      return ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: sheetContent,
+        ),
+      );
+    }
+
+    return sheetContent;
+  }
+}
+
+class _MenuOptionTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  const _MenuOptionTile({
+    required this.label,
+    required this.icon,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: iconColor,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            Icon(
+              LucideIcons.chevronRight,
+              color: Colors.white.withValues(alpha: 0.9),
+              size: 18,
+            ),
+          ],
+        ),
       ),
     );
   }

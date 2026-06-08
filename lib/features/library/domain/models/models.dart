@@ -97,13 +97,40 @@ class AppSettings {
   bool enableInternet = true;
   bool downloadArtwork = false;
   bool keepBackgroundGradient = false;
+  bool showQualityBadge = true;
+  bool enablePlayerGradient = true;
+  bool settingsV2 = false;
+  bool showPerformanceOptimizer = false;
   String? customBackgroundImagePath;
   double bgBrightness = 0.5;
   double bgOpacity = 0.3;
   bool showHomeArtists = true;
   bool showHomeAlbums = false;
-  bool showHomeGenres = false;
+  bool showHomeGenres = true;
   List<String> homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres'];
-  bool enableSlideGesture = true;
+  bool enableSlideGesture = false;
   bool stopOnTaskRemoved = false;
+
+  bool enableCrossfade = false;
+  int crossfadeLength = 150; // ms (100ms-15000ms)
+  int shortManualCrossfadeLength = 200; // ms (10ms-1000ms)
+  bool fadePlayPauseStop = true;
+  int playPauseStopFadeLength = 150; // ms (10ms-1000ms)
+  bool fadeOnSeek = false;
+  int seekFadeLength = 50; // ms (10ms-500ms)
+  int silenceBetweenTracks = 0; // ms (0ms-5000ms)
+  bool resumeAfterCall = true;
+  bool resumeOnStart = false;
+  bool permanentAudioFocusChange = true;
+  bool dynamicColorActiveLyrics = true;
+  String lyricsAlignment = 'left'; // 'left', 'center', 'right'
+  bool dynamicAccentColor = false;
+  int sortStrategyIndex = 0;
+  bool sortAscending = false;
+
+  double homeDarkness = 0.62;
+  double songsDarkness = 0.62;
+  double libraryDarkness = 0.62;
+  double musicDarkness = 0.62;
+  double lyricsDarkness = 0.55;
 }

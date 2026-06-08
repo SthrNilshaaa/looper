@@ -4,6 +4,9 @@ import 'audio_service.dart';
 import 'db_service.dart';
 import 'package:isar/isar.dart';
 
+final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+
 final audioServiceProvider = Provider<AudioService>((ref) {
   final service = AudioService();
   ref.onDispose(() => service.dispose());

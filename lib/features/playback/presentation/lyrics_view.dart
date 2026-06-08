@@ -72,13 +72,13 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                           Icon(
                             Icons.music_note,
                             size: 80,
-                            color: primaryColor.withOpacity(0.3),
+                            color: primaryColor.withValues(alpha: 0.3),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Lyrics not available.',
                             style: GoogleFonts.spaceGrotesk(
-                              color: Colors.white.withOpacity(0.4),
+                              color: Colors.white.withValues(alpha: 0.4),
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
                             ),
@@ -86,19 +86,11 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                         ],
                       ),
                     )
-                  : Consumer(
-                      builder: (context, ref, child) {
-                        final position = ref.watch(
-                          playbackProvider.select((s) => s.position),
-                        );
-                        return AdvancedLyricRenderer(
-                          lines: lyricsState.parsedLines,
-                          currentPosition: position,
-                          mode: _syncMode,
-                          onSeek: (pos) =>
-                              ref.read(playbackProvider.notifier).seek(pos),
-                        );
-                      },
+                  : AdvancedLyricRenderer(
+                      lines: lyricsState.parsedLines,
+                      mode: _syncMode,
+                      onSeek: (pos) =>
+                          ref.read(playbackProvider.notifier).seek(pos),
                     ),
             ),
           ],
@@ -126,7 +118,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.orange.withOpacity(0.1),
+        color: Colors.orange.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
@@ -151,7 +143,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(32),
       ),
       child: Row(

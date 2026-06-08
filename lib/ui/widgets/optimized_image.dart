@@ -30,19 +30,23 @@ class OptimizedImage extends StatelessWidget {
   Widget build(BuildContext context) {
     final fallback = placeholder ?? Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: borderRadius,
       ),
       child: Center(
         child: Icon(
           Icons.music_note_rounded,
-          color: Colors.white.withOpacity(0.3),
+          color: Colors.white.withValues(alpha: 0.3),
           size: width != null ? (width! * 0.5).clamp(16, 48) : 32,
         ),
       ),
     );
 
     Widget imageWidget;
+
+    final double dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
+    final int computedCacheWidth = cacheWidth ?? (width != null ? (width! * dpr).toInt() : 400);
+    final int? computedCacheHeight = cacheHeight ?? (height != null ? (height! * dpr).toInt() : null);
 
     if (imagePath != null && File(imagePath!).existsSync()) {
       imageWidget = Image.file(
@@ -51,8 +55,8 @@ class OptimizedImage extends StatelessWidget {
         height: height,
         fit: fit,
         gaplessPlayback: true,
-        cacheWidth: cacheWidth ?? (width != null ? (width! * 2.5).toInt() : 800),
-        cacheHeight: cacheHeight,
+        cacheWidth: computedCacheWidth,
+        cacheHeight: computedCacheHeight,
         errorBuilder: (context, error, stackTrace) => fallback,
       );
     } else if (imageUrl != null && imageUrl!.isNotEmpty) {
@@ -63,8 +67,8 @@ class OptimizedImage extends StatelessWidget {
         fit: fit,
         placeholder: (context, url) => fallback,
         errorWidget: (context, url, error) => fallback,
-        memCacheWidth:
-            cacheWidth ?? (width != null ? (width! * 2.5).toInt() : 800),
+        memCacheWidth: computedCacheWidth,
+        memCacheHeight: computedCacheHeight,
       );
     } else {
       imageWidget = fallback;

@@ -112,7 +112,7 @@ class AlbumsGridView extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(album.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text(album.artist ?? l10n.unknownArtist, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(album.artist ?? l10n.unknownArtist, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             );
@@ -198,32 +198,136 @@ class GenresGridView extends ConsumerWidget {
         crossAxisCount: 2,
         mainAxisSpacing: 20,
         crossAxisSpacing: 20,
-        childAspectRatio: 1.5,
+        childAspectRatio: 1.35,
       ),
       itemCount: genres.length,
       itemBuilder: (context, index) {
         final genre = genres[index];
         final genreSongs = genresMap[genre]!;
+        
+        // Hash the genre string to produce a consistent vibrant color gradient
+        final int hash = genre.hashCode;
+        final double hue = (hash.abs() % 360).toDouble();
+        final Color startColor = HSLColor.fromAHSL(1.0, hue, 0.70, 0.35).toColor();
+        final Color endColor = HSLColor.fromAHSL(1.0, (hue + 45) % 360, 0.80, 0.18).toColor();
+
+        // Get first song with art if available
+        final firstSongWithArt = genreSongs.firstWhere(
+          (s) => s.artPath != null,
+          orElse: () => genreSongs.first,
+        );
+
         return InkWell(
           onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
             title: genre,
             subtitle: l10n.genre,
             songs: genreSongs,
           ),
+          borderRadius: BorderRadius.circular(24),
           child: Container(
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
+              gradient: LinearGradient(
+                colors: [startColor, endColor],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white10),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+            child: Stack(
               children: [
-                const Icon(LucideIcons.music, color: Colors.blueAccent),
-                const SizedBox(height: 8),
-                Text(genre, style: const TextStyle(fontWeight: FontWeight.bold), textAlign: TextAlign.center),
-                Text('${genreSongs.length} ${l10n.songs}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                // Rotated Album Art in the bottom right corner
+                if (firstSongWithArt.artPath != null)
+                  Positioned(
+                    bottom: -12,
+                    right: -12,
+                    child: Transform.rotate(
+                      angle: 0.25,
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.4),
+                              blurRadius: 8,
+                              offset: const Offset(2, 4),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: OptimizedImage(
+                            imagePath: firstSongWithArt.artPath,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  Positioned(
+                    bottom: -10,
+                    right: -10,
+                    child: Transform.rotate(
+                      angle: 0.25,
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          LucideIcons.music,
+                          size: 28,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                  ),
+                
+                // Genre info on the left side
+                Positioned(
+                  left: 16,
+                  top: 16,
+                  bottom: 16,
+                  right: 56, // Leave room so text doesn't overlap the album art too much
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        genre,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.3,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        '${genreSongs.length} ${l10n.songs}',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

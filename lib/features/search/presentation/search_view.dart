@@ -124,7 +124,7 @@ class SearchView extends ConsumerWidget {
           Icon(
             LucideIcons.search,
             size: 64,
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.grey.withValues(alpha: 0.2),
           ),
           const SizedBox(height: 16),
           Text(
@@ -153,64 +153,89 @@ class SearchView extends ConsumerWidget {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(0, 16, 0, 180),
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildTopResult(results, ref, context),
+    final songListToRender = results.songs.length > 1 ? results.songs.sublist(1) : <Song>[];
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            child: _buildTopResult(results, ref, context),
+          ),
         ),
-        const SizedBox(height: 16),
-        if (results.artists.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.artists,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+        if (results.artists.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    l10n.artists,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 140,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: results.artists.length,
+                    itemBuilder: (context, index) =>
+                        _ArtistResultCard(artist: results.artists[index]),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 140,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: results.artists.length,
-              itemBuilder: (context, index) =>
-                  _ArtistResultCard(artist: results.artists[index]),
+        if (results.albums.isNotEmpty)
+          SliverToBoxAdapter(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    l10n.albums,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: results.albums.length,
+                    itemBuilder: (context, index) =>
+                        _AlbumResultCard(album: results.albums[index]),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-        ],
-        if (results.albums.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              l10n.albums,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+        if (songListToRender.isNotEmpty)
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                final song = songListToRender[index];
+                return SongTile(
+                  song: song,
+                  l10n: l10n,
+                  songs: songListToRender,
+                  searchQuery: ref.read(searchQueryProvider),
+                );
+              },
+              childCount: songListToRender.length,
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 180,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: results.albums.length,
-              itemBuilder: (context, index) =>
-                  _AlbumResultCard(album: results.albums[index]),
-            ),
-          ),
-          const SizedBox(height: 24),
-        ],
-        if (results.songs.length > 1) ...[
-          SongsList(
-            songs: results.songs.sublist(1),
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            searchQuery: ref.read(searchQueryProvider),
-          ),
-        ],
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 180),
+        ),
       ],
     );
   }
@@ -303,7 +328,7 @@ class _SongResultCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isCurrent = ref.watch(playbackProvider).currentSong?.path == song.path;
+    final isCurrent = ref.watch(playbackProvider.select((s) => s.currentSong?.path == song.path));
     final l10n = AppLocalizations.of(context)!;
 
     String? lyricSnippet;
@@ -325,13 +350,13 @@ class _SongResultCard extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isCurrent
-              ? colorScheme.primary.withOpacity(0.5)
-              : Colors.white.withOpacity(0.02),
+              ? colorScheme.primary.withValues(alpha: 0.5)
+              : Colors.white.withValues(alpha: 0.02),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isCurrent
-                ? colorScheme.primary.withOpacity(0.2)
-                : Colors.white10.withOpacity(0.05),
+                ? colorScheme.primary.withValues(alpha: 0.2)
+                : Colors.white10.withValues(alpha: 0.05),
           ),
         ),
         child: Column(
@@ -381,7 +406,7 @@ class _SongResultCard extends ConsumerWidget {
                           song.album ?? l10n.unknownAlbum,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.grey.withOpacity(0.7),
+                            color: Colors.grey.withValues(alpha: 0.7),
                           ),
                         ),
                       ],
@@ -404,10 +429,10 @@ class _SongResultCard extends ConsumerWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
-                  color: colorScheme.primary.withOpacity(0.08),
+                  color: colorScheme.primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: colorScheme.primary.withOpacity(0.15),
+                    color: colorScheme.primary.withValues(alpha: 0.15),
                     width: 1,
                   ),
                 ),
@@ -440,7 +465,7 @@ class _SongResultCard extends ConsumerWidget {
                       query: searchQuery ?? '',
                       baseStyle: TextStyle(
                         fontSize: 13,
-                        color: Colors.white.withOpacity(0.85),
+                        color: Colors.white.withValues(alpha: 0.85),
                         fontStyle: FontStyle.italic,
                       ),
                       highlightStyle: TextStyle(
@@ -448,7 +473,7 @@ class _SongResultCard extends ConsumerWidget {
                         color: colorScheme.primary,
                         fontWeight: FontWeight.bold,
                         fontStyle: FontStyle.italic,
-                        backgroundColor: colorScheme.primary.withOpacity(0.12),
+                        backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
                       ),
                     ),
                   ],
@@ -523,7 +548,7 @@ class _ArtistResultCard extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundColor: Colors.grey.withOpacity(0.1),
+              backgroundColor: Colors.grey.withValues(alpha: 0.1),
               backgroundImage: artist.artPath != null
                   ? FileImage(File(artist.artPath!))
                   : null,
@@ -584,7 +609,7 @@ class _AlbumResultCard extends ConsumerWidget {
                         fit: BoxFit.cover,
                       )
                     : null,
-                color: Colors.grey.withOpacity(
+                color: Colors.grey.withValues(alpha: 
                   ref.watch(settingsProvider).enableDynamicTheming ? 0.8 : 0.1,
                 ),
               ),

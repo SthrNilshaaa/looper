@@ -68,8 +68,7 @@ class PlaylistView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final playlists = ref.watch(playlistProvider);
-    final playbackState = ref.watch(playbackProvider);
-    final song = playbackState.currentSong;
+    final hasActiveSong = ref.watch(playbackProvider.select((s) => s.currentSong != null));
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -81,7 +80,7 @@ class PlaylistView extends ConsumerWidget {
                   Icon(
                     LucideIcons.listMusic,
                     size: 64,
-                    color: Colors.grey.withOpacity(0.2),
+                    color: Colors.grey.withValues(alpha: 0.2),
                   ),
                   const SizedBox(height: 16),
                   const Text('No playlists yet'),
@@ -108,7 +107,7 @@ class PlaylistView extends ConsumerWidget {
       floatingActionButton: AnimatedPadding(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        padding: EdgeInsets.only(bottom: song != null ? 160 : 90),
+        padding: EdgeInsets.only(bottom: hasActiveSong ? 160 : 90),
         child: FloatingActionButton(
           onPressed: () => _showCreateDialog(context, ref),
           child: const Icon(LucideIcons.plus),
@@ -187,7 +186,7 @@ class _PlaylistCard extends ConsumerWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 color: Theme.of(context).colorScheme.primaryContainer
-                    .withOpacity(
+                    .withValues(alpha: 
                       ref.watch(settingsProvider).enableDynamicTheming
                           ? 0.8
                           : 0.3,

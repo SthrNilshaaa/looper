@@ -1,9 +1,8 @@
 import 'dart:io';
-import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_view.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
@@ -15,6 +14,8 @@ import 'package:looper_player/core/app_icons.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:adaptive_palette/adaptive_palette.dart' hide FluidBackground;
+import 'package:looper_player/ui/widgets/fluid_background.dart';
 
 class AndroidLyricsScreen extends ConsumerStatefulWidget {
   const AndroidLyricsScreen({super.key});
@@ -25,7 +26,9 @@ class AndroidLyricsScreen extends ConsumerStatefulWidget {
 }
 
 class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
-  bool _zoomIn = true;
+  bool _delayCompleted = false;
+  Timer? _delayTimer;
+  Animation<double>? _routeAnimation;
 
   @override
   void initState() {
@@ -36,10 +39,39 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
     } else {
       _disableWakelock();
     }
+
+    _delayTimer = Timer(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _delayCompleted = true;
+        });
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null && route.animation != _routeAnimation) {
+      _routeAnimation?.removeStatusListener(_onRouteAnimationStatusChanged);
+      _routeAnimation = route.animation;
+      _routeAnimation?.addStatusListener(_onRouteAnimationStatusChanged);
+    }
+  }
+
+  void _onRouteAnimationStatusChanged(AnimationStatus status) {
+    if (status == AnimationStatus.reverse) {
+      if (mounted) {
+        setState(() {});
+      }
+    }
   }
 
   @override
   void dispose() {
+    _delayTimer?.cancel();
+    _routeAnimation?.removeStatusListener(_onRouteAnimationStatusChanged);
     _disableWakelock();
     super.dispose();
   }
@@ -63,7 +95,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
   TextStyle _getHeroStyle(Hero hero, TextStyle fallback) {
     final child = hero.child;
     if (child is ScrollingText) {
-      return child.style ?? fallback;
+      return child.style;
     }
     if (child is Text) {
       return child.style ?? fallback;
@@ -135,11 +167,157 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
       }
     });
 
-    final playback = ref.watch(playbackProvider);
-    final song = playback.currentSong;
+    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
+    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
     final settings = ref.watch(settingsProvider);
 
     if (song == null) return const SizedBox.shrink();
+
+    final mainContent = SafeArea(
+      child: Column(
+        children: [
+          // Top Row: Album Art + Song Info
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+            child: Row(
+              children: [
+                Hero(
+                  tag: 'album_art',
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: OptimizedImage(
+                      imagePath: song.artPath,
+                      width: 60.s,
+                      height: 60.s,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Hero(
+                        tag: 'song_title',
+                        flightShuttleBuilder: _buildHeroTextShuttle,
+                        child: ScrollingText(
+                          text: song.title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                      Hero(
+                        tag: 'song_artist',
+                        flightShuttleBuilder: _buildHeroTextShuttle,
+                        child: ScrollingText(
+                          text: song.artist ?? 'Unknown Artist',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 14,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: SizedBox(
+                    height: 36,
+                    child: VerticalDivider(
+                      width: 1,
+                      thickness: 0.5,
+                      color: Colors.white.withValues(alpha: 0.15),
+                    ),
+                  ),
+                ),
+                // Play/Pause with Hero
+                PremiumSection(
+                  borderRadius: BorderRadius.circular(32),
+                  width: 48.s,
+                  height: 48.s,
+                  useExpanded: false,
+                  forceNoBlur: true,
+                  useBlur:
+                      settings.enableDynamicTheming ||
+                      settings.dynamicLyrics,
+                  onTap: () {
+                    HapticFeedback.mediumImpact();
+                    ref.read(playbackProvider.notifier).togglePlay();
+                  },
+                  child:  SvgPicture.asset(
+                      isPlaying ? AppIcons.pause : AppIcons.play,
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                      width: AppIcons.sizeSmall.s,
+                      height: AppIcons.sizeSmall.s,
+                    ),
+                  
+                ),
+                const SizedBox(width: 8),
+                // Down Arrow
+                PremiumSection(
+                  borderRadius: BorderRadius.circular(32),
+                  width: 48.s,
+                  height: 48.s,
+                  useExpanded: false,
+                  forceNoBlur: true,
+                  useBlur:
+                      settings.enableDynamicTheming ||
+                      settings.dynamicLyrics,
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.pop(context);
+                  },
+                  child: const Icon(
+                    LucideIcons.chevronDown,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Thin grey line
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Container(
+              height: 0.5,
+              width: double.infinity,
+              color: Colors.white.withValues(alpha: 0.15),
+            ),
+          ),
+
+          // Lyrics Content
+          const Expanded(child: LyricsView()),
+        ],
+      ),
+    );
+
+    final lyricsDarkness = (settings.lyricsDarkness.isNaN || settings.lyricsDarkness == 0.0)
+        ? 0.55
+        : settings.lyricsDarkness;
+
+    final route = ModalRoute.of(context);
+    final isExiting = route != null && route.animation?.status == AnimationStatus.reverse;
+
+    final showDynamicBg = !isExiting &&
+        _delayCompleted &&
+        (settings.enableDynamicTheming || settings.dynamicLyrics) &&
+        song.artPath != null;
+
+    final transitionDuration = isExiting
+        ? Duration.zero
+        : const Duration(milliseconds: 1000);
 
     return GestureDetector(
       onVerticalDragEnd: (details) {
@@ -149,247 +327,57 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.transparent,
         body: Stack(
           children: [
-            // Dynamic Background with Slow Motion (Optimized)
-            if ((settings.enableDynamicTheming || settings.dynamicLyrics) &&
-                song.artPath != null) ...[
-              Positioned.fill(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 800),
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: child,
-                    );
-                  },
-                  child: BlurredBackgroundLyricsArt(
-                    key: ValueKey(song.artPath),
-                    song: song,
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                  child: Container(color: Colors.black.withOpacity(0.7)),
-                ),
-              ),
-            ] else ...[
-              Positioned.fill(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 600),
-                  curve: Curves.easeInOut,
-                  decoration: BoxDecoration(
-                    gradient: RadialGradient(
-                      center: Alignment.topRight,
-                      radius: 1.5,
-                      colors: [
-                        Theme.of(context).colorScheme.primary.withOpacity(0.18),
-                        Theme.of(context).colorScheme.surface,
-                      ],
-                      stops: const [0.0, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-
-            SafeArea(
-              child: Column(
-                children: [
-                  // Top Row: Album Art + Song Info
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-                    child: Row(
-                      children: [
-                        Hero(
-                          tag: 'album_art',
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: OptimizedImage(
-                              imagePath: song.artPath,
-                              width: 60.s,
-                              height: 60.s,
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Hero(
-                                tag: 'song_title',
-                                flightShuttleBuilder: _buildHeroTextShuttle,
-                                child: ScrollingText(
-                                  text: song.title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 0.3,
-                                  ),
+            // Background Layer: AnimatedSwitcher smoothly transitions between fallback static background and the dynamic fluid background
+            Positioned.fill(
+              child: AnimatedSwitcher(
+                duration: transitionDuration,
+                child: showDynamicBg
+                    ? FluidBackground(
+                        key: const ValueKey('fluid_bg'),
+                        imageProvider: FileImage(File(song.artPath!)),
+                        animate: isPlaying,
+                        blurSigma: 80,
+                        overlayDarken: lyricsDarkness,
+                        child: const SizedBox.expand(),
+                      )
+                    : Stack(
+                        key: const ValueKey('static_bg'),
+                        children: [
+                          Positioned.fill(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 600),
+                              curve: Curves.easeInOut,
+                              decoration: BoxDecoration(
+                                gradient: RadialGradient(
+                                  center: Alignment.topRight,
+                                  radius: 1.5,
+                                  colors: [
+                                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
+                                    Theme.of(context).colorScheme.surface,
+                                  ],
+                                  stops: const [0.0, 1.0],
                                 ),
                               ),
-                              Hero(
-                                tag: 'song_artist',
-                                flightShuttleBuilder: _buildHeroTextShuttle,
-                                child: ScrollingText(
-                                  text: song.artist ?? 'Unknown Artist',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.6),
-                                    fontSize: 14,
-                                    letterSpacing: 0.2,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                         Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                            child: SizedBox(
-                                    height: 36,
-                                    child: VerticalDivider(
-                                      width: 1,
-                                      thickness: 0.5,
-                                      color: Colors.white.withOpacity(0.15),
-                                    ),
-                                  ),
-                          ),
-                        // Play/Pause with Hero
-                        PremiumSection(
-                          borderRadius: BorderRadius.circular(32),
-                          width: 48.s,
-                          height: 48.s,
-                          useExpanded: false,
-                          useBlur:
-                              settings.enableDynamicTheming ||
-                              settings.dynamicLyrics,
-                           
-                          onTap: () {
-                            HapticFeedback.mediumImpact();
-                            ref.read(playbackProvider.notifier).togglePlay();
-                          },
-                          child: Hero(
-                            tag: 'play_pause_icon',
-                            child: SvgPicture.asset(
-                              playback.isPlaying
-                                  ? AppIcons.pause
-                                  : AppIcons.play,
-                              colorFilter: const ColorFilter.mode(
-                                Colors.white,
-                                BlendMode.srcIn,
-                              ),
-                              width: AppIcons.sizeSmall.s,
-                              height: AppIcons.sizeSmall.s,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        // Down Arrow
-                        PremiumSection(
-                          borderRadius: BorderRadius.circular(32),
-                          // shape: BoxShape.circle,
-                          width: 48.s,
-                          height: 48.s,
-                          useExpanded: false,
-                          useBlur:
-                              settings.enableDynamicTheming ||
-                              settings.dynamicLyrics,
-                           
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            Navigator.pop(context);
-                          },
-                          child: const Icon(
-                            LucideIcons.chevronDown,
-                            color: Colors.white,
-                            size: 20,
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withValues(alpha: lyricsDarkness),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Thin grey line
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Container(
-                      height: 0.5,
-                      width: double.infinity,
-                      color: Colors.white.withOpacity(0.15),
-                    ),
-                  ),
-
-                  // Lyrics Content
-                  const Expanded(child: LyricsView()),
-                ],
+                        ],
+                      ),
               ),
+            ),
+            // Foreground Content Layer: Kept outside of AnimatedSwitcher to prevent state/scroll resets
+            Positioned.fill(
+              child: mainContent,
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class BlurredBackgroundLyricsArt extends StatefulWidget {
-  final Song song;
-  const BlurredBackgroundLyricsArt({required this.song, super.key});
-
-  @override
-  State<BlurredBackgroundLyricsArt> createState() => _BlurredBackgroundLyricsArtState();
-}
-
-class _BlurredBackgroundLyricsArtState extends State<BlurredBackgroundLyricsArt> {
-  bool _zoomIn = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final path = widget.song.artPath;
-    if (path == null) return const SizedBox.shrink();
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(
-        begin: _zoomIn ? 1.0 : 2.0,
-        end: _zoomIn ? 2.0 : 1.0,
-      ),
-      duration: const Duration(seconds: 30),
-      curve: Curves.linear,
-      onEnd: () {
-        if (mounted) {
-          setState(() {
-            _zoomIn = !_zoomIn;
-          });
-        }
-      },
-      builder: (context, scale, child) {
-        return Transform.scale(
-          scale: scale,
-          child: ImageFiltered(
-            imageFilter: ImageFilter.blur(
-              sigmaX: 25,
-              sigmaY: 25,
-            ),
-            child: RepaintBoundary(
-              child: Image.file(
-                File(path),
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: double.infinity,
-                filterQuality: FilterQuality.low,
-                cacheWidth: 80,
-                cacheHeight: 80,
-                gaplessPlayback: true,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 }

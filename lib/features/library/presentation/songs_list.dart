@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
@@ -21,6 +23,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/song/song_info_screen.dart';
 import 'package:looper_player/ui/screens/android/widgets/song_details_bottom_sheet.dart';
+import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/song_options_bottom_sheet.dart';
 
 class SongsList extends ConsumerWidget {
@@ -60,7 +63,7 @@ class SongsList extends ConsumerWidget {
                   IconButton(
                     onPressed: () => _showSortBottomSheet(context, ref, l10n),
                     icon: const Icon(LucideIcons.listFilter, size: 18),
-                    tooltip: 'Sort By',
+                    tooltip: l10n.sortBy,
                     style: IconButton.styleFrom(
                       foregroundColor: Theme.of(context).colorScheme.primary,
                     ),
@@ -72,19 +75,19 @@ class SongsList extends ConsumerWidget {
                           context: context,
                           builder: (context) => AlertDialog(
                             title: Text(l10n.resetLibrary),
-                            content: const Text(
-                              'This will clear all songs, albums, and artists and perform a full rescan of your folders.',
+                            content: Text(
+                              l10n.resetLibraryConfirm,
                             ),
                             actions: [
                               TextButton(
                                 onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel'),
+                                child: Text(l10n.cancel),
                               ),
                               TextButton(
                                 onPressed: () => Navigator.pop(context, true),
-                                child: const Text(
-                                  'Reset',
-                                  style: TextStyle(color: Colors.red),
+                                child: Text(
+                                  l10n.reset,
+                                  style: const TextStyle(color: Colors.red),
                                 ),
                               ),
                             ],
@@ -120,7 +123,7 @@ class SongsList extends ConsumerWidget {
             itemCount: songs.length,
             itemBuilder: (context, index) {
               final song = songs[index];
-              return _SongTile(
+              return SongTile(
                 song: song,
                 l10n: l10n,
                 songs: songs,
@@ -148,7 +151,7 @@ class SongsList extends ConsumerWidget {
                 itemCount: songs.length,
                 itemBuilder: (context, index) {
                   final song = songs[index];
-                  return _SongTile(
+                  return SongTile(
                     song: song,
                     l10n: l10n,
                     songs: songs,
@@ -166,19 +169,20 @@ class SongsList extends ConsumerWidget {
 
 
 
-class _SongTile extends ConsumerWidget {
+class SongTile extends ConsumerWidget {
   final Song song;
   final List<Song> songs;
   final AppLocalizations l10n;
   final String? searchQuery;
   final Playlist? playlist;
 
-  const _SongTile({
+  const SongTile({
     required this.song,
     required this.songs,
     required this.l10n,
     this.searchQuery,
     this.playlist,
+    super.key,
   });
 
   Widget _buildHighlightedText({
@@ -238,7 +242,8 @@ class _SongTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     
-    final isCurrent = ref.watch(playbackProvider).currentSong?.path == song.path;
+    final isCurrent = ref.watch(playbackProvider.select((s) => s.currentSong?.path == song.path));
+    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
 
     String? lyricSnippet;
     if (searchQuery != null && searchQuery!.isNotEmpty && song.lyrics != null) {
@@ -246,23 +251,23 @@ class _SongTile extends ConsumerWidget {
     }
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      contentPadding: const EdgeInsets.only(left: 16, right: 4, top: 0, bottom: 0),
       leading: ClipRRect(
         borderRadius: BorderRadius.circular(4),
         child: Stack(
           children: [
             OptimizedImage(
               imagePath: song.artPath,
-              width: 48,
-              height: 48,
+              width: 52,
+              height: 52,
               fit: BoxFit.cover,
             ),
             Positioned.fill(
               child: AnimatedOpacity(
                 duration: const Duration(milliseconds: 300),
-                opacity: isCurrent && ref.watch(playbackProvider).isPlaying ? 1.0 : 0.0,
+                opacity: isCurrent && isPlaying ? 1.0 : 0.0,
                 child: Container(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   child: Center(
                     child: Image.asset(
                       'assets/android_icons/Playing.gif',
@@ -318,7 +323,7 @@ class _SongTile extends ConsumerWidget {
             child: Text(
               song.artist ?? l10n.unknownArtist,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.5),
+                color: Colors.white.withValues(alpha: 0.5),
                 fontSize: 13,
               ),
               maxLines: 1,
@@ -330,10 +335,10 @@ class _SongTile extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.06),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
                   width: 0.8,
                 ),
               ),
@@ -351,7 +356,7 @@ class _SongTile extends ConsumerWidget {
                       text: lyricSnippet,
                       query: searchQuery ?? '',
                       baseStyle: TextStyle(
-                        color: Colors.white.withOpacity(0.75),
+                        color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
                       ),
@@ -436,55 +441,82 @@ void _showSortBottomSheet(
   WidgetRef ref,
   AppLocalizations l10n,
 ) {
-  final libraryState = ref.watch(libraryProvider);
-  final currentStrategy = libraryState.sortStrategy;
-  final isAscending = libraryState.isAscending;
-
   showModalBottomSheet(
     context: context,
     useRootNavigator: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-    ),
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black54,
+    isScrollControlled: true,
     builder: (context) {
       return Consumer(
         builder: (context, ref, child) {
           final state = ref.watch(libraryProvider);
-          return SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+          final settings = ref.watch(settingsProvider);
+          final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
+          final isPureBlack = settings.darkTheme;
+          final accentColor = Color(settings.accentColor);
+
+          final sheetBg = isPureBlack 
+              ? Colors.black 
+              : (useBlur ? Colors.black.withValues(alpha: 0.6) : const Color(0xFF1E1E1E));
+
+          Widget sheetContent = Container(
+            decoration: BoxDecoration(
+              color: sheetBg,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              border: Border.all(
+                color: isPureBlack ? Colors.white10 : Colors.white.withValues(alpha: 0.08),
+                width: 1,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SafeArea(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 12),
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white10,
-                      borderRadius: BorderRadius.circular(2),
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Sort Order',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Text(
+                          l10n.sortOrder,
+                          style: const TextStyle(
+                            fontSize: 18, 
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontFamily: 'DMSans',
+                          ),
+                        ),
                       ),
                       TextButton.icon(
                         onPressed: () {
+                          HapticFeedback.lightImpact();
                           ref.read(libraryProvider.notifier).toggleSortOrder();
                         },
                         icon: Icon(
                           state.isAscending ? LucideIcons.arrowUpAZ : LucideIcons.arrowDownAZ,
                           size: 18,
                         ),
-                        label: Text(state.isAscending ? 'Ascending' : 'Descending'),
+                        label: Text(state.isAscending ? l10n.ascending : l10n.descending),
                         style: TextButton.styleFrom(
-                          foregroundColor: Theme.of(context).colorScheme.primary,
+                          foregroundColor: accentColor,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ],
@@ -492,97 +524,131 @@ void _showSortBottomSheet(
                   const Divider(color: Colors.white10, height: 24),
                   Flexible(
                     child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          _SortOption(
-                            label: 'Date Added',
-                            icon: LucideIcons.calendar,
-                            isSelected: state.sortStrategy == SongSortStrategy.dateAdded,
-                            onTap: () {
-                              ref
-                                  .read(libraryProvider.notifier)
-                                  .setSortStrategy(SongSortStrategy.dateAdded);
-                              Navigator.pop(context);
-                            },
+                      physics: const BouncingScrollPhysics(),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                        child: PremiumSection(
+                          borderRadius: BorderRadius.circular(20),
+                          padding: EdgeInsets.zero,
+                          useExpanded: false,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _SortOption(
+                                label: l10n.dateAdded,
+                                icon: LucideIcons.calendar,
+                                isSelected: state.sortStrategy == SongSortStrategy.dateAdded,
+                                accentColor: accentColor,
+                                isLast: false,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(libraryProvider.notifier)
+                                      .setSortStrategy(SongSortStrategy.dateAdded);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              _SortOption(
+                                label: l10n.title,
+                                icon: LucideIcons.type,
+                                isSelected: state.sortStrategy == SongSortStrategy.title,
+                                accentColor: accentColor,
+                                isLast: false,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(libraryProvider.notifier)
+                                      .setSortStrategy(SongSortStrategy.title);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              _SortOption(
+                                label: l10n.artist,
+                                icon: LucideIcons.mic2,
+                                isSelected: state.sortStrategy == SongSortStrategy.artist,
+                                accentColor: accentColor,
+                                isLast: false,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(libraryProvider.notifier)
+                                      .setSortStrategy(SongSortStrategy.artist);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              _SortOption(
+                                label: l10n.album,
+                                icon: LucideIcons.disc,
+                                isSelected: state.sortStrategy == SongSortStrategy.album,
+                                accentColor: accentColor,
+                                isLast: false,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(libraryProvider.notifier)
+                                      .setSortStrategy(SongSortStrategy.album);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              _SortOption(
+                                label: l10n.duration,
+                                icon: LucideIcons.clock,
+                                isSelected: state.sortStrategy == SongSortStrategy.duration,
+                                accentColor: accentColor,
+                                isLast: false,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(libraryProvider.notifier)
+                                      .setSortStrategy(SongSortStrategy.duration);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              _SortOption(
+                                label: l10n.year,
+                                icon: LucideIcons.calendarDays,
+                                isSelected: state.sortStrategy == SongSortStrategy.year,
+                                accentColor: accentColor,
+                                isLast: false,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(libraryProvider.notifier)
+                                      .setSortStrategy(SongSortStrategy.year);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              _SortOption(
+                                label: l10n.mostPlayed,
+                                icon: LucideIcons.trendingUp,
+                                isSelected: state.sortStrategy == SongSortStrategy.playCount,
+                                accentColor: accentColor,
+                                isLast: false,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(libraryProvider.notifier)
+                                      .setSortStrategy(SongSortStrategy.playCount);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                              _SortOption(
+                                label: l10n.recentlyPlayed,
+                                icon: LucideIcons.history,
+                                isSelected: state.sortStrategy == SongSortStrategy.lastPlayed,
+                                accentColor: accentColor,
+                                isLast: true,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(libraryProvider.notifier)
+                                      .setSortStrategy(SongSortStrategy.lastPlayed);
+                                  Navigator.pop(context);
+                                },
+                              ),
+                            ],
                           ),
-                          _SortOption(
-                            label: 'Title',
-                            icon: LucideIcons.type,
-                            isSelected: state.sortStrategy == SongSortStrategy.title,
-                            onTap: () {
-                              ref
-                                  .read(libraryProvider.notifier)
-                                  .setSortStrategy(SongSortStrategy.title);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          _SortOption(
-                            label: 'Artist',
-                            icon: LucideIcons.mic2,
-                            isSelected: state.sortStrategy == SongSortStrategy.artist,
-                            onTap: () {
-                              ref
-                                  .read(libraryProvider.notifier)
-                                  .setSortStrategy(SongSortStrategy.artist);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          _SortOption(
-                            label: 'Album',
-                            icon: LucideIcons.disc,
-                            isSelected: state.sortStrategy == SongSortStrategy.album,
-                            onTap: () {
-                              ref
-                                  .read(libraryProvider.notifier)
-                                  .setSortStrategy(SongSortStrategy.album);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          _SortOption(
-                            label: 'Duration',
-                            icon: LucideIcons.clock,
-                            isSelected: state.sortStrategy == SongSortStrategy.duration,
-                            onTap: () {
-                              ref
-                                  .read(libraryProvider.notifier)
-                                  .setSortStrategy(SongSortStrategy.duration);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          _SortOption(
-                            label: 'Year',
-                            icon: LucideIcons.calendarDays,
-                            isSelected: state.sortStrategy == SongSortStrategy.year,
-                            onTap: () {
-                              ref
-                                  .read(libraryProvider.notifier)
-                                  .setSortStrategy(SongSortStrategy.year);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          _SortOption(
-                            label: 'Most Played',
-                            icon: LucideIcons.trendingUp,
-                            isSelected: state.sortStrategy == SongSortStrategy.playCount,
-                            onTap: () {
-                              ref
-                                  .read(libraryProvider.notifier)
-                                  .setSortStrategy(SongSortStrategy.playCount);
-                              Navigator.pop(context);
-                            },
-                          ),
-                          _SortOption(
-                            label: 'Recently Played',
-                            icon: LucideIcons.history,
-                            isSelected: state.sortStrategy == SongSortStrategy.lastPlayed,
-                            onTap: () {
-                              ref
-                                  .read(libraryProvider.notifier)
-                                  .setSortStrategy(SongSortStrategy.lastPlayed);
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -591,6 +657,20 @@ void _showSortBottomSheet(
               ),
             ),
           );
+
+          final bool showBlur = useBlur && !settings.enableDynamicTheming;
+
+          if (showBlur && !isPureBlack) {
+            return ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: sheetContent,
+              ),
+            );
+          }
+
+          return sheetContent;
         },
       );
     },
@@ -601,54 +681,72 @@ class _SortOption extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isSelected;
+  final Color accentColor;
+  final bool isLast;
   final VoidCallback onTap;
 
   const _SortOption({
     required this.label,
     required this.icon,
     required this.isSelected,
+    required this.accentColor,
+    required this.isLast,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 2),
-      decoration: BoxDecoration(
-        color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        leading: Icon(
-          icon,
-          size: 20,
-          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
-        ),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.white70,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            fontSize: 15,
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 22,
+                  color: isSelected ? accentColor : Colors.white.withValues(alpha: 0.9),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+                if (isSelected)
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: accentColor,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      LucideIcons.check,
+                      color: Colors.white,
+                      size: 10,
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
-        trailing: isSelected
-            ? Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  LucideIcons.check,
-                  color: Colors.white,
-                  size: 12,
-                ),
-              )
-            : null,
-        onTap: onTap,
-      ),
+        if (!isLast)
+          Divider(
+            height: 1,
+            thickness: 0.8,
+            color: Colors.white.withValues(alpha: 0.04),
+            indent: 20,
+            endIndent: 20,
+          ),
+      ],
     );
   }
 }

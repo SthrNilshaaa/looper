@@ -68,8 +68,6 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   bool _isFetchingArtistImages = false;
 
   LibraryNotifier(this._ref) : super(LibraryState()) {
-    _loadLibrary();
-
     // Automatically clean up database and refresh songs whenever active library folders change!
     _ref.listen<List<String>>(
       settingsProvider.select((s) => s.libraryFolders),
@@ -82,6 +80,22 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       },
       fireImmediately: false,
     );
+
+    _init();
+  }
+
+  Future<void> _init() async {
+    // Wait for settings to load
+    await _ref.read(settingsProvider.notifier).initialization;
+
+    // Load initial sort strategy and order from persisted settings
+    final initialSettings = _ref.read(settingsProvider);
+    state = state.copyWith(
+      sortStrategy: SongSortStrategy.values[initialSettings.sortStrategyIndex],
+      isAscending: initialSettings.sortAscending,
+    );
+
+    _loadLibrary();
   }
 
   void _loadLibrary() {
@@ -94,15 +108,20 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   void setSortStrategy(SongSortStrategy strategy) {
     if (state.sortStrategy == strategy) {
       // Toggle direction if same strategy
-      state = state.copyWith(isAscending: !state.isAscending);
+      final newAsc = !state.isAscending;
+      state = state.copyWith(isAscending: newAsc);
+      _ref.read(settingsProvider.notifier).updateSortAscending(newAsc);
     } else {
       state = state.copyWith(sortStrategy: strategy);
+      _ref.read(settingsProvider.notifier).updateSortStrategy(strategy.index);
     }
     _watchSongs();
   }
 
   void toggleSortOrder() {
-    state = state.copyWith(isAscending: !state.isAscending);
+    final newAsc = !state.isAscending;
+    state = state.copyWith(isAscending: newAsc);
+    _ref.read(settingsProvider.notifier).updateSortAscending(newAsc);
     _watchSongs();
   }
 

@@ -10,32 +10,29 @@ class AndroidSearchTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                l10n.search,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: Text(
+              l10n.search,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            const Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: GlobalSearchBar(autofocus: true),
-            ),
-            const Expanded(
-              child: SearchView(),
-            ),
-          ],
-        ),
+          ),
+          const Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: GlobalSearchBar(autofocus: true),
+          ),
+          const Expanded(
+            child: SearchView(),
+          ),
+        ],
       ),
     );
   }

@@ -47,105 +47,173 @@ class SettingsView extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: _Section(
-                  title: 'Appearance',
+                  title: l10n.appearance,
                   children: [
                     _PremiumSwitchRow(
                       icon: LucideIcons.palette,
-                      title: 'Dynamic Theming',
-                      subtitle: 'Enable album-based colors and dynamic effects',
+                      title: l10n.dynamicTheming,
+                      subtitle: l10n.adaptColorsArtwork,
                       value: settings.enableDynamicTheming,
                       onChanged: (value) {
                         HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).updateDynamicTheming(value);
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateDynamicTheming(value);
                       },
                       isLast: false,
                     ),
                     if (settings.enableDynamicTheming)
                       _PremiumSwitchRow(
                         icon: LucideIcons.eyeOff,
-                        title: 'Disable Blur Effects',
-                        subtitle: 'Turn off heavy backdrop blurs to optimize system performance',
+                        title: l10n.disableBlurEffects,
+                        subtitle: l10n.turnOffBlursOptimize,
                         value: settings.disableBlur,
                         onChanged: (value) {
                           HapticFeedback.lightImpact();
-                          ref.read(settingsProvider.notifier).updateDisableBlur(value);
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateDisableBlur(value);
                         },
                         isLast: false,
                       ),
-                    if (!settings.enableDynamicTheming)
+                    if (!settings.enableDynamicTheming) ...[
+                      _PremiumSwitchRow(
+                        icon: LucideIcons.paintBucket,
+                        title: l10n.dynamicAccentColor,
+                        subtitle: l10n.dynamicAccentColorDesc,
+                        value: settings.dynamicAccentColor,
+                        onChanged: (value) {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateDynamicAccentColor(value);
+                        },
+                        isLast: false,
+                      ),
                       _PremiumAccentColorRow(
                         icon: LucideIcons.droplet,
-                        title: 'Accent Color',
-                        subtitle: 'Select manual theme accent color',
+                        title: l10n.accentColor,
+                        subtitle: l10n.accentColorDesc,
                         selectedColor: settings.accentColor,
                         onColorChanged: (color) {
-                          ref.read(settingsProvider.notifier).updateAccentColor(color);
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateAccentColor(color);
                         },
                         isLast: false,
                       ),
+                    ],
                     _PremiumSwitchRow(
                       icon: LucideIcons.moon,
-                      title: 'Pure Black (OLED)',
-                      subtitle: 'Use absolute black backgrounds',
+                      title: l10n.pureBlackOled,
+                      subtitle: l10n.pureBlackOledDesc,
                       value: settings.darkTheme,
                       onChanged: (value) {
                         HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).updateDarkTheme(value);
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateDarkTheme(value);
                       },
                       isLast: false,
                     ),
                     _PremiumSwitchRow(
                       icon: LucideIcons.music,
-                      title: 'Dynamic Lyrics Background',
-                      subtitle: 'Apply album-art blur to lyrics screen',
+                      title: l10n.dynamicLyricsBg,
+                      subtitle: l10n.dynamicLyricsBgDesc,
                       value: settings.dynamicLyrics,
                       onChanged: (value) {
                         HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).updateDynamicLyrics(value);
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateDynamicLyrics(value);
+                      },
+                      isLast: false,
+                    ),
+                    if (settings.enableDynamicTheming || settings.dynamicLyrics)
+                      _PremiumSwitchRow(
+                        icon: LucideIcons.palette,
+                        title: l10n.dynamicColorActiveLyrics,
+                        subtitle: l10n.dynamicColorActiveLyricsDesc,
+                        value: settings.dynamicColorActiveLyrics,
+                        onChanged: (value) {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateDynamicColorActiveLyrics(value);
+                        },
+                        isLast: false,
+                      ),
+                    _PremiumDropdownRow<String>(
+                      icon: LucideIcons.alignCenter,
+                      title: l10n.lyricsAlignment,
+                      value: settings.lyricsAlignment,
+                      items: [
+                        DropdownMenuItem(value: 'left', child: Text(l10n.left)),
+                        DropdownMenuItem(
+                          value: 'center',
+                          child: Text(l10n.center),
+                        ),
+                        DropdownMenuItem(value: 'right', child: Text(l10n.right)),
+                      ],
+                      onChanged: (align) {
+                        if (align != null) {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateLyricsAlignment(align);
+                        }
                       },
                       isLast: false,
                     ),
                     _PremiumSwitchRow(
                       icon: LucideIcons.sliders,
-                      title: 'Flat Progress Bar',
-                      subtitle: 'Disable squiggly wave progress bar animation',
+                      title: l10n.flatProgressBar,
+                      subtitle: l10n.disableSquigglyProgressBar,
                       value: settings.disableSquiggle,
                       onChanged: (value) {
                         HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).updateDisableSquiggle(value);
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateDisableSquiggle(value);
                       },
                       isLast: false,
                     ),
                     _PremiumSwitchRow(
                       icon: LucideIcons.clock,
-                      title: 'Plain Timestamps',
-                      subtitle: 'Use static text instead of rolling animation for progress duration',
+                      title: l10n.plainTimestamps,
+                      subtitle: l10n.useStaticTextTimestamps,
                       value: settings.disableAnimatedDuration,
                       onChanged: (value) {
                         HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).updateDisableAnimatedDuration(value);
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateDisableAnimatedDuration(value);
                       },
                       isLast: false,
                     ),
                     _PremiumSwitchRow(
                       icon: LucideIcons.move,
-                      title: 'Vertical Motion Effect Player',
-                      subtitle: 'Swipe down on the expanded player to dismiss it',
+                      title: l10n.verticalMotionEffectPlayer,
+                      subtitle: l10n.verticalMotionEffectPlayerDesc,
                       value: settings.enableSlideGesture,
                       onChanged: (value) {
                         HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).updateEnableSlideGesture(value);
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateEnableSlideGesture(value);
                       },
                       isLast: false,
                     ),
                     _PremiumSwitchRow(
                       icon: LucideIcons.power,
-                      title: 'Stop Service on App Dismissal',
-                      subtitle: 'Stop background service and close app when dismissed',
+                      title: l10n.stopServiceOnAppDismissal,
+                      subtitle: l10n.stopServiceOnAppDismissalDesc,
                       value: settings.stopOnTaskRemoved,
                       onChanged: (value) {
                         HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).updateStopOnTaskRemoved(value);
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateStopOnTaskRemoved(value);
                       },
                       isLast: true,
                     ),
@@ -165,16 +233,41 @@ class SettingsView extends ConsumerWidget {
                       icon: LucideIcons.languages,
                       title: l10n.language,
                       value: settings.language,
-                      items: const [
-                        DropdownMenuItem(value: 'en', child: Text('English')),
-                        DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
-                        DropdownMenuItem(value: 'es', child: Text('Español')),
-                        DropdownMenuItem(value: 'fr', child: Text('Français')),
+                      items: [
+                        DropdownMenuItem(
+                          value: '',
+                          child: Text(l10n.systemDefault),
+                        ),
+                        ...AppLocalizations.supportedLocales.map((locale) {
+                          final code = locale.languageCode;
+                          final name = {
+                            'en': 'English',
+                            'es': 'Español',
+                            'fr': 'Français',
+                            'de': 'Deutsch',
+                            'pt': 'Português',
+                            'ru': 'Русский',
+                            'it': 'Italiano',
+                            'zh': '中文',
+                            'ja': '日本語',
+                            'ko': '한국어',
+                            'ar': 'العربية',
+                            'tr': 'Türkçe',
+                            'nl': 'Nederlands',
+                            'hi': 'हिन्दी',
+                          }[code] ?? code;
+                          return DropdownMenuItem(
+                            value: code,
+                            child: Text(name),
+                          );
+                        }),
                       ],
                       onChanged: (lang) {
                         if (lang != null) {
                           HapticFeedback.lightImpact();
-                          ref.read(settingsProvider.notifier).updateLanguage(lang);
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateLanguage(lang);
                         }
                       },
                       isLast: true,
@@ -184,21 +277,211 @@ class SettingsView extends ConsumerWidget {
               ),
             ),
 
-            // Library Section
+            // Audio & Playback Section
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: _Section(
-                  title: 'Library Settings',
+                  title: l10n.audioPlayback,
+                  children: [
+                    _PremiumSwitchRow(
+                      icon: LucideIcons.music,
+                      title: l10n.fadePlayPauseStop,
+                      subtitle: l10n.fadePlayPauseStopDesc,
+                      value: settings.fadePlayPauseStop,
+                      onChanged: (value) {
+                        HapticFeedback.lightImpact();
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateFadePlayPauseStop(value);
+                      },
+                      isLast: false,
+                    ),
+                    if (settings.fadePlayPauseStop)
+                      _PremiumSliderRow(
+                        icon: LucideIcons.sliders,
+                        title: l10n.fadeDuration,
+                        subtitle: l10n.fadeDurationDesc,
+                        value: settings.playPauseStopFadeLength.toDouble(),
+                        min: 10,
+                        max: 1000,
+                        divisions: 99,
+                        suffix: 'ms',
+                        onChanged: (value) {
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updatePlayPauseStopFadeLength(value.round());
+                        },
+                        isLast: false,
+                      ),
+                    _PremiumSwitchRow(
+                      icon: LucideIcons.sliders,
+                      title: l10n.fadeOnSeek,
+                      subtitle: l10n.fadeOnSeekDesc,
+                      value: settings.fadeOnSeek,
+                      onChanged: (value) {
+                        HapticFeedback.lightImpact();
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateFadeOnSeek(value);
+                      },
+                      isLast: false,
+                    ),
+                    if (settings.fadeOnSeek)
+                      _PremiumSliderRow(
+                        icon: LucideIcons.sliders,
+                        title: l10n.seekFadeDuration,
+                        subtitle: l10n.seekFadeDurationDesc,
+                        value: settings.seekFadeLength.toDouble(),
+                        min: 10,
+                        max: 500,
+                        divisions: 49,
+                        suffix: 'ms',
+                        onChanged: (value) {
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateSeekFadeLength(value.round());
+                        },
+                        isLast: false,
+                      ),
+                    _PremiumSwitchRow(
+                      icon: LucideIcons.gitCompare,
+                      title: l10n.audioCrossfade,
+                      subtitle: l10n.audioCrossfadeDesc,
+                      value: settings.enableCrossfade,
+                      onChanged: (value) {
+                        HapticFeedback.lightImpact();
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateEnableCrossfade(value);
+                      },
+                      isLast: false,
+                    ),
+                    if (settings.enableCrossfade) ...[
+                      _PremiumSliderRow(
+                        icon: LucideIcons.sliders,
+                        title: l10n.autoCrossfadeDuration,
+                        subtitle: l10n.autoCrossfadeDurationDesc,
+                        value: settings.crossfadeLength.toDouble(),
+                        min: 100,
+                        max: 15000,
+                        divisions: 149,
+                        suffix: 'ms',
+                        onChanged: (value) {
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateCrossfadeLength(value.round());
+                        },
+                        isLast: false,
+                      ),
+                      _PremiumSliderRow(
+                        icon: LucideIcons.sliders,
+                        title: l10n.manualCrossfadeDuration,
+                        subtitle: l10n.manualCrossfadeDurationDesc,
+                        value: settings.shortManualCrossfadeLength.toDouble(),
+                        min: 10,
+                        max: 1000,
+                        divisions: 99,
+                        suffix: 'ms',
+                        onChanged: (value) {
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateShortManualCrossfadeLength(value.round());
+                        },
+                        isLast: false,
+                      ),
+                    ],
+                    _PremiumSliderRow(
+                      icon: LucideIcons.clock,
+                      title: l10n.silenceBetweenTracksTitle,
+                      subtitle: l10n.silenceBetweenTracksDesc,
+                      value: settings.silenceBetweenTracks.toDouble(),
+                      min: 0,
+                      max: 5000,
+                      divisions: 50,
+                      suffix: 'ms',
+                      onChanged: (value) {
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateSilenceBetweenTracks(value.round());
+                      },
+                      isLast: false,
+                    ),
+                    _PremiumSwitchRow(
+                      icon: LucideIcons.phoneCall,
+                      title: l10n.manageAudioFocusTitle,
+                      subtitle: l10n.manageAudioFocusDesc,
+                      value: settings.audioFocus,
+                      onChanged: (value) {
+                        HapticFeedback.lightImpact();
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateAudioFocus(value);
+                      },
+                      isLast: !settings.audioFocus,
+                    ),
+                    if (settings.audioFocus) ...[
+                      _PremiumSwitchRow(
+                        icon: LucideIcons.phoneCall,
+                        title: l10n.resumeAfterCallTitle,
+                        subtitle: l10n.resumeAfterCallDesc,
+                        value: settings.resumeAfterCall,
+                        onChanged: (value) {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateResumeAfterCall(value);
+                        },
+                        isLast: false,
+                      ),
+                      _PremiumSwitchRow(
+                        icon: LucideIcons.power,
+                        title: l10n.resumeOnStartTitle,
+                        subtitle: l10n.resumeOnStartDesc,
+                        value: settings.resumeOnStart,
+                        onChanged: (value) {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateResumeOnStart(value);
+                        },
+                        isLast: false,
+                      ),
+                      _PremiumSwitchRow(
+                        icon: LucideIcons.alertCircle,
+                        title: l10n.permanentFocusChangePause,
+                        subtitle: l10n.permanentFocusChangePauseDesc,
+                        value: settings.permanentAudioFocusChange,
+                        onChanged: (value) {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updatePermanentAudioFocusChange(value);
+                        },
+                        isLast: true,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+
+            // Library Section
+             SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: _Section(
+                  title: l10n.librarySettings,
                   children: [
                     const _PremiumLibraryFoldersList(),
                     _PremiumActionRow(
                       icon: LucideIcons.plus,
                       title: l10n.addFolder,
-                      subtitle: 'Select folder to index music files',
+                      subtitle: l10n.selectFolderIndex,
                       onTap: () async {
                         HapticFeedback.lightImpact();
-                        final String? path = await FilePicker.platform.getDirectoryPath();
+                        final String? path = await FilePicker.platform
+                            .getDirectoryPath();
                         if (path != null) {
                           ref.read(libraryProvider.notifier).scanLibrary(path);
                         }
@@ -207,25 +490,27 @@ class SettingsView extends ConsumerWidget {
                     ),
                     _PremiumActionRow(
                       icon: LucideIcons.refreshCcw,
-                      title: 'Rescan Library',
-                      subtitle: 'Update library files indexing',
+                      title: l10n.rescanLibrary,
+                      subtitle: l10n.updateLibraryIndexing,
                       onTap: () {
                         HapticFeedback.lightImpact();
                         ref.read(libraryProvider.notifier).scanSavedFolders();
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Scanning library...')),
+                          SnackBar(content: Text(l10n.scanningLibrary)),
                         );
                       },
                       isLast: false,
                     ),
                     _PremiumSwitchRow(
                       icon: LucideIcons.globe,
-                      title: 'Internet Mode',
-                      subtitle: 'Enable network use for online lyrics & artist art',
+                      title: l10n.internetMode,
+                      subtitle: l10n.enableNetworkLyricsArt,
                       value: settings.enableInternet,
                       onChanged: (value) {
                         HapticFeedback.lightImpact();
-                        ref.read(settingsProvider.notifier).updateEnableInternet(value);
+                        ref
+                            .read(settingsProvider.notifier)
+                            .updateEnableInternet(value);
                       },
                       isLast: false,
                     ),
@@ -233,7 +518,7 @@ class SettingsView extends ConsumerWidget {
                       icon: LucideIcons.trash2,
                       title: l10n.resetLibrary,
                       textColor: Colors.redAccent,
-                      subtitle: 'Remove all songs from your indexed library',
+                      subtitle: l10n.resetLibraryDesc,
                       onTap: () {
                         HapticFeedback.heavyImpact();
                         _showClearDialog(context, l10n);
@@ -250,39 +535,47 @@ class SettingsView extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: _Section(
-                  title: 'About App',
+                  title: l10n.aboutApp,
                   children: [
                     _PremiumActionRow(
                       icon: LucideIcons.info,
-                      title: 'Looper Player',
-                      subtitle: 'Version 1.8.0',
+                      title: l10n.appTitle,
+                      subtitle: 'Version 2.0.0',
                       onTap: () {},
                       trailing: const Text(
-                        'v1.8.0',
+                        'v2.0.0',
                         style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                       isLast: false,
                     ),
                     _PremiumActionRow(
                       icon: LucideIcons.music,
-                      title: 'Lyrics Provider',
-                      subtitle: 'Online lyrics fetched from lrclib.net (LRCLIB)',
+                      title: l10n.lyricsProvider,
+                      subtitle: l10n.lyricsProviderDesc,
                       onTap: () async {
                         final url = Uri.parse('https://lrclib.net');
                         if (await canLaunchUrl(url)) {
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                          await launchUrl(
+                            url,
+                            mode: LaunchMode.externalApplication,
+                          );
                         }
                       },
                       isLast: false,
                     ),
                     _PremiumActionRow(
                       icon: LucideIcons.gitFork,
-                      title: 'Source Code',
-                      subtitle: 'Visit official repository on GitHub',
+                      title: l10n.sourceCode,
+                      subtitle: l10n.visitOfficialRepository,
                       onTap: () async {
-                        final url = Uri.parse('https://github.com/SthrNilshaaa/looper');
+                        final url = Uri.parse(
+                          'https://github.com/SthrNilshaaa/looper',
+                        );
                         if (await canLaunchUrl(url)) {
-                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                          await launchUrl(
+                            url,
+                            mode: LaunchMode.externalApplication,
+                          );
                         }
                       },
                       isLast: true,
@@ -314,15 +607,21 @@ class SettingsView extends ConsumerWidget {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(l10n.resetLibrary, style: const TextStyle(color: Colors.white)),
-        content: const Text(
-          'This will remove all songs from your library. Your music files will not be deleted.',
-          style: TextStyle(color: Colors.white70),
+        title: Text(
+          l10n.resetLibrary,
+          style: const TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          l10n.resetLibraryConfirmNew,
+          style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: Colors.white54),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -333,7 +632,10 @@ class SettingsView extends ConsumerWidget {
               });
               Navigator.pop(context);
             },
-            child: const Text('Clear', style: TextStyle(color: Colors.redAccent)),
+            child: Text(
+              l10n.clear,
+              style: const TextStyle(color: Colors.redAccent),
+            ),
           ),
         ],
       ),
@@ -380,9 +682,7 @@ class _Section extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           padding: EdgeInsets.zero,
           useExpanded: false,
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
         const SizedBox(height: 28),
       ],
@@ -418,11 +718,7 @@ class _PremiumSwitchRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: Colors.white.withOpacity(0.9),
-                  size: 22,
-                ),
+                Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -440,7 +736,7 @@ class _PremiumSwitchRow extends StatelessWidget {
                       Text(
                         subtitle,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha: 0.4),
                           fontSize: 12,
                           height: 1.3,
                         ),
@@ -461,7 +757,7 @@ class _PremiumSwitchRow extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 0.8,
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
             indent: 20,
             endIndent: 20,
           ),
@@ -495,11 +791,7 @@ class _PremiumDropdownRow<T> extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: Colors.white.withOpacity(0.9),
-                size: 22,
-              ),
+              Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
               const SizedBox(width: 16),
               Expanded(
                 child: Text(
@@ -512,14 +804,22 @@ class _PremiumDropdownRow<T> extends StatelessWidget {
                 ),
               ),
               Theme(
-                data: Theme.of(context).copyWith(
-                  canvasColor: const Color(0xFF1E1E1E),
-                ),
+                data: Theme.of(
+                  context,
+                ).copyWith(canvasColor: const Color(0xFF1E1E1E)),
                 child: DropdownButton<T>(
                   value: value,
                   underline: const SizedBox(),
-                  icon: const Icon(LucideIcons.chevronDown, color: Colors.white70, size: 16),
-                  style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500),
+                  icon: const Icon(
+                    LucideIcons.chevronDown,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                   items: items,
                   onChanged: onChanged,
                 ),
@@ -531,7 +831,7 @@ class _PremiumDropdownRow<T> extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 0.8,
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
             indent: 20,
             endIndent: 20,
           ),
@@ -572,7 +872,7 @@ class _PremiumActionRow extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  color: textColor ?? Colors.white.withOpacity(0.9),
+                  color: textColor ?? Colors.white.withValues(alpha: 0.9),
                   size: 22,
                 ),
                 const SizedBox(width: 16),
@@ -593,7 +893,7 @@ class _PremiumActionRow extends StatelessWidget {
                         Text(
                           subtitle!,
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.4),
+                            color: Colors.white.withValues(alpha: 0.4),
                             fontSize: 12,
                           ),
                         ),
@@ -601,11 +901,12 @@ class _PremiumActionRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                trailing ?? Icon(
-                  LucideIcons.chevronRight,
-                  color: Colors.white.withOpacity(0.6),
-                  size: 18,
-                ),
+                trailing ??
+                    Icon(
+                      LucideIcons.chevronRight,
+                      color: Colors.white.withValues(alpha: 0.6),
+                      size: 18,
+                    ),
               ],
             ),
           ),
@@ -614,7 +915,7 @@ class _PremiumActionRow extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 0.8,
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
             indent: 20,
             endIndent: 20,
           ),
@@ -642,11 +943,17 @@ class _PremiumLibraryFoldersList extends ConsumerWidget {
               isLast: false,
               onTap: () {},
               trailing: IconButton(
-                icon: const Icon(LucideIcons.x, size: 18, color: Colors.white60),
+                icon: const Icon(
+                  LucideIcons.x,
+                  size: 18,
+                  color: Colors.white60,
+                ),
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   final newFolders = List<String>.from(folders)..remove(path);
-                  ref.read(settingsProvider.notifier).updateLibraryFolders(newFolders);
+                  ref
+                      .read(settingsProvider.notifier)
+                      .updateLibraryFolders(newFolders);
                 },
               ),
             ),
@@ -661,12 +968,13 @@ class _PremiumMaintainerSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return _Section(
-      title: 'Maintainer & Designer',
+      title: l10n.maintainersAndDesigners,
       children: [
         _PremiumMaintainerRow(
           name: 'Nilesh Suthar',
-          role: 'Creator and maintainer',
+          role: l10n.creatorAndMaintainer,
           avatar: 'assets/about/maintainer_avatar.png',
           github: 'https://github.com/SthrNilshaaa',
           telegram: 'https://t.me/neelshy',
@@ -674,7 +982,7 @@ class _PremiumMaintainerSection extends StatelessWidget {
         ),
         _PremiumMaintainerRow(
           name: 'Karan Suthar',
-          role: 'Designer and maintainer',
+          role: l10n.designerAndMaintainer,
           avatar: 'assets/about/designer_avatar.png',
           github: 'https://github.com/sthrkaran',
           telegram: 'https://t.me/karanwhy',
@@ -749,7 +1057,7 @@ class _PremiumMaintainerRow extends StatelessWidget {
                     Text(
                       role,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         fontSize: 12,
                       ),
                     ),
@@ -790,7 +1098,7 @@ class _PremiumMaintainerRow extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 0.8,
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
             indent: 20,
             endIndent: 20,
           ),
@@ -824,11 +1132,7 @@ class _PremiumAccentColorRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Row(
             children: [
-              Icon(
-                icon,
-                color: Colors.white.withOpacity(0.9),
-                size: 22,
-              ),
+              Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
@@ -846,7 +1150,7 @@ class _PremiumAccentColorRow extends StatelessWidget {
                     Text(
                       subtitle,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.4),
+                        color: Colors.white.withValues(alpha: 0.4),
                         fontSize: 12,
                         height: 1.3,
                       ),
@@ -883,7 +1187,7 @@ class _PremiumAccentColorRow extends StatelessWidget {
           Divider(
             height: 1,
             thickness: 0.8,
-            color: Colors.white.withOpacity(0.04),
+            color: Colors.white.withValues(alpha: 0.04),
             indent: 20,
             endIndent: 20,
           ),
@@ -921,6 +1225,117 @@ class _PremiumColorCircle extends StatelessWidget {
               : Border.all(color: Colors.white24, width: 1),
         ),
       ),
+    );
+  }
+}
+
+class _PremiumSliderRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final double value;
+  final double min;
+  final double max;
+  final int divisions;
+  final String suffix;
+  final ValueChanged<double> onChanged;
+  final bool isLast;
+
+  const _PremiumSliderRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.min,
+    required this.max,
+    this.divisions = 100,
+    required this.suffix,
+    required this.onChanged,
+    this.isLast = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            fontSize: 12,
+                            height: 1.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '${value.round()} $suffix',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 4,
+                  activeTrackColor: Theme.of(context).colorScheme.primary,
+                  inactiveTrackColor: Colors.white12,
+                  thumbColor: Theme.of(context).colorScheme.primary,
+                  overlayColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.2),
+                  valueIndicatorColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainer,
+                  valueIndicatorTextStyle: const TextStyle(color: Colors.white),
+                ),
+                child: Slider(
+                  value: value.clamp(min, max),
+                  min: min,
+                  max: max,
+                  divisions: divisions,
+                  onChanged: onChanged,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!isLast)
+          Divider(
+            height: 1,
+            thickness: 0.8,
+            color: Colors.white.withValues(alpha: 0.04),
+            indent: 20,
+            endIndent: 20,
+          ),
+      ],
     );
   }
 }

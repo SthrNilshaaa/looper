@@ -311,7 +311,7 @@ class _NavItem extends StatelessWidget {
           child: SvgPicture.asset(
             iconPath,
             colorFilter: ColorFilter.mode(
-              isSelected ? accentColor : Colors.white.withOpacity(0.4),
+              isSelected ? accentColor : Colors.white.withValues(alpha: 0.4),
               BlendMode.srcIn,
             ),
             width: AppIcons.navbarIcon.s,
@@ -324,7 +324,7 @@ class _NavItem extends StatelessWidget {
             duration:  Duration(milliseconds: 300),
             style: TextStyle(
               inherit: false,
-              color: isSelected ? accentColor : Colors.white.withOpacity(0.4),
+              color: isSelected ? accentColor : Colors.white.withValues(alpha: 0.4),
               fontSize: 13.ts,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: 0.2,

@@ -58,7 +58,7 @@ class _GlobalPlayingIndicatorState extends State<GlobalPlayingIndicator>
                   borderRadius: BorderRadius.circular(widget.size / 12),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withOpacity(0.3),
+                      color: color.withValues(alpha: 0.3),
                       blurRadius: 4,
                       spreadRadius: 1,
                     ),
@@ -95,7 +95,7 @@ class PlayingOverlay extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 300),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 borderRadius: BorderRadius.circular(borderRadius),
               ),
               child: const Center(

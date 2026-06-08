@@ -117,12 +117,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           Positioned(
             top: -100,
             right: -100,
-            child: _GlowOrb(color: colorScheme.primary.withOpacity(0.12)),
+            child: _GlowOrb(color: colorScheme.primary.withValues(alpha: 0.12)),
           ),
           Positioned(
             bottom: -150,
             left: -150,
-            child: _GlowOrb(color: colorScheme.primary.withOpacity(0.08)),
+            child: _GlowOrb(color: colorScheme.primary.withValues(alpha: 0.08)),
           ),
           
           // Subtle vignette overlay
@@ -133,7 +133,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   center: Alignment.center,
                   radius: 1.5,
                   colors: [
-                    Colors.white.withOpacity(0.001),
+                    Colors.white.withValues(alpha: 0.001),
                     Colors.transparent,
                   ],
                 ),
@@ -208,7 +208,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
               placeholderBuilder: (context) => Icon(
                 LucideIcons.music,
                 size: 50.s,
-                color: colorScheme.primary.withOpacity(0.4),
+                color: colorScheme.primary.withValues(alpha: 0.4),
               ),
             ),
           ),
@@ -232,7 +232,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           style: TextStyle(
             fontSize: 11.ts,
             fontWeight: FontWeight.bold,
-            color: colorScheme.primary.withOpacity(0.6),
+            color: colorScheme.primary.withValues(alpha: 0.6),
             letterSpacing: 4,
           ),
         ),
@@ -243,10 +243,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           width: double.infinity,
           padding: const EdgeInsets.all(20.0),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.02),
+            color: Colors.white.withValues(alpha: 0.02),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withOpacity(0.05),
+              color: Colors.white.withValues(alpha: 0.05),
               width: 1,
             ),
           ),
@@ -266,7 +266,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                     style: TextStyle(
                       fontSize: 12.ts,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white.withOpacity(0.8),
+                      color: Colors.white.withValues(alpha: 0.8),
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -278,7 +278,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                 style: TextStyle(
                   fontSize: 13.ts,
                   height: 1.6,
-                  color: Colors.white.withOpacity(0.5),
+                  color: Colors.white.withValues(alpha: 0.5),
                 ),
               ),
             ],
@@ -292,10 +292,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             width: double.infinity,
             padding: const EdgeInsets.all(20.0),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.02),
+              color: Colors.white.withValues(alpha: 0.02),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 width: 1,
               ),
             ),
@@ -315,7 +315,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                       style: TextStyle(
                         fontSize: 12.ts,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         letterSpacing: 1.5,
                       ),
                     ),
@@ -394,11 +394,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
               gradientColors: _permissionGranted
                   ? [
                       Color(settings.accentColor),
-                      Color(settings.accentColor).withOpacity(0.75),
+                      Color(settings.accentColor).withValues(alpha: 0.75),
                     ]
                   : [
-                      Colors.grey.withOpacity(0.3),
-                      Colors.grey.withOpacity(0.2),
+                      Colors.grey.withValues(alpha: 0.3),
+                      Colors.grey.withValues(alpha: 0.2),
                     ],
             ),
             const SizedBox(height: 24),
@@ -409,9 +409,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Color(settings.accentColor).withOpacity(0.08),
+                  color: Color(settings.accentColor).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Color(settings.accentColor).withOpacity(0.15)),
+                  border: Border.all(color: Color(settings.accentColor).withValues(alpha: 0.15)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -472,7 +472,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           margin: const EdgeInsets.only(top: 2.0),
           padding: const EdgeInsets.all(6.0),
           decoration: BoxDecoration(
-            color: isGranted ? accentColor.withOpacity(0.12) : Colors.white.withOpacity(0.03),
+            color: isGranted ? accentColor.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.03),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -501,7 +501,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                 style: TextStyle(
                   fontSize: 11.ts,
                   height: 1.4,
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                 ),
               ),
             ],
@@ -513,7 +513,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             height: 30.s,
             child: TextButton(
               style: TextButton.styleFrom(
-                backgroundColor: accentColor.withOpacity(0.15),
+                backgroundColor: accentColor.withValues(alpha: 0.15),
                 padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 0.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
@@ -534,7 +534,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
             decoration: BoxDecoration(
-              color: accentColor.withOpacity(0.05),
+              color: accentColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
@@ -584,7 +584,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13.ts,
-              color: Colors.white.withOpacity(0.4),
+              color: Colors.white.withValues(alpha: 0.4),
               height: 1.5,
             ),
           ),
@@ -605,9 +605,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.amber.withOpacity(0.05),
+            color: Colors.amber.withValues(alpha: 0.05),
             border: Border.all(
-              color: Colors.amber.withOpacity(0.2),
+              color: Colors.amber.withValues(alpha: 0.2),
               width: 1.5,
             ),
           ),
@@ -634,7 +634,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 13.ts,
-            color: Colors.white.withOpacity(0.4),
+            color: Colors.white.withValues(alpha: 0.4),
             height: 1.5,
           ),
         ),
@@ -673,7 +673,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           icon: LucideIcons.refreshCw,
           gradientColors: [
             Color(settings.accentColor),
-            Color(settings.accentColor).withOpacity(0.75),
+            Color(settings.accentColor).withValues(alpha: 0.75),
           ],
         ),
         const SizedBox(height: 16),
@@ -708,10 +708,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
       width: double.infinity,
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.015),
+        color: Colors.white.withValues(alpha: 0.015),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.white.withOpacity(0.03),
+          color: Colors.white.withValues(alpha: 0.03),
           width: 1,
         ),
       ),
@@ -722,7 +722,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             height: 36.s,
             width: 36.s,
             decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.08),
+              color: colorScheme.primary.withValues(alpha: 0.08),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -743,7 +743,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   style: TextStyle(
                     fontSize: 11.ts,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white.withOpacity(0.7),
+                    color: Colors.white.withValues(alpha: 0.7),
                     letterSpacing: 1,
                   ),
                 ),
@@ -752,7 +752,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   description,
                   style: TextStyle(
                     fontSize: 12.ts,
-                    color: Colors.white.withOpacity(0.45),
+                    color: Colors.white.withValues(alpha: 0.45),
                     height: 1.5,
                   ),
                 ),
@@ -909,7 +909,7 @@ class _GlowOrb extends StatelessWidget {
         gradient: RadialGradient(
           colors: [
             color,
-            color.withOpacity(0),
+            color.withValues(alpha: 0),
           ],
         ),
       ),
@@ -942,8 +942,8 @@ class _PremiumButton extends StatelessWidget {
           colors: isEnabled 
               ? gradientColors 
               : [
-                  Colors.white.withOpacity(0.05),
-                  Colors.white.withOpacity(0.02),
+                  Colors.white.withValues(alpha: 0.05),
+                  Colors.white.withValues(alpha: 0.02),
                 ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,

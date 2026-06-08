@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/providers.dart';
 import 'package:looper_player/features/library/data/scanner.dart';
 import 'package:window_manager/window_manager.dart';
@@ -15,6 +17,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 enum RepeatMode { off, all, one }
+
+enum FileActionResult { success, dbOnly, failure }
 
 class PlaybackState {
   final Song? currentSong;
@@ -72,6 +76,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   late final Player player;
   List<Song> _playlist = [];
   int _currentIndex = -1;
+  bool _isTransitioning = false;
+  bool _autoCrossfadeTriggered = false;
+  bool _isLastPlayManual = true;
+  int _activeCrossfadeId = 0;
+  int _activeSeekId = 0;
+  int _activePlayPauseId = 0;
+  bool? _targetPlayingState;
 
   PlaybackNotifier(this.ref) : super(PlaybackState()) {
     player = ref.read(audioServiceProvider).player;
@@ -80,6 +91,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     ref.read(audioServiceProvider).onSeek = (duration) => seek(duration);
     ref.read(audioServiceProvider).onFavoriteToggle = toggleFavorite;
     ref.read(audioServiceProvider).onShuffleToggle = toggleShuffle;
+    ref.read(audioServiceProvider).onPlay = () {
+      if (!state.isPlaying) togglePlay();
+    };
+    ref.read(audioServiceProvider).onPause = () {
+      if (state.isPlaying) togglePlay();
+    };
+    ref.read(audioServiceProvider).onPlayPause = togglePlay;
     _init();
   }
 
@@ -96,6 +114,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> _init() async {
     player.stream.playing.listen((playing) {
+      if (_isTransitioning && !playing) {
+        // Ignore temporary pause/stop events while transitioning/opening a new song
+        return;
+      }
       state = state.copyWith(isPlaying: playing);
       _updateNotification();
     });
@@ -103,6 +125,22 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     player.stream.position.listen((position) {
       if (!state.isScrubbing) {
         state = state.copyWith(position: position);
+      }
+
+      // Check for auto-crossfade trigger
+      final settings = ref.read(settingsProvider);
+      if (settings.enableCrossfade && 
+          settings.crossfadeLength > 0 && 
+          state.duration > Duration(milliseconds: settings.crossfadeLength + 1000) && 
+          state.repeatMode != RepeatMode.one &&
+          !_isTransitioning &&
+          !_autoCrossfadeTriggered) {
+        final remaining = state.duration - position;
+        if (remaining.inMilliseconds <= settings.crossfadeLength) {
+          _autoCrossfadeTriggered = true;
+          _isLastPlayManual = false;
+          skipNext();
+        }
       }
     });
 
@@ -113,20 +151,44 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     DateTime? lastCompletedTime;
     player.stream.completed.listen((completed) {
       if (completed) {
+        if (_isTransitioning) return;
         final now = DateTime.now();
         if (lastCompletedTime != null && now.difference(lastCompletedTime!).inMilliseconds < 1000) {
           return;
         }
         lastCompletedTime = now;
 
-        if (state.repeatMode == RepeatMode.one) {
-          player.seek(Duration.zero);
-          ref.read(audioServiceProvider).resume();
+        // If auto-crossfade was already triggered, don't trigger skipNext again
+        if (_autoCrossfadeTriggered) {
+          _autoCrossfadeTriggered = false;
+          return;
+        }
+
+        _isLastPlayManual = false;
+
+        final settings = ref.read(settingsProvider);
+        if (settings.silenceBetweenTracks > 0) {
+          Future.delayed(Duration(milliseconds: settings.silenceBetweenTracks), () {
+            if (state.repeatMode == RepeatMode.one) {
+              player.seek(Duration.zero);
+              ref.read(audioServiceProvider).resume();
+            } else {
+              skipNext();
+            }
+          });
         } else {
-          skipNext();
+          if (state.repeatMode == RepeatMode.one) {
+            player.seek(Duration.zero);
+            ref.read(audioServiceProvider).resume();
+          } else {
+            skipNext();
+          }
         }
       }
     });
+
+    // Wait for settings to load
+    await ref.read(settingsProvider.notifier).initialization;
 
     // Load last settings
     final settings = ref.read(settingsProvider);
@@ -143,6 +205,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         state = state.copyWith(currentSong: song);
         _playlist = [song];
         _currentIndex = 0;
+        if (settings.resumeOnStart) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            play(song, forceDisableCrossfade: true);
+          });
+        }
       }
     }
   }
@@ -170,16 +237,104 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
   }
 
-  Future<void> play(Song song) async {
+  Future<void> play(Song song, {bool forceDisableCrossfade = false}) async {
     final settings = ref.read(settingsProvider);
     if (settings.audioFocus) {
       final onCall = await ref.read(audioServiceProvider).isOnCall();
       if (onCall) {
         print('🎵 Cannot play song: Device is currently on a call.');
+        _showErrorSnackBar(
+          'Playback blocked: Cannot play music during an active call',
+          (l10n) => l10n.activeCallCannotPlay,
+        );
         return;
       }
     }
 
+    final crossfadeId = ++_activeCrossfadeId;
+    final audioSvc = ref.read(audioServiceProvider);
+
+    // Cancel any active volume fades on both players
+    audioSvc.cancelFade(player);
+    audioSvc.cancelFade(audioSvc.player2);
+    // Always stop player2 when starting a new play sequence
+    audioSvc.player2.stop();
+
+    final currentSong = state.currentSong;
+    final int fadeMs = _isLastPlayManual 
+        ? settings.shortManualCrossfadeLength 
+        : settings.crossfadeLength;
+
+    _isTransitioning = true;
+
+    try {
+      if (settings.enableCrossfade && 
+          currentSong != null && 
+          currentSong.path != song.path &&
+          fadeMs > 0 && 
+          !forceDisableCrossfade) {
+        
+        _autoCrossfadeTriggered = false;
+        final currentPos = player.state.position;
+        final currentVol = state.volume;
+        
+        final oldMetadata = {
+          'title': currentSong.title,
+          'artist': currentSong.artist ?? 'Unknown Artist',
+          'album': currentSong.album ?? 'Unknown Album',
+          if (currentSong.artPath != null) 'artPath': currentSong.artPath!,
+          if (currentSong.duration != null) 'duration': currentSong.duration!,
+        };
+        
+        await audioSvc.player2.open(
+          Media(currentSong.path, extras: oldMetadata.map((k, v) => MapEntry(k, v.toString()))),
+          play: false,
+        );
+        if (crossfadeId != _activeCrossfadeId) {
+          await audioSvc.player2.stop();
+          return;
+        }
+        
+        await audioSvc.player2.seek(currentPos);
+        audioSvc.player2.setVolume(currentVol * 100);
+        await audioSvc.player2.play();
+        if (crossfadeId != _activeCrossfadeId) {
+          await audioSvc.player2.stop();
+          return;
+        }
+
+        player.setVolume(0.0);
+        await _playDirect(song, crossfadeId);
+        if (crossfadeId != _activeCrossfadeId) return;
+
+        final duration = Duration(milliseconds: fadeMs);
+        await Future.wait([
+          audioSvc.fadeVolume(audioSvc.player2, currentVol, 0.0, duration),
+          audioSvc.fadeVolume(player, 0.0, currentVol, duration),
+        ]);
+
+        if (crossfadeId != _activeCrossfadeId) return;
+
+        await audioSvc.player2.stop();
+        player.setVolume(state.volume * 100);
+      } else {
+        await _playDirect(song, crossfadeId);
+      }
+    } catch (e) {
+      print('Error in play: $e');
+      if (crossfadeId == _activeCrossfadeId) {
+        player.setVolume(state.volume * 100);
+        await _playDirect(song, crossfadeId);
+      }
+    } finally {
+      if (crossfadeId == _activeCrossfadeId) {
+        _isTransitioning = false;
+      }
+    }
+  }
+
+  Future<void> _playDirect(Song song, int crossfadeId) async {
+    _autoCrossfadeTriggered = false;
     state = state.copyWith(currentSong: song);
     final metadata = {
       'title': song.title,
@@ -190,24 +345,23 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     };
     await ref.read(audioServiceProvider).play(song.path, metadata: metadata);
 
+    if (crossfadeId != _activeCrossfadeId) return;
+
     if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
       await windowManager.setTitle(
         'Looper Player - ${song.title} - ${song.artist ?? 'Unknown Artist'}',
       );
     }
 
-    // Broadcast notification on Linux
     if (Platform.isLinux) {
       final notification = LocalNotification(
         title: song.title,
-        body:
-            '${song.artist ?? 'Unknown Artist'}\n${song.album ?? 'Unknown Album'}',
+        body: '${song.artist ?? 'Unknown Artist'}\n${song.album ?? 'Unknown Album'}',
       );
       await notification.show();
     }
-    // Update play history in DB
+
     await DbService.isar.writeTxn(() async {
-      // Find the song in DB by path to ensure we have the correct ID and preserve favorites/history
       final dbSong = await DbService.isar.songs
           .filter()
           .pathEqualTo(song.path)
@@ -217,9 +371,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       songToUpdate.lastPlayed = DateTime.now();
       songToUpdate.playCount++;
 
-      // Update the song object in our state to reflect the latest DB state (especially the ID)
       if (dbSong != null) {
-        // If it exists, copy properties to our current song object
         song.id = dbSong.id;
         song.isFavorite = dbSong.isFavorite;
         song.playCount = dbSong.playCount;
@@ -233,7 +385,6 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     if (idx != -1) {
       _currentIndex = idx;
     } else {
-      // If song not in playlist, add it at current position or at end
       if (_currentIndex == -1) {
         _playlist = [song];
         _currentIndex = 0;
@@ -301,30 +452,74 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   Future<void> togglePlay() async {
-    if (!state.isPlaying) {
-      final settings = ref.read(settingsProvider);
+    final settings = ref.read(settingsProvider);
+    
+    // Determine the next target state
+    final currentPlaying = _targetPlayingState ?? state.isPlaying;
+    final targetPlaying = !currentPlaying;
+    _targetPlayingState = targetPlaying;
+
+    if (targetPlaying) {
       if (settings.audioFocus) {
         final onCall = await ref.read(audioServiceProvider).isOnCall();
         if (onCall) {
           print('🎵 Cannot play/resume: Device is currently on a call.');
+          _targetPlayingState = null;
+          _showErrorSnackBar(
+            'Playback blocked: Cannot play music during an active call',
+            (l10n) => l10n.activeCallCannotPlay,
+          );
           return;
         }
       }
     }
 
-    if (state.isPlaying) {
-      await ref.read(audioServiceProvider).pause();
+    final playPauseId = ++_activePlayPauseId;
+    final audioSvc = ref.read(audioServiceProvider);
+
+    // Cancel active volume fades on player
+    audioSvc.cancelFade(player);
+
+    if (!targetPlaying) {
+      if (settings.fadePlayPauseStop) {
+        final currentVol = player.state.volume / 100.0;
+        await audioSvc.fadeVolume(player, currentVol, 0.0, Duration(milliseconds: settings.playPauseStopFadeLength));
+        if (playPauseId != _activePlayPauseId) return;
+
+        await audioSvc.pause();
+      } else {
+        await audioSvc.pause();
+      }
     } else {
       if (player.state.playlist.medias.isEmpty && state.currentSong != null) {
         await play(state.currentSong!);
       } else {
-        await ref.read(audioServiceProvider).resume();
+        if (settings.fadePlayPauseStop) {
+          player.setVolume(0.0);
+          await audioSvc.resume();
+          if (playPauseId != _activePlayPauseId) return;
+
+          await audioSvc.fadeVolume(player, 0.0, state.volume, Duration(milliseconds: settings.playPauseStopFadeLength));
+          if (playPauseId != _activePlayPauseId) return;
+
+          player.setVolume(state.volume * 100);
+        } else {
+          player.setVolume(state.volume * 100);
+          await audioSvc.resume();
+        }
       }
+    }
+
+    if (playPauseId == _activePlayPauseId) {
+      _targetPlayingState = null;
     }
   }
 
   Future<void> skipNext() async {
     if (_playlist.isEmpty) return;
+    if (!_autoCrossfadeTriggered) {
+      _isLastPlayManual = true;
+    }
     _currentIndex++;
     if (_currentIndex >= _playlist.length) {
       if (state.repeatMode == RepeatMode.all) {
@@ -340,6 +535,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> skipPrevious() async {
     if (_playlist.isEmpty) return;
+    _isLastPlayManual = true;
     if (state.position.inSeconds > 3) {
       await seek(Duration.zero);
       return;
@@ -393,22 +589,52 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   void setVolume(double volume) {
+    ref.read(audioServiceProvider).cancelFade(player);
     state = state.copyWith(volume: volume);
     player.setVolume(volume * 100);
     ref.read(settingsProvider.notifier).updateVolume(volume);
   }
 
   Future<void> seek(Duration position) async {
-    await player.seek(position);
-    state = state.copyWith(position: position);
+    final settings = ref.read(settingsProvider);
+    if (settings.fadeOnSeek && state.isPlaying && !state.isScrubbing) {
+      final seekId = ++_activeSeekId;
+      final audioSvc = ref.read(audioServiceProvider);
+
+      audioSvc.cancelFade(player);
+
+      final currentVol = player.state.volume / 100.0;
+      await audioSvc.fadeVolume(player, currentVol, 0.0, Duration(milliseconds: settings.seekFadeLength));
+      if (seekId != _activeSeekId) return;
+
+      await player.seek(position);
+      state = state.copyWith(position: position);
+      if (seekId != _activeSeekId) return;
+
+      await audioSvc.fadeVolume(player, 0.0, state.volume, Duration(milliseconds: settings.seekFadeLength));
+      if (seekId != _activeSeekId) return;
+      player.setVolume(state.volume * 100);
+    } else {
+      _activeSeekId++;
+      ref.read(audioServiceProvider).cancelFade(player);
+      await player.seek(position);
+      state = state.copyWith(position: position);
+      if (!state.isScrubbing) {
+        player.setVolume(state.volume * 100);
+      }
+    }
   }
 
   void startScrubbing() {
+    _activeSeekId++;
+    ref.read(audioServiceProvider).cancelFade(player);
     state = state.copyWith(isScrubbing: true);
     player.setVolume(0);
   }
 
   void stopScrubbing() {
+    _activeSeekId++;
+    ref.read(audioServiceProvider).cancelFade(player);
     state = state.copyWith(
       isScrubbing: false,
       position: player.state.position,
@@ -503,7 +729,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
   }
 
-  Future<bool> renameSong(Song song, String newTitle) async {
+  Future<FileActionResult> renameSong(Song song, String newTitle) async {
     try {
       await _requestStoragePermissions();
     } catch (e) {
@@ -537,7 +763,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     try {
       await DbService.isar.writeTxn(() async {
         song.title = newTitle;
-        song.path = newPath;
+        if (fileRenamed) {
+          song.path = newPath;
+        }
         await DbService.isar.songs.put(song);
       });
       dbSuccess = true;
@@ -554,7 +782,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           currentSong: song,
           queue: List.from(_playlist),
         );
-        // Resume playing track from the new path
+        // Resume playing track from the new path / old path
         await playAtIndex(_currentIndex);
       } else {
         state = state.copyWith(queue: List.from(_playlist));
@@ -563,10 +791,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       print('Error renaming in DB: $e');
     }
 
-    return dbSuccess;
+    if (!dbSuccess) {
+      return FileActionResult.failure;
+    }
+    return fileRenamed ? FileActionResult.success : FileActionResult.dbOnly;
   }
 
-  Future<bool> deleteSong(Song song) async {
+  Future<FileActionResult> deleteSong(Song song) async {
     try {
       await _requestStoragePermissions();
     } catch (e) {
@@ -611,7 +842,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       print('Error deleting from DB: $e');
     }
 
-    return dbSuccess;
+    if (!dbSuccess) {
+      return FileActionResult.failure;
+    }
+    return fileDeleted ? FileActionResult.success : FileActionResult.dbOnly;
   }
 
   Future<void> _cleanUpOrphanedArtistsAndAlbums() async {
@@ -640,6 +874,42 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> shareSong(Song song) async {
     await Share.shareXFiles([XFile(song.path)], text: 'Check out this song: ${song.title}');
+  }
+
+  void _showErrorSnackBar(String defaultMessage, String Function(AppLocalizations) getLocalizedMessage) {
+    final context = scaffoldMessengerKey.currentContext;
+    String message = defaultMessage;
+    if (context != null) {
+      try {
+        final l10n = AppLocalizations.of(context);
+        if (l10n != null) {
+          message = getLocalizedMessage(l10n);
+        }
+      } catch (e) {
+        print('Failed to get AppLocalizations: $e');
+      }
+    }
+
+    scaffoldMessengerKey.currentState?.clearSnackBars();
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        ),
+        backgroundColor: Colors.redAccent.shade700,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: const EdgeInsets.only(
+          bottom: 24,
+          left: 24,
+          right: 24,
+        ),
+      ),
+    );
   }
 }
 

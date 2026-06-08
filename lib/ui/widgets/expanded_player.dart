@@ -24,12 +24,15 @@ class ExpandedPlayer extends ConsumerWidget {
       return const AndroidExpandedPlayer();
     }
 
-    final playback = ref.watch(playbackProvider);
-    final song = playback.currentSong;
+    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
+    if (song == null) return const SizedBox.shrink();
+
+    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
+    final isShuffle = ref.watch(playbackProvider.select((s) => s.isShuffle));
+    final repeatMode = ref.watch(playbackProvider.select((s) => s.repeatMode));
+
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context)!;
-
-    if (song == null) return const SizedBox.shrink();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -38,7 +41,7 @@ class ExpandedPlayer extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [colorScheme.primary.withOpacity(0.2), Colors.black],
+            colors: [colorScheme.primary.withValues(alpha: 0.2), Colors.black],
           ),
         ),
         child: SafeArea(
@@ -62,7 +65,7 @@ class ExpandedPlayer extends ConsumerWidget {
                     Text(
                       'NOW PLAYING',
                       style: GoogleFonts.dmSans(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12.ts,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 2,
@@ -86,8 +89,8 @@ class ExpandedPlayer extends ConsumerWidget {
                 duration: const Duration(milliseconds: 350),
                 curve: Curves.easeInOutCubic,
                 padding: EdgeInsets.symmetric(
-                  horizontal: 48.s + (playback.isPlaying ? 0.0 : 5.0),
-                  vertical: playback.isPlaying ? 0.0 : 5.0,
+                  horizontal: 48.s + (isPlaying ? 0.0 : 5.0),
+                  vertical: isPlaying ? 0.0 : 5.0,
                 ),
                 child: AspectRatio(
                   aspectRatio: 1,
@@ -97,7 +100,7 @@ class ExpandedPlayer extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(24.s),
                       boxShadow: [
                         BoxShadow(
-                          color: colorScheme.primary.withOpacity(0.3),
+                          color: colorScheme.primary.withValues(alpha: 0.3),
                           blurRadius: 40,
                           spreadRadius: 5,
                         ),
@@ -144,7 +147,7 @@ class ExpandedPlayer extends ConsumerWidget {
                     Text(
                       song.artist ?? l10n.unknownArtist,
                       style: GoogleFonts.dmSans(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 16.ts,
                         fontWeight: FontWeight.normal,
                       ),
@@ -161,57 +164,65 @@ class ExpandedPlayer extends ConsumerWidget {
               // Progress Bar
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 32.s),
-                child: Column(
-                  children: [
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 2,
-                        activeTrackColor: colorScheme.primary,
-                        inactiveTrackColor: Colors.white10,
-                        thumbShape: const RoundSliderThumbShape(
-                          enabledThumbRadius: 6,
-                        ),
-                        overlayShape: SliderComponentShape.noOverlay,
-                      ),
-                      child: SquigglySlider(
-                        value: playback.duration.inMilliseconds > 0
-                            ? (playback.position.inMilliseconds /
-                                      playback.duration.inMilliseconds)
-                                  .clamp(0.0, 1.0)
-                            : 0.0,
-                        onChanged: (val) {
-                          ref
-                              .read(playbackProvider.notifier)
-                              .seek(playback.duration * val);
-                        },
-                        activeColor: colorScheme.primary,
-                        inactiveColor: Colors.white10,
-                        squiggleAmplitude: playback.isPlaying ? 2.0 : 0.0,
-                        squiggleWavelength: 4.5,
-                        squiggleSpeed: 0.08,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final position = ref.watch(playbackProvider.select((s) => s.position));
+                    final duration = ref.watch(playbackProvider.select((s) => s.duration));
+                    final isPlayingVal = ref.watch(playbackProvider.select((s) => s.isPlaying));
+
+                    return Column(
                       children: [
-                        Text(
-                          _formatDuration(playback.position),
-                          style: TextStyle(
-                            color: Colors.white60,
-                            fontSize: 12.ts,
+                        SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            trackHeight: 2,
+                            activeTrackColor: colorScheme.primary,
+                            inactiveTrackColor: Colors.white10,
+                            thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 6,
+                            ),
+                            overlayShape: SliderComponentShape.noOverlay,
+                          ),
+                          child: SquigglySlider(
+                            value: duration.inMilliseconds > 0
+                                ? (position.inMilliseconds /
+                                          duration.inMilliseconds)
+                                      .clamp(0.0, 1.0)
+                                : 0.0,
+                            onChanged: (val) {
+                              ref
+                                  .read(playbackProvider.notifier)
+                                  .seek(duration * val);
+                            },
+                            activeColor: colorScheme.primary,
+                            inactiveColor: Colors.white10,
+                            squiggleAmplitude: isPlayingVal ? 2.0 : 0.0,
+                            squiggleWavelength: 4.5,
+                            squiggleSpeed: 0.08,
                           ),
                         ),
-                        Text(
-                          _formatDuration(playback.duration),
-                          style: TextStyle(
-                            color: Colors.white60,
-                            fontSize: 12.ts,
-                          ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _formatDuration(position),
+                              style: TextStyle(
+                                color: Colors.white60,
+                                fontSize: 12.ts,
+                              ),
+                            ),
+                            Text(
+                              _formatDuration(duration),
+                              style: TextStyle(
+                                color: Colors.white60,
+                                fontSize: 12.ts,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
 
@@ -225,10 +236,8 @@ class ExpandedPlayer extends ConsumerWidget {
                   children: [
                     IconButton(
                       icon: Icon(
-                        playback.isShuffle
-                            ? LucideIcons.shuffle
-                            : LucideIcons.shuffle,
-                        color: playback.isShuffle
+                        LucideIcons.shuffle,
+                        color: isShuffle
                             ? colorScheme.primary
                             : Colors.white60,
                         size: 24.s,
@@ -256,14 +265,14 @@ class ExpandedPlayer extends ConsumerWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: colorScheme.primary.withOpacity(0.4),
+                              color: colorScheme.primary.withValues(alpha: 0.4),
                               blurRadius: 20,
                               offset: const Offset(0, 8),
                             ),
                           ],
                         ),
                         child: Icon(
-                          playback.isPlaying ? Icons.pause : Icons.play_arrow,
+                          isPlaying ? Icons.pause : Icons.play_arrow,
                           color: Colors.white,
                           size: 40.s,
                         ),
@@ -280,10 +289,10 @@ class ExpandedPlayer extends ConsumerWidget {
                     ),
                     IconButton(
                       icon: Icon(
-                        playback.repeatMode == RepeatMode.one
+                        repeatMode == RepeatMode.one
                             ? LucideIcons.repeat1
                             : LucideIcons.repeat,
-                        color: playback.repeatMode != RepeatMode.off
+                        color: repeatMode != RepeatMode.off
                             ? colorScheme.primary
                             : Colors.white60,
                         size: 24.s,
@@ -323,10 +332,10 @@ class ExpandedPlayer extends ConsumerWidget {
                       onPressed: () {
                         ref
                             .read(appNavigationProvider.notifier)
-                            .setPlayerExpansion(false);
+                          .setPlayerExpansion(false);
                         ref
                             .read(appNavigationProvider.notifier)
-                            .setItem(NavItem.queue);
+                          .setItem(NavItem.queue);
                       },
                     ),
                     IconButton(
@@ -338,10 +347,10 @@ class ExpandedPlayer extends ConsumerWidget {
                       onPressed: () {
                         ref
                             .read(appNavigationProvider.notifier)
-                            .setPlayerExpansion(false);
+                          .setPlayerExpansion(false);
                         ref
                             .read(appNavigationProvider.notifier)
-                            .setItem(NavItem.lyrics);
+                          .setItem(NavItem.lyrics);
                       },
                     ),
                   ],

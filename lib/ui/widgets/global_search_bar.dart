@@ -79,15 +79,15 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
               53,
               53,
               53,
-            ).withOpacity(isDynamic ? 0.3 : 0.1),
+            ).withValues(alpha: isDynamic ? 0.3 : 0.1),
             border: Border.all(
-              color: Colors.white10.withOpacity(0.1),
+              color: Colors.white10.withValues(alpha: 0.1),
               width: 1,
             ),
             boxShadow: [
               if (!isDynamic)
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -120,7 +120,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                   decoration: InputDecoration(
                     hintText: l10n.searchSongsHint,
                     hintStyle: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 14,
                       fontFamily: 'DMSans',
                     ),

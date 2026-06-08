@@ -85,7 +85,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final library = ref.watch(libraryProvider);
     final nav = ref.watch(appNavigationProvider);
-    final playback = ref.watch(playbackProvider);
+    final currentSongArtPath = ref.watch(playbackProvider.select((s) => s.currentSong?.artPath));
     final settings = ref.watch(settingsProvider);
     final isDynamic = settings.enableDynamicTheming;
     final l10n = AppLocalizations.of(context)!;
@@ -124,13 +124,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           children: [
             // Global Background Art / persistent gradient
             if (!showWelcome && (settings.enableDynamicTheming || settings.keepBackgroundGradient)) ...[
-              if (playback.currentSong?.artPath != null && settings.enableDynamicTheming && (settings.keepBackgroundGradient || nav.activeItem != NavItem.settings)) ...[
+              if (currentSongArtPath != null && settings.enableDynamicTheming && (settings.keepBackgroundGradient || nav.activeItem != NavItem.settings)) ...[
                 Positioned.fill(
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 1000),
                     child: Image.file(
-                      File(playback.currentSong!.artPath!),
-                      key: ValueKey(playback.currentSong!.artPath!),
+                      File(currentSongArtPath),
+                      key: ValueKey(currentSongArtPath),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -138,7 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 Positioned.fill(
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                    child: Container(color: Colors.black.withOpacity(0.8)),
+                    child: Container(color: Colors.black.withValues(alpha: 0.8)),
                   ),
                 ),
               ] else ...[
@@ -151,7 +151,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         center: Alignment.topRight,
                         radius: 1.5,
                         colors: [
-                          Theme.of(context).colorScheme.primary.withOpacity(0.18),
+                          Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
                           Theme.of(context).scaffoldBackgroundColor,
                         ],
                         stops: const [0.0, 1.0],
@@ -187,13 +187,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       color: Theme.of(context)
                                           .colorScheme
                                           .surfaceVariant
-                                          .withOpacity(0.01),
+                                          .withValues(alpha: 0.01),
                                       border: Border(
                                         right: BorderSide(
                                           color: Theme.of(context)
                                               .colorScheme
                                               .outlineVariant
-                                              .withOpacity(0.2),
+                                              .withValues(alpha: 0.2),
                                           width: 1.5,
                                         ),
                                       ),
@@ -581,8 +581,8 @@ class _HeaderButton extends StatelessWidget {
             53,
             53,
             53,
-          ).withOpacity(isDynamic ? 0.3 : 0.1),
-          border: Border.all(color: Colors.white10.withOpacity(0.1), width: 1),
+          ).withValues(alpha: isDynamic ? 0.3 : 0.1),
+          border: Border.all(color: Colors.white10.withValues(alpha: 0.1), width: 1),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -631,7 +631,7 @@ class _SidebarItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final Color selectedColor = colorScheme.primary;
-    final Color unselectedColor = Colors.white.withOpacity(0.4);
+    final Color unselectedColor = Colors.white.withValues(alpha: 0.4);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),

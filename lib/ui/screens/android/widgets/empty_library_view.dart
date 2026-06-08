@@ -26,6 +26,7 @@ class EmptyLibraryView extends ConsumerWidget {
         child: PremiumSection(
           borderRadius: BorderRadius.circular(24),
           useBlur: true,
+          useExpanded: false,
           padding: const EdgeInsets.symmetric(vertical: 40.0, horizontal: 24.0),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -38,7 +39,7 @@ class EmptyLibraryView extends ConsumerWidget {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Color(settings.accentColor).withOpacity(0.06),
+                    color: Color(settings.accentColor).withValues(alpha: 0.06),
                   ),
                   child: SizedBox(
                     width: 48,
@@ -54,16 +55,16 @@ class EmptyLibraryView extends ConsumerWidget {
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.02),
+                    color: Colors.white.withValues(alpha: 0.02),
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.04),
+                      color: Colors.white.withValues(alpha: 0.04),
                       width: 1.5,
                     ),
                   ),
                   child: Icon(
                     LucideIcons.music,
                     size: 48,
-                    color: Color(settings.accentColor).withOpacity(0.8),
+                    color: Color(settings.accentColor).withValues(alpha: 0.8),
                   ),
                 ),
               const SizedBox(height: 24),
@@ -91,7 +92,7 @@ class EmptyLibraryView extends ConsumerWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 13,
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                   height: 1.5,
                 ),
               ),
@@ -132,7 +133,7 @@ class EmptyLibraryView extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha: 0.3),
                   ),
                 ),
               ],
@@ -168,16 +169,16 @@ class _EmptyActionButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         gradient: isPrimary
             ? LinearGradient(
-                colors: [accentColor, accentColor.withOpacity(0.75)],
+                colors: [accentColor, accentColor.withValues(alpha: 0.75)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
             : null,
-        color: isPrimary ? null : Colors.white.withOpacity(0.03),
+        color: isPrimary ? null : Colors.white.withValues(alpha: 0.03),
         border: isPrimary
             ? null
             : Border.all(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 width: 1,
               ),
       ),

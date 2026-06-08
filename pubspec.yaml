@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.8.0+6
+version: 2.0.0+7
 
 environment:
   sdk: ^3.11.0
@@ -41,6 +41,7 @@ dependencies:
   squiggly_slider: ^1.0.5
   flutter_lyric: ^3.0.3
   dynamic_color: ^1.7.0
+  adaptive_palette: ^3.1.0
 
   # State Management
   flutter_riverpod: ^2.5.1
@@ -86,6 +87,8 @@ dependencies:
   marqueer: ^2.5.0
   wakelock_plus: ^1.2.8
   flutter_hsvcolor_picker: ^1.5.1
+  flutter_displaymode: ^0.7.0
+  flutter_performance_optimizer: ^1.0.3
 
 dev_dependencies:
   flutter_test:
@@ -101,8 +104,9 @@ flutter_launcher_icons:
   android: true
   ios: false
   image_path: "assets/launcher_logo.png"
-  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_background: "#55DF69"
   adaptive_icon_foreground: "assets/launcher_logo_adaptive.png"
+  adaptive_icon_foreground_inset: 0
   min_sdk_android: 21
 
 flutter:
@@ -143,3 +147,6 @@ flutter:
           weight: 500
         - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Bold.ttf
           weight: 700
+
+dependency_overrides:
+  uuid: ^4.4.2

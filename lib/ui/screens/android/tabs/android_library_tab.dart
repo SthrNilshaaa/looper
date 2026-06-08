@@ -11,6 +11,7 @@ import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
 
 class AndroidLibraryTab extends ConsumerWidget {
   const AndroidLibraryTab({super.key});
@@ -19,287 +20,293 @@ class AndroidLibraryTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // Header Section
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      l10n.library,
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                   PremiumSection(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          bottomLeft: Radius.circular(32),
+                          topRight: Radius.circular(10),
+                          bottomRight: Radius.circular(10),
+                        ),
+                        width: 48,
+                        height: 48,
+                        useExpanded: false,
+                        useBlur: true,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
+                        },
+                        child: const Icon(
+                          LucideIcons.search,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                  Text(
+                    l10n.library,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  PremiumSection(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(10),
+                          bottomLeft: Radius.circular(10),
+                          topRight: Radius.circular(32),
+                          bottomRight: Radius.circular(32),
+                        ),
+                        width: 48,
+                        height: 48,
+                        useExpanded: false,
+                        useBlur: true,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
+                        },
+                        child: const Icon(
+                          LucideIcons.settings,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                  // Action Buttons Matching Home and Songs screen
+                  // Row(
+                  //   children: [
+                  //     const SizedBox(width: 4),
+                  //   ],
+                  // ),
+                ],
+              ),
+            ),
+            // Thin divider below the header
+            Container(
+              height: 0.5,
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              color: Colors.white.withValues(alpha: 0.15),
+            ),
+            //const SizedBox(height: 8),
+            Expanded(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
+                  // Recent Played Pill
+                  SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Row(
+                children: [
+                  PremiumSection(
+                    borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          bottomLeft: Radius.circular(32),
+                          topRight: Radius.circular(10),
+                          bottomRight: Radius.circular(10),
+                        ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    useExpanded: false,
+                    //useBlur: true,
+                    child: Text(
+                      l10n.recentPlayed,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 38,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    // Action Buttons Matching Home and Songs screen
-                    Row(
-                      children: [
-                        PremiumSection(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(20),
-                            bottomLeft: Radius.circular(20),
-                            topRight: Radius.circular(8),
-                            bottomRight: Radius.circular(8),
-                          ),
-                          width: 44,
-                          height: 44,
-                          useExpanded: false,
-                          useBlur: true,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
-                          },
-                          child: const Icon(
-                            LucideIcons.search,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        PremiumSection(
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(8),
-                            bottomLeft: Radius.circular(8),
-                            topRight: Radius.circular(20),
-                            bottomRight: Radius.circular(20),
-                          ),
-                          width: 44,
-                          height: 44,
-                          useExpanded: false,
-                          useBlur: true,
-                          onTap: () {
-                            HapticFeedback.lightImpact();
-                            ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
-                          },
-                          child: const Icon(
-                            LucideIcons.settings,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Recent Played Pill
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-                child: Row(
-                  children: [
-                    PremiumSection(
-                      borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(32),
-                            bottomLeft: Radius.circular(32),
-                            topRight: Radius.circular(8),
-                            bottomRight: Radius.circular(8),
-                          ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      useExpanded: false,
-                      child: Text(
-                        l10n.recentPlayed,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Recent Played Horizontal Cards
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(left: 20.0),
-                child: _buildRecentlyAccessed(ref),
-              ),
-            ),
-
-            // Categories Pill
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 28, 20, 16),
-                child: Row(
-                  children: [
-                    PremiumSection(
-                      borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(32),
-                            bottomLeft: Radius.circular(32),
-                            topRight: Radius.circular(8),
-                            bottomRight: Radius.circular(8),
-                          ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      useExpanded: false,
-                      child: Text(
-                        l10n.categories,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Categories Block 1
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: PremiumSection(
-                  borderRadius: BorderRadius.circular(20),
-                  padding: EdgeInsets.zero,
-                  useExpanded: false,
-                  child: Column(
-                    children: [
-                      _buildCategoryRow(
-                        context: context,
-                        ref: ref,
-                        icon: LucideIcons.star,
-                        title: 'Favorites',
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.favorites);
-                        },
-                        isLast: false,
-                      ),
-                      _buildCategoryRow(
-                        context: context,
-                        ref: ref,
-                        icon: LucideIcons.disc,
-                        title: 'Albums',
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.albums);
-                        },
-                        isLast: false,
-                      ),
-                      _buildCategoryRow(
-                        context: context,
-                        ref: ref,
-                        icon: LucideIcons.users,
-                        title: 'Artists',
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.artists);
-                        },
-                        isLast: false,
-                      ),
-                      _buildCategoryRow(
-                        context: context,
-                        ref: ref,
-                        icon: LucideIcons.listMusic,
-                        title: 'Playlists',
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.playlists);
-                        },
-                        isLast: true,
-                      ),
-                    ],
                   ),
-                ),
+                ],
               ),
             ),
+          ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          // Recent Played Horizontal Cards
+          SliverToBoxAdapter(
+            child: _buildRecentlyAccessed(context, ref),
+          ),
 
-            // Categories Block 2
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: PremiumSection(
-                  borderRadius: BorderRadius.circular(20),
-                  padding: EdgeInsets.zero,
-                  useExpanded: false,
-                  child: Column(
-                    children: [
-                      _buildCategoryRow(
-                        context: context,
-                        ref: ref,
-                        icon: LucideIcons.folder,
-                        title: 'Folders',
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.folders);
-                        },
-                        isLast: false,
+          // Categories Pill
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+              child: Row(
+                children: [
+                  PremiumSection(
+                    borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          bottomLeft: Radius.circular(32),
+                          topRight: Radius.circular(10),
+                          bottomRight: Radius.circular(10),
+                        ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    useExpanded: false,
+                    child: Text(
+                      l10n.categories,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
-                      _buildCategoryRow(
-                        context: context,
-                        ref: ref,
-                        icon: LucideIcons.music,
-                        title: 'Genres',
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.genres);
-                        },
-                        isLast: false,
-                      ),
-                      _buildCategoryRow(
-                        context: context,
-                        ref: ref,
-                        icon: LucideIcons.list,
-                        title: 'Queue',
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.queue);
-                        },
-                        isLast: false,
-                      ),
-                      _buildCategoryRow(
-                        context: context,
-                        ref: ref,
-                        icon: LucideIcons.history,
-                        title: 'History',
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.history);
-                        },
-                        isLast: true,
-                      ),
-                    ],
+                    ),
                   ),
+                ],
+              ),
+            ),
+          ),
+
+          // Categories Block 1
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: PremiumSection(
+                borderRadius: BorderRadius.circular(20),
+                padding: EdgeInsets.zero,
+                useExpanded: false,
+                child: Column(
+                  children: [
+                    _buildCategoryRow(
+                      context: context,
+                      ref: ref,
+                      icon: LucideIcons.heart,
+                      title: 'Favorites',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.favorites);
+                      },
+                      isLast: false,
+                    ),
+                    _buildCategoryRow(
+                      context: context,
+                      ref: ref,
+                      icon: LucideIcons.disc,
+                      title: 'Albums',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.albums);
+                      },
+                      isLast: false,
+                    ),
+                    _buildCategoryRow(
+                      context: context,
+                      ref: ref,
+                      icon: LucideIcons.users,
+                      title: 'Artists',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.artists);
+                      },
+                      isLast: false,
+                    ),
+                    _buildCategoryRow(
+                      context: context,
+                      ref: ref,
+                      icon: LucideIcons.listMusic,
+                      title: 'Playlists',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.playlists);
+                      },
+                      isLast: true,
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
 
-            // Bottom padding to clear Mini Player and let UI breathe
-            const SliverToBoxAdapter(child: SizedBox(height: 200)),
-          ],
-        ),
+          const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+          // Categories Block 2
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: PremiumSection(
+                borderRadius: BorderRadius.circular(20),
+                padding: EdgeInsets.zero,
+                useExpanded: false,
+                child: Column(
+                  children: [
+                    _buildCategoryRow(
+                      context: context,
+                      ref: ref,
+                      icon: LucideIcons.folder,
+                      title: 'Folders',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.folders);
+                      },
+                      isLast: false,
+                    ),
+                    _buildCategoryRow(
+                      context: context,
+                      ref: ref,
+                      icon: LucideIcons.music,
+                      title: 'Genres',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.genres);
+                      },
+                      isLast: false,
+                    ),
+                    _buildCategoryRow(
+                      context: context,
+                      ref: ref,
+                      icon: LucideIcons.list,
+                      title: 'Queue',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.queue);
+                      },
+                      isLast: false,
+                    ),
+                    _buildCategoryRow(
+                      context: context,
+                      ref: ref,
+                      icon: LucideIcons.history,
+                      title: 'History',
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.history);
+                      },
+                      isLast: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+          // Bottom padding to clear Mini Player and let UI breathe
+          const SliverToBoxAdapter(child: SizedBox(height: 200)),
+        ],
       ),
-    );
+    ),
+  ],
+),
+);
   }
 
-  Widget _buildRecentlyAccessed(WidgetRef ref) {
+  Widget _buildRecentlyAccessed(BuildContext context, WidgetRef ref) {
     final recentSongs = ref.watch(recentlyPlayedProvider).value ?? [];
     if (recentSongs.isEmpty) {
       return SizedBox(
-        height: 110,
+        height: 100,
         child: Center(
           child: Text(
             'No recently played tracks',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.3),
+              color: Colors.white.withValues(alpha: 0.3),
               fontSize: 13,
             ),
           ),
@@ -307,78 +314,95 @@ class AndroidLibraryTab extends ConsumerWidget {
       );
     }
 
+    final row1Songs = <Song>[];
+    final row2Songs = <Song>[];
+    for (int i = 0; i < recentSongs.length; i++) {
+      if (i % 2 == 0) {
+        row1Songs.add(recentSongs[i]);
+      } else {
+        row2Songs.add(recentSongs[i]);
+      }
+    }
+
+    final hasTwoRows = recentSongs.length > 1;
+
     return SizedBox(
-      height: 110,
-      child: ListView.builder(
+      height: hasTwoRows ? 100 : 50,
+      child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        itemCount: recentSongs.length,
-        itemBuilder: (context, index) {
-          final song = recentSongs[index];
-          return GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              ref.read(playbackProvider.notifier).setPlaylist(recentSongs, initialIndex: index);
-            },
-            child: Container(
-              width: 110,
-              height: 110,
-              margin: const EdgeInsets.only(right: 16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.05),
-                  width: 1,
-                ),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: row1Songs.map((song) {
+                final globalIndex = recentSongs.indexOf(song);
+                return _buildRecentPill(context, ref, song, recentSongs, globalIndex);
+              }).toList(),
+            ),
+            if (hasTwoRows) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: row2Songs.map((song) {
+                  final globalIndex = recentSongs.indexOf(song);
+                  return _buildRecentPill(context, ref, song, recentSongs, globalIndex);
+                }).toList(),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Stack(
-                  children: [
-                    Positioned.fill(
-                      child: OptimizedImage(
-                        imagePath: song.artPath,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    Positioned.fill(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withOpacity(0.3),
-                              Colors.black.withOpacity(0.85),
-                            ],
-                            stops: const [0.0, 0.4, 1.0],
-                          ),
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: 12,
-                      left: 12,
-                      right: 12,
-                      child: Text(
-                        song.title,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.2,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentPill(
+    BuildContext context,
+    WidgetRef ref,
+    Song song,
+    List<Song> recentSongs,
+    int index,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: PremiumSection(
+        borderRadius: BorderRadius.circular(36),
+        useExpanded: false,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          ref.read(playbackProvider.notifier).setPlaylist(recentSongs, initialIndex: index);
+        },
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: OptimizedImage(
+                  imagePath: song.artPath,
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
-          );
-        },
+            const SizedBox(width: 6),
+            Text(
+              song.title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -431,7 +455,7 @@ class AndroidLibraryTab extends ConsumerWidget {
               children: [
                 Icon(
                   icon,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   size: 22,
                 ),
                 const SizedBox(width: 16),
@@ -447,7 +471,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                 ),
                 Icon(
                   LucideIcons.chevronRight,
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   size: 18,
                 ),
               ],
@@ -457,8 +481,8 @@ class AndroidLibraryTab extends ConsumerWidget {
         if (!isLast)
           Divider(
             height: 1,
-            thickness: 0.8,
-            color: Colors.white.withOpacity(0.04),
+            thickness: 0.9,
+            color: Colors.white.withValues(alpha: 0.1),
             indent: 20,
             endIndent: 20,
           ),

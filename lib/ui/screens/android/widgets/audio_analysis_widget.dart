@@ -791,7 +791,7 @@ class _AudioAnalysisCardState extends State<AudioAnalysisCard> {
     if (_analyzing) {
       final isRescan = _data != null || _spectrogramImage != null;
       return Card(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -818,7 +818,7 @@ class _AudioAnalysisCardState extends State<AudioAnalysisCard> {
 
     if (_error != null) {
       return Card(
-        color: cs.errorContainer.withOpacity(0.15),
+        color: cs.errorContainer.withValues(alpha: 0.15),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -847,7 +847,7 @@ class _AudioAnalysisCardState extends State<AudioAnalysisCard> {
 
     if (_data == null) {
       return Card(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: InkWell(
           onTap: _analyze,
@@ -874,7 +874,7 @@ class _AudioAnalysisCardState extends State<AudioAnalysisCard> {
                       Text(
                         "Perform deep spectral and audio format analysis",
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.5),
+                          color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 12,
                         ),
                       ),
@@ -1174,7 +1174,7 @@ class _AudioInfoCard extends StatelessWidget {
     final nyquist = data.sampleRate / 2;
 
     return Card(
-      color: Colors.white.withOpacity(0.04),
+      color: Colors.white.withValues(alpha: 0.04),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -1278,7 +1278,7 @@ class _AudioInfoCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Divider(color: Colors.white.withOpacity(0.08)),
+            Divider(color: Colors.white.withValues(alpha: 0.08)),
             const SizedBox(height: 8),
             Wrap(
               spacing: 16,
@@ -1339,7 +1339,7 @@ class _AudioInfoCard extends StatelessWidget {
             ),
             if (data.channelStats.length > 1) ...[
               const SizedBox(height: 8),
-              Divider(color: Colors.white.withOpacity(0.08)),
+              Divider(color: Colors.white.withValues(alpha: 0.08)),
               const SizedBox(height: 8),
               const Text(
                 "Per-Channel Metrics",

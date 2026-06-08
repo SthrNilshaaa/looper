@@ -109,6 +109,8 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
         ? widget.duration * _dragValue! 
         : widget.position;
 
+    final targetAmplitude = settings.disableSquiggle ? 0.0 : (enableWave ? 2.0 : 0.0);
+
     final sliderWidget = SliderTheme(
       data: SliderTheme.of(context).copyWith(
         trackHeight: Platform.isLinux ? 3.0 : 8.0,
@@ -124,26 +126,33 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
         ),
         overlayShape: SliderComponentShape.noOverlay,
       ),
-      child: SquigglySlider(
-        value: displayValue,
-        onChanged: (val) {
-          setState(() => _dragValue = val);
-          widget.onSeek(widget.duration * val);
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0.0, end: targetAmplitude),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOutCubic,
+        builder: (context, amplitude, child) {
+          return SquigglySlider(
+            value: displayValue,
+            onChanged: (val) {
+              setState(() => _dragValue = val);
+              widget.onSeek(widget.duration * val);
+            },
+            onChangeStart: (val) {
+              setState(() => _dragValue = val);
+              widget.onSeekStart?.call();
+            },
+            onChangeEnd: (val) {
+              setState(() => _dragValue = null);
+              widget.onSeekEnd?.call();
+            },
+            activeColor: widget.color,
+            inactiveColor: Colors.white10,
+            squiggleAmplitude: amplitude,
+            squiggleWavelength:Platform.isLinux? 4.5:6.0,
+            squiggleSpeed:Platform.isLinux? 0.08:0.05,
+            useLineThumb: false,
+          );
         },
-        onChangeStart: (val) {
-          setState(() => _dragValue = val);
-          widget.onSeekStart?.call();
-        },
-        onChangeEnd: (val) {
-          setState(() => _dragValue = null);
-          widget.onSeekEnd?.call();
-        },
-        activeColor: widget.color,
-        inactiveColor: Colors.white10,
-        squiggleAmplitude: settings.disableSquiggle ? 0.0 : (enableWave ? 2.0 : 0.0),
-        squiggleWavelength:Platform.isLinux? 4.5:6.0,
-        squiggleSpeed:Platform.isLinux? 0.08:0.05,
-        useLineThumb: false,
       ),
     );
 
