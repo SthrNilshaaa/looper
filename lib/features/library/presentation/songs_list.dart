@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -250,149 +251,188 @@ class SongTile extends ConsumerWidget {
       lyricSnippet = _getLyricSnippet(song.lyrics!, searchQuery!);
     }
 
-    return ListTile(
-      contentPadding: const EdgeInsets.only(left: 16, right: 4, top: 0, bottom: 0),
-      leading: ClipRRect(
-        borderRadius: BorderRadius.circular(4),
-        child: Stack(
-          children: [
-            OptimizedImage(
-              imagePath: song.artPath,
-              width: 52,
-              height: 52,
-              fit: BoxFit.cover,
-            ),
-            Positioned.fill(
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: isCurrent && isPlaying ? 1.0 : 0.0,
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  child: Center(
-                    child: Image.asset(
-                      'assets/android_icons/Playing.gif',
-                      width: 24,
-                      height: 24,
-                      color: Colors.white,
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        contentPadding: const EdgeInsets.only(left: 16, right: 4, top: 0, bottom: 0),
+        leading: ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: isCurrent
+              ? Stack(
+                  children: [
+                    OptimizedImage(
+                      imagePath: song.artPath,
+                      width: 52,
+                      height: 52,
+                      fit: BoxFit.cover,
+                    ),
+                    Positioned.fill(
+                      child: AnimatedOpacity(
+                        duration: const Duration(milliseconds: 300),
+                        opacity: isPlaying ? 1.0 : 0.0,
+                        child: Container(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          child: Center(
+                            child: Image.asset(
+                              'assets/android_icons/Playing.gif',
+                              width: 24,
+                              height: 24,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                )
+              : OptimizedImage(
+                  imagePath: song.artPath,
+                  width: 52,
+                  height: 52,
+                  fit: BoxFit.cover,
+                ),
+        ),
+        title: Text(
+          song.title,
+          style: TextStyle(
+            color: isCurrent
+                ? Theme.of(context).colorScheme.primary
+                : Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        subtitle: lyricSnippet != null
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    onTap: () async {
+                      if (song.artist != null) {
+                        final artistSongs = await DbService.isar.songs
+                            .filter()
+                            .artistEqualTo(song.artist!)
+                            .findAll();
+                        final artist = await DbService.isar.artists
+                            .filter()
+                            .nameEqualTo(song.artist!)
+                            .findFirst();
+                        ref
+                            .read(appNavigationProvider.notifier)
+                            .showCollection(
+                              title: song.artist!,
+                              subtitle: l10n.artists,
+                              art: artist?.artPath ?? song.artPath,
+                              imageUrl: artist?.artistImageUrl,
+                              songs: artistSongs,
+                            );
+                      }
+                    },
+                    child: Text(
+                      song.artist ?? l10n.unknownArtist,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.5),
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-      title: Text(
-        song.title,
-        style: TextStyle(
-          color: isCurrent
-              ? Theme.of(context).colorScheme.primary
-              : Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          InkWell(
-            onTap: () async {
-              if (song.artist != null) {
-                final artistSongs = await DbService.isar.songs
-                    .filter()
-                    .artistEqualTo(song.artist!)
-                    .findAll();
-                final artist = await DbService.isar.artists
-                    .filter()
-                    .nameEqualTo(song.artist!)
-                    .findFirst();
-                ref
-                    .read(appNavigationProvider.notifier)
-                    .showCollection(
-                      title: song.artist!,
-                      subtitle: l10n.artists,
-                      art:
-                          artist?.artPath ??
-                          song.artPath, // Use song art as fallback
-                      imageUrl: artist?.artistImageUrl,
-                      songs: artistSongs,
-                    );
-              }
-            },
-            child: Text(
-              song.artist ?? l10n.unknownArtist,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.5),
-                fontSize: 13,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (lyricSnippet != null) ...[
-            const SizedBox(height: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-                  width: 0.8,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    LucideIcons.quote,
-                    size: 9,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: _buildHighlightedText(
-                      context: context,
-                      text: lyricSnippet,
-                      query: searchQuery ?? '',
-                      baseStyle: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                        width: 0.8,
                       ),
-                      highlightStyle: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11,
-                        fontStyle: FontStyle.italic,
-                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          LucideIcons.quote,
+                          size: 9,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: _buildHighlightedText(
+                            context: context,
+                            text: lyricSnippet,
+                            query: searchQuery ?? '',
+                            baseStyle: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.75),
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            highlightStyle: TextStyle(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
+              )
+            : InkWell(
+                onTap: () async {
+                  if (song.artist != null) {
+                    final artistSongs = await DbService.isar.songs
+                        .filter()
+                        .artistEqualTo(song.artist!)
+                        .findAll();
+                    final artist = await DbService.isar.artists
+                        .filter()
+                        .nameEqualTo(song.artist!)
+                        .findFirst();
+                    ref
+                        .read(appNavigationProvider.notifier)
+                        .showCollection(
+                          title: song.artist!,
+                          subtitle: l10n.artists,
+                          art: artist?.artPath ?? song.artPath,
+                          imageUrl: artist?.artistImageUrl,
+                          songs: artistSongs,
+                        );
+                  }
+                },
+                child: Text(
+                  song.artist ?? l10n.unknownArtist,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 13,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
-        ],
-      ),
-      trailing: IconButton(
-        icon: const Icon(Icons.more_vert, color: Colors.grey),
-        onPressed: () => showSongOptionsBottomSheet(
-          context: context,
-          ref: ref,
-          song: song,
-          playlist: playlist,
+        trailing: IconButton(
+          icon: const Icon(Icons.more_vert, color: Colors.grey),
+          onPressed: () => showSongOptionsBottomSheet(
+            context: context,
+            ref: ref,
+            song: song,
+            playlist: playlist,
+          ),
         ),
+        onTap: () {
+          final index = songs.indexWhere((s) => s.path == song.path);
+          if (index != -1) {
+            ref
+                .read(playbackProvider.notifier)
+                .setPlaylist(songs, initialIndex: index);
+          } else {
+            ref.read(playbackProvider.notifier).play(song);
+          }
+        },
       ),
-      onTap: () {
-        final index = songs.indexWhere((s) => s.path == song.path);
-        if (index != -1) {
-          ref
-              .read(playbackProvider.notifier)
-              .setPlaylist(songs, initialIndex: index);
-        } else {
-          ref.read(playbackProvider.notifier).play(song);
-        }
-      },
     );
   }
 
@@ -469,7 +509,7 @@ void _showSortBottomSheet(
                 width: 1,
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: SafeArea(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -497,7 +537,7 @@ void _showSortBottomSheet(
                             fontSize: 18, 
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
-                            fontFamily: 'DMSans',
+                            fontFamily: AppFonts.jost,
                           ),
                         ),
                       ),
@@ -661,11 +701,13 @@ void _showSortBottomSheet(
           final bool showBlur = useBlur && !settings.enableDynamicTheming;
 
           if (showBlur && !isPureBlack) {
-            return ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: sheetContent,
+            return RepaintBoundary(
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                  child: sheetContent,
+                ),
               ),
             );
           }

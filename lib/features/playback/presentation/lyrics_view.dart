@@ -6,7 +6,7 @@ import 'package:looper_player/features/playback/presentation/playback_notifier.d
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'widgets/advanced_lyric_renderer.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'overlay_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -77,7 +77,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                           const SizedBox(height: 16),
                           Text(
                             'Lyrics not available.',
-                            style: GoogleFonts.spaceGrotesk(
+                            style: AppFonts.spaceGroteskStyle(
                               color: Colors.white.withValues(alpha: 0.4),
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
@@ -128,7 +128,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
           const SizedBox(width: 6),
           Text(
             'Approximated Sync (No Word Timings)',
-            style: GoogleFonts.spaceGrotesk(
+            style: AppFonts.spaceGroteskStyle(
               fontSize: 10,
               color: Colors.orange,
               fontWeight: FontWeight.normal,

@@ -794,6 +794,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                     children: [
                       // Previous
                       PremiumSection(
+                        heroTag: 'player_prev_btn',
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(40),
                           bottomLeft: Radius.circular(40),
@@ -824,22 +825,26 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                         builder: (context, ref, child) {
                           final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
                           return PremiumSection(
+                            heroTag: 'player_play_pause_btn',
                             borderRadius: BorderRadius.circular(12),
                             height: 80,
                             showShadow: false,
                             useBlur: useBlur,
                             forceNoBlur: true,
-                             backgroundColor: isPlaying
-                                ?null
-                                :  Theme.of(context).colorScheme.primary,
+                            animate: true,
+                            backgroundColor: isPlaying
+                                ? null
+                                : Theme.of(context).colorScheme.primary,
                             onTap: () {
                               HapticFeedback.mediumImpact();
                               ref.read(playbackProvider.notifier).togglePlay();
                             },
-                            child: Hero(
-                              tag: 'play_pause_icon',
-                              child: AnimatedScale(
-                                scale:  1.1,
+                            child:
+                            //  Hero(
+                            //   tag: 'play_pause_icon',
+                            //   child:
+                               AnimatedScale(
+                                scale: 1.1,
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.easeOutBack,
                                 child: TweenAnimationBuilder<double>(
@@ -852,25 +857,24 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                                     return AnimatedIcon(
                                       icon: AnimatedIcons.play_pause,
                                       progress: AlwaysStoppedAnimation(value),
-                                      color: 
-                                       isPlaying
-                                       ? Colors.white
-                                    : HSLColor.fromColor(Theme.of(context).colorScheme.primary)
-                                        .withLightness(0.15)
-                                        .toColor()
-                                    ,
+                                      color: isPlaying
+                                          ? Colors.white
+                                          : HSLColor.fromColor(Theme.of(context).colorScheme.primary)
+                                              .withLightness(0.15)
+                                              .toColor(),
                                       size: AppIcons.expandedPlayerPlayPauseIcon.s,
                                     );
                                   },
                                 ),
                               ),
-                            ),
+                            //),
                           );
                         },
                       ),
                       const SizedBox(width: 6),
                       // Next
                       PremiumSection(
+                        heroTag: 'player_next_btn',
                         borderRadius: const BorderRadius.only(
                           topLeft: Radius.circular(12),
                           bottomLeft: Radius.circular(12),
@@ -880,7 +884,6 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                         height: 80,
                         useBlur: useBlur,
                         showShadow: false,
-
                         forceNoBlur: true,
                         onTap: () {
                           HapticFeedback.lightImpact();
@@ -895,7 +898,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                           width: AppIcons.expandedPlayerMainControl.s,
                           height: AppIcons.expandedPlayerMainControl.s,
                         ),
-                      ),
+                      ),        
                     ],
                   ),
                 ),
@@ -916,6 +919,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                             height: 64,
                             useBlur: useBlur,
                             showShadow: false,
+                            animate: true,
                             backgroundColor: isShuffle
                                 ? Theme.of(context).colorScheme.primary
                                 : null,
@@ -939,7 +943,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                                         .toColor()
                                     : Colors.white70,
                                 BlendMode.srcIn,
-                              ),
+                                                            ),
                               width: AppIcons.expandedPlayerSecondaryControl.s,
                               height: AppIcons.expandedPlayerSecondaryControl.s,
                             ),
@@ -956,6 +960,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                             height: 64,
                             showShadow: false,
                             useBlur: useBlur,
+                            animate: true,
                             backgroundColor: repeatMode != RepeatMode.off
                                 ? Theme.of(context).colorScheme.primary
                                 : null,
@@ -966,15 +971,19 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                             },
                             borderRadius: BorderRadius.circular(12),
                             child: SvgPicture.asset(
-                              AppIcons.repeat,
-                              colorFilter: ColorFilter.mode(
-                                repeatMode != RepeatMode.off
-                                    ? HSLColor.fromColor(Theme.of(context).colorScheme.primary)
-                                        .withLightness(0.15)
-                                        .toColor()
-                                    : Colors.white70,
-                                BlendMode.srcIn,
-                              ),
+                              repeatMode == RepeatMode.one
+                                  ? 'assets/music_bar_Icons/repeat_1.svg'
+                                  : AppIcons.repeat,
+                              colorFilter: repeatMode == RepeatMode.one
+                                  ? null
+                                  : ColorFilter.mode(
+                                      repeatMode != RepeatMode.off
+                                          ? HSLColor.fromColor(Theme.of(context).colorScheme.primary)
+                                              .withLightness(0.15)
+                                              .toColor()
+                                          : Colors.white70,
+                                      BlendMode.srcIn,
+                                    ),
                               width: AppIcons.expandedPlayerSecondaryControl.s,
                               height: AppIcons.expandedPlayerSecondaryControl.s,
                             ),

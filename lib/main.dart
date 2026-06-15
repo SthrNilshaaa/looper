@@ -4,7 +4,6 @@ import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
@@ -20,7 +19,6 @@ import 'package:looper_player/core/theme_provider.dart';
 import 'package:looper_player/ui/widgets/keyboard_handler.dart';
 import 'package:looper_player/core/providers.dart';
 import 'package:local_notifier/local_notifier.dart';
-import 'core/ui_utils.dart';
 
 final dbInitializerProvider = FutureProvider<void>((ref) async {
   await DbService.init();
@@ -112,11 +110,11 @@ class MainApp extends ConsumerWidget {
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: colorScheme,
-          textTheme: GoogleFonts.dmSansTextTheme(
-            ThemeData.dark().textTheme.apply(
-              displayColor: Colors.white,
-              bodyColor: Colors.white70,
-            ),
+          fontFamily: settings.useNewFont ? (settings.customFontFamily.isEmpty ? 'Jost' : settings.customFontFamily) : 'DM Sans',
+          textTheme: ThemeData.dark().textTheme.apply(
+            fontFamily: settings.useNewFont ? (settings.customFontFamily.isEmpty ? 'Jost' : settings.customFontFamily) : 'DM Sans',
+            displayColor: Colors.white,
+            bodyColor: Colors.white70,
           ),
         ),
         themeAnimationDuration: const Duration(milliseconds: 1000),

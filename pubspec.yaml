@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.0.0+7
+version: 2.1.0+8
 
 environment:
   sdk: ^3.11.0
@@ -89,6 +89,7 @@ dependencies:
   flutter_hsvcolor_picker: ^1.5.1
   flutter_displaymode: ^0.7.0
   flutter_performance_optimizer: ^1.0.3
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
@@ -119,6 +120,13 @@ flutter:
     - assets/about/
     - assets/android_icons/
   fonts:
+    - family: Jost
+      fonts:
+        - asset: assets/fonts/Jost/static/Jost-Regular.ttf
+        - asset: assets/fonts/Jost/static/Jost-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Jost/static/Jost-Bold.ttf
+          weight: 700
     - family: Poppins
       fonts:
         - asset: assets/fonts/Poppins/Poppins-Regular.ttf
@@ -146,6 +154,20 @@ flutter:
         - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Medium.ttf
           weight: 500
         - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Bold.ttf
+          weight: 700
+    - family: Sora
+      fonts:
+        - asset: assets/fonts/Sora/static/Sora-Regular.ttf
+        - asset: assets/fonts/Sora/static/Sora-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Sora/static/Sora-Bold.ttf
+          weight: 700
+    - family: Google Sans
+      fonts:
+        - asset: assets/fonts/Google_Sans/static/GoogleSans-Regular.ttf
+        - asset: assets/fonts/Google_Sans/static/GoogleSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Google_Sans/static/GoogleSans-Bold.ttf
           weight: 700
 
 dependency_overrides:

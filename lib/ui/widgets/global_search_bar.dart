@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/core/providers.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/features/search/presentation/search_view.dart';
@@ -93,81 +94,89 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                 ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(30),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(
-                sigmaX: isDynamic ? 5 : 0,
-                sigmaY: isDynamic ? 5 : 0,
+          child: () {
+            final bool enableBlur = isDynamic && !settings.disableBlur;
+            final Widget searchBarContent = Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                // vertical: 2,
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                 // vertical: 2,
-                ),
-                child: TextField(
-                  focusNode: ref.watch(searchFocusNodeProvider),
-                  controller: _controller,
-                  onChanged: (val) {
-                    // Update provider silently without triggering rebuild of this widget
-                    ref.read(searchQueryProvider.notifier).state = val;
-                    if (val.isNotEmpty && nav.activeItem != NavItem.search) {
-                      ref
-                          .read(appNavigationProvider.notifier)
-                          .setItem(NavItem.search);
-                    }
-                  },
-                  decoration: InputDecoration(
-                    hintText: l10n.searchSongsHint,
-                    hintStyle: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 14,
-                      fontFamily: 'DMSans',
-                    ),
-                    prefixIcon: SizedBox(
-                      width: 50,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SvgPicture.asset(
-                            AppIcons.search,
-                            colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
-                            width: AppIcons.sizeSmall.s,
-                            height: AppIcons.sizeSmall.s,
-                          ),
-                          Container(
-                            height: 30,
-                            width: 1,
-                            margin: const EdgeInsets.symmetric(horizontal: 12),
-                            color: Colors.white10,
-                          ),
-                        ],
-                      ),
-                    ),
-                    suffixIcon: ValueListenableBuilder<TextEditingValue>(
-                      valueListenable: _controller,
-                      builder: (context, value, child) {
-                        return value.text.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(
-                                  LucideIcons.x,
-                                  size: 18,
-                                  color: Colors.white70,
-                                ),
-                                onPressed: _clearSearch,
-                              )
-                            : const SizedBox.shrink();
-                      },
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+              child: TextField(
+                focusNode: ref.watch(searchFocusNodeProvider),
+                controller: _controller,
+                onChanged: (val) {
+                  // Update provider silently without triggering rebuild of this widget
+                  ref.read(searchQueryProvider.notifier).state = val;
+                  if (val.isNotEmpty && nav.activeItem != NavItem.search) {
+                    ref
+                        .read(appNavigationProvider.notifier)
+                        .setItem(NavItem.search);
+                  }
+                },
+                decoration: InputDecoration(
+                  hintText: l10n.searchSongsHint,
+                  hintStyle: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 14,
+                    fontFamily: AppFonts.jost,
                   ),
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                  canRequestFocus: true,
+                  prefixIcon: SizedBox(
+                    width: 50,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          AppIcons.search,
+                          colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
+                          width: AppIcons.sizeSmall.s,
+                          height: AppIcons.sizeSmall.s,
+                        ),
+                        Container(
+                          height: 30,
+                          width: 1,
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          color: Colors.white10,
+                        ),
+                      ],
+                    ),
+                  ),
+                  suffixIcon: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _controller,
+                    builder: (context, value, child) {
+                      return value.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(
+                                LucideIcons.x,
+                                size: 18,
+                                color: Colors.white70,
+                              ),
+                              onPressed: _clearSearch,
+                            )
+                          : const SizedBox.shrink();
+                    },
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+                canRequestFocus: true,
               ),
-            ),
-          ),
+            );
+
+            if (enableBlur) {
+              return RepaintBoundary(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(30),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                    child: searchBarContent,
+                  ),
+                ),
+              );
+            }
+
+            return searchBarContent;
+          }(),
         ),
       ),
     );

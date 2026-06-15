@@ -25,6 +25,7 @@ class PremiumSection extends ConsumerWidget {
   final bool forceNoBlur;
   final bool forceBlur;
   final bool keepSurfaceOnDisableBlur;
+  final bool animate;
 
   const PremiumSection({
     super.key,
@@ -47,6 +48,7 @@ class PremiumSection extends ConsumerWidget {
     this.forceNoBlur = false,
     this.forceBlur = false,
     this.keepSurfaceOnDisableBlur = false,
+    this.animate = false,
   });
 
   @override
@@ -60,62 +62,62 @@ class PremiumSection extends ConsumerWidget {
       width: 1.2,
     );
 
-    Widget containerBody = AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      height: height,
-      width: width,
-      padding: padding,
-      decoration: BoxDecoration(
-        color: backgroundColor ?? (isBlurActive 
-            ? Colors.white.withValues(alpha: 0.05) 
-            : (((useBlur || forceBlur) && disableBlur && !keepSurfaceOnDisableBlur) 
-                ? Colors.white.withValues(alpha: 0.05)
-                : Theme.of(context).colorScheme.surfaceContainer)),
-        borderRadius: borderRadius,
-        border: Border(
-          top: borderSide,
-          bottom: borderSide,
-          left: showLeftBorder ? borderSide : BorderSide.none,
-          right: showRightBorder ? borderSide : BorderSide.none,
-        ),
-        boxShadow: showShadow
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 15,
-                  spreadRadius: 2,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : null,
+    final decoration = BoxDecoration(
+      color: backgroundColor ?? (isBlurActive 
+          ? Colors.white.withValues(alpha: 0.05) 
+          : (((useBlur || forceBlur) && disableBlur && !keepSurfaceOnDisableBlur) 
+              ? Colors.white.withValues(alpha: 0.05)
+              : Theme.of(context).colorScheme.surfaceContainer)),
+      borderRadius: borderRadius,
+      border: Border(
+        top: borderSide,
+        bottom: borderSide,
+        left: showLeftBorder ? borderSide : BorderSide.none,
+        right: showRightBorder ? borderSide : BorderSide.none,
       ),
-      child: Center(child: child),
+      boxShadow: showShadow
+          ? [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.4),
+                blurRadius: 15,
+                spreadRadius: 2,
+                offset: const Offset(0, 4),
+              ),
+            ]
+          : null,
     );
 
-    final bool shouldBlur = useBlur && !forceNoBlur && !disableBlur;
+    Widget containerBody = animate
+        ? AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeOutCubic,
+            height: height,
+            width: width,
+            padding: padding,
+            decoration: decoration,
+            child: Center(child: child),
+          )
+        : Container(
+            height: height,
+            width: width,
+            padding: padding,
+            decoration: decoration,
+            child: Center(child: child),
+          );
 
-    if (shouldBlur == true) {
-      containerBody = ClipRRect(
-        borderRadius: borderRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: blurAmount,
-            sigmaY: blurAmount,
+    final bool enableBlur = ((useBlur && !forceNoBlur) || forceBlur) && !disableBlur;
+
+    if (enableBlur) {
+      containerBody = RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: borderRadius,
+          child: BackdropFilter(
+            filter: ImageFilter.blur(
+              sigmaX: blurAmount.clamp(0.0, 16.0),
+              sigmaY: blurAmount.clamp(0.0, 16.0),
+            ),
+            child: containerBody,
           ),
-          child: containerBody,
-        ),
-      );
-    }
-    if (forceBlur && !disableBlur) {
-      containerBody = ClipRRect(
-        borderRadius: borderRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(
-            sigmaX: blurAmount,
-            sigmaY: blurAmount,
-          ),
-          child: containerBody,
         ),
       );
     }

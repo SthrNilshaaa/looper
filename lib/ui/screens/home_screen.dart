@@ -30,10 +30,10 @@ import 'package:looper_player/features/library/presentation/queue_view.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/providers.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:looper_player/features/library/presentation/library_grids.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import '../widgets/global_search_bar.dart';
 import 'package:looper_player/features/playback/presentation/widgets/overlay_lyrics_widget.dart';
+import 'package:looper_player/core/update_service.dart';
 
 import 'android/android_main_screen.dart';
 
@@ -53,6 +53,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // Wait for settings to load from DB
       await ref.read(settingsProvider.notifier).initialization;
       final settings = ref.read(settingsProvider);
+
+      // Check for application updates on GitHub
+      UpdateService.checkForUpdates();
 
       // Handle file passed via CLI arguments
       final initialFile = ref.read(startupFileProvider);
@@ -126,19 +129,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             if (!showWelcome && (settings.enableDynamicTheming || settings.keepBackgroundGradient)) ...[
               if (currentSongArtPath != null && settings.enableDynamicTheming && (settings.keepBackgroundGradient || nav.activeItem != NavItem.settings)) ...[
                 Positioned.fill(
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 1000),
-                    child: Image.file(
-                      File(currentSongArtPath),
-                      key: ValueKey(currentSongArtPath),
-                      fit: BoxFit.cover,
+                  child: RepaintBoundary(
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 1000),
+                            child: ImageFiltered(
+                              imageFilter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                              child: Image.file(
+                                File(currentSongArtPath),
+                                key: ValueKey(currentSongArtPath),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned.fill(
+                          child: Container(color: Colors.black.withValues(alpha: 0.8)),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                    child: Container(color: Colors.black.withValues(alpha: 0.8)),
                   ),
                 ),
               ] else ...[

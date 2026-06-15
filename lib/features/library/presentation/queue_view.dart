@@ -93,42 +93,45 @@ class QueueView extends ConsumerWidget {
                               : Colors.white.withValues(alpha: 0.02),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: ListTile(
-                          leading: OptimizedImage(
-                            imagePath: song.artPath,
-                            width: 44,
-                            height: 44,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          title: Text(
-                            song.title,
-                            style: TextStyle(
-                              fontWeight: isCurrent
-                                  ? FontWeight.normal
-                                  : FontWeight.normal,
-                              color: isCurrent
-                                  ? Theme.of(context).colorScheme.primary
-                                  : null,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            leading: OptimizedImage(
+                              imagePath: song.artPath,
+                              width: 44,
+                              height: 44,
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          subtitle: Text(
-                            song.artist ?? 'Unknown Artist',
-                            style: const TextStyle(fontSize: 12),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          trailing: Padding(
-                            padding: const EdgeInsets.only(right: 20.0),
-                            child: const Icon(
-                              LucideIcons.gripVertical,
-                              size: 24,
-                              color: Colors.grey,
+                            title: Text(
+                              song.title,
+                              style: TextStyle(
+                                fontWeight: isCurrent
+                                    ? FontWeight.normal
+                                    : FontWeight.normal,
+                                color: isCurrent
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
+                            subtitle: Text(
+                              song.artist ?? 'Unknown Artist',
+                              style: const TextStyle(fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: Padding(
+                              padding: const EdgeInsets.only(right: 20.0),
+                              child: const Icon(
+                                LucideIcons.gripVertical,
+                                size: 24,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            onTap: () =>
+                                ref.read(playbackProvider.notifier).playAtIndex(index),
                           ),
-                          onTap: () =>
-                              ref.read(playbackProvider.notifier).playAtIndex(index),
                         ),
                       ),
                     );

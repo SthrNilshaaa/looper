@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
@@ -328,7 +329,7 @@ class _NavItem extends StatelessWidget {
               fontSize: 13.ts,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: 0.2,
-              fontFamily: 'DMSans'
+              fontFamily: AppFonts.jost,
             ),
             child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),

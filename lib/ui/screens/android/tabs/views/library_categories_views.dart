@@ -358,15 +358,18 @@ class FoldersListView extends ConsumerWidget {
         final folderPath = folders[index];
         final folderName = folderPath.split(Platform.pathSeparator).last;
         final folderSongs = foldersMap[folderPath]!;
-        return ListTile(
-          leading: const Icon(LucideIcons.folder, color: Colors.amberAccent),
-          title: Text(folderName),
-          subtitle: Text(folderPath, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-          trailing: Text('${folderSongs.length} ${l10n.songs}'),
-          onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
-            title: folderName,
-            subtitle: folderPath,
-            songs: folderSongs,
+        return Material(
+          color: Colors.transparent,
+          child: ListTile(
+            leading: const Icon(LucideIcons.folder, color: Colors.amberAccent),
+            title: Text(folderName),
+            subtitle: Text(folderPath, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+            trailing: Text('${folderSongs.length} ${l10n.songs}'),
+            onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
+              title: folderName,
+              subtitle: folderPath,
+              songs: folderSongs,
+            ),
           ),
         );
       },

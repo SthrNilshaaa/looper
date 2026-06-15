@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Dynamic background image that can be tinted -->
+    <ImageView
+        android:id="@+id/widget_background_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/widget_background"
+        android:scaleType="fitXY" />
+
+    <!-- Center layout containing everything -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="16dp">
+
+        <!-- Song Info Block (Now at the top) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_weight="1">
+
+            <!-- Rounded Artwork -->
+            <ImageView
+                android:id="@+id/widget_artwork"
+                android:layout_width="56dp"
+                android:layout_height="56dp"
+                android:src="@drawable/ic_play"
+                android:background="@drawable/widget_artwork_background"
+                android:scaleType="centerCrop"
+                android:layout_marginRight="12dp" />
+
+            <!-- Song/Artist Title -->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/widget_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Song Title"
+                    android:textColor="#FFFFFF"
+                    android:textSize="16sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:ellipsize="end"
+                    android:singleLine="true" />
+
+                <TextView
+                    android:id="@+id/widget_artist"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Artist Name"
+                    android:textColor="#AAFFFFFF"
+                    android:textSize="14sp"
+                    android:ellipsize="end"
+                    android:singleLine="true"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Lyrics container (Now in the middle, using standard TextViews to avoid inflation crash) -->
+        <LinearLayout
+            android:id="@+id/widget_lyrics_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="6dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/widget_lyric_active"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium"
+                android:gravity="center"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/widget_lyric_next"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="#88FFFFFF"
+                android:textSize="12sp"
+                android:fontFamily="sans-serif"
+                android:gravity="center"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:layout_marginTop="2dp" />
+        </LinearLayout>
+
+        <!-- Playback Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="8dp">
+
+            <!-- Shuffle Button -->
+            <ImageButton
+                android:id="@+id/widget_shuffle"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_shuffle"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:layout_marginRight="8dp" />
+
+            <!-- Previous Button -->
+            <ImageButton
+                android:id="@+id/widget_prev"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_prev"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:layout_marginRight="8dp" />
+
+            <!-- Play/Pause Button (Circular accent container) -->
+            <RelativeLayout
+                android:id="@+id/widget_play_pause_container"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginRight="8dp">
+
+                <!-- Circular background which can be tinted safely -->
+                <ImageView
+                    android:id="@+id/widget_play_pause_background"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/widget_button_background" />
+
+                <ImageView
+                    android:id="@+id/widget_play_pause"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/ic_play" />
+            </RelativeLayout>
+
+            <!-- Next Button -->
+            <ImageButton
+                android:id="@+id/widget_next"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_next"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside"
+                android:layout_marginRight="8dp" />
+
+            <!-- Repeat Button -->
+            <ImageButton
+                android:id="@+id/widget_repeat"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/ic_repeat"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:scaleType="centerInside" />
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

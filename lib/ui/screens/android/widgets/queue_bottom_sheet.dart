@@ -64,62 +64,83 @@ class QueueBottomSheet extends ConsumerWidget {
                 final song = queue[index];
                 final isCurrent = currentSongPath == song.path;
 
-                return ListTile(
+                return Material(
                   key: ValueKey('queue_sheet_${song.path}_$index'),
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: OptimizedImage(
-                      imagePath: song.artPath,
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  title: Text(
-                    song.title,
-                    style: TextStyle(
-                      color: isCurrent ? Colors.yellow[200] : Colors.white,
-                      fontWeight: isCurrent
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    song.artist ?? 'Unknown Artist',
-                    style: const TextStyle(color: Colors.grey),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      if (isCurrent)
-                        const Icon(
-                          LucideIcons.volume2,
-                          color: Colors.yellow,
-                          size: 20,
-                        ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        icon: const Icon(
-                          LucideIcons.x,
-                          color: Colors.grey,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          ref
-                              .read(playbackProvider.notifier)
-                              .removeFromQueue(index);
-                        },
+                  color: Colors.transparent,
+                  child: ListTile(
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: OptimizedImage(
+                        imagePath: song.artPath,
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
                       ),
-                      const Icon(LucideIcons.gripVertical, color: Colors.grey),
-                    ],
+                    ),
+                    title: Text(
+                      song.title,
+                      style: TextStyle(
+                        color: isCurrent ? Colors.yellow[200] : Colors.white,
+                        fontWeight: isCurrent
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      song.artist ?? 'Unknown Artist',
+                      style: const TextStyle(color: Colors.grey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: isCurrent
+                        ? Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                LucideIcons.volume2,
+                                color: Colors.yellow,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(
+                                  LucideIcons.x,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  ref
+                                      .read(playbackProvider.notifier)
+                                      .removeFromQueue(index);
+                                },
+                              ),
+                              const Icon(LucideIcons.gripVertical, color: Colors.grey),
+                            ],
+                          )
+                        : Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(
+                                  LucideIcons.x,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
+                                onPressed: () {
+                                  ref
+                                      .read(playbackProvider.notifier)
+                                      .removeFromQueue(index);
+                                },
+                              ),
+                              const Icon(LucideIcons.gripVertical, color: Colors.grey),
+                            ],
+                          ),
+                    onTap: () {
+                      ref.read(playbackProvider.notifier).playAtIndex(index);
+                    },
                   ),
-                  onTap: () {
-                    ref.read(playbackProvider.notifier).playAtIndex(index);
-                  },
                 );
               },
             ),

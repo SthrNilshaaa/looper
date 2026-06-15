@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/ui/widgets/song_options_bottom_sheet.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -634,13 +635,11 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                     HapticFeedback.mediumImpact();
                                     _showSongOptions(context, song);
                                   },
-                                  child: Stack(
-                                    children: [
-                                      Positioned.fill(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Stack(
+                                      children: [
+                                        Positioned.fill(
                                           child: OptimizedImage(
                                             imagePath: song.artPath,
                                             width: itemWidth,
@@ -648,70 +647,52 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                             fit: BoxFit.cover,
                                           ),
                                         ),
-                                      ),
-                                      Positioned.fill(
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                            gradient: LinearGradient(
-                                              begin: Alignment.topCenter,
-                                              end: Alignment.bottomCenter,
-                                              colors: [
-                                                Colors.transparent,
-                                                Colors.black.withAlpha(204),
-                                              ],
-                                              stops: const [0.5, 1.0],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      Positioned(
-                                        left: 8,
-                                        bottom: 8,
-                                        right: 8,
-                                        child: Text(
-                                          song.title,
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 13,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      Positioned.fill(
-                                        child: AnimatedOpacity(
-                                          duration: const Duration(
-                                            milliseconds: 300,
-                                          ),
-                                          opacity:
-                                              isCurrent &&
-                                                  isPlaying
-                                              ? 1.0
-                                              : 0.0,
+                                        Positioned.fill(
                                           child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withValues(alpha: 
-                                                0.5,
-                                              ),
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Center(
-                                              child: Image.asset(
-                                                'assets/android_icons/Playing.gif',
-                                                width: 32,
-                                                height: 32,
-                                                color: Colors.white,
+                                            decoration: const BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [
+                                                  Colors.transparent,
+                                                  Colors.black54,
+                                                ],
+                                                stops: [0.5, 1.0],
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                        Positioned(
+                                          left: 8,
+                                          bottom: 8,
+                                          right: 8,
+                                          child: Text(
+                                            song.title,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 13,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        if (isCurrent && isPlaying)
+                                          Positioned.fill(
+                                            child: Container(
+                                              color: Colors.black.withValues(alpha: 0.5),
+                                              child: Center(
+                                                child: Image.asset(
+                                                  'assets/android_icons/Playing.gif',
+                                                  width: 32,
+                                                  height: 32,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
                                 );
                               },
@@ -806,77 +787,10 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
             delegate: SliverChildBuilderDelegate(
               (context, index) {
                 final song = dateAddedSongs[index];
-                final isCurrent = currentSong?.path == song.path;
-
-                return ListTile(
-                  contentPadding: const EdgeInsets.only(
-                    left: 16,
-                    right: 4,
-                  ),
-                  leading: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: Stack(
-                      children: [
-                        OptimizedImage(
-                          imagePath: song.artPath,
-                          width: 52,
-                          height: 52,
-                          fit: BoxFit.cover,
-                        ),
-                        Positioned.fill(
-                          child: AnimatedOpacity(
-                            duration: const Duration(milliseconds: 300),
-                            opacity: isCurrent && isPlaying
-                                ? 1.0
-                                : 0.0,
-                            child: Container(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              child: Center(
-                                child: Image.asset(
-                                  'assets/android_icons/Playing.gif',
-                                  width: 24,
-                                  height: 24,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  title: Text(
-                    song.title,
-                    style: TextStyle(
-                      color: isCurrent
-                          ? Theme.of(context).colorScheme.primary
-                          : Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    song.artist ?? l10n.unknown,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
-                      fontSize: 13,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.more_vert, color: Colors.grey),
-                    onPressed: () {
-                      HapticFeedback.mediumImpact();
-                      _showSongOptions(context, song);
-                    },
-                  ),
-                  onTap: () {
-                    ref
-                        .read(playbackProvider.notifier)
-                        .setPlaylist(dateAddedSongs, initialIndex: index);
-                  },
+                return SongTile(
+                  song: song,
+                  l10n: l10n,
+                  songs: dateAddedSongs,
                 );
               },
               childCount: dateAddedSongs.length > 10

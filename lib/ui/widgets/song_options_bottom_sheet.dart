@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
@@ -237,6 +238,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
+    final playbackState = ref.watch(playbackProvider);
     final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
     final isPureBlack = settings.darkTheme;
     final accentColor = Color(settings.accentColor);
@@ -271,7 +273,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
           ),
           // Beautiful Standardized Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             child: Row(
               children: [
                 OptimizedImage(
@@ -298,7 +300,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
-                          fontFamily: 'DMSans',
+                          fontFamily: AppFonts.jost,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -309,7 +311,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                         style: const TextStyle(
                           fontSize: 13,
                           color: Colors.white54,
-                          fontFamily: 'DMSans',
+                          fontFamily: AppFonts.jost,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -369,6 +371,18 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                           HapticFeedback.lightImpact();
                           Navigator.pop(context);
                           _showPlaylistSelector(parentContext, ref, l10n);
+                        },
+                      ),
+                      _MenuOptionTile(
+                        label: playbackState.isSleepTimerActive
+                            ? 'Sleep Timer (${_formatSleepTimerRemaining(playbackState)})'
+                            : 'Sleep Timer',
+                        icon: LucideIcons.timer,
+                        iconColor: playbackState.isSleepTimerActive ? accentColor : Colors.white70,
+                        onTap: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                          _showSleepTimerBottomSheet(parentContext, ref);
                         },
                       ),
                       _MenuOptionTile(
@@ -493,11 +507,13 @@ class _SongOptionsSheetContent extends ConsumerWidget {
     );
 
     if (useBlur && !isPureBlack) {
-      return ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: sheetContent,
+      return RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: sheetContent,
+          ),
         ),
       );
     }
@@ -550,6 +566,372 @@ class _MenuOptionTile extends StatelessWidget {
               size: 18,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+String _formatSleepTimerRemaining(PlaybackState state) {
+  if (state.sleepTimerDurationRemaining != null) {
+    final duration = state.sleepTimerDurationRemaining!;
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  } else if (state.sleepTimerSongsRemaining != null) {
+    final count = state.sleepTimerSongsRemaining!;
+    return count == 1 ? '1 song left' : '$count songs left';
+  }
+  return '';
+}
+
+void _showSleepTimerBottomSheet(BuildContext context, WidgetRef ref) {
+  showModalBottomSheet(
+    context: context,
+    useRootNavigator: true,
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black54,
+    isScrollControlled: true,
+    builder: (modalContext) => const _SleepTimerSheetContent(),
+  );
+}
+
+class _SleepTimerSheetContent extends ConsumerStatefulWidget {
+  const _SleepTimerSheetContent();
+
+  @override
+  ConsumerState<_SleepTimerSheetContent> createState() => _SleepTimerSheetContentState();
+}
+
+class _SleepTimerSheetContentState extends ConsumerState<_SleepTimerSheetContent> {
+  int _customSongs = 3;
+  int _customMinutes = 15;
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
+    final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
+    final isPureBlack = settings.darkTheme;
+    final accentColor = Color(settings.accentColor);
+    final playbackState = ref.watch(playbackProvider);
+
+    final sheetBg = isPureBlack 
+        ? Colors.black 
+        : (useBlur ? Colors.black.withValues(alpha: 0.6) : const Color(0xFF1E1E1E));
+
+    Widget sheetContent = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: sheetBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        border: Border.all(
+          color: isPureBlack ? Colors.white10 : Colors.white.withValues(alpha: 0.08),
+          width: 1,
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Icon(LucideIcons.timer, color: accentColor, size: 24),
+                const SizedBox(width: 12),
+                const Text(
+                  'Sleep Timer',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontFamily: AppFonts.jost,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              playbackState.isSleepTimerActive
+                  ? (playbackState.sleepTimerDurationRemaining != null
+                      ? 'Active: Stopping in ${_formatSleepTimerRemaining(playbackState)}'
+                      : 'Active: Stopping after ${_formatSleepTimerRemaining(playbackState)}')
+                  : 'Select when to pause music playback',
+              style: TextStyle(
+                fontSize: 14,
+                color: playbackState.isSleepTimerActive ? accentColor : Colors.white54,
+                fontFamily: AppFonts.jost,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'STOP BY TIME',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.white38,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            PremiumSection(
+              borderRadius: BorderRadius.circular(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              useExpanded: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          if (_customMinutes > 1) {
+                            setState(() => _customMinutes--);
+                          }
+                        },
+                        icon: const Icon(LucideIcons.minus, color: Colors.white70),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white10,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        '$_customMinutes ${_customMinutes == 1 ? 'Min' : 'Mins'}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      IconButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          setState(() => _customMinutes++);
+                        },
+                        icon: const Icon(LucideIcons.plus, color: Colors.white70),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white10,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      ref.read(playbackProvider.notifier).startSleepTimer(duration: Duration(minutes: _customMinutes));
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentColor,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    child: const Text(
+                      'Start',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildCustomChip(label: '1 Min', onTap: () => _startTimer(const Duration(minutes: 1))),
+                  _buildCustomChip(label: '5 Min', onTap: () => _startTimer(const Duration(minutes: 5))),
+                  _buildCustomChip(label: '10 Min', onTap: () => _startTimer(const Duration(minutes: 10))),
+                  _buildCustomChip(label: '30 Min', onTap: () => _startTimer(const Duration(minutes: 30))),
+                  _buildCustomChip(label: '45 Min', onTap: () => _startTimer(const Duration(minutes: 45))),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'STOP BY SONG COUNT',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Colors.white38,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 12),
+            PremiumSection(
+              borderRadius: BorderRadius.circular(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              useExpanded: false,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          if (_customSongs > 1) {
+                            setState(() => _customSongs--);
+                          }
+                        },
+                        icon: const Icon(LucideIcons.minus, color: Colors.white70),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white10,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        '$_customSongs ${_customSongs == 1 ? 'Song' : 'Songs'}',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      IconButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          setState(() => _customSongs++);
+                        },
+                        icon: const Icon(LucideIcons.plus, color: Colors.white70),
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white10,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      HapticFeedback.mediumImpact();
+                      ref.read(playbackProvider.notifier).startSleepTimer(songCount: _customSongs);
+                      Navigator.pop(context);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accentColor,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    child: const Text(
+                      'Start',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: [
+                  _buildCustomChip(label: '1 Song', onTap: () => _startSongs(1)),
+                  _buildCustomChip(label: '2 Songs', onTap: () => _startSongs(2)),
+                  _buildCustomChip(label: '3 Songs', onTap: () => _startSongs(3)),
+                  _buildCustomChip(label: '5 Songs', onTap: () => _startSongs(5)),
+                  _buildCustomChip(label: '10 Songs', onTap: () => _startSongs(10)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            if (playbackState.isSleepTimerActive)
+              ElevatedButton.icon(
+                onPressed: () {
+                  HapticFeedback.mediumImpact();
+                  ref.read(playbackProvider.notifier).stopSleepTimer();
+                  Navigator.pop(context);
+                },
+                icon: const Icon(LucideIcons.xCircle, size: 20),
+                label: const Text('Cancel Sleep Timer', style: TextStyle(fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent.withValues(alpha: 0.2),
+                  foregroundColor: Colors.redAccent,
+                  elevation: 0,
+                  side: const BorderSide(color: Colors.redAccent, width: 1),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+
+    if (useBlur && !isPureBlack) {
+      return RepaintBoundary(
+        child: ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: sheetContent,
+          ),
+        ),
+      );
+    }
+
+    return sheetContent;
+  }
+
+  void _startTimer(Duration duration) {
+    ref.read(playbackProvider.notifier).startSleepTimer(duration: duration);
+    Navigator.pop(context);
+  }
+
+  void _startSongs(int count) {
+    ref.read(playbackProvider.notifier).startSleepTimer(songCount: count);
+    Navigator.pop(context);
+  }
+
+  Widget _buildCustomChip({
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: Material(
+          color: Colors.white.withValues(alpha: 0.06),
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

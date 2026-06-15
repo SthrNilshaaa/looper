@@ -344,145 +344,276 @@ class _SongResultCard extends ConsumerWidget {
         ref.read(playbackProvider.notifier).play(song);
       },
       borderRadius: BorderRadius.circular(16),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isCurrent
-              ? colorScheme.primary.withValues(alpha: 0.5)
-              : Colors.white.withValues(alpha: 0.02),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isCurrent
-                ? colorScheme.primary.withValues(alpha: 0.2)
-                : Colors.white10.withValues(alpha: 0.05),
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    image: song.artPath != null
-                        ? DecorationImage(
-                            image: FileImage(File(song.artPath!)),
-                            fit: BoxFit.cover,
-                          )
-                        : null,
-                    color: Colors.white10,
-                  ),
-                  child: song.artPath == null
-                      ? const Icon(LucideIcons.music, size: 32)
-                      : null,
+      child: isCurrent
+          ? AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: colorScheme.primary.withValues(alpha: 0.2),
                 ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Text(
-                        song.title,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.normal,
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: song.artPath != null
+                              ? DecorationImage(
+                                  image: FileImage(File(song.artPath!)),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                          color: Colors.white10,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        child: song.artPath == null
+                            ? const Icon(LucideIcons.music, size: 32)
+                            : null,
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        song.artist ?? l10n.unknownArtist,
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
-                      if (lyricSnippet == null) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          song.album ?? l10n.unknownAlbum,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey.withValues(alpha: 0.7),
-                          ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              song.title,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.normal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              song.artist ?? l10n.unknownArtist,
+                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                            ),
+                            if (lyricSnippet == null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                song.album ?? l10n.unknownAlbum,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
+                          ],
                         ),
-                      ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.play_arrow, color: Colors.white),
+                      ),
                     ],
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: colorScheme.primary,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.play_arrow, color: Colors.white),
-                ),
-              ],
-            ),
-            if (lyricSnippet != null) ...[
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: colorScheme.primary.withValues(alpha: 0.15),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          LucideIcons.quote,
-                          size: 11,
-                          color: colorScheme.primary,
+                  if (lyricSnippet != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.15),
+                          width: 1,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          l10n.matchingLyrics,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: colorScheme.primary,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    _buildHighlightedText(
-                      context: context,
-                      text: lyricSnippet,
-                      query: searchQuery ?? '',
-                      baseStyle: TextStyle(
-                        fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.85),
-                        fontStyle: FontStyle.italic,
                       ),
-                      highlightStyle: TextStyle(
-                        fontSize: 13,
-                        color: colorScheme.primary,
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
-                        backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                LucideIcons.quote,
+                                size: 11,
+                                color: colorScheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                l10n.matchingLyrics,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          _buildHighlightedText(
+                            context: context,
+                            text: lyricSnippet,
+                            query: searchQuery ?? '',
+                            baseStyle: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontStyle: FontStyle.italic,
+                            ),
+                            highlightStyle: TextStyle(
+                              fontSize: 13,
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontStyle: FontStyle.italic,
+                              backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
+                ],
+              ),
+            )
+          : Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.02),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Colors.white10.withValues(alpha: 0.05),
                 ),
               ),
-            ],
-          ],
-        ),
-      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: song.artPath != null
+                              ? DecorationImage(
+                                  image: FileImage(File(song.artPath!)),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                          color: Colors.white10,
+                        ),
+                        child: song.artPath == null
+                            ? const Icon(LucideIcons.music, size: 32)
+                            : null,
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              song.title,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.normal,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              song.artist ?? l10n.unknownArtist,
+                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                            ),
+                            if (lyricSnippet == null) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                song.album ?? l10n.unknownAlbum,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.withValues(alpha: 0.7),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.play_arrow, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                  if (lyricSnippet != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colorScheme.primary.withValues(alpha: 0.15),
+                          width: 1,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                LucideIcons.quote,
+                                size: 11,
+                                color: colorScheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                l10n.matchingLyrics,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          _buildHighlightedText(
+                            context: context,
+                            text: lyricSnippet,
+                            query: searchQuery ?? '',
+                            baseStyle: TextStyle(
+                              fontSize: 13,
+                              color: Colors.white.withValues(alpha: 0.85),
+                              fontStyle: FontStyle.italic,
+                            ),
+                            highlightStyle: TextStyle(
+                              fontSize: 13,
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                              fontStyle: FontStyle.italic,
+                              backgroundColor: colorScheme.primary.withValues(alpha: 0.12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
     );
   }
 

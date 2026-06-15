@@ -380,11 +380,13 @@ class CollectionDetailView extends ConsumerWidget {
         );
 
         if (useBlur && !isPureBlack) {
-          return ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: sheetContent,
+          return RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                child: sheetContent,
+              ),
             ),
           );
         }

@@ -7,12 +7,35 @@ import android.content.Intent
 import android.os.Bundle
 import android.media.AudioManager
 import android.content.Context
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.util.Log
+import android.graphics.Color
 
 class MainActivity : AudioServiceActivity() {
     private val CHANNEL = "com.looper.player/broadcast"
+    private val WIDGET_CHANNEL = "com.looper.player/widget"
+
+    companion object {
+        var activeEngine: FlutterEngine? = null
+
+        fun sendWidgetAction(context: Context, action: String) {
+            val engine = activeEngine
+            if (engine != null) {
+                val channel = MethodChannel(engine.dartExecutor.binaryMessenger, "com.looper.player/widget")
+                channel.invokeMethod("onWidgetAction", action)
+            } else {
+                // If app is not running, click launches the app
+                val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                launchIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(launchIntent)
+            }
+        }
+    }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        activeEngine = flutterEngine
         
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "broadcastMetadata") {
@@ -35,6 +58,66 @@ class MainActivity : AudioServiceActivity() {
                 result.notImplemented()
             }
         }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WIDGET_CHANNEL).setMethodCallHandler { call, result ->
+            if (call.method == "updateWidgetState") {
+                val title = call.argument<String>("title") ?: "No song playing"
+                val artist = call.argument<String>("artist") ?: ""
+                val isPlaying = call.argument<Boolean>("isPlaying") ?: false
+                val isShuffle = call.argument<Boolean>("isShuffle") ?: false
+                val repeatMode = (call.argument<Any>("repeatMode") as? Number)?.toInt() ?: 0
+                val lyrics = call.argument<String>("lyrics") ?: ""
+                val nextLyrics = call.argument<String>("nextLyrics") ?: ""
+                val artPath = call.argument<String>("artPath") ?: ""
+                var accentColor = (call.argument<Any>("accentColor") as? Number)?.toInt() ?: 0
+
+                Log.d("PlayerWidget", "MainActivity: updateWidgetState: title=$title, artist=$artist, isPlaying=$isPlaying, accentColor=$accentColor")
+
+                // If accentColor is transparent or zero, fallback to premium green
+                if (accentColor == 0) {
+                    accentColor = Color.parseColor("#55DF69")
+                }
+
+                val prefs = getSharedPreferences("WidgetState", Context.MODE_PRIVATE)
+                val oldTitle = prefs.getString("title", "")
+                prefs.edit().apply {
+                    if (title != oldTitle) {
+                        putInt("currentLyricIndex", 0)
+                        putString("lastSavedLyric", "")
+                    }
+                    putString("title", title)
+                    putString("artist", artist)
+                    putBoolean("isPlaying", isPlaying)
+                    putBoolean("isShuffle", isShuffle)
+                    putInt("repeatMode", repeatMode)
+                    putString("lyrics", lyrics)
+                    putString("nextLyrics", nextLyrics)
+                    putString("artPath", artPath)
+                    putInt("accentColor", accentColor)
+                    apply()
+                }
+
+                // Trigger widget update
+                val appWidgetManager = AppWidgetManager.getInstance(this)
+                val componentName = ComponentName(this, PlayerWidgetProvider::class.java)
+                val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+                Log.d("PlayerWidget", "MainActivity: updating widget IDs count = ${appWidgetIds.size}")
+                for (appWidgetId in appWidgetIds) {
+                    PlayerWidgetProvider.updateWidget(this, appWidgetManager, appWidgetId)
+                }
+
+                result.success(null)
+            } else {
+                result.notImplemented()
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        if (activeEngine == flutterEngine) {
+            activeEngine = null
+        }
+        super.onDestroy()
     }
 
     private fun sendPlaybackBroadcast(title: String?, artist: String?, album: String?, duration: Long, isPlaying: Boolean) {

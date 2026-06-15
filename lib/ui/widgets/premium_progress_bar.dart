@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'squiggly_slider/slider.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -48,7 +48,7 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
     if (settings.disableAnimatedDuration) {
       return Text(
         durationStr,
-        style: GoogleFonts.dmSans(
+        style: AppFonts.jostStyle(
           color: Colors.white70,
           fontWeight: Platform.isLinux ? FontWeight.w300 : FontWeight.w600,
           fontSize: 14,
@@ -82,7 +82,7 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
             child: Text(
               char,
               key: ValueKey(char),
-              style: GoogleFonts.dmSans(
+              style: AppFonts.jostStyle(
                 color: Colors.white70,
                 fontWeight:Platform.isLinux ? FontWeight.w300: FontWeight.w600,
                 fontSize: 12,

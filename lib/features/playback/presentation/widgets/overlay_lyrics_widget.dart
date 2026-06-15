@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../lyrics_notifier.dart';
@@ -45,11 +45,19 @@ class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
                   final lineIndex = ref.watch(
                     playbackProvider.select((s) {
                       if (lines.isEmpty) return -1;
-                      return lines.indexWhere(
+                      int idx = lines.indexWhere(
                         (line) =>
                             s.position >= line.startTime &&
                             s.position < line.endTime,
                       );
+                      if (idx == -1) {
+                        if (s.position < lines.first.startTime) {
+                          idx = 0;
+                        } else if (s.position >= lines.last.endTime) {
+                          idx = lines.length - 1;
+                        }
+                      }
+                      return idx;
                     }),
                   );
 
@@ -69,7 +77,7 @@ class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
                       Text(
                         currentLine,
                         textAlign: TextAlign.center,
-                        style: GoogleFonts.spaceGrotesk(
+                        style: AppFonts.spaceGroteskStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.primary,
@@ -82,7 +90,7 @@ class _OverlayLyricsWidgetState extends ConsumerState<OverlayLyricsWidget> {
                         Text(
                           nextLine,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.spaceGrotesk(
+                           style: AppFonts.spaceGroteskStyle(
                             fontSize: 14,
                             color: Colors.white70,
                           ),

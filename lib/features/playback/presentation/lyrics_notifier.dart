@@ -39,17 +39,10 @@ class LyricsState {
 class LyricsNotifier extends StateNotifier<LyricsState> {
   final Ref ref;
 
-  LyricsNotifier(this.ref) : super(LyricsState()) {
-    final currentSong = ref.read(playbackProvider).currentSong;
-    if (currentSong != null) {
-      _fetchLyrics(currentSong);
-    }
+  LyricsNotifier(this.ref) : super(LyricsState());
 
-    ref.listen(playbackProvider.select((s) => s.currentSong), (previous, next) {
-      if (next != null && next.id != state.songId) {
-        _fetchLyrics(next);
-      }
-    });
+  void fetchForSong(Song song) {
+    _fetchLyrics(song);
   }
 
   Future<void> _fetchLyrics(Song song) async {
@@ -78,3 +71,5 @@ final lyricsProvider = StateNotifierProvider<LyricsNotifier, LyricsState>((
 ) {
   return LyricsNotifier(ref);
 });
+
+final lyricsManualScrollProvider = StateProvider<bool>((ref) => false);

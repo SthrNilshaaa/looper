@@ -31,6 +31,21 @@
             </intent-filter>
         </receiver>
 
+        <!-- Player Widget Receiver -->
+        <receiver android:name="com.looper.player.PlayerWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.looper.player.ACTION_PLAY_PAUSE" />
+                <action android:name="com.looper.player.ACTION_NEXT" />
+                <action android:name="com.looper.player.ACTION_PREV" />
+                <action android:name="com.looper.player.ACTION_SHUFFLE" />
+                <action android:name="com.looper.player.ACTION_REPEAT" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/player_widget_info" />
+        </receiver>
+
         <activity
             android:name="com.looper.player.MainActivity"
             android:exported="true"

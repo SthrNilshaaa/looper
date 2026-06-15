@@ -540,10 +540,10 @@ class SettingsView extends ConsumerWidget {
                     _PremiumActionRow(
                       icon: LucideIcons.info,
                       title: l10n.appTitle,
-                      subtitle: 'Version 2.0.0',
+                      subtitle: 'Version 2.1.0',
                       onTap: () {},
                       trailing: const Text(
-                        'v2.0.0',
+                        'v2.1.0',
                         style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                       isLast: false,

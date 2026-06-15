@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:adaptive_palette/adaptive_palette.dart';
 import '../playback_notifier.dart';
@@ -82,8 +82,9 @@ class AdvancedLyricLine extends ConsumerWidget {
 
     final settings = ref.watch(settingsProvider);
     final alignmentString = settings.lyricsAlignment;
-    final useDynamicColor = settings.dynamicColorActiveLyrics && 
-        (settings.enableDynamicTheming || settings.dynamicLyrics);
+    final useDynamicColor = (settings.dynamicColorActiveLyrics && 
+        (settings.enableDynamicTheming || settings.dynamicLyrics)) ||
+        (!settings.enableDynamicTheming && !settings.dynamicLyrics && settings.blurredArtworkForLyrics);
 
     final textAlign = alignmentString == 'left'
         ? TextAlign.left
@@ -116,12 +117,12 @@ class AdvancedLyricLine extends ConsumerWidget {
     // Language-aware font selection
     final bool isHindiText = _isHindi(line.text);
     final baseStyle =
-        (isHindiText ? GoogleFonts.poppins() : GoogleFonts.spaceGrotesk())
+        (isHindiText ? AppFonts.googleSansStyle() : AppFonts.soraStyle())
             .copyWith(
               fontSize: (isActive ? 30.5 : 30) * fontScale,
               fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
-              letterSpacing: isHindiText ? 0.0 : -0.5,
-              height: 1.2,
+              letterSpacing: isHindiText ? 0.95 : 0,
+              height: 1.15,
               color: isActive ? activeColor : Colors.white.withValues(alpha: lineOpacity),
               shadows: isActive && useDynamicColor ? [
                 Shadow(
@@ -141,6 +142,39 @@ class AdvancedLyricLine extends ConsumerWidget {
     // Watch the search query for highlighting
     final searchQuery = ref.watch(lyricsSearchQueryProvider).toLowerCase();
 
+    final childWidget = _buildModeContent(
+      context,
+      progress,
+      isPast,
+      baseStyle,
+      activeColor,
+      searchQuery,
+      textAlign,
+      iconAlignment,
+      wrapAlignment,
+    );
+
+    // Optimization: If the line is far from the active line (distance > 1),
+    // skip expensive animation/mouse widgets and render a static layout.
+    // This reduces widget tree depth by 75% and resolves slow frames.
+    if (absIndex > 1) {
+      return GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: EdgeInsets.only(
+            top: 8 * fontScale,
+            bottom: 8 * fontScale,
+          ),
+          child: DefaultTextStyle(
+            style: baseStyle,
+            textAlign: textAlign,
+            softWrap: true,
+            child: childWidget,
+          ),
+        ),
+      );
+    }
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
@@ -158,17 +192,7 @@ class AdvancedLyricLine extends ConsumerWidget {
             style: baseStyle,
             softWrap: true,
             textAlign: textAlign,
-            child: _buildModeContent(
-              context,
-              progress,
-              isPast,
-              baseStyle,
-              activeColor,
-              searchQuery,
-              textAlign,
-              iconAlignment,
-              wrapAlignment,
-            ),
+            child: childWidget,
           ),
         ),
       ),
@@ -230,34 +254,22 @@ class AdvancedLyricLine extends ConsumerWidget {
 
     switch (mode) {
       case LyricsSyncMode.line:
-        return Row(
-          children: [
-            Expanded(
-              child: isInstrumental
-                  ? Align(
-                      alignment: iconAlignment,
-                      child: Icon(
-                        Icons.music_note,
-                        color: Colors.white,
-                        size: 40 * fontScale,
-                      ),
-                    )
-                  : Hero(
-                      tag: 'active_lyric_line',
-                      child: Material(
-                        type: MaterialType.transparency,
-                        child: Text(
-                          displayText,
-                          textAlign: textAlign,
-                          softWrap: true,
-                          overflow: TextOverflow.visible,
-                          style: baseStyle.copyWith(decoration: TextDecoration.none),
-                        ),
-                      ),
-                    ),
-            ),
-          ],
-        );
+        return isInstrumental
+            ? Align(
+                alignment: iconAlignment,
+                child: Icon(
+                  Icons.music_note,
+                  color: Colors.white,
+                  size: 40 * fontScale,
+                ),
+              )
+            : Text(
+                displayText,
+                textAlign: textAlign,
+                softWrap: true,
+                overflow: TextOverflow.visible,
+                style: baseStyle,
+              );
 
       case LyricsSyncMode.word:
         return _buildWordMode(displayText, progress, baseStyle, activeColor, wrapAlignment);

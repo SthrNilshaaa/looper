@@ -8,7 +8,7 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/data/audio_analyzer.dart';
 import 'package:looper_player/features/playback/data/lyrics_fetcher.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:intl/intl.dart';
@@ -75,23 +75,25 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
           // Blurred Background
           if (settings.enableDynamicTheming && widget.song.artPath != null)
             Positioned.fill(
-              child: Stack(
-                children: [
-                  Image.file(
-                    File(widget.song.artPath!),
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    cacheWidth: 100,
-                    cacheHeight: 100,
-                  ),
-                  BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-                    child: Container(
+              child: RepaintBoundary(
+                child: Stack(
+                  children: [
+                    ImageFiltered(
+                      imageFilter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: Image.file(
+                        File(widget.song.artPath!),
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        cacheWidth: 100,
+                        cacheHeight: 100,
+                      ),
+                    ),
+                    Container(
                       color: Colors.black.withValues(alpha: 0.85),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             )
           else
@@ -206,7 +208,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
           ),
           Text(
             l10n.songDetails,
-            style: GoogleFonts.plusJakartaSans(
+            style: AppFonts.jostStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -250,7 +252,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
             children: [
               Text(
                 widget.song.title,
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.jostStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -261,7 +263,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
               const SizedBox(height: 6),
               Text(
                 widget.song.artist ?? 'Unknown Artist',
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.jostStyle(
                   color: Colors.white70,
                   fontSize: 16,
                 ),
@@ -269,7 +271,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
               const SizedBox(height: 4),
               Text(
                 widget.song.album ?? 'Unknown Album',
-                style: GoogleFonts.plusJakartaSans(
+                style: AppFonts.jostStyle(
                   color: primaryColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -345,7 +347,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                       const SizedBox(width: 12),
                       Text(
                         l10n.lyrics,
-                        style: GoogleFonts.plusJakartaSans(
+                        style: AppFonts.jostStyle(
                           color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -356,7 +358,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                   const SizedBox(height: 20),
                   Text(
                     displayedLines.join('\n'),
-                    style: GoogleFonts.plusJakartaSans(
+                    style: AppFonts.plusJakartaSansStyle(
                       color: Colors.white.withValues(alpha: 0.7),
                       fontSize: 14,
                       height: 1.6,
@@ -412,11 +414,12 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
     required List<_InfoItem> items,
     bool isLoading = false,
   }) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
+    return RepaintBoundary(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: Container(
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
@@ -444,7 +447,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                     const SizedBox(width: 12),
                     Text(
                       title,
-                      style: GoogleFonts.plusJakartaSans(
+                      style: AppFonts.jostStyle(
                         color: Colors.white.withValues(alpha: 0.9),
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -468,7 +471,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                         children: [
                           Text(
                             item.label.toUpperCase(),
-                            style: GoogleFonts.plusJakartaSans(
+                            style: AppFonts.jostStyle(
                               color: Colors.white.withValues(alpha: 0.4),
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -478,7 +481,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                           const SizedBox(height: 4),
                           Text(
                             item.value,
-                            style: GoogleFonts.plusJakartaSans(
+                            style: AppFonts.jostStyle(
                               color: Colors.white,
                               fontSize: 14,
                             ),
@@ -493,7 +496,8 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   String _formatFileSize(String path) {

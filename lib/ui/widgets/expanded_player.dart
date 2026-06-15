@@ -11,7 +11,7 @@ import '../../features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:looper_player/core/app_fonts.dart';
 
 import 'package:looper_player/ui/screens/android/player/android_expanded_player.dart';
 
@@ -64,7 +64,7 @@ class ExpandedPlayer extends ConsumerWidget {
                     ),
                     Text(
                       'NOW PLAYING',
-                      style: GoogleFonts.dmSans(
+                      style: AppFonts.jostStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12.ts,
                         fontWeight: FontWeight.bold,
@@ -134,7 +134,7 @@ class ExpandedPlayer extends ConsumerWidget {
                   children: [
                     Text(
                       song.title,
-                      style: GoogleFonts.dmSans(
+                      style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontSize: 24.ts,
                         fontWeight: FontWeight.bold,
@@ -146,7 +146,7 @@ class ExpandedPlayer extends ConsumerWidget {
                     const SizedBox(height: 8),
                     Text(
                       song.artist ?? l10n.unknownArtist,
-                      style: GoogleFonts.dmSans(
+                      style: AppFonts.jostStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 16.ts,
                         fontWeight: FontWeight.normal,

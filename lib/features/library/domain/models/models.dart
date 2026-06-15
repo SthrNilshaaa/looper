@@ -88,7 +88,8 @@ class AppSettings {
   bool enableDynamicTheming = false;
   bool darkTheme = false;
   bool saveDynamicColor = true;
-  bool dynamicLyrics = true;
+  bool dynamicLyrics = false;
+  bool blurredArtworkForLyrics = true;
   int accentColor = 0xFF41C25E; // Default Green
   bool audioFocus = true;
   bool disableSquiggle = false;
@@ -100,6 +101,7 @@ class AppSettings {
   bool showQualityBadge = true;
   bool enablePlayerGradient = true;
   bool settingsV2 = false;
+  bool settingsV3 = false;
   bool showPerformanceOptimizer = false;
   String? customBackgroundImagePath;
   double bgBrightness = 0.5;
@@ -124,7 +126,7 @@ class AppSettings {
   bool permanentAudioFocusChange = true;
   bool dynamicColorActiveLyrics = true;
   String lyricsAlignment = 'left'; // 'left', 'center', 'right'
-  bool dynamicAccentColor = false;
+  bool dynamicAccentColor = true;
   int sortStrategyIndex = 0;
   bool sortAscending = false;
 
@@ -133,4 +135,7 @@ class AppSettings {
   double libraryDarkness = 0.62;
   double musicDarkness = 0.62;
   double lyricsDarkness = 0.55;
+
+  bool useNewFont = false;
+  String customFontFamily = 'Jost';
 }

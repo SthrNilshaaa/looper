@@ -74,11 +74,12 @@ class _PremiumPlayerBar extends ConsumerWidget {
               ),
             ],
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
-              child: Padding(
+          child: RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+                child: Padding(
                 padding: const EdgeInsets.only(left: 14),
                 child: Row(
                   children: [
@@ -143,7 +144,8 @@ class _PremiumPlayerBar extends ConsumerWidget {
               ),
             ),
           ),
-        );
+        ),
+      );
       },
     );
   }

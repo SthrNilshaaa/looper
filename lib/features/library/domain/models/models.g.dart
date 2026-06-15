@@ -6357,243 +6357,263 @@ const AppSettingsSchema = CollectionSchema(
       name: r'bgOpacity',
       type: IsarType.double,
     ),
-    r'crossfadeLength': PropertySchema(
+    r'blurredArtworkForLyrics': PropertySchema(
       id: 4,
+      name: r'blurredArtworkForLyrics',
+      type: IsarType.bool,
+    ),
+    r'crossfadeLength': PropertySchema(
+      id: 5,
       name: r'crossfadeLength',
       type: IsarType.long,
     ),
     r'customBackgroundImagePath': PropertySchema(
-      id: 5,
+      id: 6,
       name: r'customBackgroundImagePath',
       type: IsarType.string,
     ),
+    r'customFontFamily': PropertySchema(
+      id: 7,
+      name: r'customFontFamily',
+      type: IsarType.string,
+    ),
     r'darkTheme': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'darkTheme',
       type: IsarType.bool,
     ),
     r'disableAnimatedDuration': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'disableAnimatedDuration',
       type: IsarType.bool,
     ),
     r'disableBlur': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'disableBlur',
       type: IsarType.bool,
     ),
     r'disableSquiggle': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'disableSquiggle',
       type: IsarType.bool,
     ),
     r'downloadArtwork': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'downloadArtwork',
       type: IsarType.bool,
     ),
     r'dynamicAccentColor': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'dynamicAccentColor',
       type: IsarType.bool,
     ),
     r'dynamicColorActiveLyrics': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'dynamicColorActiveLyrics',
       type: IsarType.bool,
     ),
     r'dynamicLyrics': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'dynamicLyrics',
       type: IsarType.bool,
     ),
     r'enableCrossfade': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'enableCrossfade',
       type: IsarType.bool,
     ),
     r'enableDynamicTheming': PropertySchema(
-      id: 15,
+      id: 17,
       name: r'enableDynamicTheming',
       type: IsarType.bool,
     ),
     r'enableInternet': PropertySchema(
-      id: 16,
+      id: 18,
       name: r'enableInternet',
       type: IsarType.bool,
     ),
     r'enablePlayerGradient': PropertySchema(
-      id: 17,
+      id: 19,
       name: r'enablePlayerGradient',
       type: IsarType.bool,
     ),
     r'enableSlideGesture': PropertySchema(
-      id: 18,
+      id: 20,
       name: r'enableSlideGesture',
       type: IsarType.bool,
     ),
     r'fadeOnSeek': PropertySchema(
-      id: 19,
+      id: 21,
       name: r'fadeOnSeek',
       type: IsarType.bool,
     ),
     r'fadePlayPauseStop': PropertySchema(
-      id: 20,
+      id: 22,
       name: r'fadePlayPauseStop',
       type: IsarType.bool,
     ),
     r'homeDarkness': PropertySchema(
-      id: 21,
+      id: 23,
       name: r'homeDarkness',
       type: IsarType.double,
     ),
     r'homeSectionOrder': PropertySchema(
-      id: 22,
+      id: 24,
       name: r'homeSectionOrder',
       type: IsarType.stringList,
     ),
     r'keepBackgroundGradient': PropertySchema(
-      id: 23,
+      id: 25,
       name: r'keepBackgroundGradient',
       type: IsarType.bool,
     ),
     r'language': PropertySchema(
-      id: 24,
+      id: 26,
       name: r'language',
       type: IsarType.string,
     ),
     r'lastPlayedSongId': PropertySchema(
-      id: 25,
+      id: 27,
       name: r'lastPlayedSongId',
       type: IsarType.long,
     ),
     r'libraryDarkness': PropertySchema(
-      id: 26,
+      id: 28,
       name: r'libraryDarkness',
       type: IsarType.double,
     ),
     r'libraryFolders': PropertySchema(
-      id: 27,
+      id: 29,
       name: r'libraryFolders',
       type: IsarType.stringList,
     ),
     r'lyricsAlignment': PropertySchema(
-      id: 28,
+      id: 30,
       name: r'lyricsAlignment',
       type: IsarType.string,
     ),
     r'lyricsDarkness': PropertySchema(
-      id: 29,
+      id: 31,
       name: r'lyricsDarkness',
       type: IsarType.double,
     ),
     r'musicDarkness': PropertySchema(
-      id: 30,
+      id: 32,
       name: r'musicDarkness',
       type: IsarType.double,
     ),
     r'permanentAudioFocusChange': PropertySchema(
-      id: 31,
+      id: 33,
       name: r'permanentAudioFocusChange',
       type: IsarType.bool,
     ),
     r'playPauseStopFadeLength': PropertySchema(
-      id: 32,
+      id: 34,
       name: r'playPauseStopFadeLength',
       type: IsarType.long,
     ),
     r'repeatMode': PropertySchema(
-      id: 33,
+      id: 35,
       name: r'repeatMode',
       type: IsarType.long,
     ),
     r'resumeAfterCall': PropertySchema(
-      id: 34,
+      id: 36,
       name: r'resumeAfterCall',
       type: IsarType.bool,
     ),
     r'resumeOnStart': PropertySchema(
-      id: 35,
+      id: 37,
       name: r'resumeOnStart',
       type: IsarType.bool,
     ),
     r'saveDynamicColor': PropertySchema(
-      id: 36,
+      id: 38,
       name: r'saveDynamicColor',
       type: IsarType.bool,
     ),
     r'seekFadeLength': PropertySchema(
-      id: 37,
+      id: 39,
       name: r'seekFadeLength',
       type: IsarType.long,
     ),
     r'settingsV2': PropertySchema(
-      id: 38,
+      id: 40,
       name: r'settingsV2',
       type: IsarType.bool,
     ),
+    r'settingsV3': PropertySchema(
+      id: 41,
+      name: r'settingsV3',
+      type: IsarType.bool,
+    ),
     r'shortManualCrossfadeLength': PropertySchema(
-      id: 39,
+      id: 42,
       name: r'shortManualCrossfadeLength',
       type: IsarType.long,
     ),
     r'showHomeAlbums': PropertySchema(
-      id: 40,
+      id: 43,
       name: r'showHomeAlbums',
       type: IsarType.bool,
     ),
     r'showHomeArtists': PropertySchema(
-      id: 41,
+      id: 44,
       name: r'showHomeArtists',
       type: IsarType.bool,
     ),
     r'showHomeGenres': PropertySchema(
-      id: 42,
+      id: 45,
       name: r'showHomeGenres',
       type: IsarType.bool,
     ),
     r'showPerformanceOptimizer': PropertySchema(
-      id: 43,
+      id: 46,
       name: r'showPerformanceOptimizer',
       type: IsarType.bool,
     ),
     r'showQualityBadge': PropertySchema(
-      id: 44,
+      id: 47,
       name: r'showQualityBadge',
       type: IsarType.bool,
     ),
     r'shuffle': PropertySchema(
-      id: 45,
+      id: 48,
       name: r'shuffle',
       type: IsarType.bool,
     ),
     r'silenceBetweenTracks': PropertySchema(
-      id: 46,
+      id: 49,
       name: r'silenceBetweenTracks',
       type: IsarType.long,
     ),
     r'songsDarkness': PropertySchema(
-      id: 47,
+      id: 50,
       name: r'songsDarkness',
       type: IsarType.double,
     ),
     r'sortAscending': PropertySchema(
-      id: 48,
+      id: 51,
       name: r'sortAscending',
       type: IsarType.bool,
     ),
     r'sortStrategyIndex': PropertySchema(
-      id: 49,
+      id: 52,
       name: r'sortStrategyIndex',
       type: IsarType.long,
     ),
     r'stopOnTaskRemoved': PropertySchema(
-      id: 50,
+      id: 53,
       name: r'stopOnTaskRemoved',
       type: IsarType.bool,
     ),
+    r'useNewFont': PropertySchema(
+      id: 54,
+      name: r'useNewFont',
+      type: IsarType.bool,
+    ),
     r'volume': PropertySchema(
-      id: 51,
+      id: 55,
       name: r'volume',
       type: IsarType.double,
     )
@@ -6624,6 +6644,7 @@ int _appSettingsEstimateSize(
       bytesCount += 3 + value.length * 3;
     }
   }
+  bytesCount += 3 + object.customFontFamily.length * 3;
   bytesCount += 3 + object.homeSectionOrder.length * 3;
   {
     for (var i = 0; i < object.homeSectionOrder.length; i++) {
@@ -6653,54 +6674,58 @@ void _appSettingsSerialize(
   writer.writeBool(offsets[1], object.audioFocus);
   writer.writeDouble(offsets[2], object.bgBrightness);
   writer.writeDouble(offsets[3], object.bgOpacity);
-  writer.writeLong(offsets[4], object.crossfadeLength);
-  writer.writeString(offsets[5], object.customBackgroundImagePath);
-  writer.writeBool(offsets[6], object.darkTheme);
-  writer.writeBool(offsets[7], object.disableAnimatedDuration);
-  writer.writeBool(offsets[8], object.disableBlur);
-  writer.writeBool(offsets[9], object.disableSquiggle);
-  writer.writeBool(offsets[10], object.downloadArtwork);
-  writer.writeBool(offsets[11], object.dynamicAccentColor);
-  writer.writeBool(offsets[12], object.dynamicColorActiveLyrics);
-  writer.writeBool(offsets[13], object.dynamicLyrics);
-  writer.writeBool(offsets[14], object.enableCrossfade);
-  writer.writeBool(offsets[15], object.enableDynamicTheming);
-  writer.writeBool(offsets[16], object.enableInternet);
-  writer.writeBool(offsets[17], object.enablePlayerGradient);
-  writer.writeBool(offsets[18], object.enableSlideGesture);
-  writer.writeBool(offsets[19], object.fadeOnSeek);
-  writer.writeBool(offsets[20], object.fadePlayPauseStop);
-  writer.writeDouble(offsets[21], object.homeDarkness);
-  writer.writeStringList(offsets[22], object.homeSectionOrder);
-  writer.writeBool(offsets[23], object.keepBackgroundGradient);
-  writer.writeString(offsets[24], object.language);
-  writer.writeLong(offsets[25], object.lastPlayedSongId);
-  writer.writeDouble(offsets[26], object.libraryDarkness);
-  writer.writeStringList(offsets[27], object.libraryFolders);
-  writer.writeString(offsets[28], object.lyricsAlignment);
-  writer.writeDouble(offsets[29], object.lyricsDarkness);
-  writer.writeDouble(offsets[30], object.musicDarkness);
-  writer.writeBool(offsets[31], object.permanentAudioFocusChange);
-  writer.writeLong(offsets[32], object.playPauseStopFadeLength);
-  writer.writeLong(offsets[33], object.repeatMode);
-  writer.writeBool(offsets[34], object.resumeAfterCall);
-  writer.writeBool(offsets[35], object.resumeOnStart);
-  writer.writeBool(offsets[36], object.saveDynamicColor);
-  writer.writeLong(offsets[37], object.seekFadeLength);
-  writer.writeBool(offsets[38], object.settingsV2);
-  writer.writeLong(offsets[39], object.shortManualCrossfadeLength);
-  writer.writeBool(offsets[40], object.showHomeAlbums);
-  writer.writeBool(offsets[41], object.showHomeArtists);
-  writer.writeBool(offsets[42], object.showHomeGenres);
-  writer.writeBool(offsets[43], object.showPerformanceOptimizer);
-  writer.writeBool(offsets[44], object.showQualityBadge);
-  writer.writeBool(offsets[45], object.shuffle);
-  writer.writeLong(offsets[46], object.silenceBetweenTracks);
-  writer.writeDouble(offsets[47], object.songsDarkness);
-  writer.writeBool(offsets[48], object.sortAscending);
-  writer.writeLong(offsets[49], object.sortStrategyIndex);
-  writer.writeBool(offsets[50], object.stopOnTaskRemoved);
-  writer.writeDouble(offsets[51], object.volume);
+  writer.writeBool(offsets[4], object.blurredArtworkForLyrics);
+  writer.writeLong(offsets[5], object.crossfadeLength);
+  writer.writeString(offsets[6], object.customBackgroundImagePath);
+  writer.writeString(offsets[7], object.customFontFamily);
+  writer.writeBool(offsets[8], object.darkTheme);
+  writer.writeBool(offsets[9], object.disableAnimatedDuration);
+  writer.writeBool(offsets[10], object.disableBlur);
+  writer.writeBool(offsets[11], object.disableSquiggle);
+  writer.writeBool(offsets[12], object.downloadArtwork);
+  writer.writeBool(offsets[13], object.dynamicAccentColor);
+  writer.writeBool(offsets[14], object.dynamicColorActiveLyrics);
+  writer.writeBool(offsets[15], object.dynamicLyrics);
+  writer.writeBool(offsets[16], object.enableCrossfade);
+  writer.writeBool(offsets[17], object.enableDynamicTheming);
+  writer.writeBool(offsets[18], object.enableInternet);
+  writer.writeBool(offsets[19], object.enablePlayerGradient);
+  writer.writeBool(offsets[20], object.enableSlideGesture);
+  writer.writeBool(offsets[21], object.fadeOnSeek);
+  writer.writeBool(offsets[22], object.fadePlayPauseStop);
+  writer.writeDouble(offsets[23], object.homeDarkness);
+  writer.writeStringList(offsets[24], object.homeSectionOrder);
+  writer.writeBool(offsets[25], object.keepBackgroundGradient);
+  writer.writeString(offsets[26], object.language);
+  writer.writeLong(offsets[27], object.lastPlayedSongId);
+  writer.writeDouble(offsets[28], object.libraryDarkness);
+  writer.writeStringList(offsets[29], object.libraryFolders);
+  writer.writeString(offsets[30], object.lyricsAlignment);
+  writer.writeDouble(offsets[31], object.lyricsDarkness);
+  writer.writeDouble(offsets[32], object.musicDarkness);
+  writer.writeBool(offsets[33], object.permanentAudioFocusChange);
+  writer.writeLong(offsets[34], object.playPauseStopFadeLength);
+  writer.writeLong(offsets[35], object.repeatMode);
+  writer.writeBool(offsets[36], object.resumeAfterCall);
+  writer.writeBool(offsets[37], object.resumeOnStart);
+  writer.writeBool(offsets[38], object.saveDynamicColor);
+  writer.writeLong(offsets[39], object.seekFadeLength);
+  writer.writeBool(offsets[40], object.settingsV2);
+  writer.writeBool(offsets[41], object.settingsV3);
+  writer.writeLong(offsets[42], object.shortManualCrossfadeLength);
+  writer.writeBool(offsets[43], object.showHomeAlbums);
+  writer.writeBool(offsets[44], object.showHomeArtists);
+  writer.writeBool(offsets[45], object.showHomeGenres);
+  writer.writeBool(offsets[46], object.showPerformanceOptimizer);
+  writer.writeBool(offsets[47], object.showQualityBadge);
+  writer.writeBool(offsets[48], object.shuffle);
+  writer.writeLong(offsets[49], object.silenceBetweenTracks);
+  writer.writeDouble(offsets[50], object.songsDarkness);
+  writer.writeBool(offsets[51], object.sortAscending);
+  writer.writeLong(offsets[52], object.sortStrategyIndex);
+  writer.writeBool(offsets[53], object.stopOnTaskRemoved);
+  writer.writeBool(offsets[54], object.useNewFont);
+  writer.writeDouble(offsets[55], object.volume);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -6714,55 +6739,59 @@ AppSettings _appSettingsDeserialize(
   object.audioFocus = reader.readBool(offsets[1]);
   object.bgBrightness = reader.readDouble(offsets[2]);
   object.bgOpacity = reader.readDouble(offsets[3]);
-  object.crossfadeLength = reader.readLong(offsets[4]);
-  object.customBackgroundImagePath = reader.readStringOrNull(offsets[5]);
-  object.darkTheme = reader.readBool(offsets[6]);
-  object.disableAnimatedDuration = reader.readBool(offsets[7]);
-  object.disableBlur = reader.readBool(offsets[8]);
-  object.disableSquiggle = reader.readBool(offsets[9]);
-  object.downloadArtwork = reader.readBool(offsets[10]);
-  object.dynamicAccentColor = reader.readBool(offsets[11]);
-  object.dynamicColorActiveLyrics = reader.readBool(offsets[12]);
-  object.dynamicLyrics = reader.readBool(offsets[13]);
-  object.enableCrossfade = reader.readBool(offsets[14]);
-  object.enableDynamicTheming = reader.readBool(offsets[15]);
-  object.enableInternet = reader.readBool(offsets[16]);
-  object.enablePlayerGradient = reader.readBool(offsets[17]);
-  object.enableSlideGesture = reader.readBool(offsets[18]);
-  object.fadeOnSeek = reader.readBool(offsets[19]);
-  object.fadePlayPauseStop = reader.readBool(offsets[20]);
-  object.homeDarkness = reader.readDouble(offsets[21]);
-  object.homeSectionOrder = reader.readStringList(offsets[22]) ?? [];
+  object.blurredArtworkForLyrics = reader.readBool(offsets[4]);
+  object.crossfadeLength = reader.readLong(offsets[5]);
+  object.customBackgroundImagePath = reader.readStringOrNull(offsets[6]);
+  object.customFontFamily = reader.readString(offsets[7]);
+  object.darkTheme = reader.readBool(offsets[8]);
+  object.disableAnimatedDuration = reader.readBool(offsets[9]);
+  object.disableBlur = reader.readBool(offsets[10]);
+  object.disableSquiggle = reader.readBool(offsets[11]);
+  object.downloadArtwork = reader.readBool(offsets[12]);
+  object.dynamicAccentColor = reader.readBool(offsets[13]);
+  object.dynamicColorActiveLyrics = reader.readBool(offsets[14]);
+  object.dynamicLyrics = reader.readBool(offsets[15]);
+  object.enableCrossfade = reader.readBool(offsets[16]);
+  object.enableDynamicTheming = reader.readBool(offsets[17]);
+  object.enableInternet = reader.readBool(offsets[18]);
+  object.enablePlayerGradient = reader.readBool(offsets[19]);
+  object.enableSlideGesture = reader.readBool(offsets[20]);
+  object.fadeOnSeek = reader.readBool(offsets[21]);
+  object.fadePlayPauseStop = reader.readBool(offsets[22]);
+  object.homeDarkness = reader.readDouble(offsets[23]);
+  object.homeSectionOrder = reader.readStringList(offsets[24]) ?? [];
   object.id = id;
-  object.keepBackgroundGradient = reader.readBool(offsets[23]);
-  object.language = reader.readString(offsets[24]);
-  object.lastPlayedSongId = reader.readLongOrNull(offsets[25]);
-  object.libraryDarkness = reader.readDouble(offsets[26]);
-  object.libraryFolders = reader.readStringList(offsets[27]) ?? [];
-  object.lyricsAlignment = reader.readString(offsets[28]);
-  object.lyricsDarkness = reader.readDouble(offsets[29]);
-  object.musicDarkness = reader.readDouble(offsets[30]);
-  object.permanentAudioFocusChange = reader.readBool(offsets[31]);
-  object.playPauseStopFadeLength = reader.readLong(offsets[32]);
-  object.repeatMode = reader.readLong(offsets[33]);
-  object.resumeAfterCall = reader.readBool(offsets[34]);
-  object.resumeOnStart = reader.readBool(offsets[35]);
-  object.saveDynamicColor = reader.readBool(offsets[36]);
-  object.seekFadeLength = reader.readLong(offsets[37]);
-  object.settingsV2 = reader.readBool(offsets[38]);
-  object.shortManualCrossfadeLength = reader.readLong(offsets[39]);
-  object.showHomeAlbums = reader.readBool(offsets[40]);
-  object.showHomeArtists = reader.readBool(offsets[41]);
-  object.showHomeGenres = reader.readBool(offsets[42]);
-  object.showPerformanceOptimizer = reader.readBool(offsets[43]);
-  object.showQualityBadge = reader.readBool(offsets[44]);
-  object.shuffle = reader.readBool(offsets[45]);
-  object.silenceBetweenTracks = reader.readLong(offsets[46]);
-  object.songsDarkness = reader.readDouble(offsets[47]);
-  object.sortAscending = reader.readBool(offsets[48]);
-  object.sortStrategyIndex = reader.readLong(offsets[49]);
-  object.stopOnTaskRemoved = reader.readBool(offsets[50]);
-  object.volume = reader.readDouble(offsets[51]);
+  object.keepBackgroundGradient = reader.readBool(offsets[25]);
+  object.language = reader.readString(offsets[26]);
+  object.lastPlayedSongId = reader.readLongOrNull(offsets[27]);
+  object.libraryDarkness = reader.readDouble(offsets[28]);
+  object.libraryFolders = reader.readStringList(offsets[29]) ?? [];
+  object.lyricsAlignment = reader.readString(offsets[30]);
+  object.lyricsDarkness = reader.readDouble(offsets[31]);
+  object.musicDarkness = reader.readDouble(offsets[32]);
+  object.permanentAudioFocusChange = reader.readBool(offsets[33]);
+  object.playPauseStopFadeLength = reader.readLong(offsets[34]);
+  object.repeatMode = reader.readLong(offsets[35]);
+  object.resumeAfterCall = reader.readBool(offsets[36]);
+  object.resumeOnStart = reader.readBool(offsets[37]);
+  object.saveDynamicColor = reader.readBool(offsets[38]);
+  object.seekFadeLength = reader.readLong(offsets[39]);
+  object.settingsV2 = reader.readBool(offsets[40]);
+  object.settingsV3 = reader.readBool(offsets[41]);
+  object.shortManualCrossfadeLength = reader.readLong(offsets[42]);
+  object.showHomeAlbums = reader.readBool(offsets[43]);
+  object.showHomeArtists = reader.readBool(offsets[44]);
+  object.showHomeGenres = reader.readBool(offsets[45]);
+  object.showPerformanceOptimizer = reader.readBool(offsets[46]);
+  object.showQualityBadge = reader.readBool(offsets[47]);
+  object.shuffle = reader.readBool(offsets[48]);
+  object.silenceBetweenTracks = reader.readLong(offsets[49]);
+  object.songsDarkness = reader.readDouble(offsets[50]);
+  object.sortAscending = reader.readBool(offsets[51]);
+  object.sortStrategyIndex = reader.readLong(offsets[52]);
+  object.stopOnTaskRemoved = reader.readBool(offsets[53]);
+  object.useNewFont = reader.readBool(offsets[54]);
+  object.volume = reader.readDouble(offsets[55]);
   return object;
 }
 
@@ -6782,13 +6811,13 @@ P _appSettingsDeserializeProp<P>(
     case 3:
       return (reader.readDouble(offset)) as P;
     case 4:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 7:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 8:
       return (reader.readBool(offset)) as P;
     case 9:
@@ -6816,39 +6845,39 @@ P _appSettingsDeserializeProp<P>(
     case 20:
       return (reader.readBool(offset)) as P;
     case 21:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 22:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 23:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 24:
-      return (reader.readString(offset)) as P;
-    case 25:
-      return (reader.readLongOrNull(offset)) as P;
-    case 26:
-      return (reader.readDouble(offset)) as P;
-    case 27:
       return (reader.readStringList(offset) ?? []) as P;
-    case 28:
+    case 25:
+      return (reader.readBool(offset)) as P;
+    case 26:
       return (reader.readString(offset)) as P;
+    case 27:
+      return (reader.readLongOrNull(offset)) as P;
+    case 28:
+      return (reader.readDouble(offset)) as P;
     case 29:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 30:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 31:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 32:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 33:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 34:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 35:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 36:
       return (reader.readBool(offset)) as P;
     case 37:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 38:
       return (reader.readBool(offset)) as P;
     case 39:
@@ -6858,7 +6887,7 @@ P _appSettingsDeserializeProp<P>(
     case 41:
       return (reader.readBool(offset)) as P;
     case 42:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 43:
       return (reader.readBool(offset)) as P;
     case 44:
@@ -6866,16 +6895,24 @@ P _appSettingsDeserializeProp<P>(
     case 45:
       return (reader.readBool(offset)) as P;
     case 46:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 47:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 48:
       return (reader.readBool(offset)) as P;
     case 49:
       return (reader.readLong(offset)) as P;
     case 50:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 51:
+      return (reader.readBool(offset)) as P;
+    case 52:
+      return (reader.readLong(offset)) as P;
+    case 53:
+      return (reader.readBool(offset)) as P;
+    case 54:
+      return (reader.readBool(offset)) as P;
+    case 55:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -7174,6 +7211,16 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      blurredArtworkForLyricsEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'blurredArtworkForLyrics',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       crossfadeLengthEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -7380,6 +7427,142 @@ extension AppSettingsQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'customBackgroundImagePath',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontFamily',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customFontFamily',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customFontFamily',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customFontFamily',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'customFontFamily',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'customFontFamily',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'customFontFamily',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'customFontFamily',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontFamily',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'customFontFamily',
         value: '',
       ));
     });
@@ -8879,6 +9062,16 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      settingsV3EqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'settingsV3',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       shortManualCrossfadeLengthEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -9192,6 +9385,16 @@ extension AppSettingsQueryFilter
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      useNewFontEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'useNewFont',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> volumeEqualTo(
     double value, {
     double epsilon = Query.epsilon,
@@ -9313,6 +9516,20 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByBlurredArtworkForLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blurredArtworkForLyrics', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByBlurredArtworkForLyricsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blurredArtworkForLyrics', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByCrossfadeLength() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'crossfadeLength', Sort.asc);
@@ -9337,6 +9554,20 @@ extension AppSettingsQuerySortBy
       sortByCustomBackgroundImagePathDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'customBackgroundImagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontFamily() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontFamily', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontFamilyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontFamily', Sort.desc);
     });
   }
 
@@ -9749,6 +9980,18 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortBySettingsV3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'settingsV3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortBySettingsV3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'settingsV3', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
       sortByShortManualCrossfadeLength() {
     return QueryBuilder.apply(this, (query) {
@@ -9910,6 +10153,18 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByUseNewFont() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'useNewFont', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByUseNewFontDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'useNewFont', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByVolume() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'volume', Sort.asc);
@@ -9974,6 +10229,20 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByBlurredArtworkForLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blurredArtworkForLyrics', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByBlurredArtworkForLyricsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'blurredArtworkForLyrics', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByCrossfadeLength() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'crossfadeLength', Sort.asc);
@@ -9998,6 +10267,20 @@ extension AppSettingsQuerySortThenBy
       thenByCustomBackgroundImagePathDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'customBackgroundImagePath', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontFamily() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontFamily', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontFamilyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontFamily', Sort.desc);
     });
   }
 
@@ -10422,6 +10705,18 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenBySettingsV3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'settingsV3', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenBySettingsV3Desc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'settingsV3', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
       thenByShortManualCrossfadeLength() {
     return QueryBuilder.apply(this, (query) {
@@ -10583,6 +10878,18 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByUseNewFont() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'useNewFont', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByUseNewFontDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'useNewFont', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByVolume() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'volume', Sort.asc);
@@ -10623,6 +10930,13 @@ extension AppSettingsQueryWhereDistinct
   }
 
   QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByBlurredArtworkForLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'blurredArtworkForLyrics');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
       distinctByCrossfadeLength() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'crossfadeLength');
@@ -10633,6 +10947,14 @@ extension AppSettingsQueryWhereDistinct
       distinctByCustomBackgroundImagePath({bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'customBackgroundImagePath',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByCustomFontFamily(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customFontFamily',
           caseSensitive: caseSensitive);
     });
   }
@@ -10856,6 +11178,12 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctBySettingsV3() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'settingsV3');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct>
       distinctByShortManualCrossfadeLength() {
     return QueryBuilder.apply(this, (query) {
@@ -10935,6 +11263,12 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByUseNewFont() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'useNewFont');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByVolume() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'volume');
@@ -10974,6 +11308,13 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+      blurredArtworkForLyricsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'blurredArtworkForLyrics');
+    });
+  }
+
   QueryBuilder<AppSettings, int, QQueryOperations> crossfadeLengthProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'crossfadeLength');
@@ -10984,6 +11325,13 @@ extension AppSettingsQueryProperty
       customBackgroundImagePathProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'customBackgroundImagePath');
+    });
+  }
+
+  QueryBuilder<AppSettings, String, QQueryOperations>
+      customFontFamilyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customFontFamily');
     });
   }
 
@@ -11199,6 +11547,12 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, bool, QQueryOperations> settingsV3Property() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'settingsV3');
+    });
+  }
+
   QueryBuilder<AppSettings, int, QQueryOperations>
       shortManualCrossfadeLengthProperty() {
     return QueryBuilder.apply(this, (query) {
@@ -11272,6 +11626,12 @@ extension AppSettingsQueryProperty
       stopOnTaskRemovedProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'stopOnTaskRemoved');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> useNewFontProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'useNewFont');
     });
   }
 

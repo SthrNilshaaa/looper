@@ -466,9 +466,9 @@ class AudioService {
     }
   }
 
-  Future<void> play(String path, {Map<String, dynamic>? metadata}) async {
+  Future<void> play(String path, {Map<String, dynamic>? metadata, bool play = true}) async {
     _playOnInterruptionEnd = false; // Reset auto-resume on fresh manual play
-    if (Platform.isAndroid) {
+    if (play && Platform.isAndroid) {
       final hasFocus = await _requestAudioFocus();
       if (!hasFocus) {
         debugPrint('🎵 Playback aborted: Failed to acquire Audio Focus.');
@@ -477,7 +477,7 @@ class AudioService {
     }
 
     final extras = metadata?.map((k, v) => MapEntry(k, v.toString()));
-    await player.open(Media(path, extras: extras));
+    await player.open(Media(path, extras: extras), play: play);
 
     if (Platform.isAndroid && _audioHandler != null && metadata != null) {
       final item = asrv.MediaItem(

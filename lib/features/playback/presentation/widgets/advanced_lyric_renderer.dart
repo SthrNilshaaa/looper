@@ -8,6 +8,8 @@ import 'advanced_lyric_line.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 
+import '../lyrics_notifier.dart';
+
 class AdvancedLyricRenderer extends ConsumerStatefulWidget {
   final List<LyricLine> lines;
   final LyricsSyncMode mode;
@@ -37,8 +39,12 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
   @override
   void initState() {
     super.initState();
-    final currentPos = ref.read(playbackProvider).position;
-    _updateActiveLine(currentPos, forceScroll: true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final currentPos = ref.read(playbackProvider).position;
+        _updateActiveLine(currentPos, forceScroll: true);
+      }
+    });
   }
 
   @override
@@ -82,11 +88,24 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
   @override
   void didUpdateWidget(AdvancedLyricRenderer oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.lines != widget.lines) {
+      _currentLineIndex = -1;
+      _lineKeys.clear();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(lyricsManualScrollProvider.notifier).state = false;
+        }
+      });
+    }
     final currentPos = ref.read(playbackProvider).position;
-    _updateActiveLine(currentPos, forceScroll: oldWidget.mode != widget.mode);
+    _updateActiveLine(currentPos, forceScroll: oldWidget.mode != widget.mode || oldWidget.lines != widget.lines);
   }
 
   void _updateActiveLine(Duration position, {bool forceScroll = false}) {
+    final route = ModalRoute.of(context);
+    final isExiting = route != null && route.animation?.status == AnimationStatus.reverse;
+    if (isExiting) return;
+
     final searchQuery = ref.read(lyricsSearchQueryProvider).toLowerCase();
     
     // If there's a search query, prioritize showing that match
@@ -96,41 +115,50 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
       );
       if (searchIndex != -1 && (searchIndex != _currentLineIndex || forceScroll)) {
         _currentLineIndex = searchIndex;
-        if (_transitionFinished) {
-          _scrollToIndex(searchIndex, isSearch: true);
-        }
+        _scrollToIndex(searchIndex, isSearch: true, animate: _transitionFinished);
         if (mounted) setState(() {});
         return;
       }
     }
 
-    final index = widget.lines.indexWhere(
+    int index = widget.lines.indexWhere(
       (line) =>
           position >= line.startTime &&
           position < line.endTime,
     );
 
+    if (index == -1 && widget.lines.isNotEmpty) {
+      if (position < widget.lines.first.startTime) {
+        index = 0;
+      } else if (position >= widget.lines.last.endTime) {
+        index = widget.lines.length - 1;
+      }
+    }
+
+    final isManual = ref.read(lyricsManualScrollProvider);
     if (index != -1 && (index != _currentLineIndex || forceScroll)) {
       _currentLineIndex = index;
-      if (_transitionFinished) {
-        _scrollToIndex(index);
+      if (!isManual || forceScroll) {
+        _scrollToIndex(index, animate: _transitionFinished);
       }
       if (mounted) setState(() {});
     }
   }
 
-  void _scrollToIndex(int index, {bool isSearch = false}) {
+  void _scrollToIndex(int index, {bool isSearch = false, bool animate = true}) {
+    if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final key = _lineKeys[index];
-      if (key?.currentContext != null) {
-        Scrollable.ensureVisible(
-          key!.currentContext!,
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.fastOutSlowIn,
-          alignment: isSearch ? 0.5 : 0.2, // Center more for search matches
-        );
-      } else {
-        if (_scrollController.hasClients) {
+      if (animate) {
+        if (key?.currentContext != null) {
+          Scrollable.ensureVisible(
+            key!.currentContext!,
+            duration: const Duration(milliseconds: 600),
+            curve: Curves.fastOutSlowIn,
+            alignment: isSearch ? 0.5 : 0.2, // Center more for search matches
+          );
+        } else if (_scrollController.hasClients) {
           _scrollController
               .animateTo(
                 (index * 80.0),
@@ -148,6 +176,30 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
                 }
               });
         }
+      } else {
+        // Entrance: jump to slightly offset position, then animate to target to show a beautiful scroll entry effect
+        if (_scrollController.hasClients) {
+          final startOffset = (index * 80.0 - 80.0).clamp(0.0, double.infinity);
+          _scrollController.jumpTo(startOffset);
+        }
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final currentKey = _lineKeys[index];
+          if (currentKey?.currentContext != null) {
+            Scrollable.ensureVisible(
+              currentKey!.currentContext!,
+              duration: const Duration(milliseconds: 1000),
+              curve: Curves.easeOutCubic,
+              alignment: isSearch ? 0.5 : 0.2,
+            );
+          } else if (_scrollController.hasClients) {
+            _scrollController.animateTo(
+              (index * 80.0),
+              duration: const Duration(milliseconds: 1000),
+              curve: Curves.easeOutCubic,
+            );
+          }
+        });
       }
     });
   }
@@ -164,11 +216,16 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
     ref.listen<Duration>(
       playbackProvider.select((s) => s.position),
       (previous, next) {
-        if (next != null) {
-          _updateActiveLine(next);
-        }
+        _updateActiveLine(next);
       },
     );
+
+    ref.listen<bool>(lyricsManualScrollProvider, (previous, next) {
+      if (next == false) {
+        final currentPos = ref.read(playbackProvider).position;
+        _updateActiveLine(currentPos, forceScroll: true);
+      }
+    });
 
     return GestureDetector(
       onScaleStart: (details) {

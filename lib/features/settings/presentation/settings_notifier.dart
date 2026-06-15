@@ -4,6 +4,7 @@ import '../../../core/db_service.dart';
 import '../../library/domain/models/models.dart';
 
 import '../../library/data/artwork_downloader_service.dart';
+import '../../../core/app_fonts.dart';
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, AppSettings>((
   ref,
@@ -71,6 +72,12 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         settings.settingsV2 = true;
         needsSave = true;
       }
+      if (!settings.settingsV3) {
+        settings.dynamicLyrics = false;
+        settings.blurredArtworkForLyrics = true;
+        settings.settingsV3 = true;
+        needsSave = true;
+      }
       if (needsSave) {
         await DbService.isar.writeTxn(() async {
           await DbService.isar.appSettings.put(settings);
@@ -96,6 +103,9 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         ..showQualityBadge = true
         ..enablePlayerGradient = true
         ..settingsV2 = true
+        ..settingsV3 = true
+        ..dynamicLyrics = false
+        ..blurredArtworkForLyrics = true
         ..showPerformanceOptimizer = false;
       await DbService.isar.writeTxn(() async {
         await DbService.isar.appSettings.put(defaultSettings);
@@ -103,10 +113,15 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       state = defaultSettings;
     }
 
+    _updateActiveFont();
 
     if (state.downloadArtwork && state.enableInternet) {
       ArtworkDownloaderService().downloadAllMissingArtworks();
     }
+  }
+
+  void _updateActiveFont() {
+    AppFonts.activeFontFamily = state.useNewFont ? (state.customFontFamily ?? 'Jost') : 'DM Sans';
   }
 
   Future<void> updateLibraryFolders(List<String> folders) async {
@@ -169,6 +184,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..showQualityBadge = s.showQualityBadge
       ..enablePlayerGradient = s.enablePlayerGradient
       ..settingsV2 = s.settingsV2
+      ..settingsV3 = s.settingsV3
+      ..blurredArtworkForLyrics = s.blurredArtworkForLyrics
       ..customBackgroundImagePath = s.customBackgroundImagePath
       ..bgBrightness = s.bgBrightness
       ..bgOpacity = s.bgOpacity
@@ -199,7 +216,17 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..libraryDarkness = s.libraryDarkness
       ..musicDarkness = s.musicDarkness
       ..lyricsDarkness = s.lyricsDarkness
-      ..showPerformanceOptimizer = s.showPerformanceOptimizer;
+      ..showPerformanceOptimizer = s.showPerformanceOptimizer
+      ..useNewFont = s.useNewFont
+      ..customFontFamily = s.customFontFamily;
+  }
+
+  Future<void> updateBlurredArtworkForLyrics(bool value) async {
+    final newState = _clone(state)..blurredArtworkForLyrics = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
   }
 
   Future<void> updateShowQualityBadge(bool value) async {
@@ -547,6 +574,20 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     final newState = _clone(state)..lyricsDarkness = value;
     await _save(newState);
     state = newState;
+  }
+
+  Future<void> updateUseNewFont(bool value) async {
+    final newState = _clone(state)..useNewFont = value;
+    await _save(newState);
+    state = newState;
+    _updateActiveFont();
+  }
+
+  Future<void> updateCustomFontFamily(String value) async {
+    final newState = _clone(state)..customFontFamily = value;
+    await _save(newState);
+    state = newState;
+    _updateActiveFont();
   }
 
   Future<void> _save(AppSettings settings) async {

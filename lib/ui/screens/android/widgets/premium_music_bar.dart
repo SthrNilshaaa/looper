@@ -263,6 +263,8 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                     flex: 2, 
                     useBlur: useBlur,
                     keepSurfaceOnDisableBlur: true,
+
+                    heroTag: 'player_play_pause_btn',
                     //forceBlur true,
                     useExpanded: true,
                     onTap: null, // Handled by parent GestureDetector
@@ -273,9 +275,11 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                       bottomRight: Radius.circular(36),
                     ),
                     child: Center(
-                      child: Hero(
-                        tag: 'play_pause_icon',
-                        child: Padding(
+                      child: 
+                      //Hero(
+                     //  tag: 'play_pause_icon',
+                       // child:
+                         Padding(
                           padding: const EdgeInsets.only(right: 2.0),
                           child: AnimatedScale(
                             scale:  1.0,
@@ -296,7 +300,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                             ),
                           ),
                         ),
-                      ),  
+                     // ),  
                     ),
                   ),
                 ],
