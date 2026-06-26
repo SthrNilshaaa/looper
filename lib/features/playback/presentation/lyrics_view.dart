@@ -39,7 +39,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     try {
       await WakelockPlus.enable();
     } catch (e) {
-      debugPrint('Failed to enable wakelock: $e');
+
     }
   }
 
@@ -47,7 +47,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     try {
       await WakelockPlus.disable();
     } catch (e) {
-      debugPrint('Failed to disable wakelock: $e');
+
     }
   }
 

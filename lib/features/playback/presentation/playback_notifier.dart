@@ -195,37 +195,37 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   Future<void> _init() async {
     player.stream.error.listen((err) {
-      print('❌ Native mpv error: $err');
+
     });
 
     player.stream.log.listen((entry) {
-      print('🎵 Native mpv log [${entry.prefix} / ${entry.level}]: ${entry.text}');
+
     });
 
     player.stream.internalLog.listen((entry) {
-      print('🎵 Native mpv internalLog: ${entry.text}');
+
     });
 
     player.stream.playing.listen((playing) {
-      print('🎵 player.stream.playing event: $playing. State isPlaying: ${state.isPlaying}. _isTransitioning: $_isTransitioning');
+
       if (_isTransitioning && !playing) {
-        print('🎵 Ignoring playing event: transitioning and not playing');
+
         // Ignore temporary pause/stop events while transitioning/opening a new song
         return;
       }
       if (state.isScrubbing) {
-        print('🎵 Ignoring playing event: scrubbing');
+
         // Ignore playing state changes while the user is scrubbing the seek bar
         // to prevent the play/pause button from flickering
         return;
       }
       if (DateTime.now().difference(_lastSeekTime).inMilliseconds < 400) {
-        print('🎵 Ignoring playing event: seek time window < 400ms');
+
         // Ignore playing state changes immediately after a seek/scrub operation
         // to prevent play/pause button state flickering
         return;
       }
-      print('🎵 Updating state.isPlaying to: $playing');
+
       state = state.copyWith(isPlaying: playing);
       _updateNotification();
     });
@@ -286,23 +286,23 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
     DateTime? lastCompletedTime;
     player.stream.completed.listen((completed) {
-      print('🎵 player.stream.completed event: $completed. _isTransitioning: $_isTransitioning');
+
       if (completed) {
         if (_isTransitioning) {
-          print('🎵 Ignoring completion event: currently transitioning');
+
           return;
         }
         final now = DateTime.now();
         if (now.difference(_lastPlayTime).inMilliseconds < 1500) {
-          print('🎵 Ignoring completion event during transition guard window (${now.difference(_lastPlayTime).inMilliseconds}ms).');
+
           return;
         }
         if (lastCompletedTime != null && now.difference(lastCompletedTime!).inMilliseconds < 1000) {
-          print('🎵 Ignoring completion event: double trigger within 1s');
+
           return;
         }
         lastCompletedTime = now;
-        print('🎵 Processing song completion...');
+
 
         if (state.isSleepTimerActive && state.sleepTimerSongsRemaining != null) {
           final remaining = state.sleepTimerSongsRemaining! - 1;
@@ -469,13 +469,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   Future<void> play(Song song, {bool forceDisableCrossfade = false, bool play = true}) async {
-    print('🎵 play() called for song: ${song.title}. Path: ${song.path}');
+
     _silenceTimer?.cancel();
     final settings = ref.read(settingsProvider);
     if (play && settings.audioFocus) {
       final onCall = await ref.read(audioServiceProvider).isOnCall();
       if (onCall) {
-        print('🎵 Cannot play song: Device is currently on a call.');
+
         _showErrorSnackBar(
           'Playback blocked: Cannot play music during an active call',
           (l10n) => l10n.activeCallCannotPlay,
@@ -489,7 +489,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       await _requestStoragePermissions();
       final file = File(song.path);
       if (!await file.exists()) {
-        print('❌ File does not exist: ${song.path}');
+
         _showErrorSnackBar(
           'File not found or inaccessible: ${song.title}',
           (l10n) => 'File not found or inaccessible: ${song.title}',
@@ -501,23 +501,23 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     final crossfadeId = ++_activeCrossfadeId;
     _isTransitioning = true;
     _lastPlayTime = DateTime.now();
-    print('🎵 Starting playback transition. crossfadeId: $crossfadeId. _isTransitioning set to true');
+
 
     try {
       player.setVolume(state.volume * 100);
-      print('🎵 Calling _playDirect for crossfadeId: $crossfadeId');
+
       await _playDirect(song, crossfadeId, play: play);
-      print('🎵 _playDirect completed successfully for crossfadeId: $crossfadeId');
+
     } catch (e) {
-      print('🎵 Error in play: $e');
+
       if (crossfadeId == _activeCrossfadeId) {
         try {
-          print('🎵 Retrying _playDirect for crossfadeId: $crossfadeId');
+
           player.setVolume(state.volume * 100);
           await _playDirect(song, crossfadeId, play: play);
-          print('🎵 Retry of _playDirect completed successfully for crossfadeId: $crossfadeId');
+
         } catch (retryError) {
-          print('🎵 Retry error in play: $retryError');
+
           _showErrorSnackBar(
             'Playback failed: ${retryError.toString()}',
             (l10n) => 'Playback failed: ${retryError.toString()}',
@@ -525,17 +525,17 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           rethrow;
         }
       } else {
-        print('🎵 Skipping retry: active crossfade ID changed to $_activeCrossfadeId');
+
       }
     } finally {
       if (crossfadeId == _activeCrossfadeId) {
         int attempts = 0;
-        print('🎵 Finally block: checking if player is completed. Current player.state.completed: ${player.state.completed}');
+
         while (player.state.completed && attempts < 20) {
           await Future.delayed(const Duration(milliseconds: 25));
           attempts++;
         }
-        print('🎵 Finally block: finished waiting. Attempts: $attempts. Setting _isTransitioning to false');
+
         _isTransitioning = false;
       }
     }
@@ -745,14 +745,14 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     final playPauseId = ++_activePlayPauseId;
     final audioSvc = ref.read(audioServiceProvider);
 
-    print('🎵 togglePlay called. currentPlaying: $currentPlaying, targetPlaying: $targetPlaying, playlistIsEmpty: ${player.state.playlist.items.isEmpty}, completed: ${player.state.completed}, stateDuration: ${state.duration}');
+
 
     try {
       if (targetPlaying) {
         if (settings.audioFocus) {
           final onCall = await ref.read(audioServiceProvider).isOnCall();
           if (onCall) {
-            print('🎵 Cannot play/resume: Device is currently on a call.');
+
             _showErrorSnackBar(
               'Playback blocked: Cannot play music during an active call',
               (l10n) => l10n.activeCallCannotPlay,
@@ -763,13 +763,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
 
       if (!targetPlaying) {
-        print('🎵 Pausing playback');
+
         if (settings.fadePlayPauseStop && settings.playPauseStopFadeLength > 0) {
           _fadeVolume(0.0, Duration(milliseconds: settings.playPauseStopFadeLength), onComplete: () async {
             try {
               await audioSvc.pause();
             } catch (e) {
-              print('🎵 Error in pause: $e');
+
             } finally {
               player.setVolume(state.volume * 100);
             }
@@ -801,14 +801,14 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         }
 
         if (player.state.playlist.items.isEmpty || player.state.completed || state.duration == Duration.zero) {
-          print('🎵 Playlist empty, completed, or duration is zero. Reloading song via play().');
+
           if (songToPlay != null) {
             await play(songToPlay);
           } else {
-            print('🎵 Cannot reload: songToPlay is null');
+
           }
         } else {
-          print('🎵 Resuming playback');
+
           _lastPlayTime = DateTime.now(); // Record resumption time
           if (settings.fadePlayPauseStop && settings.playPauseStopFadeLength > 0) {
             player.setVolume(0);
@@ -821,7 +821,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         }
       }
     } catch (e) {
-      print('🎵 Error in togglePlay: $e');
+
       _showErrorSnackBar(
         'Playback action failed: ${e.toString()}',
         (l10n) => 'Playback action failed: ${e.toString()}',
@@ -973,17 +973,17 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _activeSeekId++;
     _lastSeekTime = DateTime.now();
     final settings = ref.read(settingsProvider);
-    print('🎵 seek called with position: $position. isScrubbing: ${state.isScrubbing}');
+
     try {
       if (settings.fadeOnSeek && settings.seekFadeLength > 0 && !state.isScrubbing) {
         final targetVol = state.volume;
         _fadeVolume(0.0, Duration(milliseconds: (settings.seekFadeLength / 2).round()), onComplete: () async {
           try {
-            print('🎵 Executing faded player.seek to $position');
+
             await player.seek(position);
             state = state.copyWith(position: position);
           } catch (e) {
-            print('🎵 Error in faded player.seek: $e');
+
             _showErrorSnackBar(
               'Seek failed: ${e.toString()}',
               (l10n) => 'Seek failed: ${e.toString()}',
@@ -993,7 +993,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           }
         });
       } else {
-        print('🎵 Executing direct player.seek to $position');
+
         await player.seek(position);
         state = state.copyWith(position: position);
         if (!state.isScrubbing) {
@@ -1001,7 +1001,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         }
       }
     } catch (e) {
-      print('🎵 Error in player.seek: $e');
+
       _showErrorSnackBar(
         'Seek failed: ${e.toString()}',
         (l10n) => 'Seek failed: ${e.toString()}',
@@ -1141,13 +1141,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       final audioStatusBefore = await Permission.audio.status;
       final storageStatusBefore = await Permission.storage.status;
       final manageStatusBefore = await Permission.manageExternalStorage.status;
-      print('🎵 Permission statuses BEFORE request - audio: $audioStatusBefore, storage: $storageStatusBefore, manageExternalStorage: $manageStatusBefore');
+
 
       // Check if we already have permissions
       if (audioStatusBefore.isGranted ||
           storageStatusBefore.isGranted ||
           manageStatusBefore.isGranted) {
-        print('🎵 Storage permissions already granted (at least one)');
+
         return true;
       }
 
@@ -1159,14 +1159,14 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
       final audioStatusAfter = statuses[Permission.audio] ?? PermissionStatus.denied;
       final storageStatusAfter = statuses[Permission.storage] ?? PermissionStatus.denied;
-      print('🎵 Permission statuses AFTER request - audio: $audioStatusAfter, storage: $storageStatusAfter');
+
 
       bool isGranted = audioStatusAfter.isGranted || storageStatusAfter.isGranted;
 
       if (!isGranted) {
-        print('🎵 Requesting manageExternalStorage since other permissions were not granted');
+
         final manageStatusAfter = await Permission.manageExternalStorage.request();
-        print('🎵 Permission status AFTER manageExternalStorage request: $manageStatusAfter');
+
         if (manageStatusAfter.isGranted) {
           isGranted = true;
         }
@@ -1174,7 +1174,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
       return isGranted;
     } catch (e) {
-      print('Error requesting storage permissions: $e');
+
       return true; // Fallback to let the app try physical operations
     }
   }
@@ -1183,7 +1183,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     try {
       await _requestStoragePermissions();
     } catch (e) {
-      print('Permission request failed: $e');
+
     }
 
     final sanitizedTitle = newTitle.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
@@ -1211,7 +1211,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     if (newPath != song.path) {
       try {
         if (newPath.toLowerCase() != song.path.toLowerCase() && await File(newPath).exists()) {
-          print('Physical file rename failed: target file already exists');
+
           if (isCurrent) {
             // Restore playback of the original song
             await play(song, play: wasPlaying);
@@ -1225,7 +1225,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           fileRenamed = true;
         }
       } catch (e) {
-        print('Physical file rename failed (continuing with DB update): $e');
+
       }
     } else {
       fileRenamed = true;
@@ -1261,7 +1261,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         state = state.copyWith(queue: List.from(_playlist));
       }
     } catch (e) {
-      print('Error renaming in DB: $e');
+
       if (isCurrent) {
         // Fallback: restore player using original song/state
         await play(song, play: wasPlaying);
@@ -1346,7 +1346,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
       return true;
     } catch (e) {
-      print('Error editing song metadata: $e');
+
       return false;
     }
   }
@@ -1355,7 +1355,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     try {
       await _requestStoragePermissions();
     } catch (e) {
-      print('Permission request failed: $e');
+
     }
 
     final isCurrent = state.currentSong?.id == song.id;
@@ -1376,7 +1376,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         fileDeleted = true;
       }
     } catch (e) {
-      print('Physical file delete failed (continuing with DB delete): $e');
+
     }
 
     bool dbSuccess = false;
@@ -1424,7 +1424,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       // Clean up orphaned artists and albums
       await _cleanUpOrphanedArtistsAndAlbums();
     } catch (e) {
-      print('Error deleting from DB: $e');
+
     }
 
     if (!dbSuccess) {
@@ -1453,7 +1453,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         }
       });
     } catch (e) {
-      print('Error cleaning up orphaned artists/albums: $e');
+
     }
   }
 
@@ -1471,7 +1471,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           message = getLocalizedMessage(l10n);
         }
       } catch (e) {
-        print('Failed to get AppLocalizations: $e');
+
       }
     }
 
@@ -1548,7 +1548,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         _updateWidgetState();
       }
     } catch (e, s) {
-      print('Error checking lyrics for widget: $e\n$s');
+
     }
   }
 
@@ -1610,7 +1610,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         qualifiedAndroidName: 'com.looper.player.PlayerWidgetProviderLargeLyrics',
       );
     } catch (e, s) {
-      print('Error updating widget state: $e\n$s');
+
     }
   }
 

@@ -31,8 +31,12 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
           colorScheme: ColorScheme.fromSeed(
             seedColor: Color(_settings.accentColor),
             primary: Color(_settings.accentColor),
-            surface: _settings.darkTheme ? Colors.black : const Color(0xFF11110E),
-            surfaceContainer: _settings.darkTheme ? const Color(0xFF0A0A0A) : const Color(0xFF1E1E1E),
+            surface: _settings.darkTheme
+                ? Colors.black
+                : const Color(0xFF11110E),
+            surfaceContainer: _settings.darkTheme
+                ? const Color(0xFF0A0A0A)
+                : const Color(0xFF1E1E1E),
             brightness: Brightness.dark,
           ),
         ),
@@ -45,17 +49,14 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
     final oldSettings = _settings;
     _settings = newSettings;
 
-    debugPrint(
-      '⚙️ Settings updated in ThemeNotifier. Dynamic: ${newSettings.enableDynamicTheming}, Dark: ${newSettings.darkTheme}, Color: ${Color(newSettings.accentColor)}',
-    );
-
     // Handle theme reset logic
     if (!newSettings.enableDynamicTheming) {
       if (oldSettings.enableDynamicTheming ||
           oldSettings.darkTheme != newSettings.darkTheme ||
           oldSettings.accentColor != newSettings.accentColor) {
         _resetTheme();
-      } else if (!oldSettings.dynamicAccentColor && newSettings.dynamicAccentColor) {
+      } else if (!oldSettings.dynamicAccentColor &&
+          newSettings.dynamicAccentColor) {
         final playback = _ref.read(playbackProvider);
         updateFromImage(playback.currentSong?.artPath);
       }
@@ -102,12 +103,15 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
         newLightness = newLightness.clamp(0.0, 0.95);
         final brighterColor = hsl.withLightness(newLightness).toColor();
 
-        debugPrint('🎨 Extracted vibrant color (adaptive_palette): $vibrantColor -> Brightened: $brighterColor');
         vibrantColor = brighterColor;
 
         // Update the state
-        final surfaceColor = _settings.darkTheme ? Colors.black : const Color(0xFF11110E);
-        final containerColor = _settings.darkTheme ? const Color(0xFF0A0A0A) : const Color(0xFF1E1E1E);
+        final surfaceColor = _settings.darkTheme
+            ? Colors.black
+            : const Color(0xFF11110E);
+        final containerColor = _settings.darkTheme
+            ? const Color(0xFF0A0A0A)
+            : const Color(0xFF1E1E1E);
 
         state = state.copyWith(
           colorScheme: ColorScheme.fromSeed(
@@ -122,29 +126,27 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
 
         // PERSIST the color to database if enabled
         if (_settings.saveDynamicColor || _settings.dynamicAccentColor) {
-          debugPrint('💾 Requesting database save for color: $vibrantColor');
           await _ref
               .read(settingsProvider.notifier)
               .updateAccentColor(vibrantColor.value);
         }
       }
     } catch (e) {
-      debugPrint('Error updating theme from image: $e');
     } finally {
       _isUpdating = false;
     }
   }
 
   void _resetTheme() {
-    debugPrint(
-      '🔄 Resetting theme to accent color: ${Color(_settings.accentColor)}, OLED Mode: ${_settings.darkTheme}',
-    );
-    
     // darkTheme ON = OLED/Pure Black (#000000)
     // darkTheme OFF = Premium Deep Black (#11110E)
-    final surfaceColor = _settings.darkTheme ? Colors.black : const Color(0xFF11110E);
-    final containerColor = _settings.darkTheme ? const Color(0xFF0A0A0A) : const Color(0xFF1E1E1E);
-    
+    final surfaceColor = _settings.darkTheme
+        ? Colors.black
+        : const Color(0xFF11110E);
+    final containerColor = _settings.darkTheme
+        ? const Color(0xFF0A0A0A)
+        : const Color(0xFF1E1E1E);
+
     state = state.copyWith(
       colorScheme: ColorScheme.fromSeed(
         seedColor: Color(_settings.accentColor),
@@ -165,7 +167,8 @@ final themeProvider = StateNotifierProvider<ThemeNotifier, ThemeState>((ref) {
   // Watch current song and update theme if dynamic theming or dynamic accent color is enabled
   ref.listen(playbackProvider, (previous, next) {
     final currentSettings = ref.read(settingsProvider);
-    if ((currentSettings.enableDynamicTheming || currentSettings.dynamicAccentColor) &&
+    if ((currentSettings.enableDynamicTheming ||
+            currentSettings.dynamicAccentColor) &&
         next.currentSong?.artPath != previous?.currentSong?.artPath) {
       notifier.updateFromImage(next.currentSong?.artPath);
     }

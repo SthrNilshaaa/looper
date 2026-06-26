@@ -33,7 +33,7 @@ final artworkColorProvider = FutureProvider<Color?>((ref) async {
       return hsl.withLightness(newLightness).toColor();
     }
   } catch (e) {
-    debugPrint('Error extracting color in artworkColorProvider: $e');
+
   }
   return null;
 });

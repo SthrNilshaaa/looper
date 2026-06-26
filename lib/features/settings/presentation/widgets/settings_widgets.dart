@@ -62,10 +62,10 @@ class MaintainerTile extends StatelessWidget {
     final Uri uri = Uri.parse(url);
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        debugPrint('Could not launch $url');
+
       }
     } catch (e) {
-      debugPrint('Error launching URL: $e');
+
     }
   }
 

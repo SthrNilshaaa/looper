@@ -26,7 +26,7 @@ class LyricsCache {
       final file = File(p.join(dir.path, '$key.lrc'));
       await file.writeAsString(lrc);
     } catch (e) {
-      print('Error saving lyrics to cache: $e');
+
     }
   }
 
@@ -39,7 +39,7 @@ class LyricsCache {
         return await file.readAsString();
       }
     } catch (e) {
-      print('Error reading lyrics from cache: $e');
+
     }
     return null;
   }

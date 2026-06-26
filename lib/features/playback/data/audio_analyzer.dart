@@ -110,7 +110,7 @@ class AudioAnalyzer {
       _cache[filePath] = analysis;
       return analysis;
     } catch (e) {
-      debugPrint('Error analyzing audio: $e');
+
       return null;
     }
   }
@@ -148,7 +148,7 @@ class AudioAnalyzer {
         };
       }
     } catch (e) {
-      debugPrint('Error analyzing loudness: $e');
+
     } finally {
       await FFmpegKitConfig.setLogLevel(Level.avLogError);
     }

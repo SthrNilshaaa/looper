@@ -114,7 +114,7 @@ class LyricsFetcher {
         });
       }
     } catch (e) {
-      debugPrint('Error fetching online lyrics: $e');
+
     }
 
     return lrc;

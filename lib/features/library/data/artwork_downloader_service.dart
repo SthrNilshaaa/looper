@@ -48,7 +48,7 @@ class ArtworkDownloaderService {
       query = '${song.artist} $cleanTitle';
     }
 
-    debugPrint('🎨 ArtworkDownloader: Searching iTunes for query: "$query" (Original: "${song.artist} - ${song.title}")');
+
 
     try {
       final url = Uri.parse(iTunesSearchUrl).replace(queryParameters: {
@@ -66,17 +66,17 @@ class ArtworkDownloaderService {
           String? imageUrl = result['artworkUrl100'];
           if (imageUrl != null) {
             imageUrl = imageUrl.replaceAll('100x100bb', '600x600bb');
-            debugPrint('🎨 ArtworkDownloader: Found artwork image URL: $imageUrl');
+
             return await _downloadAndSaveArt(song.album ?? 'unknown', imageUrl);
           }
         } else {
-          debugPrint('🎨 ArtworkDownloader: No results found for query: "$query"');
+
         }
       } else {
-        debugPrint('🎨 ArtworkDownloader: iTunes search failed with status: ${response.statusCode}');
+
       }
     } catch (e) {
-      debugPrint('Error searching artwork for "${song.title}": $e');
+
     }
     return null;
   }
@@ -94,24 +94,24 @@ class ArtworkDownloaderService {
           .findAll();
 
       if (songsWithMissingArt.isEmpty) {
-        debugPrint('🎨 ArtworkDownloader: No songs are missing artwork in the database.');
+
         return;
       }
 
-      debugPrint('🎨 ArtworkDownloader: Starting to download missing artwork for ${songsWithMissingArt.length} songs...');
+
 
       int downloadCount = 0;
       for (final song in songsWithMissingArt) {
         // Check if downloadArtwork setting is still enabled during execution
         final settings = await DbService.isar.appSettings.get(0);
         if (settings == null || !settings.downloadArtwork || !settings.enableInternet) {
-          debugPrint('🎨 ArtworkDownloader: Download stopped because setting was disabled or internet disabled.');
+
           break;
         }
 
         final artPath = await downloadArtworkForSong(song);
         if (artPath != null) {
-          debugPrint('🎨 Downloaded artwork for "${song.title}" -> $artPath');
+
           downloadCount++;
 
           await DbService.isar.writeTxn(() async {
@@ -139,9 +139,9 @@ class ArtworkDownloaderService {
         // Politeness delay to avoid hitting rate limits
         await Future.delayed(const Duration(milliseconds: 500));
       }
-      debugPrint('🎨 ArtworkDownloader: Finished downloading missing artworks. Downloaded $downloadCount covers.');
+
     } catch (e) {
-      debugPrint('Error in downloadAllMissingArtworks: $e');
+
     }
   }
 
@@ -160,10 +160,10 @@ class ArtworkDownloaderService {
         await file.writeAsBytes(response.bodyBytes);
         return file.path;
       } else {
-        debugPrint('🎨 ArtworkDownloader: Image download failed with status: ${response.statusCode}');
+
       }
     } catch (e) {
-      debugPrint('Error downloading artwork image: $e');
+
     }
     return null;
   }

@@ -61,7 +61,7 @@ void main(List<String> args) async {
   try {
     await FlutterDisplayMode.setHighRefreshRate();
   } catch (e) {
-    debugPrint('Error setting high refresh rate: $e');
+
   }
 
   runApp(

@@ -97,7 +97,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
     try {
       await WakelockPlus.enable();
     } catch (e) {
-      debugPrint('Failed to enable wakelock: $e');
+
     }
   }
 
@@ -105,7 +105,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
     try {
       await WakelockPlus.disable();
     } catch (e) {
-      debugPrint('Failed to disable wakelock: $e');
+
     }
   }
 

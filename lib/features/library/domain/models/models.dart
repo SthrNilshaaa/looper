@@ -36,7 +36,12 @@ class Song {
 
   // Metadata for search
   @Index(type: IndexType.value, caseSensitive: false)
-  List<String> get searchTerms => [title, artist ?? '', album ?? '', lyrics ?? ''];
+  List<String> get searchTerms => [
+    title,
+    artist ?? '',
+    album ?? '',
+    lyrics ?? '',
+  ];
 }
 
 @collection
@@ -113,7 +118,13 @@ class AppSettings {
   bool showHomeArtists = true;
   bool showHomeAlbums = false;
   bool showHomeGenres = true;
-  List<String> homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres'];
+  List<String> homeSectionOrder = [
+    'quick_picks',
+    'songs',
+    'albums',
+    'artists',
+    'genres',
+  ];
   bool enableSlideGesture = false;
   bool stopOnTaskRemoved = false;
   bool persistQueue = true;
@@ -153,9 +164,8 @@ class AppSettings {
   bool equalizerEnabled = false;
   List<double> globalEqualizerGains = [];
   bool enableAudioCache = true;
-  int audioCacheSizeMB = 100;
-  int audioCacheSecs = 30;
-  int audioBackCacheSizeMB = 50;
+  int audioCacheSizeMB = 200;
+  int audioCacheSecs = 120;
+  int audioBackCacheSizeMB = 100;
   bool exclusiveHardwareMode = false;
 }
-

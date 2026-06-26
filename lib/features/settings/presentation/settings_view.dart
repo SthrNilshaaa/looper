@@ -1356,7 +1356,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                                     await launchUrl(uri,
                                         mode: LaunchMode.externalApplication);
                                   } catch (e) {
-                                    debugPrint('Error launching URL: $e');
+
                                   }
                                 },
                                 child: SizedBox(

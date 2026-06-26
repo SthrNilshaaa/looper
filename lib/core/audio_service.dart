@@ -29,10 +29,11 @@ class AudioService {
   Future<bool> isOnCall() async {
     if (!Platform.isAndroid) return false;
     try {
-      final bool? result = await _broadcastChannel.invokeMethod<bool>('isOnCall');
+      final bool? result = await _broadcastChannel.invokeMethod<bool>(
+        'isOnCall',
+      );
       return result ?? false;
     } catch (e) {
-      debugPrint('Error checking call state: $e');
       return false;
     }
   }
@@ -81,9 +82,7 @@ class AudioService {
     // ── Precision position updates for lyrics sync (15ms tick) ──────────────
     try {
       await player.setRawProperty('playback-time-update-interval', '0.015');
-    } catch (e) {
-      debugPrint('Failed to set playback-time-update-interval: $e');
-    }
+    } catch (e) {}
 
     // ── Audio format: 32-bit float through typed API ─────────────────────────
     // All internal processing (EQ, DSP, mixing) happens in float32 precision.
@@ -96,7 +95,6 @@ class AudioService {
       try {
         await player.setRawProperty('audio-format', 'float');
       } catch (_) {}
-      debugPrint('setAudioFormat float32 fell back to raw property: $e');
     }
 
     // ── Volume ceiling: 150% for full ReplayGain/preamp headroom ────────────
@@ -105,53 +103,39 @@ class AudioService {
     // internally before reaching the AO.
     try {
       await player.setRawProperty('volume-max', '150');
-    } catch (e) {
-      debugPrint('Failed to set volume-max: $e');
-    }
+    } catch (e) {}
 
     // ── Audio buffer: 2 seconds — glitch-free under CPU pressure ────────────
     try {
-      await player.setRawProperty('audio-buffer', '2.0');
-    } catch (e) {
-      debugPrint('Failed to set audio-buffer: $e');
-    }
+      await player.setRawProperty('audio-buffer', '4.0');
+    } catch (e) {}
 
     // ── Readahead: 10 seconds — essential for large lossless files ──────────
     // FLAC/WAV at 24-bit/192kHz can have very large frames; short readahead
     // causes micro-stutters on storage-bound devices.
     try {
-      await player.setRawProperty('demuxer-readahead-secs', '10');
-    } catch (e) {
-      debugPrint('Failed to set demuxer-readahead-secs: $e');
-    }
+      await player.setRawProperty('demuxer-readahead-secs', '20');
+    } catch (e) {}
 
     // ── Keep audio device open with silence (no click on play/pause) ─────────
     try {
       await player.setRawProperty('audio-stream-silence', 'yes');
-    } catch (e) {
-      debugPrint('Failed to set audio-stream-silence: $e');
-    }
+    } catch (e) {}
 
     // ── Gapless: true gapless at the engine level ────────────────────────────
     try {
       await player.setRawProperty('gapless-audio', 'yes');
-    } catch (e) {
-      debugPrint('Failed to set gapless-audio: $e');
-    }
+    } catch (e) {}
 
     // ── Downmix normalisation: prevents clipping on multi-channel sources ────
     try {
       await player.setRawProperty('audio-normalize-downmix', 'yes');
-    } catch (e) {
-      debugPrint('Failed to set audio-normalize-downmix: $e');
-    }
+    } catch (e) {}
 
     // ── ReplayGain anti-clip ─────────────────────────────────────────────────
     try {
       await player.setRawProperty('replaygain-clip', 'yes');
-    } catch (e) {
-      debugPrint('Failed to set replaygain-clip: $e');
-    }
+    } catch (e) {}
 
     // ── Disable mpv's built-in scaletempo pitch-correction ──────────────────
     // When `setRate(1.0)`, mpv still inserts scaletempo as a no-op by default.
@@ -159,9 +143,7 @@ class AudioService {
     // so this internal tap only wastes CPU and introduces a resampling stage.
     try {
       await player.setRawProperty('audio-pitch-correction', 'no');
-    } catch (e) {
-      debugPrint('Failed to set audio-pitch-correction: $e');
-    }
+    } catch (e) {}
 
     // ── Force software decode (preserves full 32-bit float path) ────────────
     // Android AAudio/OpenSL hardware decode paths may reduce internal bit depth
@@ -169,39 +151,40 @@ class AudioService {
     // reaches the AO untouched.
     try {
       await player.setRawProperty('hwdec', 'no');
-    } catch (e) {
-      debugPrint('Failed to set hwdec=no: $e');
-    }
+    } catch (e) {}
 
     _initMediaSession();
   }
 
-  void _initMediaSession({InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume}) {
-    player.setMediaSession(MediaSession(
-      appName: 'Looper Player',
-      desktopEntry: 'looper_player',
-      autoApplyPlaylistNavigation: false, // Let our PlaybackNotifier coordinate queue actions
-      actions: const {
-        MediaAction.play,
-        MediaAction.pause,
-        MediaAction.playPause,
-        MediaAction.next,
-        MediaAction.previous,
-        MediaAction.seek,
-        MediaAction.like,
-        MediaAction.setShuffle,
-        MediaAction.setRepeatMode,
-      },
-      interruptionPolicy: interruptionPolicy,
-    ));
+  void _initMediaSession({
+    InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume,
+  }) {
+    player.setMediaSession(
+      MediaSession(
+        appName: 'Looper Player',
+        desktopEntry: 'looper_player',
+        autoApplyPlaylistNavigation:
+            false, // Let our PlaybackNotifier coordinate queue actions
+        actions: const {
+          MediaAction.play,
+          MediaAction.pause,
+          MediaAction.playPause,
+          MediaAction.next,
+          MediaAction.previous,
+          MediaAction.seek,
+          MediaAction.like,
+          MediaAction.setShuffle,
+          MediaAction.setRepeatMode,
+        },
+        interruptionPolicy: interruptionPolicy,
+      ),
+    );
   }
 
   /// Call this when the audioFocus setting changes so the interruption
   /// policy is re-published to the native media session.
   void applyAudioFocusPolicy(InterruptionPolicy interruptionPolicy) {
-    _initMediaSession(
-      interruptionPolicy: interruptionPolicy,
-    );
+    _initMediaSession(interruptionPolicy: interruptionPolicy);
   }
 
   // Listen to media session command streams
@@ -240,17 +223,16 @@ class AudioService {
     required int backBytes,
   }) async {
     try {
-      await player.setCache(CacheSettings(
-        mode: enabled ? Cache.yes : Cache.no,
-        secs: Duration(seconds: cacheSecs),
-      ));
-      await player.setDemuxer(DemuxerSettings(
-        maxBytes: maxBytes,
-        maxBackBytes: backBytes,
-      ));
-    } catch (e) {
-      debugPrint('Failed to configure cache options: $e');
-    }
+      await player.setCache(
+        CacheSettings(
+          mode: enabled ? Cache.yes : Cache.no,
+          secs: Duration(seconds: cacheSecs),
+        ),
+      );
+      await player.setDemuxer(
+        DemuxerSettings(maxBytes: maxBytes, maxBackBytes: backBytes),
+      );
+    } catch (e) {}
   }
 
   // --- ReplayGain Scaling ---
@@ -260,15 +242,17 @@ class AudioService {
     required double preamp,
   }) async {
     try {
-      final rgMode = mode == 1 ? ReplayGain.track : (mode == 2 ? ReplayGain.album : ReplayGain.no);
-      await player.setReplayGain(ReplayGainSettings(
-        mode: rgMode,
-        preamp: preamp,
-        clip: true, // Limit peaks to prevent digital clipping
-      ));
-    } catch (e) {
-      debugPrint('Failed to configure ReplayGain: $e');
-    }
+      final rgMode = mode == 1
+          ? ReplayGain.track
+          : (mode == 2 ? ReplayGain.album : ReplayGain.no);
+      await player.setReplayGain(
+        ReplayGainSettings(
+          mode: rgMode,
+          preamp: preamp,
+          clip: true, // Limit peaks to prevent digital clipping
+        ),
+      );
+    } catch (e) {}
   }
 
   // --- Multi-track Audio Stream Handling ---
@@ -280,17 +264,18 @@ class AudioService {
       final List<dynamic> rawTracks = jsonDecode(trackListJson);
       return rawTracks
           .where((t) => t['type'] == 'audio')
-          .map((t) => {
-                'id': t['id'] as int,
-                'title': t['title'] ?? 'Track ${t['id']}',
-                'lang': t['lang'] ?? 'unknown',
-                'codec': t['codec'] ?? 'unknown',
-                'channels': t['demux-channels'] ?? 2,
-                'selected': t['selected'] as bool? ?? false,
-              })
+          .map(
+            (t) => {
+              'id': t['id'] as int,
+              'title': t['title'] ?? 'Track ${t['id']}',
+              'lang': t['lang'] ?? 'unknown',
+              'codec': t['codec'] ?? 'unknown',
+              'channels': t['demux-channels'] ?? 2,
+              'selected': t['selected'] as bool? ?? false,
+            },
+          )
           .toList();
     } catch (e) {
-      debugPrint('Error fetching track list: $e');
       return [];
     }
   }
@@ -304,9 +289,7 @@ class AudioService {
         orElse: () => activeTracks.first,
       );
       await player.setAudioTrack(Track.id(match.id));
-    } catch (e) {
-      debugPrint('Failed to select audio track: $e');
-    }
+    } catch (e) {}
   }
 
   // --- Hardware Device Routing ---
@@ -314,13 +297,9 @@ class AudioService {
   Future<List<Map<String, String>>> getAudioDevices() async {
     try {
       return player.state.audioDevices
-          .map((d) => {
-                'name': d.name,
-                'description': d.description,
-              })
+          .map((d) => {'name': d.name, 'description': d.description})
           .toList();
     } catch (e) {
-      debugPrint('Error fetching device list: $e');
       return [];
     }
   }
@@ -332,22 +311,19 @@ class AudioService {
         orElse: () => player.state.audioDevices.first,
       );
       await player.setAudioDevice(match);
-    } catch (e) {
-      debugPrint('Failed to route audio device: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> configureHardwareExclusive(bool exclusive) async {
     try {
       await player.setAudioExclusive(exclusive);
-    } catch (e) {
-      debugPrint('Failed to configure audio exclusive mode: $e');
-    }
+    } catch (e) {}
   }
 
   // --- Playback Controls ---
 
-  Future<void> play(String path, {
+  Future<void> play(
+    String path, {
     Map<String, dynamic>? metadata,
     bool play = true,
     List<double>? equalizerGains,
@@ -391,37 +367,38 @@ class AudioService {
               'bmp' => 'image/bmp',
               _ => 'image/jpeg',
             };
-            artwork = MediaSessionArtwork.custom(CoverArt(bytes: bytes, mimeType: mimeType));
-            debugPrint('🎵 AudioService: Loaded custom artwork bytes from $artPath ($mimeType)');
+            artwork = MediaSessionArtwork.custom(
+              CoverArt(bytes: bytes, mimeType: mimeType),
+            );
           }
-        } catch (e) {
-          debugPrint('⚠️ AudioService: Failed to load local artwork bytes: $e');
-        }
+        } catch (e) {}
       }
     }
 
     // Update local MediaSession options dynamically
-    player.setMediaSession(MediaSession(
-      title: metadata?['title']?.toString(),
-      artist: metadata?['artist']?.toString(),
-      album: metadata?['album']?.toString(),
-      artwork: artwork,
-      appName: 'Looper Player',
-      desktopEntry: 'looper_player',
-      autoApplyPlaylistNavigation: false,
-      actions: const {
-        MediaAction.play,
-        MediaAction.pause,
-        MediaAction.playPause,
-        MediaAction.next,
-        MediaAction.previous,
-        MediaAction.seek,
-        MediaAction.like,
-        MediaAction.setShuffle,
-        MediaAction.setRepeatMode,
-      },
-      interruptionPolicy: policy,
-    ));
+    player.setMediaSession(
+      MediaSession(
+        title: metadata?['title']?.toString(),
+        artist: metadata?['artist']?.toString(),
+        album: metadata?['album']?.toString(),
+        artwork: artwork,
+        appName: 'Looper Player',
+        desktopEntry: 'looper_player',
+        autoApplyPlaylistNavigation: false,
+        actions: const {
+          MediaAction.play,
+          MediaAction.pause,
+          MediaAction.playPause,
+          MediaAction.next,
+          MediaAction.previous,
+          MediaAction.seek,
+          MediaAction.like,
+          MediaAction.setShuffle,
+          MediaAction.setRepeatMode,
+        },
+        interruptionPolicy: policy,
+      ),
+    );
 
     final media = Media(
       path,
@@ -465,7 +442,11 @@ class AudioService {
 
   bool _filtersInitialized = false;
 
-  void _triggerThrottledEq(List<double> gains, bool enabled, String? customFilter) {
+  void _triggerThrottledEq(
+    List<double> gains,
+    bool enabled,
+    String? customFilter,
+  ) {
     _throttledGains = List<double>.from(gains);
     _throttledEnabled = enabled;
     _throttledCustomFilter = customFilter;
@@ -478,41 +459,60 @@ class AudioService {
 
   Future<void> _applyThrottledEq() async {
     if (_throttledGains == null) return;
-    await setEqualizerGains(_throttledGains!, _throttledEnabled, customFilter: _throttledCustomFilter);
+    await setEqualizerGains(
+      _throttledGains!,
+      _throttledEnabled,
+      customFilter: _throttledCustomFilter,
+    );
   }
 
   Future<void> setLiveBandGain(int bandIndex, double gain) async {
     if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
     if (_lastEqualizerGains == null) return;
     _lastEqualizerGains![bandIndex] = gain;
-    _triggerThrottledEq(_lastEqualizerGains!, _equalizerEnabled, _customFilterString);
+    _triggerThrottledEq(
+      _lastEqualizerGains!,
+      _equalizerEnabled,
+      _customFilterString,
+    );
   }
 
   Future<void> setLivePreamp(double preamp) async {
     if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
     if (_lastEqualizerGains == null) return;
     _lastEqualizerGains![18] = preamp;
-    _triggerThrottledEq(_lastEqualizerGains!, _equalizerEnabled, _customFilterString);
+    _triggerThrottledEq(
+      _lastEqualizerGains!,
+      _equalizerEnabled,
+      _customFilterString,
+    );
   }
 
-  Future<void> setLiveCompressor({double? threshold, double? ratio, double? attack, double? release}) async {
+  Future<void> setLiveCompressor({
+    double? threshold,
+    double? ratio,
+    double? attack,
+    double? release,
+  }) async {
     if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
     try {
       await player.updateAudioEffects((e) {
-        final current = e.acompressor ?? const AcompressorSettings(enabled: true);
-        double dBToMultiplier(double dB) => math.pow(10.0, dB / 20.0).toDouble();
+        final current =
+            e.acompressor ?? const AcompressorSettings(enabled: true);
+        double dBToMultiplier(double dB) =>
+            math.pow(10.0, dB / 20.0).toDouble();
         return e.copyWith(
           acompressor: current.copyWith(
-            threshold: threshold != null ? dBToMultiplier(threshold.clamp(-40.0, 0.0)) : current.threshold,
+            threshold: threshold != null
+                ? dBToMultiplier(threshold.clamp(-40.0, 0.0))
+                : current.threshold,
             ratio: ratio ?? current.ratio,
             attack: attack ?? current.attack,
             release: release ?? current.release,
           ),
         );
       });
-    } catch (e) {
-      debugPrint('Failed to set live compressor settings: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> setLiveBass(double gain) async {
@@ -520,41 +520,33 @@ class AudioService {
     try {
       await player.updateAudioEffects((e) {
         final current = e.bass ?? const BassSettings(enabled: true, f: 100.0);
-        return e.copyWith(
-          bass: current.copyWith(g: gain.clamp(-10.0, 15.0)),
-        );
+        return e.copyWith(bass: current.copyWith(g: gain.clamp(-10.0, 15.0)));
       });
-    } catch (e) {
-      debugPrint('Failed to set live bass: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> setLiveTreble(double gain) async {
     if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
     try {
       await player.updateAudioEffects((e) {
-        final current = e.treble ?? const TrebleSettings(enabled: true, f: 8000.0);
-        return e.copyWith(
-          treble: current.copyWith(g: gain.clamp(-10.0, 15.0)),
-        );
+        final current =
+            e.treble ?? const TrebleSettings(enabled: true, f: 8000.0);
+        return e.copyWith(treble: current.copyWith(g: gain.clamp(-10.0, 15.0)));
       });
-    } catch (e) {
-      debugPrint('Failed to set live treble: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> setLiveStereoWidth(double m) async {
     if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
     try {
       await player.updateAudioEffects((e) {
-        final current = e.extrastereo ?? const ExtrastereoSettings(enabled: true);
+        final current =
+            e.extrastereo ?? const ExtrastereoSettings(enabled: true);
         return e.copyWith(
           extrastereo: current.copyWith(m: m.clamp(-10.0, 10.0)),
         );
       });
-    } catch (e) {
-      debugPrint('Failed to set live stereo width: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> setLiveCrossfeed(double strength) async {
@@ -566,9 +558,7 @@ class AudioService {
           crossfeed: current.copyWith(strength: strength.clamp(0.0, 1.0)),
         );
       });
-    } catch (e) {
-      debugPrint('Failed to set live crossfeed: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> setLiveHighpass(double f) async {
@@ -576,13 +566,9 @@ class AudioService {
     try {
       await player.updateAudioEffects((e) {
         final current = e.highpass ?? const HighpassSettings(enabled: true);
-        return e.copyWith(
-          highpass: current.copyWith(f: f.clamp(100.0, 300.0)),
-        );
+        return e.copyWith(highpass: current.copyWith(f: f.clamp(100.0, 300.0)));
       });
-    } catch (e) {
-      debugPrint('Failed to set live highpass: $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> setLiveLowpass(double f) async {
@@ -594,9 +580,7 @@ class AudioService {
           lowpass: current.copyWith(f: f.clamp(3000.0, 6000.0)),
         );
       });
-    } catch (e) {
-      debugPrint('Failed to set live lowpass: $e');
-    }
+    } catch (e) {}
   }
 
   // ── SoX resampler filter string (injected last in every customFilters list)
@@ -609,7 +593,11 @@ class AudioService {
   static const String _swrFilter =
       '@aek_soxr:lavfi-aresample=resampler=swr:dither_method=triangular';
 
-  Future<void> setEqualizerGains(List<double> gains, bool enabled, {String? customFilter}) async {
+  Future<void> setEqualizerGains(
+    List<double> gains,
+    bool enabled, {
+    String? customFilter,
+  }) async {
     _liveEqThrottleTimer?.cancel();
     _lastEqualizerGains = gains;
     _equalizerEnabled = enabled;
@@ -618,7 +606,7 @@ class AudioService {
     if (player.state.playlist.items.isEmpty) {
       // FILE_LOADED hasn't fired yet — the playlist stream listener will
       // apply EQ once items populate. Mark _pendingEqApply so it triggers.
-      debugPrint('Equalizer: Player playlist is empty, deferring until FILE_LOADED.');
+
       _pendingEqApply = true;
       _filtersInitialized = false;
       return;
@@ -629,21 +617,59 @@ class AudioService {
 
     // 1. 18-band peaking equalizer chain (using lavfi-equalizer) and Pre-amp volume in custom filters list
     final customFilters = <String>[];
-    
+
     if (enabled) {
       final List<double> bandsFreq = [
-        65, 92, 131, 185, 262, 370, 523, 740, 1000, 1400, 2000, 2900, 4100, 5900, 8300, 11700, 16600, 20000
+        65,
+        92,
+        131,
+        185,
+        262,
+        370,
+        523,
+        740,
+        1000,
+        1400,
+        2000,
+        2900,
+        4100,
+        5900,
+        8300,
+        11700,
+        16600,
+        20000,
       ];
       final List<double> bandsWidth = [
-        20, 30, 40, 60, 80, 110, 160, 220, 300, 420, 600, 850, 1200, 1750, 2500, 3500, 5000, 6000
+        20,
+        30,
+        40,
+        60,
+        80,
+        110,
+        160,
+        220,
+        300,
+        420,
+        600,
+        850,
+        1200,
+        1750,
+        2500,
+        3500,
+        5000,
+        6000,
       ];
       for (int i = 0; i < 18; i++) {
         final freq = bandsFreq[i];
         final width = bandsWidth[i];
         final gain = i < gains.length ? gains[i].clamp(-20.0, 20.0) : 0.0;
-        customFilters.add('@eq${i + 1}:lavfi-equalizer=f=$freq:width_type=h:width=$width:g=$gain');
+        customFilters.add(
+          '@eq${i + 1}:lavfi-equalizer=f=$freq:width_type=h:width=$width:g=$gain',
+        );
       }
-      final double preamp = gains.length > 18 ? gains[18].clamp(-12.0, 12.0) : 0.0;
+      final double preamp = gains.length > 18
+          ? gains[18].clamp(-12.0, 12.0)
+          : 0.0;
       customFilters.add('@preamp:lavfi-volume=volume=${preamp}dB');
 
       // User arbitrary raw filter --af string
@@ -659,11 +685,14 @@ class AudioService {
     customFilters.add(_soxrFilter);
 
     // 2. Dynamic Range Compressor
-    final bool compEnabled = enabled && (gains.length > 23 ? gains[23] == 1.0 : false);
+    final bool compEnabled =
+        enabled && (gains.length > 23 ? gains[23] == 1.0 : false);
     final compressor = compEnabled
         ? AcompressorSettings(
             enabled: true,
-            threshold: gains.length > 24 ? dBToMultiplier(gains[24].clamp(-40.0, 0.0)) : 0.125,
+            threshold: gains.length > 24
+                ? dBToMultiplier(gains[24].clamp(-40.0, 0.0))
+                : 0.125,
             ratio: gains.length > 25 ? gains[25].clamp(1.0, 20.0) : 2.0,
             attack: gains.length > 26 ? gains[26].clamp(0.01, 2000.0) : 20.0,
             release: gains.length > 27 ? gains[27].clamp(0.01, 9000.0) : 250.0,
@@ -671,7 +700,8 @@ class AudioService {
         : null;
 
     // 3. Loudness Normalization
-    final bool loudnormEnabled = enabled && (gains.length > 28 ? gains[28] == 1.0 : false);
+    final bool loudnormEnabled =
+        enabled && (gains.length > 28 ? gains[28] == 1.0 : false);
     final loudnorm = loudnormEnabled
         ? LoudnormSettings(
             enabled: true,
@@ -682,7 +712,8 @@ class AudioService {
         : null;
 
     // 4. Headphone Crossfeed
-    final bool crossfeedEnabled = enabled && (gains.length > 21 ? gains[21] == 1.0 : false);
+    final bool crossfeedEnabled =
+        enabled && (gains.length > 21 ? gains[21] == 1.0 : false);
     final crossfeed = crossfeedEnabled
         ? CrossfeedSettings(
             enabled: true,
@@ -691,7 +722,8 @@ class AudioService {
         : null;
 
     // 5. Stereo Width Expansion
-    final bool widthEnabled = enabled && (gains.length > 30 ? gains[30] == 1.0 : false);
+    final bool widthEnabled =
+        enabled && (gains.length > 30 ? gains[30] == 1.0 : false);
     final extrastereo = widthEnabled
         ? ExtrastereoSettings(
             enabled: true,
@@ -700,15 +732,16 @@ class AudioService {
         : null;
 
     // 6. Bass & Treble tone shelving
-    final bool shelvingEnabled = enabled && (gains.length > 44 ? gains[44] == 1.0 : true);
-    final double bassGain = shelvingEnabled ? (gains.length > 32 ? gains[32] : 0.0) : 0.0;
-    final double trebleGain = shelvingEnabled ? (gains.length > 33 ? gains[33] : 0.0) : 0.0;
+    final bool shelvingEnabled =
+        enabled && (gains.length > 44 ? gains[44] == 1.0 : true);
+    final double bassGain = shelvingEnabled
+        ? (gains.length > 32 ? gains[32] : 0.0)
+        : 0.0;
+    final double trebleGain = shelvingEnabled
+        ? (gains.length > 33 ? gains[33] : 0.0)
+        : 0.0;
     final bass = shelvingEnabled
-        ? BassSettings(
-            enabled: true,
-            g: bassGain.clamp(-10.0, 15.0),
-            f: 100.0,
-          )
+        ? BassSettings(enabled: true, g: bassGain.clamp(-10.0, 15.0), f: 100.0)
         : null;
     final treble = shelvingEnabled
         ? TrebleSettings(
@@ -719,38 +752,41 @@ class AudioService {
         : null;
 
     // 7. Silence Trim
-    final bool trimEnabled = enabled && (gains.length > 19 ? gains[19] == 1.0 : false);
+    final bool trimEnabled =
+        enabled && (gains.length > 19 ? gains[19] == 1.0 : false);
     final silenceremove = trimEnabled
         ? SilenceremoveSettings(
             enabled: true,
             start_periods: 1,
-            start_threshold: gains.length > 20 ? dBToMultiplier(gains[20].clamp(-60.0, -30.0)) : 0.003,
+            start_threshold: gains.length > 20
+                ? dBToMultiplier(gains[20].clamp(-60.0, -30.0))
+                : 0.003,
             stop_periods: 1,
-            stop_threshold: gains.length > 20 ? dBToMultiplier(gains[20].clamp(-60.0, -30.0)) : 0.003,
+            stop_threshold: gains.length > 20
+                ? dBToMultiplier(gains[20].clamp(-60.0, -30.0))
+                : 0.003,
           )
         : null;
 
     // 8. Lofi (acrusher + lowpass)
-    final bool lofiEnabled = enabled && (gains.length > 41 ? gains[41] == 1.0 : false);
+    final bool lofiEnabled =
+        enabled && (gains.length > 41 ? gains[41] == 1.0 : false);
     final acrusher = lofiEnabled
-        ? AcrusherSettings(
-            enabled: true,
-            bits: 8.0,
-            samples: 4.0,
-            mix: 0.5,
-          )
+        ? AcrusherSettings(enabled: true, bits: 8.0, samples: 4.0, mix: 0.5)
         : null;
 
     // 9. Speech Enhancement Filter (highpass + lowpass)
-    final bool speechEnabled = enabled && (gains.length > 38 ? gains[38] == 1.0 : false);
-    final double hpCutoff = gains.length > 39 ? gains[39].clamp(100.0, 300.0) : 150.0;
-    final double lpCutoff = gains.length > 40 ? gains[40].clamp(3000.0, 6000.0) : 4000.0;
+    final bool speechEnabled =
+        enabled && (gains.length > 38 ? gains[38] == 1.0 : false);
+    final double hpCutoff = gains.length > 39
+        ? gains[39].clamp(100.0, 300.0)
+        : 150.0;
+    final double lpCutoff = gains.length > 40
+        ? gains[40].clamp(3000.0, 6000.0)
+        : 4000.0;
 
     final highpass = speechEnabled
-        ? HighpassSettings(
-            enabled: true,
-            f: hpCutoff,
-          )
+        ? HighpassSettings(enabled: true, f: hpCutoff)
         : null;
 
     // Merge lowpass cutoff between Lofi and Speech
@@ -764,7 +800,8 @@ class AudioService {
     }
 
     // 10. Reverb (aecho)
-    final bool reverbEnabled = enabled && (gains.length > 42 ? gains[42] == 1.0 : false);
+    final bool reverbEnabled =
+        enabled && (gains.length > 42 ? gains[42] == 1.0 : false);
     final aecho = reverbEnabled
         ? AechoSettings(
             enabled: true,
@@ -776,12 +813,9 @@ class AudioService {
         : null;
 
     // 11. Surround
-    final bool surroundEnabled = enabled && (gains.length > 43 ? gains[43] == 1.0 : false);
-    final surround = surroundEnabled
-        ? SurroundSettings(
-            enabled: true,
-          )
-        : null;
+    final bool surroundEnabled =
+        enabled && (gains.length > 43 ? gains[43] == 1.0 : false);
+    final surround = surroundEnabled ? SurroundSettings(enabled: true) : null;
 
     AudioEffects buildEffects(String? resampler) {
       final List<String> finalCustomFilters = List<String>.from(customFilters);
@@ -808,11 +842,12 @@ class AudioService {
     bool success = false;
     if (_resamplerProbed) {
       try {
-        final resampler = _resolvedResamplerFilter == 'none' ? null : _resolvedResamplerFilter;
+        final resampler = _resolvedResamplerFilter == 'none'
+            ? null
+            : _resolvedResamplerFilter;
         await player.setAudioEffects(buildEffects(resampler));
         success = true;
       } catch (e) {
-        debugPrint('Equalizer: Cached resampler filter failed, resetting probe: $e');
         _resamplerProbed = false;
       }
     }
@@ -824,28 +859,21 @@ class AudioService {
         _resolvedResamplerFilter = _soxrFilter;
         _resamplerProbed = true;
         success = true;
-        debugPrint('Equalizer: Soxr resampler applied successfully.');
       } catch (e) {
-        debugPrint('Equalizer: Primary soxr resampler failed. Falling back to swr. Error: $e');
         // 2. Try secondary (swr)
         try {
           await player.setAudioEffects(buildEffects(_swrFilter));
           _resolvedResamplerFilter = _swrFilter;
           _resamplerProbed = true;
           success = true;
-          debugPrint('Equalizer: Swr resampler applied successfully.');
         } catch (e2) {
-          debugPrint('Equalizer: Secondary swr resampler failed. Falling back to no resampler. Error: $e2');
           // 3. Try tertiary (no resampler filter)
           try {
             await player.setAudioEffects(buildEffects(null));
             _resolvedResamplerFilter = 'none';
             _resamplerProbed = true;
             success = true;
-            debugPrint('Equalizer: Applied audio effects without resampler.');
-          } catch (e3) {
-            debugPrint('Equalizer: All audio effects applications failed: $e3');
-          }
+          } catch (e3) {}
         }
       }
     }
@@ -853,9 +881,15 @@ class AudioService {
     if (success) {
       _filtersInitialized = true;
       // Rubberband Tempo and Pitch Shift (gain index 34-35) - keep these working even if master EQ is disabled
-      final bool pitchTempoEnabled = gains.length > 45 ? gains[45] == 1.0 : true;
-      final double pitch = pitchTempoEnabled ? (gains.length > 34 ? gains[34].clamp(0.5, 2.0) : 1.0) : 1.0;
-      final double tempo = pitchTempoEnabled ? (gains.length > 35 ? gains[35].clamp(0.5, 3.0) : 1.0) : 1.0;
+      final bool pitchTempoEnabled = gains.length > 45
+          ? gains[45] == 1.0
+          : true;
+      final double pitch = pitchTempoEnabled
+          ? (gains.length > 34 ? gains[34].clamp(0.5, 2.0) : 1.0)
+          : 1.0;
+      final double tempo = pitchTempoEnabled
+          ? (gains.length > 35 ? gains[35].clamp(0.5, 3.0) : 1.0)
+          : 1.0;
       try {
         await player.setPitch(pitch);
         await player.setRate(tempo);
@@ -864,42 +898,56 @@ class AudioService {
         final int rgMode = gains.length > 36 ? gains[36].toInt() : 0;
         final double rgPreamp = gains.length > 37 ? gains[37] : 0.0;
         await configureReplayGain(mode: rgMode, preamp: rgPreamp);
-      } catch (e) {
-        debugPrint('Failed to set pitch/rate/replaygain: $e');
-      }
+      } catch (e) {}
     }
   }
 
   Future<Map<String, String>> getAudioOutputCapabilities() async {
     final Map<String, String> capabilities = {};
     try {
-      capabilities['Active Codec'] = await player.getRawProperty('audio-codec-name') ?? 'N/A';
+      capabilities['Active Codec'] =
+          await player.getRawProperty('audio-codec-name') ?? 'N/A';
     } catch (_) {}
     try {
-      capabilities['Output Device'] = await player.getRawProperty('audio-device') ?? 'Default';
+      capabilities['Output Device'] =
+          await player.getRawProperty('audio-device') ?? 'Default';
     } catch (_) {}
     try {
-      final String? format = await player.getRawProperty('audio-out-detected-format');
+      final String? format = await player.getRawProperty(
+        'audio-out-detected-format',
+      );
       capabilities['Output Format'] = format ?? 'N/A';
     } catch (_) {}
     try {
-      final String? sampleRate = await player.getRawProperty('audio-out-detected-samplerate');
-      capabilities['Output Sample Rate'] = sampleRate != null ? '$sampleRate Hz' : 'N/A';
+      final String? sampleRate = await player.getRawProperty(
+        'audio-out-detected-samplerate',
+      );
+      capabilities['Output Sample Rate'] = sampleRate != null
+          ? '$sampleRate Hz'
+          : 'N/A';
     } catch (_) {}
     try {
-      final String? channels = await player.getRawProperty('audio-out-detected-channels');
+      final String? channels = await player.getRawProperty(
+        'audio-out-detected-channels',
+      );
       capabilities['Output Channels'] = channels ?? 'N/A';
     } catch (_) {}
     try {
-      final String? sampleRate = await player.getRawProperty('audio-params/samplerate');
-      capabilities['Source Sample Rate'] = sampleRate != null ? '$sampleRate Hz' : 'N/A';
+      final String? sampleRate = await player.getRawProperty(
+        'audio-params/samplerate',
+      );
+      capabilities['Source Sample Rate'] = sampleRate != null
+          ? '$sampleRate Hz'
+          : 'N/A';
     } catch (_) {}
     try {
       final String? format = await player.getRawProperty('audio-params/format');
       capabilities['Source Format'] = format ?? 'N/A';
     } catch (_) {}
     try {
-      final String? channels = await player.getRawProperty('audio-params/channel-count');
+      final String? channels = await player.getRawProperty(
+        'audio-params/channel-count',
+      );
       capabilities['Source Channels'] = channels ?? 'N/A';
     } catch (_) {}
     try {
