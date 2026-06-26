@@ -11,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
+import 'package:looper_player/core/providers.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -540,10 +541,10 @@ class SettingsView extends ConsumerWidget {
                     _PremiumActionRow(
                       icon: LucideIcons.info,
                       title: l10n.appTitle,
-                      subtitle: 'Version 2.1.0',
+                      subtitle: 'Version 2.2.0',
                       onTap: () {},
                       trailing: const Text(
-                        'v2.1.0',
+                        'v2.2.0',
                         style: TextStyle(color: Colors.white38, fontSize: 13),
                       ),
                       isLast: false,

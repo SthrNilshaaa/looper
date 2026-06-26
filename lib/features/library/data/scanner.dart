@@ -123,8 +123,32 @@ class LibraryScanner {
       print('🗑️ Scanner: Pruned ${idsToDelete.length} deleted songs from database');
     }
 
+    // Check and update dateAdded of existing songs to match file modification time
+    final List<Song> songsToUpdate = [];
+    for (final file in filesToProcess) {
+      final dbSong = dbSongsMap[file.path];
+      if (dbSong != null) {
+        try {
+          final fileDate = file.lastModifiedSync();
+          // If the difference is more than 5 seconds, update it to the file date
+          if (dbSong.dateAdded.difference(fileDate).inSeconds.abs() > 5) {
+            dbSong.dateAdded = fileDate;
+            songsToUpdate.add(dbSong);
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (songsToUpdate.isNotEmpty) {
+      print('🔄 Scanner: Updating dateAdded for ${songsToUpdate.length} existing songs to match file modification times...');
+      await DbService.isar.writeTxn(() async {
+        await DbService.isar.songs.putAll(songsToUpdate);
+      });
+    }
+
     // Find new files to process (on disk but not in DB)
     final List<File> newFilesToProcess = filesToProcess.where((f) => !dbSongsMap.containsKey(f.path)).toList();
+
 
     // If requested, add discovered folders to settings
     if (addFolderToSettings) {
@@ -227,6 +251,13 @@ class LibraryScanner {
 
       final lyrics = await MetadataService.getEmbeddedLyrics(file.path);
 
+      DateTime fileDate;
+      try {
+        fileDate = file.lastModifiedSync();
+      } catch (_) {
+        fileDate = DateTime.now();
+      }
+
       final song = Song()
         ..path = file.path
         ..title = metadata?.title ?? p.basenameWithoutExtension(file.path)
@@ -238,7 +269,7 @@ class LibraryScanner {
         ..year = metadata?.year
         ..artPath = artPath
         ..lyrics = lyrics
-        ..dateAdded = DateTime.now();
+        ..dateAdded = fileDate;
 
       if (artPath == null && downloadArtworkIfMissing) {
         artPath = await ArtworkDownloaderService().downloadArtworkForSong(song);

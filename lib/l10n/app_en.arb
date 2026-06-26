@@ -210,6 +210,8 @@
   "resumeAfterCallTitle": "Resume after Call",
   "resumeOnStartDesc": "Resume playing automatically when Looper Player is started",
   "resumeOnStartTitle": "Resume on Start",
+  "persistQueueTitle": "Persist Last Queue",
+  "persistQueueDesc": "Save the last playing song and queue on app restarts",
   "right": "Right",
   "scanCompleteSongsDetected": "SCAN COMPLETE: {count} SONGS DETECTED!",
   "@scanCompleteSongsDetected": {
@@ -303,5 +305,49 @@
   "whyPermissionsUsed": "Why Permissions are Used",
   "whyPermissionsUsedDesc": "• Storage / Media Access: Required to discover, read, and index local audio tracks stored on your device.\n• Notifications: Required to display active playback control widgets in your status bar and system drawer.",
   "willPlayNext": "Will play next",
-  "year": "Year"
+  "year": "Year",
+  "supportUs": "Support Us",
+  "supportUsDesc": "Help keep Looper Player alive & open-source",
+  "supportDevelopment": "Support the Development",
+  "supportDevelopmentDesc": "Looper Player is 100% free and open-source. If you enjoy using it, please consider supporting the creator with a donation. Every contribution helps keep the project active!",
+
+  "useCustomFont": "Use Custom Font",
+  "useCustomFontDesc": "Use Jost or other custom fonts. Otherwise, DM Sans is used.",
+  "selectFontFamily": "Select Font Family",
+  "activeFont": "Active font: {fontName}",
+  "@activeFont": {
+    "placeholders": {
+      "fontName": {
+        "type": "String"
+      }
+    }
+  },
+  "fontWeightAdjustment": "Font Weight Adjustment",
+  "currentWeight": "Current weight",
+  "useCustomFontLyrics": "Use Custom Font for Lyrics",
+  "useCustomFontLyricsDesc": "Use custom font and weight for synchronized lyrics view",
+  "lyricsFontFamily": "Lyrics Font Family",
+  "activeLyricsFont": "Active lyrics font: {fontName}",
+  "@activeLyricsFont": {
+    "placeholders": {
+      "fontName": {
+        "type": "String"
+      }
+    }
+  },
+  "lyricsFontWeightAdjustment": "Lyrics Font Weight Adjustment",
+  "giveStarOnGithub": "Give Star on GitHub",
+  "supportProjectLove": "Support the project and show some love!",
+  "sortAlphabeticalAZ": "Alphabetical (A-Z)",
+  "sortAlphabeticalZA": "Alphabetical (Z-A)",
+  "sortRecentlyAdded": "Recently Added",
+  "sortOldestAdded": "Oldest Added",
+  "sortYearNewest": "Year (Newest)",
+  "sortYearOldest": "Year (Oldest)",
+  "sortMostSongs": "Most Songs",
+  "sortLeastSongs": "Least Songs",
+  "sortDefault": "Default",
+  "sortArtistAsc": "Artist (A-Z)",
+  "sortAlbumAsc": "Album (A-Z)",
+  "sortDuration": "Duration"
 }

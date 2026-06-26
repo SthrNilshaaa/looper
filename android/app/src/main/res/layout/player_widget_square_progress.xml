@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Dynamic background image -->
+    <ImageView
+        android:id="@+id/widget_background_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:src="@drawable/widget_background"
+        android:scaleType="fitXY" />
+
+    <!-- Details, controls & progress container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <!-- Rounded artwork -->
+        <ImageView
+            android:id="@+id/widget_artwork"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginBottom="8dp"
+            android:scaleType="centerCrop"
+            android:src="@mipmap/ic_launcher" />
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:singleLine="true"
+            android:gravity="center"
+            android:text="Song Title"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/widget_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:gravity="center"
+            android:text="Artist Name"
+            android:textColor="#AAFFFFFF"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="8dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <!-- Previous button -->
+            <ImageButton
+                android:id="@+id/widget_prev"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_prev"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside"
+                android:layout_marginRight="6dp" />
+
+            <!-- Circular Play/Pause button -->
+            <RelativeLayout
+                android:id="@+id/widget_play_pause_container"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginRight="6dp">
+
+                <ImageView
+                    android:id="@+id/widget_play_pause_background"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/widget_button_background" />
+
+                <ImageView
+                    android:id="@+id/widget_play_pause"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/ic_play" />
+            </RelativeLayout>
+
+            <!-- Next button -->
+            <ImageButton
+                android:id="@+id/widget_next"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_next"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside" />
+        </LinearLayout>
+
+        <!-- Progress Bar (Figma styled) -->
+        <ProgressBar
+            android:id="@+id/widget_progress"
+            style="@android:style/Widget.ProgressBar.Horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:layout_marginLeft="6dp"
+            android:layout_marginRight="6dp"
+            android:layout_marginTop="4dp"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/widget_progress_drawable" />
+    </LinearLayout>
+</RelativeLayout>

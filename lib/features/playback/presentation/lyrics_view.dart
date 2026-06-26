@@ -9,6 +9,7 @@ import 'widgets/advanced_lyric_renderer.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'overlay_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 
 enum LyricsSyncMode { line, word, char }
 
@@ -63,7 +64,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
             Expanded(
               child: lyricsState.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const AppLoadingIndicator()
                   : lyricsState.rawLrc == null
                   ? Center(
                       child: Column(
@@ -209,7 +210,7 @@ class _ModeButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: AppFonts.jostStyle(
             fontSize: isShort ? 10 : 11,
             fontWeight: FontWeight.normal,
             color: isSelected

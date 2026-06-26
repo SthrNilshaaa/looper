@@ -1,6 +1,6 @@
 package com.looper.player
 
-import com.ryanheise.audioservice.AudioServiceActivity
+import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.content.Intent
@@ -11,10 +11,15 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.util.Log
 import android.graphics.Color
+import android.os.PowerManager
 
-class MainActivity : AudioServiceActivity() {
+
+class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.looper.player/broadcast"
     private val WIDGET_CHANNEL = "com.looper.player/widget"
+    private val WAKELOCK_CHANNEL = "com.looper.player/wakelock"
+    private var wakeLock: PowerManager.WakeLock? = null
+
 
     companion object {
         var activeEngine: FlutterEngine? = null
@@ -70,6 +75,8 @@ class MainActivity : AudioServiceActivity() {
                 val nextLyrics = call.argument<String>("nextLyrics") ?: ""
                 val artPath = call.argument<String>("artPath") ?: ""
                 var accentColor = (call.argument<Any>("accentColor") as? Number)?.toInt() ?: 0
+                val position = (call.argument<Any>("position") as? Number)?.toLong() ?: 0L
+                val duration = (call.argument<Any>("duration") as? Number)?.toLong() ?: 0L
 
                 Log.d("PlayerWidget", "MainActivity: updateWidgetState: title=$title, artist=$artist, isPlaying=$isPlaying, accentColor=$accentColor")
 
@@ -78,7 +85,7 @@ class MainActivity : AudioServiceActivity() {
                     accentColor = Color.parseColor("#55DF69")
                 }
 
-                val prefs = getSharedPreferences("WidgetState", Context.MODE_PRIVATE)
+                val prefs = es.antonborri.home_widget.HomeWidgetPlugin.getData(this)
                 val oldTitle = prefs.getString("title", "")
                 prefs.edit().apply {
                     if (title != oldTitle) {
@@ -94,16 +101,26 @@ class MainActivity : AudioServiceActivity() {
                     putString("nextLyrics", nextLyrics)
                     putString("artPath", artPath)
                     putInt("accentColor", accentColor)
+                    putLong("position", position)
+                    putLong("duration", duration)
                     apply()
                 }
 
-                // Trigger widget update
+                // Trigger widget update for all 4 providers
                 val appWidgetManager = AppWidgetManager.getInstance(this)
-                val componentName = ComponentName(this, PlayerWidgetProvider::class.java)
-                val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
-                Log.d("PlayerWidget", "MainActivity: updating widget IDs count = ${appWidgetIds.size}")
-                for (appWidgetId in appWidgetIds) {
-                    PlayerWidgetProvider.updateWidget(this, appWidgetManager, appWidgetId)
+                val providers = listOf(
+                    PlayerWidgetProvider::class.java,
+                    PlayerWidgetProviderSquareArtwork::class.java,
+                    PlayerWidgetProviderSquareProgress::class.java,
+                    PlayerWidgetProviderLargeLyrics::class.java
+                )
+                for (provider in providers) {
+                    val componentName = ComponentName(this, provider)
+                    val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+                    Log.d("PlayerWidget", "MainActivity: updating widget IDs count for ${provider.simpleName} = ${appWidgetIds.size}")
+                    for (appWidgetId in appWidgetIds) {
+                        PlayerWidgetProvider.updateWidget(this, appWidgetManager, appWidgetId, provider)
+                    }
                 }
 
                 result.success(null)
@@ -111,12 +128,54 @@ class MainActivity : AudioServiceActivity() {
                 result.notImplemented()
             }
         }
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, WAKELOCK_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "acquire" -> {
+                    acquireWakeLock()
+                    result.success(null)
+                }
+                "release" -> {
+                    releaseWakeLock()
+                    result.success(null)
+                }
+                else -> {
+                    result.notImplemented()
+                }
+            }
+        }
     }
 
-    override fun onDestroy() {
-        if (activeEngine == flutterEngine) {
-            activeEngine = null
+    private fun acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                val powerManager = getSystemService(Context.POWER_SERVICE) as PowerManager
+                wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "LooperPlayer:PlaybackWakeLock")
+            }
+            if (wakeLock?.isHeld == false) {
+                wakeLock?.acquire()
+                Log.d("LooperWakeLock", "Partial WakeLock acquired")
+            }
+        } catch (e: Exception) {
+            Log.e("LooperWakeLock", "Error acquiring wakeLock", e)
         }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            if (wakeLock?.isHeld == true) {
+                wakeLock?.release()
+                Log.d("LooperWakeLock", "Partial WakeLock released")
+            }
+        } catch (e: Exception) {
+            Log.e("LooperWakeLock", "Error releasing wakeLock", e)
+        }
+    }
+
+
+    override fun onDestroy() {
+        releaseWakeLock()
+        activeEngine = null
         super.onDestroy()
     }
 

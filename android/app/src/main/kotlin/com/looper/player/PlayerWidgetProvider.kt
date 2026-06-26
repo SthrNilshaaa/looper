@@ -13,7 +13,7 @@ import android.view.View
 import android.widget.RemoteViews
 import android.util.Log
 
-class PlayerWidgetProvider : AppWidgetProvider() {
+open class PlayerWidgetProvider : AppWidgetProvider() {
 
     companion object {
         const val ACTION_PLAY_PAUSE = "com.looper.player.ACTION_PLAY_PAUSE"
@@ -22,128 +22,175 @@ class PlayerWidgetProvider : AppWidgetProvider() {
         const val ACTION_SHUFFLE = "com.looper.player.ACTION_SHUFFLE"
         const val ACTION_REPEAT = "com.looper.player.ACTION_REPEAT"
 
-        fun updateWidget(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, options: Bundle? = null) {
-            val views = RemoteViews(context.packageName, R.layout.player_widget)
-            val prefs = context.getSharedPreferences("WidgetState", Context.MODE_PRIVATE)
-
-            val title = prefs.getString("title", "No song playing") ?: "No song playing"
-            val artist = prefs.getString("artist", "") ?: ""
-            val isPlaying = prefs.getBoolean("isPlaying", false)
-            val isShuffle = prefs.getBoolean("isShuffle", false)
-            val repeatMode = prefs.getInt("repeatMode", 0) // 0: off, 1: all, 2: one
-            val lyrics = prefs.getString("lyrics", "") ?: ""
-            val nextLyrics = prefs.getString("nextLyrics", "") ?: ""
-            val artPath = prefs.getString("artPath", "") ?: ""
-            val accentColor = prefs.getInt("accentColor", Color.parseColor("#55DF69"))
-
-            Log.d("PlayerWidget", "PlayerWidgetProvider: updateWidget: id=$appWidgetId, title=$title, artist=$artist, isPlaying=$isPlaying, accentColor=$accentColor")
-
-            // Blend accentColor with a deep dark background (12% accent, 88% black)
-            val ratio = 0.12f
-            val r = (((accentColor shr 16) and 0xFF) * ratio + 0x11 * (1 - ratio)).toInt()
-            val g = (((accentColor shr 8) and 0xFF) * ratio + 0x11 * (1 - ratio)).toInt()
-            val b = ((accentColor and 0xFF) * ratio + 0x11 * (1 - ratio)).toInt()
-            val blendedBackgroundColor = Color.rgb(r, g, b)
-            views.setInt(R.id.widget_background_image, "setColorFilter", blendedBackgroundColor)
-
-            // Set song metadata
-            views.setTextViewText(R.id.widget_title, title)
-            views.setTextViewText(R.id.widget_artist, artist)
-
-            // Setup sizes (responsive elements)
-            val opts = options ?: appWidgetManager.getAppWidgetOptions(appWidgetId)
-            val minWidth = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH)
-            val minHeight = opts.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT)
-
-            val width = if (minWidth > 0) minWidth else 250
-            val height = if (minHeight > 0) minHeight else 110
-
-            // Dynamic layout adjustments based on dimensions
-            val showLyrics = width >= 150 && height >= 80
-            val showShuffleRepeat = width >= 160
-
-            val hasLyrics = lyrics.isNotEmpty() || nextLyrics.isNotEmpty()
-            if (showLyrics && hasLyrics) {
-                views.setViewVisibility(R.id.widget_lyrics_container, View.VISIBLE)
-                views.setTextViewText(R.id.widget_lyric_active, lyrics)
-                views.setTextViewText(R.id.widget_lyric_next, nextLyrics)
-            } else {
-                views.setViewVisibility(R.id.widget_lyrics_container, View.GONE)
-            }
-
-            if (showShuffleRepeat) {
-                views.setViewVisibility(R.id.widget_shuffle, View.VISIBLE)
-                views.setViewVisibility(R.id.widget_repeat, View.VISIBLE)
-            } else {
-                views.setViewVisibility(R.id.widget_shuffle, View.GONE)
-                views.setViewVisibility(R.id.widget_repeat, View.GONE)
-            }
-
-            // Set play/pause icon and play container background color
-            if (isPlaying) {
-                views.setImageViewResource(R.id.widget_play_pause, R.drawable.ic_pause)
-            } else {
-                views.setImageViewResource(R.id.widget_play_pause, R.drawable.ic_play)
-            }
-            
-            // Apply accent colors dynamically to the circular background ImageView
-            views.setInt(R.id.widget_play_pause_background, "setColorFilter", accentColor)
-
-            // Highlight Shuffle if enabled
-            if (isShuffle) {
-                views.setInt(R.id.widget_shuffle, "setColorFilter", accentColor)
-            } else {
-                views.setInt(R.id.widget_shuffle, "setColorFilter", Color.parseColor("#88FFFFFF"))
-            }
-
-            // Highlight Repeat if not off
-            if (repeatMode == 2) {
-                views.setImageViewResource(R.id.widget_repeat, R.drawable.ic_repeat_one)
-                views.setInt(R.id.widget_repeat, "setColorFilter", accentColor)
-            } else if (repeatMode == 1) {
-                views.setImageViewResource(R.id.widget_repeat, R.drawable.ic_repeat)
-                views.setInt(R.id.widget_repeat, "setColorFilter", accentColor)
-            } else {
-                views.setImageViewResource(R.id.widget_repeat, R.drawable.ic_repeat)
-                views.setInt(R.id.widget_repeat, "setColorFilter", Color.parseColor("#88FFFFFF"))
-            }
-
-            // Set artwork
-            Log.d("PlayerWidget", "artwork path: $artPath")
-            if (artPath.isNotEmpty()) {
-                try {
-                    val bitmap = decodeSampledBitmapFromFile(artPath, 256, 256)
-                    Log.d("PlayerWidget", "decoded bitmap: ${bitmap != null}")
-                    if (bitmap != null) {
-                        val roundedBitmap = getRoundedCornerBitmap(bitmap, 48) // 48px rounding
-                        views.setImageViewBitmap(R.id.widget_artwork, roundedBitmap)
-                    } else {
-                        views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_play)
-                    }
-                } catch (e: Exception) {
-                    views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_play)
+        fun updateWidget(
+            context: Context,
+            appWidgetManager: AppWidgetManager,
+            appWidgetId: Int,
+            providerClass: Class<out PlayerWidgetProvider> = PlayerWidgetProvider::class.java,
+            options: Bundle? = null
+        ) {
+            try {
+                val layoutId = when (providerClass.simpleName) {
+                    "PlayerWidgetProviderSquareArtwork" -> R.layout.player_widget_square_artwork
+                    "PlayerWidgetProviderSquareProgress" -> R.layout.player_widget_square_progress
+                    "PlayerWidgetProviderLargeLyrics" -> R.layout.player_widget_large_lyrics
+                    else -> R.layout.player_widget
                 }
-            } else {
-                views.setImageViewResource(R.id.widget_artwork, R.drawable.ic_play)
+                
+                // Pre-inflate the layout locally to catch inflation exceptions (e.g. invalid layouts/attributes)
+                try {
+                    val inflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as android.view.LayoutInflater
+                    inflater.inflate(layoutId, null)
+                    Log.d("PlayerWidget", "Pre-inflated layout successfully: ${context.resources.getResourceEntryName(layoutId)}")
+                } catch (ie: Exception) {
+                    Log.e("PlayerWidget", "CRITICAL: Layout pre-inflation failed for ${context.resources.getResourceEntryName(layoutId)}!", ie)
+                }
+
+                val views = RemoteViews(context.packageName, layoutId)
+                val prefs = es.antonborri.home_widget.HomeWidgetPlugin.getData(context)
+
+                val title = prefs.getString("title", "No song playing") ?: "No song playing"
+                val artist = prefs.getString("artist", "") ?: ""
+                val isPlaying = prefs.getBoolean("isPlaying", false)
+                val lyrics = prefs.getString("lyrics", "") ?: ""
+                val artPath = prefs.getString("artPath", "") ?: ""
+                val accentColor = try {
+                    prefs.getInt("accentColor", Color.parseColor("#55DF69"))
+                } catch (e: ClassCastException) {
+                    try {
+                        prefs.getLong("accentColor", Color.parseColor("#55DF69").toLong()).toInt()
+                    } catch (e2: Exception) {
+                        Color.parseColor("#55DF69")
+                    }
+                }
+
+                Log.d("PlayerWidget", "PlayerWidgetProvider: updateWidget: provider=${providerClass.simpleName}, id=$appWidgetId, title=$title, artist=$artist, isPlaying=$isPlaying, accentColor=$accentColor")
+
+                val blendedBackgroundColor = Color.BLACK
+
+                if (layoutId != R.layout.player_widget_square_artwork) {
+                    views.setInt(R.id.widget_background_image, "setColorFilter", blendedBackgroundColor)
+                }
+
+                // Set song metadata
+                views.setTextViewText(R.id.widget_title, title)
+                views.setTextViewText(R.id.widget_artist, artist)
+
+                // Set play/pause icon and play container background color
+                if (isPlaying) {
+                    views.setImageViewResource(R.id.widget_play_pause, R.drawable.ic_pause)
+                } else {
+                    views.setImageViewResource(R.id.widget_play_pause, R.drawable.ic_play)
+                }
+                
+                // Apply accent colors dynamically to the circular background ImageView
+                views.setInt(R.id.widget_play_pause_background, "setColorFilter", accentColor)
+
+                // Progress bar binding for Square Progress layout
+                if (layoutId == R.layout.player_widget_square_progress) {
+                    val position = try {
+                        prefs.getLong("position", 0L)
+                    } catch (e: ClassCastException) {
+                        try {
+                            prefs.getInt("position", 0).toLong()
+                        } catch (e2: Exception) {
+                            0L
+                        }
+                    }
+                    val duration = try {
+                        prefs.getLong("duration", 0L)
+                    } catch (e: ClassCastException) {
+                        try {
+                            prefs.getInt("duration", 0).toLong()
+                        } catch (e2: Exception) {
+                            0L
+                        }
+                    }
+                    val progress = if (duration > 0) (position * 100 / duration).toInt() else 0
+                    views.setProgressBar(R.id.widget_progress, 100, progress, false)
+                }
+
+                // Lyrics binding for Large Lyrics layout
+                if (layoutId == R.layout.player_widget_large_lyrics) {
+                    views.setTextViewText(R.id.widget_lyric_active, if (lyrics.isNotEmpty()) lyrics else "Lyrics will appear here...")
+                }
+
+                // Set artwork if the layout supports it
+                if (layoutId == R.layout.player_widget || 
+                    layoutId == R.layout.player_widget_square_artwork || 
+                    layoutId == R.layout.player_widget_large_lyrics ||
+                    layoutId == R.layout.player_widget_square_progress) {
+                    Log.d("PlayerWidget", "artwork path: $artPath")
+                    var cleanPath = artPath.trim()
+                    if (cleanPath.startsWith("file://")) {
+                        cleanPath = cleanPath.substring(7)
+                    } else if (cleanPath.startsWith("file:")) {
+                        cleanPath = cleanPath.substring(5)
+                    }
+
+                    if (cleanPath.isNotEmpty()) {
+                        var file = java.io.File(cleanPath)
+                        if (!file.isAbsolute) {
+                            file = java.io.File(context.filesDir, cleanPath)
+                        }
+                        if (!file.exists()) {
+                            file = java.io.File(context.filesDir, "album_art/" + file.name)
+                        }
+                        if (!file.exists()) {
+                            file = java.io.File(context.filesDir, file.name)
+                        }
+
+                        Log.d("PlayerWidget", "Resolved artPath: ${file.absolutePath}, exists: ${file.exists()}")
+
+                        if (file.exists()) {
+                            try {
+                                val bitmap = decodeSampledBitmapFromFile(file.absolutePath, 128, 128)
+                                Log.d("PlayerWidget", "decoded bitmap: ${bitmap != null}")
+                                if (bitmap != null) {
+                                    val roundedBitmap = getRoundedCornerBitmap(bitmap, 24) // 24px rounding for 128x128
+                                    views.setImageViewBitmap(R.id.widget_artwork, roundedBitmap)
+                                } else {
+                                    Log.w("PlayerWidget", "Bitmap decoding returned null for ${file.absolutePath}")
+                                    views.setImageViewResource(R.id.widget_artwork, R.mipmap.ic_launcher)
+                                }
+                            } catch (e: Exception) {
+                                Log.e("PlayerWidget", "Error decoding artwork bitmap", e)
+                                views.setImageViewResource(R.id.widget_artwork, R.mipmap.ic_launcher)
+                            }
+                        } else {
+                            Log.w("PlayerWidget", "Artwork file does not exist at: ${file.absolutePath}")
+                            views.setImageViewResource(R.id.widget_artwork, R.mipmap.ic_launcher)
+                        }
+                    } else {
+                        views.setImageViewResource(R.id.widget_artwork, R.mipmap.ic_launcher)
+                    }
+                }
+
+                // Add PendingIntents for clicks
+                views.setOnClickPendingIntent(R.id.widget_play_pause_container, getPendingIntent(context, ACTION_PLAY_PAUSE, providerClass))
+                views.setOnClickPendingIntent(R.id.widget_next, getPendingIntent(context, ACTION_NEXT, providerClass))
+                if (layoutId != R.layout.player_widget_large_lyrics) {
+                    views.setOnClickPendingIntent(R.id.widget_prev, getPendingIntent(context, ACTION_PREV, providerClass))
+                }
+
+                // Launch app intent when title, artist or artwork is clicked
+                val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
+                val launchPendingIntent = PendingIntent.getActivity(
+                    context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                views.setOnClickPendingIntent(R.id.widget_title, launchPendingIntent)
+                views.setOnClickPendingIntent(R.id.widget_artist, launchPendingIntent)
+                if (layoutId == R.layout.player_widget || 
+                    layoutId == R.layout.player_widget_square_artwork || 
+                    layoutId == R.layout.player_widget_large_lyrics ||
+                    layoutId == R.layout.player_widget_square_progress) {
+                    views.setOnClickPendingIntent(R.id.widget_artwork, launchPendingIntent)
+                }
+
+                appWidgetManager.updateAppWidget(appWidgetId, views)
+            } catch (t: Throwable) {
+                Log.e("PlayerWidget", "Error updating widget (id=$appWidgetId, providerClass=${providerClass.simpleName})", t)
             }
-
-            // Add PendingIntents for clicks
-            views.setOnClickPendingIntent(R.id.widget_play_pause_container, getPendingIntent(context, ACTION_PLAY_PAUSE))
-            views.setOnClickPendingIntent(R.id.widget_next, getPendingIntent(context, ACTION_NEXT))
-            views.setOnClickPendingIntent(R.id.widget_prev, getPendingIntent(context, ACTION_PREV))
-            views.setOnClickPendingIntent(R.id.widget_shuffle, getPendingIntent(context, ACTION_SHUFFLE))
-            views.setOnClickPendingIntent(R.id.widget_repeat, getPendingIntent(context, ACTION_REPEAT))
-
-            // Launch app intent when title, artist or artwork is clicked
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
-            val launchPendingIntent = PendingIntent.getActivity(
-                context, 0, launchIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-            )
-            views.setOnClickPendingIntent(R.id.widget_artwork, launchPendingIntent)
-            views.setOnClickPendingIntent(R.id.widget_title, launchPendingIntent)
-            views.setOnClickPendingIntent(R.id.widget_artist, launchPendingIntent)
-
-            appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
         private fun decodeSampledBitmapFromFile(path: String, reqWidth: Int, reqHeight: Int): Bitmap? {
@@ -176,12 +223,12 @@ class PlayerWidgetProvider : AppWidgetProvider() {
             return inSampleSize
         }
 
-        private fun getPendingIntent(context: Context, action: String): PendingIntent {
-            val intent = Intent(context, PlayerWidgetProvider::class.java).apply {
+        private fun getPendingIntent(context: Context, action: String, providerClass: Class<out PlayerWidgetProvider>): PendingIntent {
+            val intent = Intent(context, providerClass).apply {
                 this.action = action
             }
             return PendingIntent.getBroadcast(
-                context, action.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                context, action.hashCode() + providerClass.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
         }
 
@@ -209,12 +256,12 @@ class PlayerWidgetProvider : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         for (appWidgetId in appWidgetIds) {
-            updateWidget(context, appWidgetManager, appWidgetId)
+            updateWidget(context, appWidgetManager, appWidgetId, javaClass)
         }
     }
 
     override fun onAppWidgetOptionsChanged(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, newOptions: Bundle) {
-        updateWidget(context, appWidgetManager, appWidgetId, newOptions)
+        updateWidget(context, appWidgetManager, appWidgetId, javaClass, newOptions)
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -238,16 +285,20 @@ class PlayerWidgetProvider : AppWidgetProvider() {
     }
 
     private fun sendMediaButtonIntent(context: Context, keycode: Int) {
-        val downIntent = Intent(Intent.ACTION_MEDIA_BUTTON).apply {
-            setClassName(context.packageName, "com.ryanheise.audioservice.MediaButtonReceiver")
-            putExtra(Intent.EXTRA_KEY_EVENT, KeyEvent(KeyEvent.ACTION_DOWN, keycode))
+        // Map keycodes to widget action strings so that MainActivity can
+        // route them through the Flutter MethodChannel to PlaybackNotifier.
+        // (com.ryanheise.audioservice.MediaButtonReceiver no longer exists
+        //  since the migration to mpv_audio_kit.)
+        val action = when (keycode) {
+            KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> ACTION_PLAY_PAUSE
+            KeyEvent.KEYCODE_MEDIA_NEXT       -> ACTION_NEXT
+            KeyEvent.KEYCODE_MEDIA_PREVIOUS   -> ACTION_PREV
+            else -> return
         }
-        context.sendBroadcast(downIntent)
-
-        val upIntent = Intent(Intent.ACTION_MEDIA_BUTTON).apply {
-            setClassName(context.packageName, "com.ryanheise.audioservice.MediaButtonReceiver")
-            putExtra(Intent.EXTRA_KEY_EVENT, KeyEvent(KeyEvent.ACTION_UP, keycode))
-        }
-        context.sendBroadcast(upIntent)
+        MainActivity.sendWidgetAction(context, action)
     }
 }
+
+class PlayerWidgetProviderSquareArtwork : PlayerWidgetProvider()
+class PlayerWidgetProviderSquareProgress : PlayerWidgetProvider()
+class PlayerWidgetProviderLargeLyrics : PlayerWidgetProvider()

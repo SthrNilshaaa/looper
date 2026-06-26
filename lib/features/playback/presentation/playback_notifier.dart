@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:media_kit/media_kit.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/providers.dart';
 import 'package:looper_player/features/library/data/scanner.dart';
@@ -11,6 +13,7 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
+import 'package:looper_player/features/playback/presentation/equalizer_notifier.dart';
 import 'package:metadata_god/metadata_god.dart';
 import 'package:isar/isar.dart';
 import 'package:local_notifier/local_notifier.dart';
@@ -35,9 +38,17 @@ class PlaybackState {
   final bool isScrubbing;
   final List<Song> queue;
 
+  /// True when a song was loaded from saved state on startup but playback
+  /// hasn't started yet (resumeOnStart = false). The player bar is hidden
+  /// when this is true and isPlaying is false, preventing the stale
+  /// "paused song" ghost bar from showing on every cold start.
+  final bool isRestoredSession;
+
   final bool isSleepTimerActive;
   final Duration? sleepTimerDurationRemaining;
   final int? sleepTimerSongsRemaining;
+  final Duration? sleepTimerDurationInitial;
+  final int? sleepTimerSongsInitial;
 
   PlaybackState({
     this.currentSong,
@@ -49,9 +60,12 @@ class PlaybackState {
     this.volume = 1.0,
     this.isScrubbing = false,
     this.queue = const [],
+    this.isRestoredSession = false,
     this.isSleepTimerActive = false,
     this.sleepTimerDurationRemaining,
     this.sleepTimerSongsRemaining,
+    this.sleepTimerDurationInitial,
+    this.sleepTimerSongsInitial,
   });
 
   PlaybackState copyWith({
@@ -64,9 +78,12 @@ class PlaybackState {
     double? volume,
     bool? isScrubbing,
     List<Song>? queue,
+    bool? isRestoredSession,
     bool? isSleepTimerActive,
     Object? sleepTimerDurationRemaining = _sentinel,
     Object? sleepTimerSongsRemaining = _sentinel,
+    Object? sleepTimerDurationInitial = _sentinel,
+    Object? sleepTimerSongsInitial = _sentinel,
   }) {
     return PlaybackState(
       currentSong: currentSong == _sentinel ? this.currentSong : currentSong as Song?,
@@ -78,6 +95,7 @@ class PlaybackState {
       volume: volume ?? this.volume,
       isScrubbing: isScrubbing ?? this.isScrubbing,
       queue: queue ?? this.queue,
+      isRestoredSession: isRestoredSession ?? this.isRestoredSession,
       isSleepTimerActive: isSleepTimerActive ?? this.isSleepTimerActive,
       sleepTimerDurationRemaining: sleepTimerDurationRemaining == _sentinel 
           ? this.sleepTimerDurationRemaining 
@@ -85,6 +103,12 @@ class PlaybackState {
       sleepTimerSongsRemaining: sleepTimerSongsRemaining == _sentinel 
           ? this.sleepTimerSongsRemaining 
           : sleepTimerSongsRemaining as int?,
+      sleepTimerDurationInitial: sleepTimerDurationInitial == _sentinel 
+          ? this.sleepTimerDurationInitial 
+          : sleepTimerDurationInitial as Duration?,
+      sleepTimerSongsInitial: sleepTimerSongsInitial == _sentinel 
+          ? this.sleepTimerSongsInitial 
+          : sleepTimerSongsInitial as int?,
     );
   }
 }
@@ -104,6 +128,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   int _activePlayPauseId = 0;
   bool? _targetPlayingState;
   Timer? _silenceTimer;
+  int _lastWidgetPositionUpdate = 0;
+  int _manualQueueCount = 0;
+  DateTime _lastSeekTime = DateTime.fromMillisecondsSinceEpoch(0);
+  DateTime _lastPlayTime = DateTime.fromMillisecondsSinceEpoch(0);
 
   PlaybackNotifier(this.ref) : super(PlaybackState()) {
     player = ref.read(audioServiceProvider).player;
@@ -112,6 +140,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     ref.read(audioServiceProvider).onSeek = (duration) => seek(duration);
     ref.read(audioServiceProvider).onFavoriteToggle = toggleFavorite;
     ref.read(audioServiceProvider).onShuffleToggle = toggleShuffle;
+    ref.read(audioServiceProvider).onRepeatToggle = nextRepeatMode;
     ref.read(audioServiceProvider).onPlay = () {
       if (!state.isPlaying) togglePlay();
     };
@@ -126,26 +155,77 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         _updateWidgetState();
       }
     });
+    ref.listen<AppSettings>(settingsProvider, (previous, next) {
+      if (previous?.audioFocus != next.audioFocus ||
+          previous?.resumeAfterCall != next.resumeAfterCall ||
+          previous?.permanentAudioFocusChange != next.permanentAudioFocusChange) {
+        ref.read(audioServiceProvider).applyAudioFocusPolicy(_getInterruptionPolicy());
+      }
+      if (previous?.enableAudioCache != next.enableAudioCache ||
+          previous?.audioCacheSizeMB != next.audioCacheSizeMB ||
+          previous?.audioCacheSecs != next.audioCacheSecs ||
+          previous?.audioBackCacheSizeMB != next.audioBackCacheSizeMB) {
+        ref.read(audioServiceProvider).configureCache(
+          enabled: next.enableAudioCache,
+          maxBytes: next.audioCacheSizeMB * 1024 * 1024,
+          cacheSecs: next.audioCacheSecs,
+          backBytes: next.audioBackCacheSizeMB * 1024 * 1024,
+        );
+      }
+      if (previous?.exclusiveHardwareMode != next.exclusiveHardwareMode) {
+        ref.read(audioServiceProvider).configureHardwareExclusive(next.exclusiveHardwareMode);
+      }
+    });
   }
 
   void _updateNotification() {
     final song = state.currentSong;
     if (song != null) {
-      ref.read(audioServiceProvider).updatePlaybackState(
-        isPlaying: state.isPlaying,
-        isFavorite: song.isFavorite,
-        isShuffle: state.isShuffle,
-      );
+      final audioSvc = ref.read(audioServiceProvider);
+      if (audioSvc.player.state.mediaSession != null) {
+        audioSvc.player.setMediaSession(
+          audioSvc.player.state.mediaSession!.copyWith(
+            isFavorite: song.isFavorite,
+          ),
+        );
+      }
     }
     _updateWidgetState();
   }
 
   Future<void> _init() async {
+    player.stream.error.listen((err) {
+      print('❌ Native mpv error: $err');
+    });
+
+    player.stream.log.listen((entry) {
+      print('🎵 Native mpv log [${entry.prefix} / ${entry.level}]: ${entry.text}');
+    });
+
+    player.stream.internalLog.listen((entry) {
+      print('🎵 Native mpv internalLog: ${entry.text}');
+    });
+
     player.stream.playing.listen((playing) {
+      print('🎵 player.stream.playing event: $playing. State isPlaying: ${state.isPlaying}. _isTransitioning: $_isTransitioning');
       if (_isTransitioning && !playing) {
+        print('🎵 Ignoring playing event: transitioning and not playing');
         // Ignore temporary pause/stop events while transitioning/opening a new song
         return;
       }
+      if (state.isScrubbing) {
+        print('🎵 Ignoring playing event: scrubbing');
+        // Ignore playing state changes while the user is scrubbing the seek bar
+        // to prevent the play/pause button from flickering
+        return;
+      }
+      if (DateTime.now().difference(_lastSeekTime).inMilliseconds < 400) {
+        print('🎵 Ignoring playing event: seek time window < 400ms');
+        // Ignore playing state changes immediately after a seek/scrub operation
+        // to prevent play/pause button state flickering
+        return;
+      }
+      print('🎵 Updating state.isPlaying to: $playing');
       state = state.copyWith(isPlaying: playing);
       _updateNotification();
     });
@@ -155,6 +235,12 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         state = state.copyWith(position: position);
       }
       _checkAndUpdateLyrics();
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      if (state.isPlaying && now - _lastWidgetPositionUpdate > 2000) {
+        _lastWidgetPositionUpdate = now;
+        _updateWidgetState();
+      }
 
       // Check for auto-crossfade trigger
       final settings = ref.read(settingsProvider);
@@ -176,7 +262,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
               state = state.copyWith(
                 isSleepTimerActive: false,
                 sleepTimerSongsRemaining: null,
+                sleepTimerSongsInitial: null,
                 sleepTimerDurationRemaining: null,
+                sleepTimerDurationInitial: null,
               );
               player.pause();
               return;
@@ -191,18 +279,30 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     });
 
     player.stream.duration.listen((duration) {
-      state = state.copyWith(duration: duration);
+      if (duration != Duration.zero) {
+        state = state.copyWith(duration: duration);
+      }
     });
 
     DateTime? lastCompletedTime;
     player.stream.completed.listen((completed) {
+      print('🎵 player.stream.completed event: $completed. _isTransitioning: $_isTransitioning');
       if (completed) {
-        if (_isTransitioning) return;
+        if (_isTransitioning) {
+          print('🎵 Ignoring completion event: currently transitioning');
+          return;
+        }
         final now = DateTime.now();
+        if (now.difference(_lastPlayTime).inMilliseconds < 1500) {
+          print('🎵 Ignoring completion event during transition guard window (${now.difference(_lastPlayTime).inMilliseconds}ms).');
+          return;
+        }
         if (lastCompletedTime != null && now.difference(lastCompletedTime!).inMilliseconds < 1000) {
+          print('🎵 Ignoring completion event: double trigger within 1s');
           return;
         }
         lastCompletedTime = now;
+        print('🎵 Processing song completion...');
 
         if (state.isSleepTimerActive && state.sleepTimerSongsRemaining != null) {
           final remaining = state.sleepTimerSongsRemaining! - 1;
@@ -210,7 +310,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
             state = state.copyWith(
               isSleepTimerActive: false,
               sleepTimerSongsRemaining: null,
+              sleepTimerSongsInitial: null,
               sleepTimerDurationRemaining: null,
+              sleepTimerDurationInitial: null,
             );
             player.pause();
             return;
@@ -261,30 +363,87 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     );
     player.setVolume(settings.volume * 100);
 
-    if (settings.lastPlayedSongId != null) {
-      final song = await DbService.isar.songs.get(settings.lastPlayedSongId!);
-      if (song != null) {
-        state = state.copyWith(currentSong: song);
+    // Apply cache and hardware configurations
+    final audioSvc = ref.read(audioServiceProvider);
+    audioSvc.applyAudioFocusPolicy(_getInterruptionPolicy());
+    await audioSvc.configureCache(
+      enabled: settings.enableAudioCache,
+      maxBytes: settings.audioCacheSizeMB * 1024 * 1024,
+      cacheSecs: settings.audioCacheSecs,
+      backBytes: settings.audioBackCacheSizeMB * 1024 * 1024,
+    );
+    await audioSvc.configureHardwareExclusive(settings.exclusiveHardwareMode);
+
+    final savedSongIds = settings.lastQueueSongIds;
+    final savedIndex = settings.lastQueueIndex;
+    
+    if (settings.persistQueue && savedSongIds.isNotEmpty) {
+      final List<Song> loadedSongs = [];
+      for (final id in savedSongIds) {
+        final song = await DbService.isar.songs.get(id);
+        if (song != null) {
+          loadedSongs.add(song);
+        }
+      }
+      if (loadedSongs.isNotEmpty) {
+        _playlist = loadedSongs;
+        _currentIndex = (savedIndex >= 0 && savedIndex < loadedSongs.length) ? savedIndex : 0;
+        final song = _playlist[_currentIndex];
+        state = state.copyWith(
+          queue: List.from(_playlist),
+          currentSong: song,
+          isRestoredSession: false,
+        );
         ref.read(lyricsProvider.notifier).fetchForSong(song);
-        _playlist = [song];
-        _currentIndex = 0;
+        ref.read(equalizerProvider.notifier).onSongChanged(song);
+        _updateWidgetState();
         if (settings.resumeOnStart) {
           Future.delayed(const Duration(milliseconds: 500), () {
             play(song, forceDisableCrossfade: true);
           });
         }
       }
+    } else if (settings.persistQueue && settings.lastPlayedSongId != null) {
+      final song = await DbService.isar.songs.get(settings.lastPlayedSongId!);
+      if (song != null) {
+        state = state.copyWith(
+          currentSong: song,
+          isRestoredSession: false,
+        );
+        ref.read(lyricsProvider.notifier).fetchForSong(song);
+        ref.read(equalizerProvider.notifier).onSongChanged(song);
+        _playlist = [song];
+        _currentIndex = 0;
+        _updateWidgetState(); // Sync initial song data with home screen widgets on launch
+        if (settings.resumeOnStart) {
+          Future.delayed(const Duration(milliseconds: 500), () {
+            play(song, forceDisableCrossfade: true);
+          });
+        }
+      }
+    } else {
+      await ref.read(settingsProvider.notifier).updateLastQueueState([], -1, null);
     }
+
+    // Ensure dynamic queue is populated right after startup loading finishes
+    await _ensureDynamicQueue();
   }
 
   Future<void> playAtIndex(int index) async {
     if (index >= 0 && index < _playlist.length) {
+      final endOfManual = _currentIndex + _manualQueueCount;
+      _manualQueueCount = (index < endOfManual) ? endOfManual - index : 0;
       _currentIndex = index;
       await play(_playlist[_currentIndex]);
     }
   }
 
   void setPlaylist(List<Song> songs, {int initialIndex = 0}) {
+    // Extract manual queue songs before replacing the playlist
+    final start = _currentIndex + 1;
+    final end = (start + _manualQueueCount).clamp(0, _playlist.length);
+    final manualSongs = (start < _playlist.length) ? _playlist.sublist(start, end) : <Song>[];
+
     _playlist = List.from(songs);
     if (state.isShuffle) {
       _playlist.shuffle();
@@ -294,13 +453,23 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     } else {
       _currentIndex = initialIndex;
     }
-    state = state.copyWith(queue: _playlist);
-    if (_playlist.isNotEmpty) {
+
+    // Re-insert manual queue songs after the new current song
+    if (_currentIndex != -1 && manualSongs.isNotEmpty) {
+      _playlist.insertAll(_currentIndex + 1, manualSongs);
+      _manualQueueCount = manualSongs.length;
+    } else {
+      _manualQueueCount = 0;
+    }
+
+    state = state.copyWith(queue: List.from(_playlist));
+    if (_playlist.isNotEmpty && _currentIndex != -1) {
       play(_playlist[_currentIndex]);
     }
   }
 
   Future<void> play(Song song, {bool forceDisableCrossfade = false, bool play = true}) async {
+    print('🎵 play() called for song: ${song.title}. Path: ${song.path}');
     _silenceTimer?.cancel();
     final settings = ref.read(settingsProvider);
     if (play && settings.audioFocus) {
@@ -315,83 +484,58 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
     }
 
+    final isUrl = song.path.startsWith('http://') || song.path.startsWith('https://');
+    if (!isUrl) {
+      await _requestStoragePermissions();
+      final file = File(song.path);
+      if (!await file.exists()) {
+        print('❌ File does not exist: ${song.path}');
+        _showErrorSnackBar(
+          'File not found or inaccessible: ${song.title}',
+          (l10n) => 'File not found or inaccessible: ${song.title}',
+        );
+        return;
+      }
+    }
+
     final crossfadeId = ++_activeCrossfadeId;
-    final audioSvc = ref.read(audioServiceProvider);
-
-    // Cancel any active volume fades on both players
-    audioSvc.cancelFade(player);
-    audioSvc.cancelFade(audioSvc.player2);
-    // Always stop player2 when starting a new play sequence
-    audioSvc.player2.stop();
-
-    final currentSong = state.currentSong;
-    final int fadeMs = _isLastPlayManual 
-        ? settings.shortManualCrossfadeLength 
-        : settings.crossfadeLength;
-
     _isTransitioning = true;
+    _lastPlayTime = DateTime.now();
+    print('🎵 Starting playback transition. crossfadeId: $crossfadeId. _isTransitioning set to true');
 
     try {
-      if (play && settings.enableCrossfade && 
-          currentSong != null && 
-          currentSong.path != song.path &&
-          fadeMs > 0 && 
-          !forceDisableCrossfade) {
-        
-        _autoCrossfadeTriggered = false;
-        final currentPos = player.state.position;
-        final currentVol = state.volume;
-        
-        final oldMetadata = {
-          'title': currentSong.title,
-          'artist': currentSong.artist ?? 'Unknown Artist',
-          'album': currentSong.album ?? 'Unknown Album',
-          if (currentSong.artPath != null) 'artPath': currentSong.artPath!,
-          if (currentSong.duration != null) 'duration': currentSong.duration!,
-        };
-        
-        await audioSvc.player2.open(
-          Media(currentSong.path, extras: oldMetadata.map((k, v) => MapEntry(k, v.toString()))),
-          play: false,
-        );
-        if (crossfadeId != _activeCrossfadeId) {
-          await audioSvc.player2.stop();
-          return;
-        }
-        
-        await audioSvc.player2.seek(currentPos);
-        audioSvc.player2.setVolume(currentVol * 100);
-        await audioSvc.player2.play();
-        if (crossfadeId != _activeCrossfadeId) {
-          await audioSvc.player2.stop();
-          return;
-        }
-
-        player.setVolume(0.0);
-        await _playDirect(song, crossfadeId, play: play);
-        if (crossfadeId != _activeCrossfadeId) return;
-
-        final duration = Duration(milliseconds: fadeMs);
-        await Future.wait([
-          audioSvc.fadeVolume(audioSvc.player2, currentVol, 0.0, duration),
-          audioSvc.fadeVolume(player, 0.0, currentVol, duration),
-        ]);
-
-        if (crossfadeId != _activeCrossfadeId) return;
-
-        await audioSvc.player2.stop();
-        player.setVolume(state.volume * 100);
-      } else {
-        await _playDirect(song, crossfadeId, play: play);
-      }
+      player.setVolume(state.volume * 100);
+      print('🎵 Calling _playDirect for crossfadeId: $crossfadeId');
+      await _playDirect(song, crossfadeId, play: play);
+      print('🎵 _playDirect completed successfully for crossfadeId: $crossfadeId');
     } catch (e) {
-      print('Error in play: $e');
+      print('🎵 Error in play: $e');
       if (crossfadeId == _activeCrossfadeId) {
-        player.setVolume(state.volume * 100);
-        await _playDirect(song, crossfadeId, play: play);
+        try {
+          print('🎵 Retrying _playDirect for crossfadeId: $crossfadeId');
+          player.setVolume(state.volume * 100);
+          await _playDirect(song, crossfadeId, play: play);
+          print('🎵 Retry of _playDirect completed successfully for crossfadeId: $crossfadeId');
+        } catch (retryError) {
+          print('🎵 Retry error in play: $retryError');
+          _showErrorSnackBar(
+            'Playback failed: ${retryError.toString()}',
+            (l10n) => 'Playback failed: ${retryError.toString()}',
+          );
+          rethrow;
+        }
+      } else {
+        print('🎵 Skipping retry: active crossfade ID changed to $_activeCrossfadeId');
       }
     } finally {
       if (crossfadeId == _activeCrossfadeId) {
+        int attempts = 0;
+        print('🎵 Finally block: checking if player is completed. Current player.state.completed: ${player.state.completed}');
+        while (player.state.completed && attempts < 20) {
+          await Future.delayed(const Duration(milliseconds: 25));
+          attempts++;
+        }
+        print('🎵 Finally block: finished waiting. Attempts: $attempts. Setting _isTransitioning to false');
         _isTransitioning = false;
       }
     }
@@ -400,8 +544,23 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   Future<void> _playDirect(Song song, int crossfadeId, {bool play = true}) async {
     _autoCrossfadeTriggered = false;
     _lastWidgetLyricLine = '';
-    state = state.copyWith(currentSong: song);
+    state = state.copyWith(
+      currentSong: song,
+      duration: song.duration != null ? Duration(milliseconds: song.duration!) : Duration.zero,
+      position: Duration.zero,
+      // Clear restored-session flag: from here on the song is actively playing.
+      isRestoredSession: false,
+    );
     ref.read(lyricsProvider.notifier).fetchForSong(song);
+    ref.read(equalizerProvider.notifier).onSongChanged(song);
+    
+    // Apply equalizer settings for the song
+    final settings = ref.read(settingsProvider);
+    final gains = (song.hasCustomEqualizer && song.equalizerGains != null)
+        ? song.equalizerGains!
+        : settings.globalEqualizerGains;
+    final customFilter = ref.read(equalizerProvider).customFilterString;
+
     final metadata = {
       'title': song.title,
       'artist': song.artist ?? 'Unknown Artist',
@@ -409,9 +568,31 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       if (song.artPath != null) 'artPath': song.artPath!,
       if (song.duration != null) 'duration': song.duration!,
     };
-    await ref.read(audioServiceProvider).play(song.path, metadata: metadata, play: play);
+    final double targetVol = state.volume;
+    final bool shouldFade = settings.fadePlayPauseStop && settings.playPauseStopFadeLength > 0 && play;
+    if (shouldFade) {
+      player.setVolume(0);
+    } else {
+      player.setVolume(state.volume * 100);
+    }
+
+    await ref.read(audioServiceProvider).play(
+      song.path,
+      metadata: metadata,
+      play: play,
+      equalizerGains: gains,
+      equalizerEnabled: settings.equalizerEnabled,
+      customFilter: customFilter,
+      interruptionPolicy: _getInterruptionPolicy(),
+    );
+
+    if (shouldFade && crossfadeId == _activeCrossfadeId) {
+      _fadeVolume(targetVol, Duration(milliseconds: settings.playPauseStopFadeLength));
+    }
 
     if (crossfadeId != _activeCrossfadeId) return;
+
+    _updateWidgetState(); // Update home screen widgets instantly with the new song metadata
 
     if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
       await windowManager.setTitle(
@@ -444,18 +625,27 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         song.isFavorite = dbSong.isFavorite;
         song.playCount = dbSong.playCount;
         song.lastPlayed = dbSong.lastPlayed;
+      } else {
+        song.id = songToUpdate.id;
       }
 
       await DbService.isar.songs.put(songToUpdate);
     });
 
+    if (settings.persistQueue) {
+      await ref.read(settingsProvider.notifier).updateLastPlayedSong(song.id);
+    }
+
     final idx = _playlist.indexWhere((s) => s.path == song.path);
     if (idx != -1) {
+      final endOfManual = _currentIndex + _manualQueueCount;
+      _manualQueueCount = (idx < endOfManual) ? endOfManual - idx : 0;
       _currentIndex = idx;
     } else {
       if (_currentIndex == -1) {
         _playlist = [song];
         _currentIndex = 0;
+        _manualQueueCount = 0;
       } else {
         _playlist.insert(_currentIndex + 1, song);
         _currentIndex++;
@@ -463,17 +653,40 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       state = state.copyWith(queue: List.from(_playlist));
     }
     _updateNotification();
+    await _ensureDynamicQueue();
+    await _saveQueueState();
   }
 
   void addToQueue(Song song) {
-    if (_playlist.any((s) => s.path == song.path)) return;
-    _playlist.add(song);
+    // Remove from the upcoming auto-playing list (if present) to prevent immediate duplicate playback
+    final startSearchIndex = _currentIndex + _manualQueueCount;
+    for (int i = _playlist.length - 1; i > startSearchIndex; i--) {
+      if (_playlist[i].path == song.path) {
+        _playlist.removeAt(i);
+      }
+    }
+
+    final insertIndex = _currentIndex + 1 + _manualQueueCount;
+    if (insertIndex >= _playlist.length) {
+      _playlist.add(song);
+    } else {
+      _playlist.insert(insertIndex, song);
+    }
+    _manualQueueCount++;
+
     state = state.copyWith(queue: List.from(_playlist));
   }
 
   void addNext(Song song) {
-    // Remove if already in queue to avoid duplicates/unexpected behavior
-    _playlist.removeWhere((s) => s.path == song.path);
+    // Remove from the upcoming queue (if present) to prevent immediate duplicate playback
+    for (int i = _playlist.length - 1; i > _currentIndex; i--) {
+      if (_playlist[i].path == song.path) {
+        _playlist.removeAt(i);
+        if (i <= _currentIndex + _manualQueueCount) {
+          if (_manualQueueCount > 0) _manualQueueCount--;
+        }
+      }
+    }
 
     final insertIndex = _currentIndex + 1;
     if (insertIndex >= _playlist.length) {
@@ -481,6 +694,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     } else {
       _playlist.insert(insertIndex, song);
     }
+    _manualQueueCount++;
 
     state = state.copyWith(queue: List.from(_playlist));
   }
@@ -528,76 +742,158 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     final targetPlaying = !currentPlaying;
     _targetPlayingState = targetPlaying;
 
-    if (targetPlaying) {
-      if (settings.audioFocus) {
-        final onCall = await ref.read(audioServiceProvider).isOnCall();
-        if (onCall) {
-          print('🎵 Cannot play/resume: Device is currently on a call.');
-          _targetPlayingState = null;
-          _showErrorSnackBar(
-            'Playback blocked: Cannot play music during an active call',
-            (l10n) => l10n.activeCallCannotPlay,
-          );
-          return;
-        }
-      }
-    }
-
     final playPauseId = ++_activePlayPauseId;
     final audioSvc = ref.read(audioServiceProvider);
 
-    // Cancel active volume fades on player
-    audioSvc.cancelFade(player);
+    print('🎵 togglePlay called. currentPlaying: $currentPlaying, targetPlaying: $targetPlaying, playlistIsEmpty: ${player.state.playlist.items.isEmpty}, completed: ${player.state.completed}, stateDuration: ${state.duration}');
 
-    if (!targetPlaying) {
-      if (settings.fadePlayPauseStop) {
-        final currentVol = player.state.volume / 100.0;
-        await audioSvc.fadeVolume(player, currentVol, 0.0, Duration(milliseconds: settings.playPauseStopFadeLength));
-        if (playPauseId != _activePlayPauseId) return;
-
-        await audioSvc.pause();
-      } else {
-        await audioSvc.pause();
-      }
-    } else {
-      if (player.state.playlist.medias.isEmpty && state.currentSong != null) {
-        await play(state.currentSong!);
-      } else {
-        if (settings.fadePlayPauseStop) {
-          player.setVolume(0.0);
-          await audioSvc.resume();
-          if (playPauseId != _activePlayPauseId) return;
-
-          await audioSvc.fadeVolume(player, 0.0, state.volume, Duration(milliseconds: settings.playPauseStopFadeLength));
-          if (playPauseId != _activePlayPauseId) return;
-
-          player.setVolume(state.volume * 100);
-        } else {
-          player.setVolume(state.volume * 100);
-          await audioSvc.resume();
+    try {
+      if (targetPlaying) {
+        if (settings.audioFocus) {
+          final onCall = await ref.read(audioServiceProvider).isOnCall();
+          if (onCall) {
+            print('🎵 Cannot play/resume: Device is currently on a call.');
+            _showErrorSnackBar(
+              'Playback blocked: Cannot play music during an active call',
+              (l10n) => l10n.activeCallCannotPlay,
+            );
+            return;
+          }
         }
       }
-    }
 
-    if (playPauseId == _activePlayPauseId) {
-      _targetPlayingState = null;
+      if (!targetPlaying) {
+        print('🎵 Pausing playback');
+        if (settings.fadePlayPauseStop && settings.playPauseStopFadeLength > 0) {
+          _fadeVolume(0.0, Duration(milliseconds: settings.playPauseStopFadeLength), onComplete: () async {
+            try {
+              await audioSvc.pause();
+            } catch (e) {
+              print('🎵 Error in pause: $e');
+            } finally {
+              player.setVolume(state.volume * 100);
+            }
+          });
+        } else {
+          await audioSvc.pause();
+        }
+      } else {
+        Song? songToPlay = state.currentSong;
+        if (songToPlay == null) {
+          if (_playlist.isNotEmpty) {
+            if (_currentIndex >= 0 && _currentIndex < _playlist.length) {
+              songToPlay = _playlist[_currentIndex];
+            } else {
+              songToPlay = _playlist.first;
+              _currentIndex = 0;
+            }
+          } else {
+            if (settings.lastPlayedSongId != null) {
+              songToPlay = await DbService.isar.songs.get(settings.lastPlayedSongId!);
+            }
+            if (songToPlay == null) {
+              final libSongs = await DbService.isar.songs.where().findAll();
+              if (libSongs.isNotEmpty) {
+                songToPlay = libSongs.first;
+              }
+            }
+          }
+        }
+
+        if (player.state.playlist.items.isEmpty || player.state.completed || state.duration == Duration.zero) {
+          print('🎵 Playlist empty, completed, or duration is zero. Reloading song via play().');
+          if (songToPlay != null) {
+            await play(songToPlay);
+          } else {
+            print('🎵 Cannot reload: songToPlay is null');
+          }
+        } else {
+          print('🎵 Resuming playback');
+          _lastPlayTime = DateTime.now(); // Record resumption time
+          if (settings.fadePlayPauseStop && settings.playPauseStopFadeLength > 0) {
+            player.setVolume(0);
+            await audioSvc.resume();
+            _fadeVolume(state.volume, Duration(milliseconds: settings.playPauseStopFadeLength));
+          } else {
+            player.setVolume(state.volume * 100);
+            await audioSvc.resume();
+          }
+        }
+      }
+    } catch (e) {
+      print('🎵 Error in togglePlay: $e');
+      _showErrorSnackBar(
+        'Playback action failed: ${e.toString()}',
+        (l10n) => 'Playback action failed: ${e.toString()}',
+      );
+    } finally {
+      if (playPauseId == _activePlayPauseId) {
+        _targetPlayingState = null;
+      }
     }
   }
 
   Future<void> skipNext({bool isManual = true}) async {
     if (_playlist.isEmpty) return;
     _isLastPlayManual = isManual;
-    _currentIndex++;
-    if (_currentIndex >= _playlist.length) {
-      if (state.repeatMode == RepeatMode.all) {
-        _currentIndex = 0;
-      } else {
-        _currentIndex = _playlist.length - 1;
-        await ref.read(audioServiceProvider).pause();
+
+    final settings = ref.read(settingsProvider);
+    final fadeDurationMs = isManual 
+        ? (settings.enableCrossfade ? settings.shortManualCrossfadeLength : 0)
+        : (settings.enableCrossfade ? settings.crossfadeLength : 0);
+
+    final nextIndex = _currentIndex + 1;
+    if (nextIndex >= _playlist.length) {
+      if (state.repeatMode != RepeatMode.all) {
+        if (fadeDurationMs > 0 && state.isPlaying) {
+          _fadeVolume(0.0, Duration(milliseconds: fadeDurationMs), onComplete: () async {
+            await ref.read(audioServiceProvider).pause();
+            player.setVolume(state.volume * 100);
+          });
+        } else {
+          await ref.read(audioServiceProvider).pause();
+        }
         return;
       }
     }
-    await play(_playlist[_currentIndex]);
+
+    if (fadeDurationMs > 0 && state.isPlaying) {
+      _fadeVolume(0.0, Duration(milliseconds: fadeDurationMs), onComplete: () async {
+        _currentIndex++;
+        if (_currentIndex >= _playlist.length) {
+          _currentIndex = 0;
+        }
+        if (_manualQueueCount > 0) {
+          _manualQueueCount--;
+        }
+
+        if (!isManual && settings.silenceBetweenTracks > 0) {
+          _silenceTimer?.cancel();
+          _silenceTimer = Timer(Duration(milliseconds: settings.silenceBetweenTracks), () async {
+            await play(_playlist[_currentIndex]);
+          });
+        } else {
+          await play(_playlist[_currentIndex]);
+        }
+      });
+    } else {
+      _currentIndex++;
+      if (_currentIndex >= _playlist.length) {
+        _currentIndex = 0;
+      }
+      if (_manualQueueCount > 0) {
+        _manualQueueCount--;
+      }
+
+      if (!isManual && settings.silenceBetweenTracks > 0) {
+        _silenceTimer?.cancel();
+        _silenceTimer = Timer(Duration(milliseconds: settings.silenceBetweenTracks), () async {
+          await play(_playlist[_currentIndex]);
+        });
+      } else {
+        await play(_playlist[_currentIndex]);
+      }
+    }
   }
 
   Future<void> skipPrevious() async {
@@ -607,15 +903,25 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       await seek(Duration.zero);
       return;
     }
-    _currentIndex--;
-    if (_currentIndex < 0) {
-      if (state.repeatMode == RepeatMode.all) {
-        _currentIndex = _playlist.length - 1;
-      } else {
-        _currentIndex = 0;
+
+    final settings = ref.read(settingsProvider);
+    final fadeDurationMs = settings.enableCrossfade ? settings.shortManualCrossfadeLength : 0;
+
+    if (fadeDurationMs > 0 && state.isPlaying) {
+      _fadeVolume(0.0, Duration(milliseconds: fadeDurationMs), onComplete: () async {
+        _currentIndex--;
+        if (_currentIndex < 0) {
+          _currentIndex = state.repeatMode == RepeatMode.all ? _playlist.length - 1 : 0;
+        }
+        await play(_playlist[_currentIndex]);
+      });
+    } else {
+      _currentIndex--;
+      if (_currentIndex < 0) {
+        _currentIndex = state.repeatMode == RepeatMode.all ? _playlist.length - 1 : 0;
       }
+      await play(_playlist[_currentIndex]);
     }
-    await play(_playlist[_currentIndex]);
   }
 
   Future<void> seekRelative(int seconds) async {
@@ -630,7 +936,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     setVolume(newVolume);
   }
 
-  void toggleShuffle() {
+  Future<void> toggleShuffle() async {
     final newState = !state.isShuffle;
     state = state.copyWith(isShuffle: newState);
     if (newState) {
@@ -642,7 +948,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         (s) => s.path == state.currentSong!.path,
       );
     }
-    ref.read(settingsProvider.notifier).updateShuffle(newState);
+    await ref.read(settingsProvider.notifier).updateShuffle(newState);
+    await _saveQueueState();
     _updateNotification();
   }
 
@@ -657,52 +964,62 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   }
 
   void setVolume(double volume) {
-    ref.read(audioServiceProvider).cancelFade(player);
     state = state.copyWith(volume: volume);
     player.setVolume(volume * 100);
     ref.read(settingsProvider.notifier).updateVolume(volume);
   }
 
   Future<void> seek(Duration position) async {
+    _activeSeekId++;
+    _lastSeekTime = DateTime.now();
     final settings = ref.read(settingsProvider);
-    if (settings.fadeOnSeek && state.isPlaying && !state.isScrubbing) {
-      final seekId = ++_activeSeekId;
-      final audioSvc = ref.read(audioServiceProvider);
-
-      audioSvc.cancelFade(player);
-
-      final currentVol = player.state.volume / 100.0;
-      await audioSvc.fadeVolume(player, currentVol, 0.0, Duration(milliseconds: settings.seekFadeLength));
-      if (seekId != _activeSeekId) return;
-
-      await player.seek(position);
-      state = state.copyWith(position: position);
-      if (seekId != _activeSeekId) return;
-
-      await audioSvc.fadeVolume(player, 0.0, state.volume, Duration(milliseconds: settings.seekFadeLength));
-      if (seekId != _activeSeekId) return;
-      player.setVolume(state.volume * 100);
-    } else {
-      _activeSeekId++;
-      ref.read(audioServiceProvider).cancelFade(player);
-      await player.seek(position);
-      state = state.copyWith(position: position);
-      if (!state.isScrubbing) {
-        player.setVolume(state.volume * 100);
+    print('🎵 seek called with position: $position. isScrubbing: ${state.isScrubbing}');
+    try {
+      if (settings.fadeOnSeek && settings.seekFadeLength > 0 && !state.isScrubbing) {
+        final targetVol = state.volume;
+        _fadeVolume(0.0, Duration(milliseconds: (settings.seekFadeLength / 2).round()), onComplete: () async {
+          try {
+            print('🎵 Executing faded player.seek to $position');
+            await player.seek(position);
+            state = state.copyWith(position: position);
+          } catch (e) {
+            print('🎵 Error in faded player.seek: $e');
+            _showErrorSnackBar(
+              'Seek failed: ${e.toString()}',
+              (l10n) => 'Seek failed: ${e.toString()}',
+            );
+          } finally {
+            _fadeVolume(targetVol, Duration(milliseconds: (settings.seekFadeLength / 2).round()));
+          }
+        });
+      } else {
+        print('🎵 Executing direct player.seek to $position');
+        await player.seek(position);
+        state = state.copyWith(position: position);
+        if (!state.isScrubbing) {
+          player.setVolume(state.volume * 100);
+        }
       }
+    } catch (e) {
+      print('🎵 Error in player.seek: $e');
+      _showErrorSnackBar(
+        'Seek failed: ${e.toString()}',
+        (l10n) => 'Seek failed: ${e.toString()}',
+      );
+      state = state.copyWith(position: position);
     }
   }
 
   void startScrubbing() {
     _activeSeekId++;
-    ref.read(audioServiceProvider).cancelFade(player);
+    _lastSeekTime = DateTime.now();
     state = state.copyWith(isScrubbing: true);
     player.setVolume(0);
   }
 
   void stopScrubbing() {
     _activeSeekId++;
-    ref.read(audioServiceProvider).cancelFade(player);
+    _lastSeekTime = DateTime.now();
     state = state.copyWith(
       isScrubbing: false,
       position: player.state.position,
@@ -710,49 +1027,100 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     player.setVolume(state.volume * 100);
   }
 
-  void reorderQueue(int oldIndex, int newIndex) {
-    if (newIndex > oldIndex) newIndex -= 1;
-    final song = _playlist.removeAt(oldIndex);
-    _playlist.insert(newIndex, song);
+  Future<void> reorderQueue(int oldIndex, int newIndex) async {
+    if (_playlist.isEmpty) return;
+
+    final currentSongPath = state.currentSong?.path;
+    final currentIdx = _playlist.indexWhere((s) => s.path == currentSongPath);
+
+    if (currentIdx == -1) {
+      // Non-rotated standard reorder
+      if (newIndex > oldIndex) newIndex -= 1;
+      final song = _playlist.removeAt(oldIndex);
+      _playlist.insert(newIndex, song);
+    } else {
+      // 1. Reconstruct the rotated list (displayed list)
+      final List<Song> displayedQueue = [
+        ..._playlist.sublist(currentIdx),
+        ..._playlist.sublist(0, currentIdx),
+      ];
+
+      // 2. Perform the reorder on the rotated list
+      if (newIndex > oldIndex) newIndex -= 1;
+      final song = displayedQueue.removeAt(oldIndex);
+      displayedQueue.insert(newIndex, song);
+
+      // 3. Rotate it back to align currentSong with its original index
+      final n = displayedQueue.length;
+      final k = (n - currentIdx) % n;
+
+      _playlist = [
+        ...displayedQueue.sublist(k),
+        ...displayedQueue.sublist(0, k),
+      ];
+    }
+
+    // 4. Update state and save
     state = state.copyWith(queue: List.from(_playlist));
     if (state.currentSong != null) {
       _currentIndex = _playlist.indexWhere((s) => s.path == state.currentSong!.path);
     }
+    await _saveQueueState();
   }
 
-  void removeFromQueue(int index) {
+  Future<void> removeFromQueue(int index) async {
     if (index == _currentIndex) {
-      skipNext();
+      await skipNext();
+    }
+    final endOfManual = _currentIndex + _manualQueueCount;
+    if (index > _currentIndex && index <= endOfManual) {
+      if (_manualQueueCount > 0) _manualQueueCount--;
     }
     _playlist.removeAt(index);
     state = state.copyWith(queue: List.from(_playlist));
     if (state.currentSong != null) {
       _currentIndex = _playlist.indexWhere((s) => s.path == state.currentSong!.path);
     }
+    await _ensureDynamicQueue();
   }
 
-  void clearQueue() {
+  Future<void> clearQueue() async {
     _playlist = [];
     _currentIndex = -1;
+    _manualQueueCount = 0;
     state = PlaybackState(
       volume: state.volume,
       isShuffle: state.isShuffle,
       repeatMode: state.repeatMode,
     );
-    player.stop();
+    await player.stop();
+    await _ensureDynamicQueue();
   }
 
   Future<void> toggleFavorite() async {
     final song = state.currentSong;
     if (song == null) return;
 
+    // Toggle and persist
+    final newFavoriteState = !song.isFavorite;
     await DbService.isar.writeTxn(() async {
-      song.isFavorite = !song.isFavorite;
+      song.isFavorite = newFavoriteState;
       await DbService.isar.songs.put(song);
     });
 
-    // Refresh the state to trigger UI updates
-    state = state.copyWith(currentSong: song);
+    // Read a fresh instance back from DB to guarantee a new object reference
+    // so Riverpod's select((s) => s.currentSong) detects the identity change
+    // and rebuilds widgets (the like button, notification etc.)
+    final freshSong = await DbService.isar.songs.get(song.id) ?? song;
+
+    // Sync the in-memory playlist entry too
+    final idx = _playlist.indexWhere((s) => s.id == freshSong.id);
+    if (idx != -1) _playlist[idx] = freshSong;
+
+    state = state.copyWith(
+      currentSong: freshSong,
+      queue: List.from(_playlist),
+    );
     _updateNotification();
   }
 
@@ -770,10 +1138,16 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   Future<bool> _requestStoragePermissions() async {
     if (!Platform.isAndroid) return true;
     try {
+      final audioStatusBefore = await Permission.audio.status;
+      final storageStatusBefore = await Permission.storage.status;
+      final manageStatusBefore = await Permission.manageExternalStorage.status;
+      print('🎵 Permission statuses BEFORE request - audio: $audioStatusBefore, storage: $storageStatusBefore, manageExternalStorage: $manageStatusBefore');
+
       // Check if we already have permissions
-      if (await Permission.audio.isGranted ||
-          await Permission.storage.isGranted ||
-          await Permission.manageExternalStorage.isGranted) {
+      if (audioStatusBefore.isGranted ||
+          storageStatusBefore.isGranted ||
+          manageStatusBefore.isGranted) {
+        print('🎵 Storage permissions already granted (at least one)');
         return true;
       }
 
@@ -783,11 +1157,19 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         Permission.storage,
       ].request();
 
-      bool isGranted = (statuses[Permission.audio]?.isGranted ?? false) ||
-                       (statuses[Permission.storage]?.isGranted ?? false);
+      final audioStatusAfter = statuses[Permission.audio] ?? PermissionStatus.denied;
+      final storageStatusAfter = statuses[Permission.storage] ?? PermissionStatus.denied;
+      print('🎵 Permission statuses AFTER request - audio: $audioStatusAfter, storage: $storageStatusAfter');
 
-      if (!isGranted && await Permission.manageExternalStorage.request().isGranted) {
-        isGranted = true;
+      bool isGranted = audioStatusAfter.isGranted || storageStatusAfter.isGranted;
+
+      if (!isGranted) {
+        print('🎵 Requesting manageExternalStorage since other permissions were not granted');
+        final manageStatusAfter = await Permission.manageExternalStorage.request();
+        print('🎵 Permission status AFTER manageExternalStorage request: $manageStatusAfter');
+        if (manageStatusAfter.isGranted) {
+          isGranted = true;
+        }
       }
 
       return isGranted;
@@ -814,9 +1196,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     final lastPosition = state.position;
 
     if (isCurrent) {
-      // Completely stop both players to release any file handle locks
+      // Completely stop player to release file handle locks
       await player.stop();
-      await ref.read(audioServiceProvider).player2.stop();
       // Wait for player to completely release the file handle
       await Future.delayed(const Duration(milliseconds: 500));
     }
@@ -894,6 +1275,82 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     return (fileRenamed && newPath != song.path) ? FileActionResult.success : FileActionResult.dbOnly;
   }
 
+  void updateSongEqualizer({required int songId, required bool hasCustom, List<double>? gains}) {
+    // Update in playlist
+    final idx = _playlist.indexWhere((s) => s.id == songId);
+    if (idx != -1) {
+      _playlist[idx].hasCustomEqualizer = hasCustom;
+      _playlist[idx].equalizerGains = gains;
+    }
+
+    // Update in currentSong if it matches
+    final song = state.currentSong;
+    if (song != null && song.id == songId) {
+      song.hasCustomEqualizer = hasCustom;
+      song.equalizerGains = gains;
+      state = state.copyWith(currentSong: song, queue: List.from(_playlist));
+    } else {
+      state = state.copyWith(queue: List.from(_playlist));
+    }
+  }
+
+  void clearAllSongsEqualizer() {
+    for (int i = 0; i < _playlist.length; i++) {
+      _playlist[i].hasCustomEqualizer = false;
+      _playlist[i].equalizerGains = null;
+    }
+    final song = state.currentSong;
+    if (song != null) {
+      song.hasCustomEqualizer = false;
+      song.equalizerGains = null;
+      state = state.copyWith(currentSong: song, queue: List.from(_playlist));
+    } else {
+      state = state.copyWith(queue: List.from(_playlist));
+    }
+  }
+
+  /// Edits song metadata in the database (title, artist, album, year, genre, artPath).
+  /// Does NOT rename the physical file — only updates the DB record.
+  Future<bool> editSongMetadata(Song song, {
+    String? title,
+    String? artist,
+    String? album,
+    int? year,
+    String? genre,
+    String? artPath,
+    String? lyrics,
+  }) async {
+    try {
+      await DbService.isar.writeTxn(() async {
+        if (title != null && title.isNotEmpty) song.title = title.trim();
+        if (artist != null) song.artist = artist.trim().isEmpty ? null : artist.trim();
+        if (album != null) song.album = album.trim().isEmpty ? null : album.trim();
+        if (year != null) song.year = year == 0 ? null : year;
+        if (genre != null) song.genre = genre.trim().isEmpty ? null : genre.trim();
+        if (artPath != null) song.artPath = artPath.trim().isEmpty ? null : artPath.trim();
+        song.lyrics = (lyrics == null || lyrics.trim().isEmpty) ? null : lyrics.trim();
+        await DbService.isar.songs.put(song);
+      });
+
+      // Update the in-memory playlist
+      final idx = _playlist.indexWhere((s) => s.id == song.id);
+      if (idx != -1) _playlist[idx] = song;
+
+      // Reflect changes in live playback state if this is the current song
+      if (state.currentSong?.id == song.id) {
+        state = state.copyWith(currentSong: song, queue: List.from(_playlist));
+        _updateNotification();
+        ref.read(lyricsProvider.notifier).fetchForSong(song, force: true);
+      } else {
+        state = state.copyWith(queue: List.from(_playlist));
+      }
+      return true;
+    } catch (e) {
+      print('Error editing song metadata: $e');
+      return false;
+    }
+  }
+
   Future<FileActionResult> deleteSong(Song song) async {
     try {
       await _requestStoragePermissions();
@@ -905,9 +1362,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     final wasPlaying = state.isPlaying;
 
     if (isCurrent) {
-      // Completely stop both players to release any file handle locks
+      // Completely stop player to release file handle locks
       await player.stop();
-      await ref.read(audioServiceProvider).player2.stop();
       // Wait for player to completely release the file handle
       await Future.delayed(const Duration(milliseconds: 500));
     }
@@ -954,6 +1410,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
             repeatMode: state.repeatMode,
             queue: [],
           );
+          ref.read(equalizerProvider.notifier).onSongChanged(null);
+          await ref.read(settingsProvider.notifier).updateLastPlayedSong(null);
         }
       } else {
         // Adjust _currentIndex if the deleted song was before the current one
@@ -1048,7 +1506,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       switch (call.method) {
         case 'onWidgetAction':
           final action = call.arguments as String?;
-          if (action == 'com.looper.player.ACTION_SHUFFLE') {
+          if (action == 'com.looper.player.ACTION_PLAY_PAUSE') {
+            togglePlay();
+          } else if (action == 'com.looper.player.ACTION_NEXT') {
+            skipNext();
+          } else if (action == 'com.looper.player.ACTION_PREV') {
+            skipPrevious();
+          } else if (action == 'com.looper.player.ACTION_SHUFFLE') {
             toggleShuffle();
           } else if (action == 'com.looper.player.ACTION_REPEAT') {
             nextRepeatMode();
@@ -1117,17 +1581,34 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
       final accentColor = ref.read(settingsProvider).accentColor;
 
-      await _widgetChannel.invokeMethod('updateWidgetState', {
-        'title': song?.title ?? 'No song playing',
-        'artist': song?.artist ?? '',
-        'isPlaying': state.isPlaying,
-        'isShuffle': state.isShuffle,
-        'repeatMode': state.repeatMode.index,
-        'lyrics': currentLine,
-        'nextLyrics': nextLine,
-        'artPath': song?.artPath ?? '',
-        'accentColor': accentColor,
-      });
+      await HomeWidget.saveWidgetData<String>('title', song?.title ?? 'No song playing');
+      await HomeWidget.saveWidgetData<String>('artist', song?.artist ?? '');
+      await HomeWidget.saveWidgetData<bool>('isPlaying', state.isPlaying);
+      await HomeWidget.saveWidgetData<bool>('isShuffle', state.isShuffle);
+      await HomeWidget.saveWidgetData<int>('repeatMode', state.repeatMode.index);
+      await HomeWidget.saveWidgetData<String>('lyrics', currentLine);
+      await HomeWidget.saveWidgetData<String>('nextLyrics', nextLine);
+      await HomeWidget.saveWidgetData<String>('artPath', song?.artPath ?? '');
+      await HomeWidget.saveWidgetData<int>('accentColor', accentColor);
+      await HomeWidget.saveWidgetData<int>('position', currentPosition.inMilliseconds);
+      await HomeWidget.saveWidgetData<int>('duration', state.duration.inMilliseconds);
+
+      await HomeWidget.updateWidget(
+        name: 'PlayerWidgetProvider',
+        qualifiedAndroidName: 'com.looper.player.PlayerWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'PlayerWidgetProviderSquareArtwork',
+        qualifiedAndroidName: 'com.looper.player.PlayerWidgetProviderSquareArtwork',
+      );
+      await HomeWidget.updateWidget(
+        name: 'PlayerWidgetProviderSquareProgress',
+        qualifiedAndroidName: 'com.looper.player.PlayerWidgetProviderSquareProgress',
+      );
+      await HomeWidget.updateWidget(
+        name: 'PlayerWidgetProviderLargeLyrics',
+        qualifiedAndroidName: 'com.looper.player.PlayerWidgetProviderLargeLyrics',
+      );
     } catch (e, s) {
       print('Error updating widget state: $e\n$s');
     }
@@ -1143,7 +1624,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       state = state.copyWith(
         isSleepTimerActive: true,
         sleepTimerDurationRemaining: duration,
+        sleepTimerDurationInitial: duration,
         sleepTimerSongsRemaining: null,
+        sleepTimerSongsInitial: null,
       );
 
       _sleepTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -1161,6 +1644,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
             isSleepTimerActive: false,
             sleepTimerDurationRemaining: null,
             sleepTimerSongsRemaining: null,
+            sleepTimerDurationInitial: null,
+            sleepTimerSongsInitial: null,
           );
           player.pause();
         } else {
@@ -1171,7 +1656,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       state = state.copyWith(
         isSleepTimerActive: true,
         sleepTimerDurationRemaining: null,
+        sleepTimerDurationInitial: null,
         sleepTimerSongsRemaining: songCount,
+        sleepTimerSongsInitial: songCount,
       );
     }
   }
@@ -1183,13 +1670,106 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       isSleepTimerActive: false,
       sleepTimerDurationRemaining: null,
       sleepTimerSongsRemaining: null,
+      sleepTimerDurationInitial: null,
+      sleepTimerSongsInitial: null,
     );
+  }
+
+  Future<void> _saveQueueState() async {
+    final settings = ref.read(settingsProvider);
+    if (!settings.persistQueue) return;
+    final songIds = _playlist.map((s) => s.id).toList();
+    await ref.read(settingsProvider.notifier).updateLastQueueState(
+      songIds,
+      _currentIndex,
+      state.currentSong?.id,
+    );
+  }
+
+  Future<void> _ensureDynamicQueue() async {
+    final allSongs = await DbService.isar.songs.where().findAll();
+    if (allSongs.isEmpty) return;
+
+    bool playlistChanged = false;
+
+    // 1. If playlist is empty, populate it with a random song
+    if (_playlist.isEmpty) {
+      final randomSong = allSongs[math.Random().nextInt(allSongs.length)];
+      _playlist = [randomSong];
+      _currentIndex = 0;
+      _manualQueueCount = 0;
+      playlistChanged = true;
+    }
+
+    // 2. Ensure we have at least 5 songs ahead of the current index (dynamic queue auto-fill)
+    const int bufferSize = 5;
+    while (_playlist.length - 1 - _currentIndex < bufferSize) {
+      final lastSong = _playlist.isNotEmpty ? _playlist.last : null;
+      var candidates = allSongs;
+      if (lastSong != null) {
+        candidates = allSongs.where((s) => s.path != lastSong.path).toList();
+      }
+      if (candidates.isEmpty) {
+        candidates = allSongs;
+      }
+      final nextSong = candidates[math.Random().nextInt(candidates.length)];
+      _playlist.add(nextSong);
+      playlistChanged = true;
+    }
+
+    if (playlistChanged) {
+      state = state.copyWith(queue: List.from(_playlist));
+      await _saveQueueState();
+    }
+  }
+
+  InterruptionPolicy _getInterruptionPolicy() {
+    final settings = ref.read(settingsProvider);
+    if (!settings.audioFocus) {
+      return InterruptionPolicy.keepPlaying;
+    }
+    if (!settings.permanentAudioFocusChange) {
+      return InterruptionPolicy.keepPlaying;
+    }
+    return settings.resumeAfterCall
+        ? InterruptionPolicy.pauseAndResume
+        : InterruptionPolicy.pauseOnly;
+  }
+
+  Timer? _fadeVolumeTimer;
+
+  void _fadeVolume(double targetVolume, Duration duration, {VoidCallback? onComplete}) {
+    _fadeVolumeTimer?.cancel();
+    if (duration.inMilliseconds <= 0) {
+      player.setVolume(targetVolume * 100);
+      onComplete?.call();
+      return;
+    }
+
+    final double startVolume = player.state.volume / 100.0;
+    final int steps = 15;
+    final int stepMs = (duration.inMilliseconds / steps).round().clamp(10, 100);
+    final double volumeStep = (targetVolume - startVolume) / steps;
+    int currentStep = 0;
+
+    _fadeVolumeTimer = Timer.periodic(Duration(milliseconds: stepMs), (timer) {
+      currentStep++;
+      final double nextVolume = (startVolume + (volumeStep * currentStep)).clamp(0.0, 1.5);
+      player.setVolume(nextVolume * 100);
+
+      if (currentStep >= steps) {
+        timer.cancel();
+        player.setVolume(targetVolume * 100);
+        onComplete?.call();
+      }
+    });
   }
 
   @override
   void dispose() {
     _silenceTimer?.cancel();
     _sleepTimer?.cancel();
+    _fadeVolumeTimer?.cancel();
     super.dispose();
   }
 }

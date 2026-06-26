@@ -640,6 +640,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resumeOnStartTitle => 'Resume on Start';
 
   @override
+  String get persistQueueTitle => 'Persist Last Queue';
+
+  @override
+  String get persistQueueDesc =>
+      'Save the last playing song and queue on app restarts';
+
+  @override
   String get right => 'Right';
 
   @override
@@ -926,4 +933,98 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get year => 'Year';
+
+  @override
+  String get supportUs => 'Support Us';
+
+  @override
+  String get supportUsDesc => 'Help keep Looper Player alive & open-source';
+
+  @override
+  String get supportDevelopment => 'Support the Development';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player is 100% free and open-source. If you enjoy using it, please consider supporting the creator with a donation. Every contribution helps keep the project active!';
+
+  @override
+  String get useCustomFont => 'Use Custom Font';
+
+  @override
+  String get useCustomFontDesc =>
+      'Use Jost or other custom fonts. Otherwise, DM Sans is used.';
+
+  @override
+  String get selectFontFamily => 'Select Font Family';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Active font: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Font Weight Adjustment';
+
+  @override
+  String get currentWeight => 'Current weight';
+
+  @override
+  String get useCustomFontLyrics => 'Use Custom Font for Lyrics';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Use custom font and weight for synchronized lyrics view';
+
+  @override
+  String get lyricsFontFamily => 'Lyrics Font Family';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Active lyrics font: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'Lyrics Font Weight Adjustment';
+
+  @override
+  String get giveStarOnGithub => 'Give Star on GitHub';
+
+  @override
+  String get supportProjectLove => 'Support the project and show some love!';
+
+  @override
+  String get sortAlphabeticalAZ => 'Alphabetical (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Alphabetical (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'Recently Added';
+
+  @override
+  String get sortOldestAdded => 'Oldest Added';
+
+  @override
+  String get sortYearNewest => 'Year (Newest)';
+
+  @override
+  String get sortYearOldest => 'Year (Oldest)';
+
+  @override
+  String get sortMostSongs => 'Most Songs';
+
+  @override
+  String get sortLeastSongs => 'Least Songs';
+
+  @override
+  String get sortDefault => 'Default';
+
+  @override
+  String get sortArtistAsc => 'Artist (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'Album (A-Z)';
+
+  @override
+  String get sortDuration => 'Duration';
 }

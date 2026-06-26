@@ -13,6 +13,7 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
+import 'package:looper_player/ui/widgets/app_refresh_indicator.dart';
 
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/playlists/presentation/playlist_view.dart';
@@ -57,7 +58,7 @@ class SongsList extends ConsumerWidget {
             children: [
               Text(
                 '${songs.length} ${l10n.songs}',
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
+                style: AppFonts.jostStyle(color: Colors.grey, fontSize: 13),
               ),
               Row(
                 children: [
@@ -88,7 +89,7 @@ class SongsList extends ConsumerWidget {
                                 onPressed: () => Navigator.pop(context, true),
                                 child: Text(
                                   l10n.reset,
-                                  style: const TextStyle(color: Colors.red),
+                                  style: AppFonts.jostStyle(color: Colors.red),
                                 ),
                               ),
                             ],
@@ -103,7 +104,7 @@ class SongsList extends ConsumerWidget {
                       icon: const Icon(LucideIcons.refreshCw, size: 16),
                       label: Text(
                         l10n.resetLibrary,
-                        style: const TextStyle(fontSize: 13),
+                        style: AppFonts.jostStyle(fontSize: 13),
                       ),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -135,12 +136,9 @@ class SongsList extends ConsumerWidget {
           )
         else
           Expanded(
-            child: RefreshIndicator(
+            child: AppRefreshIndicator(
               onRefresh: () =>
                   ref.read(libraryProvider.notifier).scanSavedFolders(),
-              displacement: 20,
-              backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-              color: Theme.of(context).colorScheme.primary,
               child: ListView.builder(
                 controller: controller,
                 shrinkWrap: false,
@@ -294,7 +292,7 @@ class SongTile extends ConsumerWidget {
         ),
         title: Text(
           song.title,
-          style: TextStyle(
+          style: AppFonts.jostStyle(
             color: isCurrent
                 ? Theme.of(context).colorScheme.primary
                 : Colors.white,
@@ -331,7 +329,7 @@ class SongTile extends ConsumerWidget {
                     },
                     child: Text(
                       song.artist ?? l10n.unknownArtist,
-                      style: TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 13,
                       ),
@@ -363,12 +361,12 @@ class SongTile extends ConsumerWidget {
                             context: context,
                             text: lyricSnippet,
                             query: searchQuery ?? '',
-                            baseStyle: TextStyle(
+                            baseStyle: AppFonts.jostStyle(
                               color: Colors.white.withValues(alpha: 0.75),
                               fontSize: 11,
                               fontStyle: FontStyle.italic,
                             ),
-                            highlightStyle: TextStyle(
+                            highlightStyle: AppFonts.jostStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
                               fontSize: 11,
@@ -405,7 +403,7 @@ class SongTile extends ConsumerWidget {
                 },
                 child: Text(
                   song.artist ?? l10n.unknownArtist,
-                  style: TextStyle(
+                  style: AppFonts.jostStyle(
                     color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 13,
                   ),
@@ -533,11 +531,10 @@ void _showSortBottomSheet(
                         padding: const EdgeInsets.only(left: 8.0),
                         child: Text(
                           l10n.sortOrder,
-                          style: const TextStyle(
+                          style: AppFonts.jostStyle(
                             fontSize: 18, 
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
-                            fontFamily: AppFonts.jost,
                           ),
                         ),
                       ),
@@ -756,7 +753,7 @@ class _SortOption extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
-                    style: TextStyle(
+                    style: AppFonts.jostStyle(
                       color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.9),
                       fontWeight: FontWeight.w500,
                       fontSize: 16,

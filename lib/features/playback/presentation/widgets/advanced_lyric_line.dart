@@ -116,22 +116,25 @@ class AdvancedLyricLine extends ConsumerWidget {
 
     // Language-aware font selection
     final bool isHindiText = _isHindi(line.text);
-    final baseStyle =
-        (isHindiText ? AppFonts.googleSansStyle() : AppFonts.soraStyle())
-            .copyWith(
-              fontSize: (isActive ? 30.5 : 30) * fontScale,
-              fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
-              letterSpacing: isHindiText ? 0.95 : 0,
-              height: 1.15,
-              color: isActive ? activeColor : Colors.white.withValues(alpha: lineOpacity),
-              shadows: isActive && useDynamicColor ? [
-                Shadow(
-                  color: activeColor.withValues(alpha: 0.01),
-                  blurRadius: 20,
-                  offset: const Offset(0, 4),
-                )
-              ] : null,
-            );
+    final baseStyle = AppFonts.getLyricsStyle(
+      useNewFontLyrics: settings.useNewFontLyrics,
+      family: isHindiText ? 'Google Sans' : settings.customFontFamilyLyrics,
+      weightDelta: settings.customFontWeightLyricsDelta,
+      activeWeightDelta: settings.activeLyricsFontWeightDelta,
+      isActive: isActive,
+      fontSize: 30 * fontScale,//(isActive ? 30.5 : 30) * fontScale,
+      height: 1.15,
+      color: isActive ? activeColor : Colors.white.withValues(alpha: lineOpacity),
+      shadows: isActive && useDynamicColor ? [
+        Shadow(
+          color: activeColor.withValues(alpha: 0.01),
+          blurRadius: 20,
+          offset: const Offset(0, 4),
+        )
+      ] : null,
+    ).copyWith(
+      letterSpacing: isHindiText ? 0.95 : 0,
+    );
 
     // Staggered animation durations based on absolute distance
     final animDuration = Duration(milliseconds: 600 + (absIndex * 20).clamp(0, 200));
@@ -184,7 +187,7 @@ class AdvancedLyricLine extends ConsumerWidget {
           curve: curve,
           padding: EdgeInsets.only(
             top: (isActive ? 12 : 8) * fontScale,
-            bottom: (isActive ? 20 : 8) * fontScale,
+            bottom: (isActive ? 16 : 8) * fontScale,
           ),
           child: AnimatedDefaultTextStyle(
             duration: animDuration,

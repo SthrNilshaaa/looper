@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:intl/intl.dart';
+import 'package:looper_player/core/app_fonts.dart';
 
 class SongDetailsBottomSheet extends StatelessWidget {
   final Song song;
@@ -27,9 +28,9 @@ class SongDetailsBottomSheet extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Song Details',
-            style: TextStyle(
+            style: AppFonts.jostStyle(
               color: Colors.white,
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -77,12 +78,12 @@ class SongDetailsBottomSheet extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: AppFonts.jostStyle(color: Colors.grey, fontSize: 12),
           ),
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: AppFonts.jostStyle(color: Colors.white, fontSize: 14),
           ),
         ],
       ),

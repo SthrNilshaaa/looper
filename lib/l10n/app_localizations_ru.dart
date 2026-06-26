@@ -648,6 +648,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resumeOnStartTitle => 'Возобновлять при запуске';
 
   @override
+  String get persistQueueTitle => 'Сохранять последнюю очередь';
+
+  @override
+  String get persistQueueDesc =>
+      'Сохранять последнюю песню и очередь при перезапуске приложения';
+
+  @override
   String get right => 'Справа';
 
   @override
@@ -940,4 +947,99 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get year => 'Год';
+
+  @override
+  String get supportUs => 'Поддержать нас';
+
+  @override
+  String get supportUsDesc =>
+      'Помогите сохранить Looper Player живым и открытым';
+
+  @override
+  String get supportDevelopment => 'Поддержать разработку';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player на 100% бесплатен и имеет открытый исходный код. Если вам нравится им пользоваться, пожалуйста, поддержите создателя пожертвованием. Каждая поддержка помогает поддерживать проект активным!';
+
+  @override
+  String get useCustomFont => 'Использовать свой шрифт';
+
+  @override
+  String get useCustomFontDesc =>
+      'Использовать Jost или другие шрифты. Иначе используется DM Sans.';
+
+  @override
+  String get selectFontFamily => 'Выбрать семейство шрифтов';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Активный шрифт: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Регулировка толщины шрифта';
+
+  @override
+  String get currentWeight => 'Текущая толщина';
+
+  @override
+  String get useCustomFontLyrics => 'Свой шрифт для текста песен';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Использовать свой шрифт и толщину для синхронизированных слов';
+
+  @override
+  String get lyricsFontFamily => 'Семейство шрифтов текста';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Активный шрифт текста: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'Регулировка толщины текста';
+
+  @override
+  String get giveStarOnGithub => 'Поставить звезду на GitHub';
+
+  @override
+  String get supportProjectLove => 'Поддержите проект и проявите симпатию!';
+
+  @override
+  String get sortAlphabeticalAZ => 'По алфавиту (А-Я)';
+
+  @override
+  String get sortAlphabeticalZA => 'По алфавиту (Я-А)';
+
+  @override
+  String get sortRecentlyAdded => 'Недавно добавленные';
+
+  @override
+  String get sortOldestAdded => 'Сначала старые';
+
+  @override
+  String get sortYearNewest => 'Год (Новые)';
+
+  @override
+  String get sortYearOldest => 'Год (Старые)';
+
+  @override
+  String get sortMostSongs => 'Больше всего песен';
+
+  @override
+  String get sortLeastSongs => 'Меньше всего песен';
+
+  @override
+  String get sortDefault => 'По умолчанию';
+
+  @override
+  String get sortArtistAsc => 'Исполнитель (А-Я)';
+
+  @override
+  String get sortAlbumAsc => 'Альбом (А-Я)';
+
+  @override
+  String get sortDuration => 'Длительность';
 }

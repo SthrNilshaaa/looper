@@ -649,6 +649,13 @@ class AppLocalizationsNl extends AppLocalizations {
   String get resumeOnStartTitle => 'Hervatten bij starten';
 
   @override
+  String get persistQueueTitle => 'Laatste wachtrij behouden';
+
+  @override
+  String get persistQueueDesc =>
+      'Sla het laatst afgespeelde nummer en de wachtrij op bij het herstarten van de app';
+
+  @override
   String get right => 'Rechts';
 
   @override
@@ -938,4 +945,100 @@ class AppLocalizationsNl extends AppLocalizations {
 
   @override
   String get year => 'Jaar';
+
+  @override
+  String get supportUs => 'Steun ons';
+
+  @override
+  String get supportUsDesc =>
+      'Help Looper Player in stand te houden en open-source te houden';
+
+  @override
+  String get supportDevelopment => 'Ondersteun de ontwikkeling';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player is 100% gratis en open-source. Als u het met plezier gebruikt, overweeg dan om de maker te steunen met een donatie. Elke bijdrage helpt het project actief te houden!';
+
+  @override
+  String get useCustomFont => 'Aangepast lettertype gebruiken';
+
+  @override
+  String get useCustomFontDesc =>
+      'Gebruik Jost of andere aangepaste lettertypen. Anders wordt DM Sans gebruikt.';
+
+  @override
+  String get selectFontFamily => 'Selecteer lettertypefamilie';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Actief lettertype: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Aanpassing lettertypegewicht';
+
+  @override
+  String get currentWeight => 'Huidig gewicht';
+
+  @override
+  String get useCustomFontLyrics => 'Aangepast lettertype voor songtekst';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Gebruik een aangepast lettertype en gewicht voor de gesynchroniseerde songtekstweergave';
+
+  @override
+  String get lyricsFontFamily => 'Lettertypefamilie songtekst';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Actief songtekstlettertype: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment =>
+      'Gewichtsaanpassing songtekstlettertype';
+
+  @override
+  String get giveStarOnGithub => 'Geef een ster op GitHub';
+
+  @override
+  String get supportProjectLove => 'Steun het project en toon wat liefde!';
+
+  @override
+  String get sortAlphabeticalAZ => 'Alfabetisch (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Alfabetisch (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'Onlangs toegevoegd';
+
+  @override
+  String get sortOldestAdded => 'Oudste toegevoegd';
+
+  @override
+  String get sortYearNewest => 'Jaar (Nieuwste)';
+
+  @override
+  String get sortYearOldest => 'Jaar (Oudste)';
+
+  @override
+  String get sortMostSongs => 'Meeste nummers';
+
+  @override
+  String get sortLeastSongs => 'Minste nummers';
+
+  @override
+  String get sortDefault => 'Standaard';
+
+  @override
+  String get sortArtistAsc => 'Artiest (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'Album (A-Z)';
+
+  @override
+  String get sortDuration => 'Duur';
 }

@@ -323,13 +323,12 @@ class _NavItem extends StatelessWidget {
         Flexible(
           child: AnimatedDefaultTextStyle(
             duration:  Duration(milliseconds: 300),
-            style: TextStyle(
-              inherit: false,
+            style: AppFonts.jostStyle(
+              textStyle: const TextStyle(inherit: false),
               color: isSelected ? accentColor : Colors.white.withValues(alpha: 0.4),
               fontSize: 13.ts,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: 0.2,
-              fontFamily: AppFonts.jost,
             ),
             child: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
           ),

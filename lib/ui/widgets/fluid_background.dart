@@ -12,13 +12,14 @@ enum FluidFallbackMode {
   auto,
 }
 
-/// A highly-optimized local version of FluidBackground to resolve animation stutter.
+/// A highly-optimized, lightweight fluid background that uses radial mesh gradient blobs
+/// animated on the GPU via composited layer translation.
 class FluidBackground extends StatefulWidget {
   const FluidBackground({
     super.key,
     this.imageProvider,
     required this.child,
-    this.blurSigma = 80,
+    this.blurSigma = 40, // Kept for API compatibility, but soft radial gradients replace heavy image blurs
     this.overlayDarken = 0.10,
     this.animate = false,
     this.fallbackMode = FluidFallbackMode.auto,
@@ -39,18 +40,8 @@ class FluidBackground extends StatefulWidget {
 
 class _FluidBackgroundState extends State<FluidBackground>
     with TickerProviderStateMixin {
-  ui.Image? _image;
+  FluidPalette? _oldPalette;
   FluidPalette? _palette;
-
-  static const Duration _motionDuration = Duration(seconds: 12);
-
-  late final AnimationController _motionController = AnimationController(
-    vsync: this,
-    duration: _motionDuration,
-  );
-
-  double _frozenMotionT = 0.35;
-  int _motionSession = 0;
   int _loadSession = 0;
   bool _routeTransitionFinished = false;
   Animation<double>? _routeAnimation;
@@ -58,6 +49,11 @@ class _FluidBackgroundState extends State<FluidBackground>
   late final AnimationController _revealController = AnimationController(
     vsync: this,
     duration: widget.transitionDuration,
+  );
+
+  late final AnimationController _motionController = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 12), // Slow, premium fluid drifting
   );
 
   FluidPalette _fallbackFor(BuildContext context) {
@@ -77,6 +73,9 @@ class _FluidBackgroundState extends State<FluidBackground>
   @override
   void initState() {
     super.initState();
+    if (widget.animate) {
+      _motionController.repeat();
+    }
   }
 
   @override
@@ -92,7 +91,7 @@ class _FluidBackgroundState extends State<FluidBackground>
           _routeTransitionFinished = true;
           _kickLoad();
           if (widget.animate) {
-            _resumeMotionFromFrozen();
+            _motionController.repeat();
           }
         } else {
           _routeTransitionFinished = false;
@@ -102,7 +101,7 @@ class _FluidBackgroundState extends State<FluidBackground>
         _routeTransitionFinished = true;
         _kickLoad();
         if (widget.animate) {
-          _resumeMotionFromFrozen();
+          _motionController.repeat();
         }
       }
     }
@@ -116,7 +115,7 @@ class _FluidBackgroundState extends State<FluidBackground>
         });
         _kickLoad();
         if (widget.animate) {
-          _resumeMotionFromFrozen();
+          _motionController.repeat();
         }
       }
     } else {
@@ -124,7 +123,7 @@ class _FluidBackgroundState extends State<FluidBackground>
         setState(() {
           _routeTransitionFinished = false;
         });
-        _freezeMotion();
+        _motionController.stop();
       }
     }
   }
@@ -135,51 +134,15 @@ class _FluidBackgroundState extends State<FluidBackground>
 
     if (oldWidget.animate != widget.animate) {
       if (widget.animate && _routeTransitionFinished) {
-        _resumeMotionFromFrozen();
+        _motionController.repeat();
       } else {
-        _freezeMotion();
+        _motionController.stop();
       }
-      if (mounted) setState(() {});
     }
 
     if (oldWidget.imageProvider != widget.imageProvider) {
       _kickLoad();
     }
-  }
-
-  void _freezeMotion() {
-    _motionSession++;
-    _frozenMotionT = _motionController.value;
-    _motionController.stop(canceled: false);
-  }
-
-  void _resumeMotionFromFrozen() {
-    if (!widget.animate || !_routeTransitionFinished) return;
-    final int session = ++_motionSession;
-
-    _motionController.value = _frozenMotionT;
-    final remaining = (1.0 - _frozenMotionT).clamp(0.0, 1.0).toDouble();
-
-    if (remaining <= 0.0001) {
-      _motionController.repeat();
-      return;
-    }
-
-    final remainingMs =
-        (_motionDuration.inMilliseconds * remaining).round().clamp(1, 600000);
-
-    _motionController
-        .animateTo(
-      1.0,
-      duration: Duration(milliseconds: remainingMs),
-      curve: Curves.linear,
-    )
-        .then((_) {
-      if (!mounted || !widget.animate || !_routeTransitionFinished || session != _motionSession) return;
-      _motionController.repeat();
-    }).catchError((_) {
-      // Safe to ignore ticker cancellation during rapid animate toggles.
-    });
   }
 
   @override
@@ -194,13 +157,13 @@ class _FluidBackgroundState extends State<FluidBackground>
     if (!_routeTransitionFinished) return;
     final int loadToken = ++_loadSession;
 
-    _revealController.value = 0;
-    _image = null;
-    _palette = null;
-
     final provider = widget.imageProvider;
     if (provider == null) {
-      setState(() {});
+      setState(() {
+        _oldPalette = _palette ?? _fallbackFor(context);
+        _palette = null;
+      });
+      _revealController.forward(from: 0);
       return;
     }
     // Downsample the image to 64x64 using ResizeImage to minimize GPU memory and shader processing overhead
@@ -214,18 +177,23 @@ class _FluidBackgroundState extends State<FluidBackground>
       final FluidPalette pal =
           await FluidPaletteExtractor.buildPaletteFromImage(img);
 
+      // Immediately dispose of the decoded image reference to free native resources
+      img.dispose();
+
       if (!mounted || loadToken != _loadSession) return;
       setState(() {
-        _image = img;
+        _oldPalette = _palette ?? _fallbackFor(context);
         _palette = pal;
       });
 
-      await _revealController.forward(from: 0);
+      _revealController.forward(from: 0);
     } catch (_) {
       if (!mounted || loadToken != _loadSession) return;
-      _image = null;
-      _palette = null;
-      setState(() {});
+      setState(() {
+        _oldPalette = _palette ?? _fallbackFor(context);
+        _palette = null;
+      });
+      _revealController.forward(from: 0);
     }
   }
 
@@ -238,68 +206,45 @@ class _FluidBackgroundState extends State<FluidBackground>
         : Colors.black.withValues(alpha: widget.overlayDarken);
 
     return Container(
-      color: fallbackPalette.baseDark,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          final height = constraints.maxHeight;
+      color: target.baseDark,
+      child: AnimatedBuilder(
+        animation: _revealController,
+        child: RepaintBoundary(child: widget.child),
+        builder: (context, child) {
+          final double k = _revealController.value;
+          final FluidPalette current =
+              FluidPalette.lerp(_oldPalette ?? fallbackPalette, target, k);
 
-          // Downscale factor of 16 for shader layer rendering and blur performance
-          final lowResWidth = (width / 16.0).clamp(1.0, 150.0);
-          final lowResHeight = (height / 16.0).clamp(1.0, 300.0);
-          final lowResSigma = (widget.blurSigma / 16.0).clamp(1.0, 15.0);
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              // Matte Base Gradient
+              _MatteBase(palette: current),
 
-          // Top-level AnimatedBuilder ONLY listens to _revealController.
-          // This avoids rebuilding the matte base, corner glows, overlay, and main content on every motion frame.
-          return AnimatedBuilder(
-            animation: _revealController,
-            child: RepaintBoundary(child: widget.child),
-            builder: (context, child) {
-              final double k = _revealController.value;
-              final FluidPalette current =
-                  FluidPalette.lerp(fallbackPalette, target, k);
+              // Animated Mesh Gradient Blobs (only animated and rendered when transition is finished and palette loaded)
+              if (_palette != null && _routeTransitionFinished)
+                _AnimatedBlobs(
+                  palette: current,
+                  controller: _motionController,
+                  animate: widget.animate,
+                ),
 
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  // Matte fallback base (always visible, only repaints during transition reveal)
-                  _MatteFallbackBase(palette: current),
+              // Corner glows for secondary lighting and depth
+              _CornerGlows(
+                tl: current.accent1,
+                tr: current.accent2,
+                bl: current.accent3,
+                br: current.accent4,
+              ),
 
-                  // Fluid shader layers (motion animation is isolated internally)
-                  // Only render the expensive blur/shader layers when route transition is fully finished
-                  if (_image != null && _routeTransitionFinished && k > 0.0)
-                    Opacity(
-                      opacity: Curves.easeInOutCubic.transform(k),
-                      child: FittedBox(
-                        fit: BoxFit.fill,
-                        child: _FluidShaderTicker(
-                          controller: _motionController,
-                          animate: widget.animate,
-                          image: _image!,
-                          width: lowResWidth,
-                          height: lowResHeight,
-                          sigma: lowResSigma,
-                          frozenT: _frozenMotionT,
-                        ),
-                      ),
-                    ),
+              // Legibility overlay (static layer)
+              IgnorePointer(
+                child: Container(color: overlayColor),
+              ),
 
-                  // High-performance Corner glows (native gradient based, only repaints during transition reveal)
-                  _CornerGlows(
-                    tl: current.accent1,
-                    tr: current.accent2,
-                    bl: current.accent3,
-                    br: current.accent4,
-                  ),
-
-                  // Adaptive overlay for legibility (static)
-                  Container(color: overlayColor),
-
-                  // User content (cached and isolated via RepaintBoundary)
-                  child!,
-                ],
-              );
-            },
+              // Foregrounds Child
+              child!,
+            ],
           );
         },
       ),
@@ -307,109 +252,54 @@ class _FluidBackgroundState extends State<FluidBackground>
   }
 }
 
-/// Matte gradient fallback base layer.
-class _MatteFallbackBase extends StatelessWidget {
-  const _MatteFallbackBase({required this.palette});
+/// Matte gradient base layer.
+class _MatteBase extends StatelessWidget {
+  const _MatteBase({required this.palette});
   final FluidPalette palette;
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                palette.accent1.withValues(alpha: 0.55),
-                palette.accent2.withValues(alpha: 0.45),
-                palette.baseDark,
-              ],
-              stops: const [0.0, 0.55, 1.0],
-            ),
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            palette.accent1.withValues(alpha: 0.35),
+            palette.baseDark,
+          ],
         ),
-        const _MatteNoiseOverlay(),
-      ],
+      ),
     );
   }
 }
 
-class _FluidShaderTicker extends StatefulWidget {
-  const _FluidShaderTicker({
-    required this.controller,
-    required this.animate,
-    required this.image,
-    required this.width,
-    required this.height,
-    required this.sigma,
-    required this.frozenT,
+/// Highly-optimized individual soft glowing blob.
+/// Radial gradient transparent falloff provides native GPU blur at zero CPU cost.
+class _Blob extends StatelessWidget {
+  const _Blob({
+    required this.color,
+    required this.size,
   });
 
-  final AnimationController controller;
-  final bool animate;
-  final ui.Image image;
-  final double width;
-  final double height;
-  final double sigma;
-  final double frozenT;
-
-  @override
-  State<_FluidShaderTicker> createState() => _FluidShaderTickerState();
-}
-
-class _FluidShaderTickerState extends State<_FluidShaderTicker> {
-  late double _t;
-
-  @override
-  void initState() {
-    super.initState();
-    _t = widget.frozenT;
-    widget.controller.addListener(_onTick);
-  }
-
-  @override
-  void didUpdateWidget(covariant _FluidShaderTicker oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.controller != widget.controller) {
-      oldWidget.controller.removeListener(_onTick);
-      widget.controller.addListener(_onTick);
-    }
-  }
-
-  @override
-  void dispose() {
-    widget.controller.removeListener(_onTick);
-    super.dispose();
-  }
-
-  void _onTick() {
-    if (!widget.animate) return;
-    const double step = 1.0 / 288.0;
-    final double newT = ((widget.controller.value / step).round() * step);
-    if (newT != _t) {
-      setState(() {
-        _t = newT;
-      });
-    }
-  }
+  final Color color;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return RepaintBoundary(
-      child: ImageFiltered(
-        imageFilter: ui.ImageFilter.blur(
-          sigmaX: widget.sigma,
-          sigmaY: widget.sigma,
-          tileMode: ui.TileMode.clamp,
-        ),
-        child: CustomPaint(
-          size: Size(widget.width, widget.height),
-          painter: _FluidShaderPainter(
-            image: widget.image,
-            t: widget.animate ? _t : widget.frozenT,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(
+            colors: [
+              color.withValues(alpha: 0.30),
+              color.withValues(alpha: 0.10),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
       ),
@@ -417,101 +307,86 @@ class _FluidShaderTickerState extends State<_FluidShaderTicker> {
   }
 }
 
-/// Fluid shader painter with multiple transformed image layers.
-class _FluidShaderPainter extends CustomPainter {
-  _FluidShaderPainter({required this.image, required this.t});
-
-  final ui.Image image;
-  final double t;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = const Color(0xFF0F1419),
-    );
-
-    final layers = <_ShaderLayer>[
-      _ShaderLayer(
-        scale: 1.35,
-        rot: math.sin(t * 2 * math.pi) * 0.09,
-        dx: _orbitX(0.10, t),
-        dy: _orbitY(0.08, t),
-        alpha: 0.55,
-      ),
-      _ShaderLayer(
-        scale: 0.95,
-        rot: math.cos(t * 2 * math.pi) * 0.09,
-        dx: _orbitX(0.18, t + 0.33),
-        dy: _orbitY(0.14, t + 0.33),
-        alpha: 0.45,
-      ),
-      _ShaderLayer(
-        scale: 0.70,
-        rot: math.sin((t + 0.25) * 2 * math.pi) * 0.11,
-        dx: _orbitX(0.22, t + 0.66),
-        dy: _orbitY(0.18, t + 0.66),
-        alpha: 0.35,
-      ),
-      _ShaderLayer(
-        scale: 1.85,
-        rot: math.cos((t + 0.5) * 2 * math.pi) * 0.08,
-        dx: _orbitX(0.06, t + 0.18),
-        dy: _orbitY(0.06, t + 0.18),
-        alpha: 0.25,
-      ),
-    ];
-
-    for (final layer in layers) {
-      final Matrix4 m = Matrix4.identity()
-        ..translate(size.width * 0.5, size.height * 0.5)
-        ..translate(size.width * layer.dx, size.height * layer.dy)
-        ..rotateZ(layer.rot)
-        ..scale(layer.scale, layer.scale)
-        ..translate(-image.width / 2.0, -image.height / 2.0);
-
-      final paint = Paint()
-        ..shader = ui.ImageShader(
-          image,
-          ui.TileMode.clamp,
-          ui.TileMode.clamp,
-          m.storage,
-        )
-        ..color = Colors.white.withValues(alpha: layer.alpha)
-        ..blendMode = ui.BlendMode.srcOver;
-
-      canvas.drawRect(Offset.zero & size, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _FluidShaderPainter oldDelegate) =>
-      oldDelegate.t != t || oldDelegate.image != image;
-
-  static double _orbitX(double amp, double t) =>
-      math.sin(t * 2 * math.pi) * amp;
-  static double _orbitY(double amp, double t) =>
-      math.cos(t * 2 * math.pi) * amp;
-}
-
-/// Shader layer configuration.
-class _ShaderLayer {
-  const _ShaderLayer({
-    required this.scale,
-    required this.rot,
-    required this.dx,
-    required this.dy,
-    required this.alpha,
+/// Stack of floating mesh blobs animated purely using GPU translation matrices.
+class _AnimatedBlobs extends StatelessWidget {
+  const _AnimatedBlobs({
+    required this.palette,
+    required this.controller,
+    required this.animate,
   });
 
-  final double scale;
-  final double rot;
-  final double dx;
-  final double dy;
-  final double alpha;
+  final FluidPalette palette;
+  final AnimationController controller;
+  final bool animate;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+
+        // Base size of blobs
+        final blobSize = (width * 0.85).clamp(300.0, 600.0);
+
+        return AnimatedBuilder(
+          animation: controller,
+          builder: (context, child) {
+            final t = controller.value;
+
+            // Orbiter math to move blobs in slow, distinct circular paths
+            final offset1 = Offset(
+              width * 0.15 + math.sin(t * 2 * math.pi) * (width * 0.12),
+              height * 0.20 + math.cos(t * 2 * math.pi) * (height * 0.10),
+            );
+
+            final offset2 = Offset(
+              width * 0.65 + math.cos((t + 0.25) * 2 * math.pi) * (width * 0.15),
+              height * 0.15 + math.sin((t + 0.25) * 2 * math.pi) * (height * 0.12),
+            );
+
+            final offset3 = Offset(
+              width * 0.10 + math.sin((t + 0.50) * 2 * math.pi) * (width * 0.10),
+              height * 0.65 + math.cos((t + 0.50) * 2 * math.pi) * (height * 0.15),
+            );
+
+            final offset4 = Offset(
+              width * 0.60 + math.cos((t + 0.75) * 2 * math.pi) * (width * 0.14),
+              height * 0.70 + math.sin((t + 0.75) * 2 * math.pi) * (height * 0.12),
+            );
+
+            return Stack(
+              children: [
+                // Blob 1
+                Transform.translate(
+                  offset: offset1 - Offset(blobSize / 2, blobSize / 2),
+                  child: _Blob(color: palette.accent1, size: blobSize),
+                ),
+                // Blob 2
+                Transform.translate(
+                  offset: offset2 - Offset(blobSize / 2, blobSize / 2),
+                  child: _Blob(color: palette.accent2, size: blobSize),
+                ),
+                // Blob 3
+                Transform.translate(
+                  offset: offset3 - Offset(blobSize / 2, blobSize / 2),
+                  child: _Blob(color: palette.accent3, size: blobSize),
+                ),
+                // Blob 4
+                Transform.translate(
+                  offset: offset4 - Offset(blobSize / 2, blobSize / 2),
+                  child: _Blob(color: palette.accent4, size: blobSize),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
 }
 
-/// Corner radial glow accents optimized to use native radial gradients instead of heavy image blurs.
+/// Corner radial glow accents utilizing fast native radial gradients.
 class _CornerGlows extends StatelessWidget {
   const _CornerGlows({
     required this.tl,
@@ -536,8 +411,8 @@ class _CornerGlows extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: RadialGradient(
               colors: [
-                c.withValues(alpha: 0.24),
-                c.withValues(alpha: 0.08),
+                c.withValues(alpha: 0.20),
+                c.withValues(alpha: 0.05),
                 Colors.transparent,
               ],
               stops: const [0.0, 0.5, 1.0],
@@ -558,38 +433,4 @@ class _CornerGlows extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Matte noise overlay for texture.
-class _MatteNoiseOverlay extends StatelessWidget {
-  const _MatteNoiseOverlay();
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Opacity(
-        opacity: 0.06,
-        child: CustomPaint(painter: _NoisePainter()),
-      ),
-    );
-  }
-}
-
-/// Simple noise texture painter.
-class _NoisePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white;
-    final rnd = math.Random(1);
-    for (int i = 0; i < 1200; i++) {
-      final dx = rnd.nextDouble() * size.width;
-      final dy = rnd.nextDouble() * size.height;
-      final a = 20 + rnd.nextInt(30);
-      paint.color = Colors.white.withAlpha(a);
-      canvas.drawRect(Rect.fromLTWH(dx, dy, 1, 1), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

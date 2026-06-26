@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:ui';
-import 'dart:io';
 
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 
@@ -55,7 +54,19 @@ class PremiumSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
     final bool disableBlur = settings.disableBlur;
-    final bool isBlurActive = (useBlur || forceBlur) && !disableBlur;
+
+    // Detect if we are transitioning (route or tab transitions)
+    final ModalRoute<dynamic>? parentRoute = ModalRoute.of(context);
+    final bool isRouteTransitioning = parentRoute != null && (
+      parentRoute.animation?.status == AnimationStatus.forward ||
+      parentRoute.animation?.status == AnimationStatus.reverse ||
+      parentRoute.secondaryAnimation?.status == AnimationStatus.forward ||
+      parentRoute.secondaryAnimation?.status == AnimationStatus.reverse
+    );
+    final bool isTabTransitioning = TransitionStatusProvider.of(context);
+    final bool isTransitioning = isRouteTransitioning || isTabTransitioning;
+
+    final bool isBlurActive = (useBlur || forceBlur) && !disableBlur && !isTransitioning;
 
     final borderSide = BorderSide(
       color: Colors.white.withValues(alpha: 0.05),
@@ -65,8 +76,12 @@ class PremiumSection extends ConsumerWidget {
     final decoration = BoxDecoration(
       color: backgroundColor ?? (isBlurActive 
           ? Colors.white.withValues(alpha: 0.05) 
-          : (((useBlur || forceBlur) && disableBlur && !keepSurfaceOnDisableBlur) 
-              ? Colors.white.withValues(alpha: 0.05)
+          : ((useBlur || forceBlur)
+              ? (isTransitioning 
+                  ? Colors.white.withValues(alpha: 0.12)
+                  : (disableBlur && !keepSurfaceOnDisableBlur 
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Theme.of(context).colorScheme.surfaceContainer))
               : Theme.of(context).colorScheme.surfaceContainer)),
       borderRadius: borderRadius,
       border: Border(
@@ -105,7 +120,7 @@ class PremiumSection extends ConsumerWidget {
             child: Center(child: child),
           );
 
-    final bool enableBlur = ((useBlur && !forceNoBlur) || forceBlur) && !disableBlur;
+    final bool enableBlur = isBlurActive && !forceNoBlur;
 
     if (enableBlur) {
       containerBody = RepaintBoundary(
@@ -152,3 +167,24 @@ class PremiumSection extends ConsumerWidget {
     return content;
   }
 }
+
+class TransitionStatusProvider extends InheritedWidget {
+  final bool isTransitioning;
+
+  const TransitionStatusProvider({
+    super.key,
+    required this.isTransitioning,
+    required super.child,
+  });
+
+  static bool of(BuildContext context) {
+    final provider = context.dependOnInheritedWidgetOfExactType<TransitionStatusProvider>();
+    return provider?.isTransitioning ?? false;
+  }
+
+  @override
+  bool updateShouldNotify(TransitionStatusProvider oldWidget) {
+    return oldWidget.isTransitioning != isTransitioning;
+  }
+}
+

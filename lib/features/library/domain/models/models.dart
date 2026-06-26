@@ -31,6 +31,8 @@ class Song {
   DateTime? lastPlayed;
   bool isFavorite = false;
   String? lyrics;
+  bool hasCustomEqualizer = false;
+  List<double>? equalizerGains;
 
   // Metadata for search
   @Index(type: IndexType.value, caseSensitive: false)
@@ -81,12 +83,14 @@ class AppSettings {
 
   List<String> libraryFolders = [];
   int? lastPlayedSongId;
+  List<int> lastQueueSongIds = [];
+  int lastQueueIndex = -1;
   double volume = 1.0;
   bool shuffle = false;
   int repeatMode = 0; // 0: off, 1: one, 2: all
   String language = 'en';
   bool enableDynamicTheming = false;
-  bool darkTheme = false;
+  bool darkTheme = true;
   bool saveDynamicColor = true;
   bool dynamicLyrics = false;
   bool blurredArtworkForLyrics = true;
@@ -112,6 +116,7 @@ class AppSettings {
   List<String> homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres'];
   bool enableSlideGesture = false;
   bool stopOnTaskRemoved = false;
+  bool persistQueue = true;
 
   bool enableCrossfade = false;
   int crossfadeLength = 150; // ms (100ms-15000ms)
@@ -123,12 +128,12 @@ class AppSettings {
   int silenceBetweenTracks = 0; // ms (0ms-5000ms)
   bool resumeAfterCall = true;
   bool resumeOnStart = false;
-  bool permanentAudioFocusChange = true;
+  bool permanentAudioFocusChange = false;
   bool dynamicColorActiveLyrics = true;
   String lyricsAlignment = 'left'; // 'left', 'center', 'right'
   bool dynamicAccentColor = true;
   int sortStrategyIndex = 0;
-  bool sortAscending = false;
+  bool sortAscending = true;
 
   double homeDarkness = 0.62;
   double songsDarkness = 0.62;
@@ -138,4 +143,19 @@ class AppSettings {
 
   bool useNewFont = false;
   String customFontFamily = 'Jost';
+  int customFontWeight = 400;
+  int customFontWeightDelta = 0;
+  bool useNewFontLyrics = false;
+  String customFontFamilyLyrics = 'Sora';
+  String customFontWeightLyrics = 'Normal';
+  int customFontWeightLyricsDelta = 0;
+  int activeLyricsFontWeightDelta = 0;
+  bool equalizerEnabled = false;
+  List<double> globalEqualizerGains = [];
+  bool enableAudioCache = true;
+  int audioCacheSizeMB = 100;
+  int audioCacheSecs = 30;
+  int audioBackCacheSizeMB = 50;
+  bool exclusiveHardwareMode = false;
 }
+

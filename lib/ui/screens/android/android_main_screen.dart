@@ -3,20 +3,16 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/core/navigation_provider.dart';
-import 'package:looper_player/core/ui_utils.dart';
-import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
-import 'package:looper_player/features/library/presentation/library_notifier.dart';
-import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_view.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_music_bar.dart';
-import 'package:looper_player/ui/screens/home_screen.dart';
 import 'package:looper_player/ui/screens/welcome_screen.dart';
 import 'package:looper_player/ui/widgets/collection_detail_view.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playlists/presentation/playlist_view.dart';
 import 'package:looper_player/ui/screens/android/tabs/views/library_categories_views.dart';
 
@@ -24,17 +20,13 @@ import 'tabs/android_home_tab.dart';
 import 'tabs/android_search_tab.dart';
 import 'tabs/android_library_tab.dart';
 import 'tabs/android_songs_tab.dart';
-import 'player/android_expanded_player.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
-import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'widgets/premium_navbar.dart';
 import 'widgets/premium_section.dart';
-import 'tabs/views/library_categories_views.dart';
 import 'package:looper_player/features/library/presentation/smart_views.dart';
 import 'package:looper_player/features/library/presentation/queue_view.dart';
 
 
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:animations/animations.dart';
 
 final androidNavigatorKeyProvider = Provider(
@@ -56,6 +48,21 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
     const AndroidSongsTab(),
     const AndroidLibraryTab(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _requestNotificationPermissionIfNeeded();
+  }
+
+  Future<void> _requestNotificationPermissionIfNeeded() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.notification.status;
+      if (!status.isGranted) {
+        await Permission.notification.request();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -191,6 +198,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
 
     final settings = ref.watch(settingsProvider);
     final isWelcomeBypassed = ref.watch(welcomeBypassedProvider);
+    final showSupportUsSheet = ref.watch(supportUsSheetVisibleProvider);
 
     final activeDarkness = () {
       final val = rootItem == NavItem.home
@@ -257,7 +265,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
             SnackBar(
               content: Text(
                 l10n.pressBackExit,
-                style: const TextStyle(color: Colors.white),
+                style: AppFonts.jostStyle(color: Colors.white),
               ),
               backgroundColor: Colors.black87,
               duration: const Duration(seconds: 2),
@@ -369,11 +377,15 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                             reverse: false,
                             transitionBuilder:
                                 (child, animation, secondaryAnimation) {
-                                  return FadeThroughTransition(
-                                    animation: animation,
-                                    secondaryAnimation: secondaryAnimation,
-                                    fillColor: Colors.transparent,
-                                    child: child,
+                                  final isTransitioning = !animation.isCompleted || !secondaryAnimation.isDismissed;
+                                  return TransitionStatusProvider(
+                                    isTransitioning: isTransitioning,
+                                    child: FadeThroughTransition(
+                                      animation: animation,
+                                      secondaryAnimation: secondaryAnimation,
+                                      fillColor: Colors.transparent,
+                                      child: child,
+                                    ),
                                   );
                                 },
                             child: KeyedSubtree(
@@ -402,9 +414,9 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withValues(alpha: 0.1),
-                          Colors.black.withValues(alpha: 0.4),
+                          Colors.black.withValues(alpha: 0.45),
                           Colors.black.withValues(alpha: 0.8),
+                          Colors.black,
                         ],
                         stops: const [
                           0.0,
@@ -443,7 +455,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                         transitionBuilder: (child, animation) {
                           return FadeTransition(opacity: animation, child: child);
                         },
-                        child: song != null
+                        child: (song != null && !showSupportUsSheet)
                             ? const PremiumMusicBar(key: ValueKey('music_bar'))
                             : const SizedBox(key: ValueKey('no_music')),
                       ),
@@ -513,12 +525,12 @@ class BlurredBackgroundArt extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = song.artPath;
     if (path == null) return const SizedBox.shrink();
-    return ImageFiltered(
-      imageFilter: ImageFilter.blur(
-        sigmaX: 18,
-        sigmaY: 18,
-      ),
-      child: RepaintBoundary(
+    return RepaintBoundary(
+      child: ImageFiltered(
+        imageFilter: ImageFilter.blur(
+          sigmaX: 18,
+          sigmaY: 18,
+        ),
         child: Image.file(
           File(path),
           fit: BoxFit.cover,

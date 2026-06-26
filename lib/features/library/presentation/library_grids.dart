@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -44,7 +46,7 @@ class AlbumsGrid extends ConsumerWidget {
         itemCount: albums.length,
         itemBuilder: (context, index) => _AlbumCard(album: albums[index]),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const AppLoadingIndicator(),
       error: (e, s) => Center(child: Text('Error: $e')),
     );
   }
@@ -149,7 +151,7 @@ class _AlbumCard extends ConsumerWidget {
                 children: [
                   Text(
                     album.name,
-                    style: TextStyle(
+                    style: AppFonts.jostStyle(
                       fontWeight: FontWeight.normal,
                       fontSize: 14.ts,
                     ),
@@ -158,7 +160,7 @@ class _AlbumCard extends ConsumerWidget {
                   ),
                   Text(
                     album.artist ?? 'Unknown Artist',
-                    style: TextStyle(color: Colors.grey[400], fontSize: 12.ts),
+                    style: AppFonts.jostStyle(color: Colors.grey[400], fontSize: 12.ts),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -192,7 +194,7 @@ class ArtistsGrid extends ConsumerWidget {
         itemCount: artists.length,
         itemBuilder: (context, index) => _ArtistCard(artist: artists[index]),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const AppLoadingIndicator(),
       error: (e, s) => Center(child: Text('Error: $e')),
     );
   }
@@ -280,7 +282,7 @@ class _ArtistCard extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               artist.name,
-              style: TextStyle(fontWeight: FontWeight.normal, fontSize: 14.ts),
+              style: AppFonts.jostStyle(fontWeight: FontWeight.normal, fontSize: 14.ts),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

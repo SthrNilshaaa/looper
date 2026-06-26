@@ -109,6 +109,11 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     required List<Song> songs,
     Playlist? playlist,
   }) {
+    if (state.activeItem == NavItem.collectionDetail &&
+        state.collectionTitle == title) {
+      return;
+    }
+
     // Push current state to history
     final newHistory = List<NavigationState>.from(state.history)
       ..add(_captureCurrentState());

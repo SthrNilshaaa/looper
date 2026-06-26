@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Notification small icon (status bar and header) -->
+    <item name="media3_notification_small_icon" type="drawable">@drawable/ic_notification_session</item>
+
+    <!-- Notification action button icons -->
+    <item name="media3_icon_play" type="drawable">@drawable/ic_play</item>
+    <item name="media3_icon_pause" type="drawable">@drawable/ic_pause</item>
+    <item name="media3_icon_previous" type="drawable">@drawable/ic_prev</item>
+    <item name="media3_icon_next" type="drawable">@drawable/ic_next</item>
+    
+    <item name="media3_icon_repeat_off" type="drawable">@drawable/ic_repeat</item>
+    <item name="media3_icon_repeat_all" type="drawable">@drawable/ic_repeat</item>
+    <item name="media3_icon_repeat_one" type="drawable">@drawable/ic_repeat_one</item>
+    
+    <item name="media3_icon_shuffle_off" type="drawable">@drawable/ic_shuffle_off</item>
+    <item name="media3_icon_shuffle_on" type="drawable">@drawable/ic_shuffle</item>
+    
+    <item name="media3_icon_heart_unfilled" type="drawable">@drawable/ic_like</item>
+    <item name="media3_icon_heart_filled" type="drawable">@drawable/ic_like_filled</item>
+</resources>

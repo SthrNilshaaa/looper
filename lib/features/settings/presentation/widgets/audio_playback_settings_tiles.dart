@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'settings_widgets.dart';
@@ -16,11 +17,11 @@ class FadePlayPauseStopTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.music, color: Colors.white70),
       title: Text(
         l10n.fadePlayPauseStop,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.fadePlayPauseStopDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.fadePlayPauseStop,
@@ -67,11 +68,11 @@ class FadeOnSeekTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.sliders, color: Colors.white70),
       title: Text(
         l10n.fadeOnSeek,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.fadeOnSeekDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.fadeOnSeek,
@@ -118,11 +119,11 @@ class AudioCrossfadeTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.gitCompare, color: Colors.white70),
       title: Text(
         l10n.audioCrossfade,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.audioCrossfadeDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.enableCrossfade,
@@ -219,11 +220,11 @@ class ManageAudioFocusTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.phoneCall, color: Colors.white70),
       title: Text(
         l10n.manageAudioFocusTitle,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.manageAudioFocusDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.audioFocus,
@@ -245,14 +246,11 @@ class ResumeAfterCallTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.phoneCall, color: Colors.white70),
       title: Text(
         l10n.resumeAfterCallTitle,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.resumeAfterCallDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.resumeAfterCall,
@@ -274,19 +272,42 @@ class ResumeOnStartTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.power, color: Colors.white70),
       title: Text(
         l10n.resumeOnStartTitle,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.resumeOnStartDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.resumeOnStart,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateResumeOnStart(value);
+      },
+    );
+  }
+}
+
+class PersistQueueTile extends ConsumerWidget {
+  const PersistQueueTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.save, color: Colors.white70),
+      title: Text(
+        l10n.persistQueueTitle,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.persistQueueDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeColor: Color(settings.accentColor),
+      value: settings.persistQueue,
+      onChanged: (value) {
+        ref.read(settingsProvider.notifier).updatePersistQueue(value);
       },
     );
   }
@@ -303,14 +324,11 @@ class PermanentAudioFocusChangeTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.alertCircle, color: Colors.white70),
       title: Text(
         l10n.permanentFocusChangePause,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.permanentFocusChangePauseDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.permanentAudioFocusChange,
@@ -322,3 +340,14 @@ class PermanentAudioFocusChangeTile extends ConsumerWidget {
     );
   }
 }
+
+TextStyle _tileTitleStyle() => AppFonts.jostStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w500,
+    );
+
+TextStyle _tileSubtitleStyle() => AppFonts.jostStyle(
+      color: Colors.white54,
+      fontSize: 12,
+    );
+

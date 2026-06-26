@@ -42,53 +42,63 @@ const SongSchema = CollectionSchema(
       name: r'duration',
       type: IsarType.long,
     ),
-    r'genre': PropertySchema(
+    r'equalizerGains': PropertySchema(
       id: 5,
+      name: r'equalizerGains',
+      type: IsarType.doubleList,
+    ),
+    r'genre': PropertySchema(
+      id: 6,
       name: r'genre',
       type: IsarType.string,
     ),
+    r'hasCustomEqualizer': PropertySchema(
+      id: 7,
+      name: r'hasCustomEqualizer',
+      type: IsarType.bool,
+    ),
     r'isFavorite': PropertySchema(
-      id: 6,
+      id: 8,
       name: r'isFavorite',
       type: IsarType.bool,
     ),
     r'lastPlayed': PropertySchema(
-      id: 7,
+      id: 9,
       name: r'lastPlayed',
       type: IsarType.dateTime,
     ),
     r'lyrics': PropertySchema(
-      id: 8,
+      id: 10,
       name: r'lyrics',
       type: IsarType.string,
     ),
     r'path': PropertySchema(
-      id: 9,
+      id: 11,
       name: r'path',
       type: IsarType.string,
     ),
     r'playCount': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'playCount',
       type: IsarType.long,
     ),
     r'searchTerms': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'searchTerms',
       type: IsarType.stringList,
     ),
     r'title': PropertySchema(
-      id: 12,
+      id: 14,
       name: r'title',
       type: IsarType.string,
     ),
     r'trackNumber': PropertySchema(
-      id: 13,
+      id: 15,
       name: r'trackNumber',
       type: IsarType.long,
     ),
     r'year': PropertySchema(
-      id: 14,
+      id: 16,
       name: r'year',
       type: IsarType.long,
     )
@@ -211,6 +221,12 @@ int _songEstimateSize(
     }
   }
   {
+    final value = object.equalizerGains;
+    if (value != null) {
+      bytesCount += 3 + value.length * 8;
+    }
+  }
+  {
     final value = object.genre;
     if (value != null) {
       bytesCount += 3 + value.length * 3;
@@ -245,16 +261,18 @@ void _songSerialize(
   writer.writeString(offsets[2], object.artist);
   writer.writeDateTime(offsets[3], object.dateAdded);
   writer.writeLong(offsets[4], object.duration);
-  writer.writeString(offsets[5], object.genre);
-  writer.writeBool(offsets[6], object.isFavorite);
-  writer.writeDateTime(offsets[7], object.lastPlayed);
-  writer.writeString(offsets[8], object.lyrics);
-  writer.writeString(offsets[9], object.path);
-  writer.writeLong(offsets[10], object.playCount);
-  writer.writeStringList(offsets[11], object.searchTerms);
-  writer.writeString(offsets[12], object.title);
-  writer.writeLong(offsets[13], object.trackNumber);
-  writer.writeLong(offsets[14], object.year);
+  writer.writeDoubleList(offsets[5], object.equalizerGains);
+  writer.writeString(offsets[6], object.genre);
+  writer.writeBool(offsets[7], object.hasCustomEqualizer);
+  writer.writeBool(offsets[8], object.isFavorite);
+  writer.writeDateTime(offsets[9], object.lastPlayed);
+  writer.writeString(offsets[10], object.lyrics);
+  writer.writeString(offsets[11], object.path);
+  writer.writeLong(offsets[12], object.playCount);
+  writer.writeStringList(offsets[13], object.searchTerms);
+  writer.writeString(offsets[14], object.title);
+  writer.writeLong(offsets[15], object.trackNumber);
+  writer.writeLong(offsets[16], object.year);
 }
 
 Song _songDeserialize(
@@ -269,16 +287,18 @@ Song _songDeserialize(
   object.artist = reader.readStringOrNull(offsets[2]);
   object.dateAdded = reader.readDateTime(offsets[3]);
   object.duration = reader.readLongOrNull(offsets[4]);
-  object.genre = reader.readStringOrNull(offsets[5]);
+  object.equalizerGains = reader.readDoubleList(offsets[5]);
+  object.genre = reader.readStringOrNull(offsets[6]);
+  object.hasCustomEqualizer = reader.readBool(offsets[7]);
   object.id = id;
-  object.isFavorite = reader.readBool(offsets[6]);
-  object.lastPlayed = reader.readDateTimeOrNull(offsets[7]);
-  object.lyrics = reader.readStringOrNull(offsets[8]);
-  object.path = reader.readString(offsets[9]);
-  object.playCount = reader.readLong(offsets[10]);
-  object.title = reader.readString(offsets[12]);
-  object.trackNumber = reader.readLongOrNull(offsets[13]);
-  object.year = reader.readLongOrNull(offsets[14]);
+  object.isFavorite = reader.readBool(offsets[8]);
+  object.lastPlayed = reader.readDateTimeOrNull(offsets[9]);
+  object.lyrics = reader.readStringOrNull(offsets[10]);
+  object.path = reader.readString(offsets[11]);
+  object.playCount = reader.readLong(offsets[12]);
+  object.title = reader.readString(offsets[14]);
+  object.trackNumber = reader.readLongOrNull(offsets[15]);
+  object.year = reader.readLongOrNull(offsets[16]);
   return object;
 }
 
@@ -300,24 +320,28 @@ P _songDeserializeProp<P>(
     case 4:
       return (reader.readLongOrNull(offset)) as P;
     case 5:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDoubleList(offset)) as P;
     case 6:
-      return (reader.readBool(offset)) as P;
-    case 7:
-      return (reader.readDateTimeOrNull(offset)) as P;
-    case 8:
       return (reader.readStringOrNull(offset)) as P;
+    case 7:
+      return (reader.readBool(offset)) as P;
+    case 8:
+      return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readString(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 10:
-      return (reader.readLong(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readStringList(offset) ?? []) as P;
-    case 12:
       return (reader.readString(offset)) as P;
+    case 12:
+      return (reader.readLong(offset)) as P;
     case 13:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 14:
+      return (reader.readString(offset)) as P;
+    case 15:
+      return (reader.readLongOrNull(offset)) as P;
+    case 16:
       return (reader.readLongOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -1548,6 +1572,170 @@ extension SongQueryFilter on QueryBuilder<Song, Song, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'equalizerGains',
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'equalizerGains',
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsElementEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'equalizerGains',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition>
+      equalizerGainsElementGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'equalizerGains',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsElementLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'equalizerGains',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsElementBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'equalizerGains',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'equalizerGains',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'equalizerGains',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'equalizerGains',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'equalizerGains',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition>
+      equalizerGainsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'equalizerGains',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> equalizerGainsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'equalizerGains',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
+    });
+  }
+
   QueryBuilder<Song, Song, QAfterFilterCondition> genreIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -1688,6 +1876,16 @@ extension SongQueryFilter on QueryBuilder<Song, Song, QFilterCondition> {
       return query.addFilterCondition(FilterCondition.greaterThan(
         property: r'genre',
         value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterFilterCondition> hasCustomEqualizerEqualTo(
+      bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'hasCustomEqualizer',
+        value: value,
       ));
     });
   }
@@ -2705,6 +2903,18 @@ extension SongQuerySortBy on QueryBuilder<Song, Song, QSortBy> {
     });
   }
 
+  QueryBuilder<Song, Song, QAfterSortBy> sortByHasCustomEqualizer() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCustomEqualizer', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterSortBy> sortByHasCustomEqualizerDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCustomEqualizer', Sort.desc);
+    });
+  }
+
   QueryBuilder<Song, Song, QAfterSortBy> sortByIsFavorite() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'isFavorite', Sort.asc);
@@ -2875,6 +3085,18 @@ extension SongQuerySortThenBy on QueryBuilder<Song, Song, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Song, Song, QAfterSortBy> thenByHasCustomEqualizer() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCustomEqualizer', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Song, Song, QAfterSortBy> thenByHasCustomEqualizerDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'hasCustomEqualizer', Sort.desc);
+    });
+  }
+
   QueryBuilder<Song, Song, QAfterSortBy> thenById() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'id', Sort.asc);
@@ -3018,10 +3240,22 @@ extension SongQueryWhereDistinct on QueryBuilder<Song, Song, QDistinct> {
     });
   }
 
+  QueryBuilder<Song, Song, QDistinct> distinctByEqualizerGains() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'equalizerGains');
+    });
+  }
+
   QueryBuilder<Song, Song, QDistinct> distinctByGenre(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'genre', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Song, Song, QDistinct> distinctByHasCustomEqualizer() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'hasCustomEqualizer');
     });
   }
 
@@ -3120,9 +3354,21 @@ extension SongQueryProperty on QueryBuilder<Song, Song, QQueryProperty> {
     });
   }
 
+  QueryBuilder<Song, List<double>?, QQueryOperations> equalizerGainsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'equalizerGains');
+    });
+  }
+
   QueryBuilder<Song, String?, QQueryOperations> genreProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'genre');
+    });
+  }
+
+  QueryBuilder<Song, bool, QQueryOperations> hasCustomEqualizerProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'hasCustomEqualizer');
     });
   }
 
@@ -6342,278 +6588,363 @@ const AppSettingsSchema = CollectionSchema(
       name: r'accentColor',
       type: IsarType.long,
     ),
-    r'audioFocus': PropertySchema(
+    r'activeLyricsFontWeightDelta': PropertySchema(
       id: 1,
+      name: r'activeLyricsFontWeightDelta',
+      type: IsarType.long,
+    ),
+    r'audioBackCacheSizeMB': PropertySchema(
+      id: 2,
+      name: r'audioBackCacheSizeMB',
+      type: IsarType.long,
+    ),
+    r'audioCacheSecs': PropertySchema(
+      id: 3,
+      name: r'audioCacheSecs',
+      type: IsarType.long,
+    ),
+    r'audioCacheSizeMB': PropertySchema(
+      id: 4,
+      name: r'audioCacheSizeMB',
+      type: IsarType.long,
+    ),
+    r'audioFocus': PropertySchema(
+      id: 5,
       name: r'audioFocus',
       type: IsarType.bool,
     ),
     r'bgBrightness': PropertySchema(
-      id: 2,
+      id: 6,
       name: r'bgBrightness',
       type: IsarType.double,
     ),
     r'bgOpacity': PropertySchema(
-      id: 3,
+      id: 7,
       name: r'bgOpacity',
       type: IsarType.double,
     ),
     r'blurredArtworkForLyrics': PropertySchema(
-      id: 4,
+      id: 8,
       name: r'blurredArtworkForLyrics',
       type: IsarType.bool,
     ),
     r'crossfadeLength': PropertySchema(
-      id: 5,
+      id: 9,
       name: r'crossfadeLength',
       type: IsarType.long,
     ),
     r'customBackgroundImagePath': PropertySchema(
-      id: 6,
+      id: 10,
       name: r'customBackgroundImagePath',
       type: IsarType.string,
     ),
     r'customFontFamily': PropertySchema(
-      id: 7,
+      id: 11,
       name: r'customFontFamily',
       type: IsarType.string,
     ),
+    r'customFontFamilyLyrics': PropertySchema(
+      id: 12,
+      name: r'customFontFamilyLyrics',
+      type: IsarType.string,
+    ),
+    r'customFontWeight': PropertySchema(
+      id: 13,
+      name: r'customFontWeight',
+      type: IsarType.long,
+    ),
+    r'customFontWeightDelta': PropertySchema(
+      id: 14,
+      name: r'customFontWeightDelta',
+      type: IsarType.long,
+    ),
+    r'customFontWeightLyrics': PropertySchema(
+      id: 15,
+      name: r'customFontWeightLyrics',
+      type: IsarType.string,
+    ),
+    r'customFontWeightLyricsDelta': PropertySchema(
+      id: 16,
+      name: r'customFontWeightLyricsDelta',
+      type: IsarType.long,
+    ),
     r'darkTheme': PropertySchema(
-      id: 8,
+      id: 17,
       name: r'darkTheme',
       type: IsarType.bool,
     ),
     r'disableAnimatedDuration': PropertySchema(
-      id: 9,
+      id: 18,
       name: r'disableAnimatedDuration',
       type: IsarType.bool,
     ),
     r'disableBlur': PropertySchema(
-      id: 10,
+      id: 19,
       name: r'disableBlur',
       type: IsarType.bool,
     ),
     r'disableSquiggle': PropertySchema(
-      id: 11,
+      id: 20,
       name: r'disableSquiggle',
       type: IsarType.bool,
     ),
     r'downloadArtwork': PropertySchema(
-      id: 12,
+      id: 21,
       name: r'downloadArtwork',
       type: IsarType.bool,
     ),
     r'dynamicAccentColor': PropertySchema(
-      id: 13,
+      id: 22,
       name: r'dynamicAccentColor',
       type: IsarType.bool,
     ),
     r'dynamicColorActiveLyrics': PropertySchema(
-      id: 14,
+      id: 23,
       name: r'dynamicColorActiveLyrics',
       type: IsarType.bool,
     ),
     r'dynamicLyrics': PropertySchema(
-      id: 15,
+      id: 24,
       name: r'dynamicLyrics',
       type: IsarType.bool,
     ),
+    r'enableAudioCache': PropertySchema(
+      id: 25,
+      name: r'enableAudioCache',
+      type: IsarType.bool,
+    ),
     r'enableCrossfade': PropertySchema(
-      id: 16,
+      id: 26,
       name: r'enableCrossfade',
       type: IsarType.bool,
     ),
     r'enableDynamicTheming': PropertySchema(
-      id: 17,
+      id: 27,
       name: r'enableDynamicTheming',
       type: IsarType.bool,
     ),
     r'enableInternet': PropertySchema(
-      id: 18,
+      id: 28,
       name: r'enableInternet',
       type: IsarType.bool,
     ),
     r'enablePlayerGradient': PropertySchema(
-      id: 19,
+      id: 29,
       name: r'enablePlayerGradient',
       type: IsarType.bool,
     ),
     r'enableSlideGesture': PropertySchema(
-      id: 20,
+      id: 30,
       name: r'enableSlideGesture',
       type: IsarType.bool,
     ),
+    r'equalizerEnabled': PropertySchema(
+      id: 31,
+      name: r'equalizerEnabled',
+      type: IsarType.bool,
+    ),
+    r'exclusiveHardwareMode': PropertySchema(
+      id: 32,
+      name: r'exclusiveHardwareMode',
+      type: IsarType.bool,
+    ),
     r'fadeOnSeek': PropertySchema(
-      id: 21,
+      id: 33,
       name: r'fadeOnSeek',
       type: IsarType.bool,
     ),
     r'fadePlayPauseStop': PropertySchema(
-      id: 22,
+      id: 34,
       name: r'fadePlayPauseStop',
       type: IsarType.bool,
     ),
+    r'globalEqualizerGains': PropertySchema(
+      id: 35,
+      name: r'globalEqualizerGains',
+      type: IsarType.doubleList,
+    ),
     r'homeDarkness': PropertySchema(
-      id: 23,
+      id: 36,
       name: r'homeDarkness',
       type: IsarType.double,
     ),
     r'homeSectionOrder': PropertySchema(
-      id: 24,
+      id: 37,
       name: r'homeSectionOrder',
       type: IsarType.stringList,
     ),
     r'keepBackgroundGradient': PropertySchema(
-      id: 25,
+      id: 38,
       name: r'keepBackgroundGradient',
       type: IsarType.bool,
     ),
     r'language': PropertySchema(
-      id: 26,
+      id: 39,
       name: r'language',
       type: IsarType.string,
     ),
     r'lastPlayedSongId': PropertySchema(
-      id: 27,
+      id: 40,
       name: r'lastPlayedSongId',
       type: IsarType.long,
     ),
+    r'lastQueueIndex': PropertySchema(
+      id: 41,
+      name: r'lastQueueIndex',
+      type: IsarType.long,
+    ),
+    r'lastQueueSongIds': PropertySchema(
+      id: 42,
+      name: r'lastQueueSongIds',
+      type: IsarType.longList,
+    ),
     r'libraryDarkness': PropertySchema(
-      id: 28,
+      id: 43,
       name: r'libraryDarkness',
       type: IsarType.double,
     ),
     r'libraryFolders': PropertySchema(
-      id: 29,
+      id: 44,
       name: r'libraryFolders',
       type: IsarType.stringList,
     ),
     r'lyricsAlignment': PropertySchema(
-      id: 30,
+      id: 45,
       name: r'lyricsAlignment',
       type: IsarType.string,
     ),
     r'lyricsDarkness': PropertySchema(
-      id: 31,
+      id: 46,
       name: r'lyricsDarkness',
       type: IsarType.double,
     ),
     r'musicDarkness': PropertySchema(
-      id: 32,
+      id: 47,
       name: r'musicDarkness',
       type: IsarType.double,
     ),
     r'permanentAudioFocusChange': PropertySchema(
-      id: 33,
+      id: 48,
       name: r'permanentAudioFocusChange',
       type: IsarType.bool,
     ),
+    r'persistQueue': PropertySchema(
+      id: 49,
+      name: r'persistQueue',
+      type: IsarType.bool,
+    ),
     r'playPauseStopFadeLength': PropertySchema(
-      id: 34,
+      id: 50,
       name: r'playPauseStopFadeLength',
       type: IsarType.long,
     ),
     r'repeatMode': PropertySchema(
-      id: 35,
+      id: 51,
       name: r'repeatMode',
       type: IsarType.long,
     ),
     r'resumeAfterCall': PropertySchema(
-      id: 36,
+      id: 52,
       name: r'resumeAfterCall',
       type: IsarType.bool,
     ),
     r'resumeOnStart': PropertySchema(
-      id: 37,
+      id: 53,
       name: r'resumeOnStart',
       type: IsarType.bool,
     ),
     r'saveDynamicColor': PropertySchema(
-      id: 38,
+      id: 54,
       name: r'saveDynamicColor',
       type: IsarType.bool,
     ),
     r'seekFadeLength': PropertySchema(
-      id: 39,
+      id: 55,
       name: r'seekFadeLength',
       type: IsarType.long,
     ),
     r'settingsV2': PropertySchema(
-      id: 40,
+      id: 56,
       name: r'settingsV2',
       type: IsarType.bool,
     ),
     r'settingsV3': PropertySchema(
-      id: 41,
+      id: 57,
       name: r'settingsV3',
       type: IsarType.bool,
     ),
     r'shortManualCrossfadeLength': PropertySchema(
-      id: 42,
+      id: 58,
       name: r'shortManualCrossfadeLength',
       type: IsarType.long,
     ),
     r'showHomeAlbums': PropertySchema(
-      id: 43,
+      id: 59,
       name: r'showHomeAlbums',
       type: IsarType.bool,
     ),
     r'showHomeArtists': PropertySchema(
-      id: 44,
+      id: 60,
       name: r'showHomeArtists',
       type: IsarType.bool,
     ),
     r'showHomeGenres': PropertySchema(
-      id: 45,
+      id: 61,
       name: r'showHomeGenres',
       type: IsarType.bool,
     ),
     r'showPerformanceOptimizer': PropertySchema(
-      id: 46,
+      id: 62,
       name: r'showPerformanceOptimizer',
       type: IsarType.bool,
     ),
     r'showQualityBadge': PropertySchema(
-      id: 47,
+      id: 63,
       name: r'showQualityBadge',
       type: IsarType.bool,
     ),
     r'shuffle': PropertySchema(
-      id: 48,
+      id: 64,
       name: r'shuffle',
       type: IsarType.bool,
     ),
     r'silenceBetweenTracks': PropertySchema(
-      id: 49,
+      id: 65,
       name: r'silenceBetweenTracks',
       type: IsarType.long,
     ),
     r'songsDarkness': PropertySchema(
-      id: 50,
+      id: 66,
       name: r'songsDarkness',
       type: IsarType.double,
     ),
     r'sortAscending': PropertySchema(
-      id: 51,
+      id: 67,
       name: r'sortAscending',
       type: IsarType.bool,
     ),
     r'sortStrategyIndex': PropertySchema(
-      id: 52,
+      id: 68,
       name: r'sortStrategyIndex',
       type: IsarType.long,
     ),
     r'stopOnTaskRemoved': PropertySchema(
-      id: 53,
+      id: 69,
       name: r'stopOnTaskRemoved',
       type: IsarType.bool,
     ),
     r'useNewFont': PropertySchema(
-      id: 54,
+      id: 70,
       name: r'useNewFont',
       type: IsarType.bool,
     ),
+    r'useNewFontLyrics': PropertySchema(
+      id: 71,
+      name: r'useNewFontLyrics',
+      type: IsarType.bool,
+    ),
     r'volume': PropertySchema(
-      id: 55,
+      id: 72,
       name: r'volume',
       type: IsarType.double,
     )
@@ -6645,6 +6976,9 @@ int _appSettingsEstimateSize(
     }
   }
   bytesCount += 3 + object.customFontFamily.length * 3;
+  bytesCount += 3 + object.customFontFamilyLyrics.length * 3;
+  bytesCount += 3 + object.customFontWeightLyrics.length * 3;
+  bytesCount += 3 + object.globalEqualizerGains.length * 8;
   bytesCount += 3 + object.homeSectionOrder.length * 3;
   {
     for (var i = 0; i < object.homeSectionOrder.length; i++) {
@@ -6653,6 +6987,7 @@ int _appSettingsEstimateSize(
     }
   }
   bytesCount += 3 + object.language.length * 3;
+  bytesCount += 3 + object.lastQueueSongIds.length * 8;
   bytesCount += 3 + object.libraryFolders.length * 3;
   {
     for (var i = 0; i < object.libraryFolders.length; i++) {
@@ -6671,61 +7006,78 @@ void _appSettingsSerialize(
   Map<Type, List<int>> allOffsets,
 ) {
   writer.writeLong(offsets[0], object.accentColor);
-  writer.writeBool(offsets[1], object.audioFocus);
-  writer.writeDouble(offsets[2], object.bgBrightness);
-  writer.writeDouble(offsets[3], object.bgOpacity);
-  writer.writeBool(offsets[4], object.blurredArtworkForLyrics);
-  writer.writeLong(offsets[5], object.crossfadeLength);
-  writer.writeString(offsets[6], object.customBackgroundImagePath);
-  writer.writeString(offsets[7], object.customFontFamily);
-  writer.writeBool(offsets[8], object.darkTheme);
-  writer.writeBool(offsets[9], object.disableAnimatedDuration);
-  writer.writeBool(offsets[10], object.disableBlur);
-  writer.writeBool(offsets[11], object.disableSquiggle);
-  writer.writeBool(offsets[12], object.downloadArtwork);
-  writer.writeBool(offsets[13], object.dynamicAccentColor);
-  writer.writeBool(offsets[14], object.dynamicColorActiveLyrics);
-  writer.writeBool(offsets[15], object.dynamicLyrics);
-  writer.writeBool(offsets[16], object.enableCrossfade);
-  writer.writeBool(offsets[17], object.enableDynamicTheming);
-  writer.writeBool(offsets[18], object.enableInternet);
-  writer.writeBool(offsets[19], object.enablePlayerGradient);
-  writer.writeBool(offsets[20], object.enableSlideGesture);
-  writer.writeBool(offsets[21], object.fadeOnSeek);
-  writer.writeBool(offsets[22], object.fadePlayPauseStop);
-  writer.writeDouble(offsets[23], object.homeDarkness);
-  writer.writeStringList(offsets[24], object.homeSectionOrder);
-  writer.writeBool(offsets[25], object.keepBackgroundGradient);
-  writer.writeString(offsets[26], object.language);
-  writer.writeLong(offsets[27], object.lastPlayedSongId);
-  writer.writeDouble(offsets[28], object.libraryDarkness);
-  writer.writeStringList(offsets[29], object.libraryFolders);
-  writer.writeString(offsets[30], object.lyricsAlignment);
-  writer.writeDouble(offsets[31], object.lyricsDarkness);
-  writer.writeDouble(offsets[32], object.musicDarkness);
-  writer.writeBool(offsets[33], object.permanentAudioFocusChange);
-  writer.writeLong(offsets[34], object.playPauseStopFadeLength);
-  writer.writeLong(offsets[35], object.repeatMode);
-  writer.writeBool(offsets[36], object.resumeAfterCall);
-  writer.writeBool(offsets[37], object.resumeOnStart);
-  writer.writeBool(offsets[38], object.saveDynamicColor);
-  writer.writeLong(offsets[39], object.seekFadeLength);
-  writer.writeBool(offsets[40], object.settingsV2);
-  writer.writeBool(offsets[41], object.settingsV3);
-  writer.writeLong(offsets[42], object.shortManualCrossfadeLength);
-  writer.writeBool(offsets[43], object.showHomeAlbums);
-  writer.writeBool(offsets[44], object.showHomeArtists);
-  writer.writeBool(offsets[45], object.showHomeGenres);
-  writer.writeBool(offsets[46], object.showPerformanceOptimizer);
-  writer.writeBool(offsets[47], object.showQualityBadge);
-  writer.writeBool(offsets[48], object.shuffle);
-  writer.writeLong(offsets[49], object.silenceBetweenTracks);
-  writer.writeDouble(offsets[50], object.songsDarkness);
-  writer.writeBool(offsets[51], object.sortAscending);
-  writer.writeLong(offsets[52], object.sortStrategyIndex);
-  writer.writeBool(offsets[53], object.stopOnTaskRemoved);
-  writer.writeBool(offsets[54], object.useNewFont);
-  writer.writeDouble(offsets[55], object.volume);
+  writer.writeLong(offsets[1], object.activeLyricsFontWeightDelta);
+  writer.writeLong(offsets[2], object.audioBackCacheSizeMB);
+  writer.writeLong(offsets[3], object.audioCacheSecs);
+  writer.writeLong(offsets[4], object.audioCacheSizeMB);
+  writer.writeBool(offsets[5], object.audioFocus);
+  writer.writeDouble(offsets[6], object.bgBrightness);
+  writer.writeDouble(offsets[7], object.bgOpacity);
+  writer.writeBool(offsets[8], object.blurredArtworkForLyrics);
+  writer.writeLong(offsets[9], object.crossfadeLength);
+  writer.writeString(offsets[10], object.customBackgroundImagePath);
+  writer.writeString(offsets[11], object.customFontFamily);
+  writer.writeString(offsets[12], object.customFontFamilyLyrics);
+  writer.writeLong(offsets[13], object.customFontWeight);
+  writer.writeLong(offsets[14], object.customFontWeightDelta);
+  writer.writeString(offsets[15], object.customFontWeightLyrics);
+  writer.writeLong(offsets[16], object.customFontWeightLyricsDelta);
+  writer.writeBool(offsets[17], object.darkTheme);
+  writer.writeBool(offsets[18], object.disableAnimatedDuration);
+  writer.writeBool(offsets[19], object.disableBlur);
+  writer.writeBool(offsets[20], object.disableSquiggle);
+  writer.writeBool(offsets[21], object.downloadArtwork);
+  writer.writeBool(offsets[22], object.dynamicAccentColor);
+  writer.writeBool(offsets[23], object.dynamicColorActiveLyrics);
+  writer.writeBool(offsets[24], object.dynamicLyrics);
+  writer.writeBool(offsets[25], object.enableAudioCache);
+  writer.writeBool(offsets[26], object.enableCrossfade);
+  writer.writeBool(offsets[27], object.enableDynamicTheming);
+  writer.writeBool(offsets[28], object.enableInternet);
+  writer.writeBool(offsets[29], object.enablePlayerGradient);
+  writer.writeBool(offsets[30], object.enableSlideGesture);
+  writer.writeBool(offsets[31], object.equalizerEnabled);
+  writer.writeBool(offsets[32], object.exclusiveHardwareMode);
+  writer.writeBool(offsets[33], object.fadeOnSeek);
+  writer.writeBool(offsets[34], object.fadePlayPauseStop);
+  writer.writeDoubleList(offsets[35], object.globalEqualizerGains);
+  writer.writeDouble(offsets[36], object.homeDarkness);
+  writer.writeStringList(offsets[37], object.homeSectionOrder);
+  writer.writeBool(offsets[38], object.keepBackgroundGradient);
+  writer.writeString(offsets[39], object.language);
+  writer.writeLong(offsets[40], object.lastPlayedSongId);
+  writer.writeLong(offsets[41], object.lastQueueIndex);
+  writer.writeLongList(offsets[42], object.lastQueueSongIds);
+  writer.writeDouble(offsets[43], object.libraryDarkness);
+  writer.writeStringList(offsets[44], object.libraryFolders);
+  writer.writeString(offsets[45], object.lyricsAlignment);
+  writer.writeDouble(offsets[46], object.lyricsDarkness);
+  writer.writeDouble(offsets[47], object.musicDarkness);
+  writer.writeBool(offsets[48], object.permanentAudioFocusChange);
+  writer.writeBool(offsets[49], object.persistQueue);
+  writer.writeLong(offsets[50], object.playPauseStopFadeLength);
+  writer.writeLong(offsets[51], object.repeatMode);
+  writer.writeBool(offsets[52], object.resumeAfterCall);
+  writer.writeBool(offsets[53], object.resumeOnStart);
+  writer.writeBool(offsets[54], object.saveDynamicColor);
+  writer.writeLong(offsets[55], object.seekFadeLength);
+  writer.writeBool(offsets[56], object.settingsV2);
+  writer.writeBool(offsets[57], object.settingsV3);
+  writer.writeLong(offsets[58], object.shortManualCrossfadeLength);
+  writer.writeBool(offsets[59], object.showHomeAlbums);
+  writer.writeBool(offsets[60], object.showHomeArtists);
+  writer.writeBool(offsets[61], object.showHomeGenres);
+  writer.writeBool(offsets[62], object.showPerformanceOptimizer);
+  writer.writeBool(offsets[63], object.showQualityBadge);
+  writer.writeBool(offsets[64], object.shuffle);
+  writer.writeLong(offsets[65], object.silenceBetweenTracks);
+  writer.writeDouble(offsets[66], object.songsDarkness);
+  writer.writeBool(offsets[67], object.sortAscending);
+  writer.writeLong(offsets[68], object.sortStrategyIndex);
+  writer.writeBool(offsets[69], object.stopOnTaskRemoved);
+  writer.writeBool(offsets[70], object.useNewFont);
+  writer.writeBool(offsets[71], object.useNewFontLyrics);
+  writer.writeDouble(offsets[72], object.volume);
 }
 
 AppSettings _appSettingsDeserialize(
@@ -6736,62 +7088,79 @@ AppSettings _appSettingsDeserialize(
 ) {
   final object = AppSettings();
   object.accentColor = reader.readLong(offsets[0]);
-  object.audioFocus = reader.readBool(offsets[1]);
-  object.bgBrightness = reader.readDouble(offsets[2]);
-  object.bgOpacity = reader.readDouble(offsets[3]);
-  object.blurredArtworkForLyrics = reader.readBool(offsets[4]);
-  object.crossfadeLength = reader.readLong(offsets[5]);
-  object.customBackgroundImagePath = reader.readStringOrNull(offsets[6]);
-  object.customFontFamily = reader.readString(offsets[7]);
-  object.darkTheme = reader.readBool(offsets[8]);
-  object.disableAnimatedDuration = reader.readBool(offsets[9]);
-  object.disableBlur = reader.readBool(offsets[10]);
-  object.disableSquiggle = reader.readBool(offsets[11]);
-  object.downloadArtwork = reader.readBool(offsets[12]);
-  object.dynamicAccentColor = reader.readBool(offsets[13]);
-  object.dynamicColorActiveLyrics = reader.readBool(offsets[14]);
-  object.dynamicLyrics = reader.readBool(offsets[15]);
-  object.enableCrossfade = reader.readBool(offsets[16]);
-  object.enableDynamicTheming = reader.readBool(offsets[17]);
-  object.enableInternet = reader.readBool(offsets[18]);
-  object.enablePlayerGradient = reader.readBool(offsets[19]);
-  object.enableSlideGesture = reader.readBool(offsets[20]);
-  object.fadeOnSeek = reader.readBool(offsets[21]);
-  object.fadePlayPauseStop = reader.readBool(offsets[22]);
-  object.homeDarkness = reader.readDouble(offsets[23]);
-  object.homeSectionOrder = reader.readStringList(offsets[24]) ?? [];
+  object.activeLyricsFontWeightDelta = reader.readLong(offsets[1]);
+  object.audioBackCacheSizeMB = reader.readLong(offsets[2]);
+  object.audioCacheSecs = reader.readLong(offsets[3]);
+  object.audioCacheSizeMB = reader.readLong(offsets[4]);
+  object.audioFocus = reader.readBool(offsets[5]);
+  object.bgBrightness = reader.readDouble(offsets[6]);
+  object.bgOpacity = reader.readDouble(offsets[7]);
+  object.blurredArtworkForLyrics = reader.readBool(offsets[8]);
+  object.crossfadeLength = reader.readLong(offsets[9]);
+  object.customBackgroundImagePath = reader.readStringOrNull(offsets[10]);
+  object.customFontFamily = reader.readString(offsets[11]);
+  object.customFontFamilyLyrics = reader.readString(offsets[12]);
+  object.customFontWeight = reader.readLong(offsets[13]);
+  object.customFontWeightDelta = reader.readLong(offsets[14]);
+  object.customFontWeightLyrics = reader.readString(offsets[15]);
+  object.customFontWeightLyricsDelta = reader.readLong(offsets[16]);
+  object.darkTheme = reader.readBool(offsets[17]);
+  object.disableAnimatedDuration = reader.readBool(offsets[18]);
+  object.disableBlur = reader.readBool(offsets[19]);
+  object.disableSquiggle = reader.readBool(offsets[20]);
+  object.downloadArtwork = reader.readBool(offsets[21]);
+  object.dynamicAccentColor = reader.readBool(offsets[22]);
+  object.dynamicColorActiveLyrics = reader.readBool(offsets[23]);
+  object.dynamicLyrics = reader.readBool(offsets[24]);
+  object.enableAudioCache = reader.readBool(offsets[25]);
+  object.enableCrossfade = reader.readBool(offsets[26]);
+  object.enableDynamicTheming = reader.readBool(offsets[27]);
+  object.enableInternet = reader.readBool(offsets[28]);
+  object.enablePlayerGradient = reader.readBool(offsets[29]);
+  object.enableSlideGesture = reader.readBool(offsets[30]);
+  object.equalizerEnabled = reader.readBool(offsets[31]);
+  object.exclusiveHardwareMode = reader.readBool(offsets[32]);
+  object.fadeOnSeek = reader.readBool(offsets[33]);
+  object.fadePlayPauseStop = reader.readBool(offsets[34]);
+  object.globalEqualizerGains = reader.readDoubleList(offsets[35]) ?? [];
+  object.homeDarkness = reader.readDouble(offsets[36]);
+  object.homeSectionOrder = reader.readStringList(offsets[37]) ?? [];
   object.id = id;
-  object.keepBackgroundGradient = reader.readBool(offsets[25]);
-  object.language = reader.readString(offsets[26]);
-  object.lastPlayedSongId = reader.readLongOrNull(offsets[27]);
-  object.libraryDarkness = reader.readDouble(offsets[28]);
-  object.libraryFolders = reader.readStringList(offsets[29]) ?? [];
-  object.lyricsAlignment = reader.readString(offsets[30]);
-  object.lyricsDarkness = reader.readDouble(offsets[31]);
-  object.musicDarkness = reader.readDouble(offsets[32]);
-  object.permanentAudioFocusChange = reader.readBool(offsets[33]);
-  object.playPauseStopFadeLength = reader.readLong(offsets[34]);
-  object.repeatMode = reader.readLong(offsets[35]);
-  object.resumeAfterCall = reader.readBool(offsets[36]);
-  object.resumeOnStart = reader.readBool(offsets[37]);
-  object.saveDynamicColor = reader.readBool(offsets[38]);
-  object.seekFadeLength = reader.readLong(offsets[39]);
-  object.settingsV2 = reader.readBool(offsets[40]);
-  object.settingsV3 = reader.readBool(offsets[41]);
-  object.shortManualCrossfadeLength = reader.readLong(offsets[42]);
-  object.showHomeAlbums = reader.readBool(offsets[43]);
-  object.showHomeArtists = reader.readBool(offsets[44]);
-  object.showHomeGenres = reader.readBool(offsets[45]);
-  object.showPerformanceOptimizer = reader.readBool(offsets[46]);
-  object.showQualityBadge = reader.readBool(offsets[47]);
-  object.shuffle = reader.readBool(offsets[48]);
-  object.silenceBetweenTracks = reader.readLong(offsets[49]);
-  object.songsDarkness = reader.readDouble(offsets[50]);
-  object.sortAscending = reader.readBool(offsets[51]);
-  object.sortStrategyIndex = reader.readLong(offsets[52]);
-  object.stopOnTaskRemoved = reader.readBool(offsets[53]);
-  object.useNewFont = reader.readBool(offsets[54]);
-  object.volume = reader.readDouble(offsets[55]);
+  object.keepBackgroundGradient = reader.readBool(offsets[38]);
+  object.language = reader.readString(offsets[39]);
+  object.lastPlayedSongId = reader.readLongOrNull(offsets[40]);
+  object.lastQueueIndex = reader.readLong(offsets[41]);
+  object.lastQueueSongIds = reader.readLongList(offsets[42]) ?? [];
+  object.libraryDarkness = reader.readDouble(offsets[43]);
+  object.libraryFolders = reader.readStringList(offsets[44]) ?? [];
+  object.lyricsAlignment = reader.readString(offsets[45]);
+  object.lyricsDarkness = reader.readDouble(offsets[46]);
+  object.musicDarkness = reader.readDouble(offsets[47]);
+  object.permanentAudioFocusChange = reader.readBool(offsets[48]);
+  object.persistQueue = reader.readBool(offsets[49]);
+  object.playPauseStopFadeLength = reader.readLong(offsets[50]);
+  object.repeatMode = reader.readLong(offsets[51]);
+  object.resumeAfterCall = reader.readBool(offsets[52]);
+  object.resumeOnStart = reader.readBool(offsets[53]);
+  object.saveDynamicColor = reader.readBool(offsets[54]);
+  object.seekFadeLength = reader.readLong(offsets[55]);
+  object.settingsV2 = reader.readBool(offsets[56]);
+  object.settingsV3 = reader.readBool(offsets[57]);
+  object.shortManualCrossfadeLength = reader.readLong(offsets[58]);
+  object.showHomeAlbums = reader.readBool(offsets[59]);
+  object.showHomeArtists = reader.readBool(offsets[60]);
+  object.showHomeGenres = reader.readBool(offsets[61]);
+  object.showPerformanceOptimizer = reader.readBool(offsets[62]);
+  object.showQualityBadge = reader.readBool(offsets[63]);
+  object.shuffle = reader.readBool(offsets[64]);
+  object.silenceBetweenTracks = reader.readLong(offsets[65]);
+  object.songsDarkness = reader.readDouble(offsets[66]);
+  object.sortAscending = reader.readBool(offsets[67]);
+  object.sortStrategyIndex = reader.readLong(offsets[68]);
+  object.stopOnTaskRemoved = reader.readBool(offsets[69]);
+  object.useNewFont = reader.readBool(offsets[70]);
+  object.useNewFontLyrics = reader.readBool(offsets[71]);
+  object.volume = reader.readDouble(offsets[72]);
   return object;
 }
 
@@ -6805,37 +7174,37 @@ P _appSettingsDeserializeProp<P>(
     case 0:
       return (reader.readLong(offset)) as P;
     case 1:
-      return (reader.readBool(offset)) as P;
-    case 2:
-      return (reader.readDouble(offset)) as P;
-    case 3:
-      return (reader.readDouble(offset)) as P;
-    case 4:
-      return (reader.readBool(offset)) as P;
-    case 5:
       return (reader.readLong(offset)) as P;
+    case 2:
+      return (reader.readLong(offset)) as P;
+    case 3:
+      return (reader.readLong(offset)) as P;
+    case 4:
+      return (reader.readLong(offset)) as P;
+    case 5:
+      return (reader.readBool(offset)) as P;
     case 6:
-      return (reader.readStringOrNull(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 7:
-      return (reader.readString(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 8:
       return (reader.readBool(offset)) as P;
     case 9:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 10:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 11:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 12:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 13:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 14:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 15:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 16:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLong(offset)) as P;
     case 17:
       return (reader.readBool(offset)) as P;
     case 18:
@@ -6849,70 +7218,104 @@ P _appSettingsDeserializeProp<P>(
     case 22:
       return (reader.readBool(offset)) as P;
     case 23:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 24:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 25:
       return (reader.readBool(offset)) as P;
     case 26:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 27:
-      return (reader.readLongOrNull(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 28:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 29:
-      return (reader.readStringList(offset) ?? []) as P;
+      return (reader.readBool(offset)) as P;
     case 30:
-      return (reader.readString(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 31:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 32:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 33:
       return (reader.readBool(offset)) as P;
     case 34:
-      return (reader.readLong(offset)) as P;
+      return (reader.readBool(offset)) as P;
     case 35:
-      return (reader.readLong(offset)) as P;
+      return (reader.readDoubleList(offset) ?? []) as P;
     case 36:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 37:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 38:
       return (reader.readBool(offset)) as P;
     case 39:
-      return (reader.readLong(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 40:
-      return (reader.readBool(offset)) as P;
+      return (reader.readLongOrNull(offset)) as P;
     case 41:
-      return (reader.readBool(offset)) as P;
-    case 42:
       return (reader.readLong(offset)) as P;
+    case 42:
+      return (reader.readLongList(offset) ?? []) as P;
     case 43:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 44:
-      return (reader.readBool(offset)) as P;
+      return (reader.readStringList(offset) ?? []) as P;
     case 45:
-      return (reader.readBool(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 46:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 47:
-      return (reader.readBool(offset)) as P;
+      return (reader.readDouble(offset)) as P;
     case 48:
       return (reader.readBool(offset)) as P;
     case 49:
-      return (reader.readLong(offset)) as P;
-    case 50:
-      return (reader.readDouble(offset)) as P;
-    case 51:
       return (reader.readBool(offset)) as P;
-    case 52:
+    case 50:
       return (reader.readLong(offset)) as P;
+    case 51:
+      return (reader.readLong(offset)) as P;
+    case 52:
+      return (reader.readBool(offset)) as P;
     case 53:
       return (reader.readBool(offset)) as P;
     case 54:
       return (reader.readBool(offset)) as P;
     case 55:
+      return (reader.readLong(offset)) as P;
+    case 56:
+      return (reader.readBool(offset)) as P;
+    case 57:
+      return (reader.readBool(offset)) as P;
+    case 58:
+      return (reader.readLong(offset)) as P;
+    case 59:
+      return (reader.readBool(offset)) as P;
+    case 60:
+      return (reader.readBool(offset)) as P;
+    case 61:
+      return (reader.readBool(offset)) as P;
+    case 62:
+      return (reader.readBool(offset)) as P;
+    case 63:
+      return (reader.readBool(offset)) as P;
+    case 64:
+      return (reader.readBool(offset)) as P;
+    case 65:
+      return (reader.readLong(offset)) as P;
+    case 66:
+      return (reader.readDouble(offset)) as P;
+    case 67:
+      return (reader.readBool(offset)) as P;
+    case 68:
+      return (reader.readLong(offset)) as P;
+    case 69:
+      return (reader.readBool(offset)) as P;
+    case 70:
+      return (reader.readBool(offset)) as P;
+    case 71:
+      return (reader.readBool(offset)) as P;
+    case 72:
       return (reader.readDouble(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -7060,6 +7463,230 @@ extension AppSettingsQueryFilter
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.between(
         property: r'accentColor',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      activeLyricsFontWeightDeltaEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'activeLyricsFontWeightDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      activeLyricsFontWeightDeltaGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'activeLyricsFontWeightDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      activeLyricsFontWeightDeltaLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'activeLyricsFontWeightDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      activeLyricsFontWeightDeltaBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'activeLyricsFontWeightDelta',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioBackCacheSizeMBEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'audioBackCacheSizeMB',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioBackCacheSizeMBGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'audioBackCacheSizeMB',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioBackCacheSizeMBLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'audioBackCacheSizeMB',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioBackCacheSizeMBBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'audioBackCacheSizeMB',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioCacheSecsEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'audioCacheSecs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioCacheSecsGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'audioCacheSecs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioCacheSecsLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'audioCacheSecs',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioCacheSecsBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'audioCacheSecs',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioCacheSizeMBEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'audioCacheSizeMB',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioCacheSizeMBGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'audioCacheSizeMB',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioCacheSizeMBLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'audioCacheSizeMB',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      audioCacheSizeMBBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'audioCacheSizeMB',
         lower: lower,
         includeLower: includeLower,
         upper: upper,
@@ -7569,6 +8196,450 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontFamilyLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customFontFamilyLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customFontFamilyLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customFontFamilyLyrics',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'customFontFamilyLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'customFontFamilyLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'customFontFamilyLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'customFontFamilyLyrics',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontFamilyLyrics',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontFamilyLyricsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'customFontFamilyLyrics',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontWeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customFontWeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customFontWeight',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customFontWeight',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightDeltaEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontWeightDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightDeltaGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customFontWeightDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightDeltaLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customFontWeightDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightDeltaBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customFontWeightDelta',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontWeightLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customFontWeightLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customFontWeightLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customFontWeightLyrics',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'customFontWeightLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'customFontWeightLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsContains(String value,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'customFontWeightLyrics',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsMatches(String pattern,
+          {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'customFontWeightLyrics',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontWeightLyrics',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'customFontWeightLyrics',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsDeltaEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'customFontWeightLyricsDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsDeltaGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'customFontWeightLyricsDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsDeltaLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'customFontWeightLyricsDelta',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      customFontWeightLyricsDeltaBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'customFontWeightLyricsDelta',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       darkThemeEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -7649,6 +8720,16 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      enableAudioCacheEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'enableAudioCache',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       enableCrossfadeEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -7699,6 +8780,26 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      equalizerEnabledEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'equalizerEnabled',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      exclusiveHardwareModeEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'exclusiveHardwareMode',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       fadeOnSeekEqualTo(bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -7715,6 +8816,161 @@ extension AppSettingsQueryFilter
         property: r'fadePlayPauseStop',
         value: value,
       ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsElementEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'globalEqualizerGains',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsElementGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'globalEqualizerGains',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsElementLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'globalEqualizerGains',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsElementBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'globalEqualizerGains',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'globalEqualizerGains',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'globalEqualizerGains',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'globalEqualizerGains',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'globalEqualizerGains',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'globalEqualizerGains',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      globalEqualizerGainsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'globalEqualizerGains',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -8280,6 +9536,207 @@ extension AppSettingsQueryFilter
         upper: upper,
         includeUpper: includeUpper,
       ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueIndexEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastQueueIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueIndexGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastQueueIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueIndexLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastQueueIndex',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueIndexBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastQueueIndex',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsElementEqualTo(int value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'lastQueueSongIds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsElementGreaterThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'lastQueueSongIds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsElementLessThan(
+    int value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'lastQueueSongIds',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsElementBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'lastQueueSongIds',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsLengthEqualTo(int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'lastQueueSongIds',
+        length,
+        true,
+        length,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'lastQueueSongIds',
+        0,
+        true,
+        0,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'lastQueueSongIds',
+        0,
+        false,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'lastQueueSongIds',
+        0,
+        true,
+        length,
+        include,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'lastQueueSongIds',
+        length,
+        include,
+        999999,
+        true,
+      );
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      lastQueueSongIdsLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.listLength(
+        r'lastQueueSongIds',
+        lower,
+        includeLower,
+        upper,
+        includeUpper,
+      );
     });
   }
 
@@ -8854,6 +10311,16 @@ extension AppSettingsQueryFilter
   }
 
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      persistQueueEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'persistQueue',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
       playPauseStopFadeLengthEqualTo(int value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
@@ -9395,6 +10862,16 @@ extension AppSettingsQueryFilter
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition>
+      useNewFontLyricsEqualTo(bool value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'useNewFontLyrics',
+        value: value,
+      ));
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterFilterCondition> volumeEqualTo(
     double value, {
     double epsilon = Query.epsilon,
@@ -9476,6 +10953,61 @@ extension AppSettingsQuerySortBy
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByAccentColorDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'accentColor', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByActiveLyricsFontWeightDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activeLyricsFontWeightDelta', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByActiveLyricsFontWeightDeltaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activeLyricsFontWeightDelta', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByAudioBackCacheSizeMB() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioBackCacheSizeMB', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByAudioBackCacheSizeMBDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioBackCacheSizeMB', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByAudioCacheSecs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioCacheSecs', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByAudioCacheSecsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioCacheSecs', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByAudioCacheSizeMB() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioCacheSizeMB', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByAudioCacheSizeMBDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioCacheSizeMB', Sort.desc);
     });
   }
 
@@ -9568,6 +11100,76 @@ extension AppSettingsQuerySortBy
       sortByCustomFontFamilyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'customFontFamily', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontFamilyLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontFamilyLyrics', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontFamilyLyricsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontFamilyLyrics', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeight', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontWeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeight', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontWeightDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightDelta', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontWeightDeltaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightDelta', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontWeightLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightLyrics', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontWeightLyricsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightLyrics', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontWeightLyricsDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightLyricsDelta', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByCustomFontWeightLyricsDeltaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightLyricsDelta', Sort.desc);
     });
   }
 
@@ -9676,6 +11278,20 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByEnableAudioCache() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableAudioCache', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByEnableAudioCacheDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableAudioCache', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByEnableCrossfade() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'enableCrossfade', Sort.asc);
@@ -9741,6 +11357,34 @@ extension AppSettingsQuerySortBy
       sortByEnableSlideGestureDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'enableSlideGesture', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByEqualizerEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'equalizerEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByEqualizerEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'equalizerEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByExclusiveHardwareMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'exclusiveHardwareMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByExclusiveHardwareModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'exclusiveHardwareMode', Sort.desc);
     });
   }
 
@@ -9823,6 +11467,19 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByLastQueueIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastQueueIndex', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByLastQueueIndexDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastQueueIndex', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByLibraryDarkness() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'libraryDarkness', Sort.asc);
@@ -9886,6 +11543,19 @@ extension AppSettingsQuerySortBy
       sortByPermanentAudioFocusChangeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'permanentAudioFocusChange', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByPersistQueue() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'persistQueue', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByPersistQueueDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'persistQueue', Sort.desc);
     });
   }
 
@@ -10165,6 +11835,20 @@ extension AppSettingsQuerySortBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByUseNewFontLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'useNewFontLyrics', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      sortByUseNewFontLyricsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'useNewFontLyrics', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> sortByVolume() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'volume', Sort.asc);
@@ -10189,6 +11873,61 @@ extension AppSettingsQuerySortThenBy
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByAccentColorDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'accentColor', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByActiveLyricsFontWeightDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activeLyricsFontWeightDelta', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByActiveLyricsFontWeightDeltaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'activeLyricsFontWeightDelta', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByAudioBackCacheSizeMB() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioBackCacheSizeMB', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByAudioBackCacheSizeMBDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioBackCacheSizeMB', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByAudioCacheSecs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioCacheSecs', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByAudioCacheSecsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioCacheSecs', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByAudioCacheSizeMB() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioCacheSizeMB', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByAudioCacheSizeMBDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'audioCacheSizeMB', Sort.desc);
     });
   }
 
@@ -10281,6 +12020,76 @@ extension AppSettingsQuerySortThenBy
       thenByCustomFontFamilyDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'customFontFamily', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontFamilyLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontFamilyLyrics', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontFamilyLyricsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontFamilyLyrics', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeight', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontWeightDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeight', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontWeightDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightDelta', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontWeightDeltaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightDelta', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontWeightLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightLyrics', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontWeightLyricsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightLyrics', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontWeightLyricsDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightLyricsDelta', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByCustomFontWeightLyricsDeltaDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'customFontWeightLyricsDelta', Sort.desc);
     });
   }
 
@@ -10389,6 +12198,20 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByEnableAudioCache() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableAudioCache', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByEnableAudioCacheDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'enableAudioCache', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByEnableCrossfade() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'enableCrossfade', Sort.asc);
@@ -10454,6 +12277,34 @@ extension AppSettingsQuerySortThenBy
       thenByEnableSlideGestureDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'enableSlideGesture', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByEqualizerEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'equalizerEnabled', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByEqualizerEnabledDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'equalizerEnabled', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByExclusiveHardwareMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'exclusiveHardwareMode', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByExclusiveHardwareModeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'exclusiveHardwareMode', Sort.desc);
     });
   }
 
@@ -10548,6 +12399,19 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByLastQueueIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastQueueIndex', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByLastQueueIndexDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'lastQueueIndex', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByLibraryDarkness() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'libraryDarkness', Sort.asc);
@@ -10611,6 +12475,19 @@ extension AppSettingsQuerySortThenBy
       thenByPermanentAudioFocusChangeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'permanentAudioFocusChange', Sort.desc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByPersistQueue() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'persistQueue', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByPersistQueueDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'persistQueue', Sort.desc);
     });
   }
 
@@ -10890,6 +12767,20 @@ extension AppSettingsQuerySortThenBy
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByUseNewFontLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'useNewFontLyrics', Sort.asc);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QAfterSortBy>
+      thenByUseNewFontLyricsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'useNewFontLyrics', Sort.desc);
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QAfterSortBy> thenByVolume() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'volume', Sort.asc);
@@ -10908,6 +12799,33 @@ extension AppSettingsQueryWhereDistinct
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByAccentColor() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'accentColor');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByActiveLyricsFontWeightDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'activeLyricsFontWeightDelta');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByAudioBackCacheSizeMB() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'audioBackCacheSizeMB');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByAudioCacheSecs() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'audioCacheSecs');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByAudioCacheSizeMB() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'audioCacheSizeMB');
     });
   }
 
@@ -10956,6 +12874,43 @@ extension AppSettingsQueryWhereDistinct
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'customFontFamily',
           caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByCustomFontFamilyLyrics({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customFontFamilyLyrics',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByCustomFontWeight() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customFontWeight');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByCustomFontWeightDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customFontWeightDelta');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByCustomFontWeightLyrics({bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customFontWeightLyrics',
+          caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByCustomFontWeightLyricsDelta() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'customFontWeightLyricsDelta');
     });
   }
 
@@ -11013,6 +12968,13 @@ extension AppSettingsQueryWhereDistinct
   }
 
   QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByEnableAudioCache() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'enableAudioCache');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
       distinctByEnableCrossfade() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'enableCrossfade');
@@ -11046,6 +13008,20 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByEqualizerEnabled() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'equalizerEnabled');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByExclusiveHardwareMode() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'exclusiveHardwareMode');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByFadeOnSeek() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'fadeOnSeek');
@@ -11056,6 +13032,13 @@ extension AppSettingsQueryWhereDistinct
       distinctByFadePlayPauseStop() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'fadePlayPauseStop');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByGlobalEqualizerGains() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'globalEqualizerGains');
     });
   }
 
@@ -11090,6 +13073,19 @@ extension AppSettingsQueryWhereDistinct
       distinctByLastPlayedSongId() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'lastPlayedSongId');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByLastQueueIndex() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastQueueIndex');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByLastQueueSongIds() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'lastQueueSongIds');
     });
   }
 
@@ -11130,6 +13126,12 @@ extension AppSettingsQueryWhereDistinct
       distinctByPermanentAudioFocusChange() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'permanentAudioFocusChange');
+    });
+  }
+
+  QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByPersistQueue() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'persistQueue');
     });
   }
 
@@ -11269,6 +13271,13 @@ extension AppSettingsQueryWhereDistinct
     });
   }
 
+  QueryBuilder<AppSettings, AppSettings, QDistinct>
+      distinctByUseNewFontLyrics() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'useNewFontLyrics');
+    });
+  }
+
   QueryBuilder<AppSettings, AppSettings, QDistinct> distinctByVolume() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'volume');
@@ -11287,6 +13296,32 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, int, QQueryOperations> accentColorProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'accentColor');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations>
+      activeLyricsFontWeightDeltaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'activeLyricsFontWeightDelta');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations>
+      audioBackCacheSizeMBProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'audioBackCacheSizeMB');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations> audioCacheSecsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'audioCacheSecs');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations> audioCacheSizeMBProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'audioCacheSizeMB');
     });
   }
 
@@ -11332,6 +13367,40 @@ extension AppSettingsQueryProperty
       customFontFamilyProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'customFontFamily');
+    });
+  }
+
+  QueryBuilder<AppSettings, String, QQueryOperations>
+      customFontFamilyLyricsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customFontFamilyLyrics');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations> customFontWeightProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customFontWeight');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations>
+      customFontWeightDeltaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customFontWeightDelta');
+    });
+  }
+
+  QueryBuilder<AppSettings, String, QQueryOperations>
+      customFontWeightLyricsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customFontWeightLyrics');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations>
+      customFontWeightLyricsDeltaProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'customFontWeightLyricsDelta');
     });
   }
 
@@ -11386,6 +13455,12 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, bool, QQueryOperations> enableAudioCacheProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'enableAudioCache');
+    });
+  }
+
   QueryBuilder<AppSettings, bool, QQueryOperations> enableCrossfadeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'enableCrossfade');
@@ -11419,6 +13494,19 @@ extension AppSettingsQueryProperty
     });
   }
 
+  QueryBuilder<AppSettings, bool, QQueryOperations> equalizerEnabledProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'equalizerEnabled');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations>
+      exclusiveHardwareModeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'exclusiveHardwareMode');
+    });
+  }
+
   QueryBuilder<AppSettings, bool, QQueryOperations> fadeOnSeekProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'fadeOnSeek');
@@ -11429,6 +13517,13 @@ extension AppSettingsQueryProperty
       fadePlayPauseStopProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'fadePlayPauseStop');
+    });
+  }
+
+  QueryBuilder<AppSettings, List<double>, QQueryOperations>
+      globalEqualizerGainsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'globalEqualizerGains');
     });
   }
 
@@ -11461,6 +13556,19 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, int?, QQueryOperations> lastPlayedSongIdProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastPlayedSongId');
+    });
+  }
+
+  QueryBuilder<AppSettings, int, QQueryOperations> lastQueueIndexProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastQueueIndex');
+    });
+  }
+
+  QueryBuilder<AppSettings, List<int>, QQueryOperations>
+      lastQueueSongIdsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'lastQueueSongIds');
     });
   }
 
@@ -11501,6 +13609,12 @@ extension AppSettingsQueryProperty
       permanentAudioFocusChangeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'permanentAudioFocusChange');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> persistQueueProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'persistQueue');
     });
   }
 
@@ -11632,6 +13746,12 @@ extension AppSettingsQueryProperty
   QueryBuilder<AppSettings, bool, QQueryOperations> useNewFontProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'useNewFont');
+    });
+  }
+
+  QueryBuilder<AppSettings, bool, QQueryOperations> useNewFontLyricsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'useNewFontLyrics');
     });
   }
 

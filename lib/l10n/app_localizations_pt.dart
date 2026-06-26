@@ -647,6 +647,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get resumeOnStartTitle => 'Retomar ao Iniciar';
 
   @override
+  String get persistQueueTitle => 'Persistir última fila';
+
+  @override
+  String get persistQueueDesc =>
+      'Salvar a última música e a fila ao reiniciar a aplicação';
+
+  @override
   String get right => 'Direita';
 
   @override
@@ -939,4 +946,99 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get year => 'Ano';
+
+  @override
+  String get supportUs => 'Apoie-nos';
+
+  @override
+  String get supportUsDesc =>
+      'Ajude a manter o Looper Player vivo e de código aberto';
+
+  @override
+  String get supportDevelopment => 'Apoiar o desenvolvimento';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'O Looper Player é 100% gratuito e de código aberto. Se gosta de o usar, por favor considere apoiar o criador com uma doação. Cada contribuição ajuda a manter o projeto ativo!';
+
+  @override
+  String get useCustomFont => 'Usar fonte personalizada';
+
+  @override
+  String get useCustomFontDesc =>
+      'Usar Jost ou outras fontes personalizadas. Caso contrário, DM Sans será usada.';
+
+  @override
+  String get selectFontFamily => 'Selecionar família de fontes';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Fonte ativa: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Ajuste de peso da fonte';
+
+  @override
+  String get currentWeight => 'Espessura atual';
+
+  @override
+  String get useCustomFontLyrics => 'Fonte personalizada para letras';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Usar fonte e peso personalizados para a visualização de letras sincronizadas';
+
+  @override
+  String get lyricsFontFamily => 'Família de fontes das letras';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Fonte de letra ativa: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'Ajuste de peso das letras';
+
+  @override
+  String get giveStarOnGithub => 'Dar estrela no GitHub';
+
+  @override
+  String get supportProjectLove => 'Apoie o projeto e mostre carinho!';
+
+  @override
+  String get sortAlphabeticalAZ => 'Alfabético (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Alfabético (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'Adicionado recentemente';
+
+  @override
+  String get sortOldestAdded => 'Mais antigo adicionado';
+
+  @override
+  String get sortYearNewest => 'Ano (Mais recente)';
+
+  @override
+  String get sortYearOldest => 'Ano (Mais antigo)';
+
+  @override
+  String get sortMostSongs => 'Mais músicas';
+
+  @override
+  String get sortLeastSongs => 'Menos músicas';
+
+  @override
+  String get sortDefault => 'Padrão';
+
+  @override
+  String get sortArtistAsc => 'Artista (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'Álbum (A-Z)';
+
+  @override
+  String get sortDuration => 'Duração';
 }

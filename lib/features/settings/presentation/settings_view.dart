@@ -13,6 +13,7 @@ import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 
 import 'widgets/settings_widgets.dart';
 import 'widgets/settings_dialogs.dart';
@@ -22,6 +23,8 @@ import 'widgets/playback_settings_tiles.dart';
 import 'widgets/audio_playback_settings_tiles.dart';
 import 'widgets/library_settings_tiles.dart';
 import 'widgets/about_settings_tiles.dart';
+
+final supportUsSheetVisibleProvider = StateProvider<bool>((ref) => false);
 
 class SettingsView extends ConsumerStatefulWidget {
   const SettingsView({super.key});
@@ -38,6 +41,139 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _showSupportUsDialog(BuildContext context, ColorScheme colorScheme, bool useBlur) {
+    ref.read(supportUsSheetVisibleProvider.notifier).state = true;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      barrierColor: Colors.black54,
+      builder: (context) {
+        const coffeeUrl = 'https://buymeacoffee.com/sthrnilshaaa';
+        final settings = ref.read(settingsProvider);
+        final l10n = AppLocalizations.of(context)!;
+
+        Widget dialogContent = Container(
+          decoration: BoxDecoration(
+            color: useBlur ? Colors.transparent : const Color(0xFF0F0F0C),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.05),
+              width: 1,
+            ),
+          ),
+          padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 24),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const _PulsingHeart(),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.supportDevelopment,
+                  style: AppFonts.jostStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  l10n.supportDevelopmentDesc,
+                  textAlign: TextAlign.center,
+                  style: AppFonts.jostStyle(
+                    fontSize: 13,
+                    height: 1.5,
+                    color: Colors.white.withValues(alpha: 0.6),
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Container(
+                  width: double.infinity,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    color: const Color(0xFFFFDD00),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFFDD00).withValues(alpha: 0.25),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        HapticFeedback.mediumImpact();
+                        final uri = Uri.parse(coffeeUrl);
+                        if (await canLaunchUrl(uri)) {
+                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(16),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              LucideIcons.coffee,
+                              size: 20,
+                              color: Colors.black,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Buy Me a Coffee',
+                              style: AppFonts.jostStyle(
+                                color: Colors.black,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+
+        if (useBlur) {
+          return PremiumSection(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(30),
+              topRight: Radius.circular(30),
+            ),
+            useBlur: true,
+            useExpanded: false,
+            child: dialogContent,
+          );
+        }
+        return dialogContent;
+      },
+    ).whenComplete(() {
+      ref.read(supportUsSheetVisibleProvider.notifier).state = false;
+    });
   }
 
   @override
@@ -110,13 +246,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                                   child: TextField(
                                     controller: _searchController,
                                     autofocus: true,
-                                    style: const TextStyle(
+                                    style: AppFonts.jostStyle(
                                       color: Colors.white,
                                       fontSize: 16,
                                     ),
                                     decoration: InputDecoration(
                                       hintText: 'Search settings...',
-                                      hintStyle: const TextStyle(
+                                      hintStyle: AppFonts.jostStyle(
                                         color: Colors.white38,
                                       ),
                                       border: InputBorder.none,
@@ -178,7 +314,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                             ),
                             Text(
                               l10n.settings,
-                              style: const TextStyle(
+                              style: AppFonts.jostStyle(
                                 color: Colors.white,
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -296,6 +432,18 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                             settings: settings,
                           ),
 
+                          // 7. Support Us
+                          _buildCategoryGroup(
+                            context: context,
+                            id: 'support_us',
+                            title: l10n.supportUs,
+                            subtitle: l10n.supportUsDesc,
+                            icon: LucideIcons.heart,
+                            colorScheme: Theme.of(context).colorScheme,
+                            useBlur: useBlur,
+                            settings: settings,
+                          ),
+
                           const SizedBox(
                             height: 140,
                           ), // Bottom breathing room for expanded player bar
@@ -330,6 +478,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           child: InkWell(
             onTap: () {
               HapticFeedback.lightImpact();
+              if (id == 'support_us') {
+                _showSupportUsDialog(context, colorScheme, useBlur);
+                return;
+              }
               Navigator.of(context).push(
                 PageRouteBuilder(
                   settings: const RouteSettings(name: 'settings_subpage'),
@@ -375,7 +527,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                       children: [
                         Text(
                           title,
-                          style: const TextStyle(
+                          style: AppFonts.jostStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -384,7 +536,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                         const SizedBox(height: 4),
                         Text(
                           subtitle,
-                          style: TextStyle(
+                          style: AppFonts.jostStyle(
                             color: Colors.white.withValues(alpha: 0.4),
                             fontSize: 12,
                           ),
@@ -422,15 +574,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     }).toList();
 
     if (query.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(LucideIcons.search, size: 48, color: Colors.white24),
-            SizedBox(height: 16),
+            const Icon(LucideIcons.search, size: 48, color: Colors.white24),
+            const SizedBox(height: 16),
             Text(
               'Type to search settings...',
-              style: TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white38,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
@@ -454,7 +606,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             const SizedBox(height: 16),
             Text(
               'No settings found for "$query"',
-              style: const TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white38,
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
@@ -492,7 +644,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   ),
                   child: Text(
                     item.category.toUpperCase(),
-                    style: TextStyle(
+                    style: AppFonts.jostStyle(
                       color: Color(settings.accentColor).withValues(alpha: 0.8),
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -623,13 +775,46 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         category: l10n.theme,
         widget: const UseNewFontTile(),
       ),
-      if (settings.useNewFont)
+      if (settings.useNewFont) ...[
         SettingsSearchItem(
           title: 'Select Font Family',
           subtitle: 'Active font: ${settings.customFontFamily}',
           category: l10n.theme,
           widget: const FontFamilySelectionTile(),
         ),
+        SettingsSearchItem(
+          title: 'Font Weight',
+          subtitle: 'Change base weight of custom font',
+          category: l10n.theme,
+          widget: const FontWeightSelectionTile(),
+        ),
+      ],
+      SettingsSearchItem(
+        title: 'Use Custom Font for Lyrics',
+        subtitle: 'Use custom font and weight for synchronized lyrics view',
+        category: l10n.theme,
+        widget: const UseNewFontLyricsTile(),
+      ),
+      if (settings.useNewFontLyrics) ...[
+        SettingsSearchItem(
+          title: 'Lyrics Font Family',
+          subtitle: 'Active lyrics font: ${settings.customFontFamilyLyrics}',
+          category: l10n.theme,
+          widget: const LyricsFontFamilySelectionTile(),
+        ),
+        SettingsSearchItem(
+          title: 'Inactive Lyrics Font Weight',
+          subtitle: 'Inactive lyrics weight offset: ${settings.customFontWeightLyricsDelta}',
+          category: l10n.theme,
+          widget: const LyricsFontWeightSelectionTile(),
+        ),
+        SettingsSearchItem(
+          title: 'Active Lyrics Font Weight',
+          subtitle: 'Active lyrics weight offset: ${settings.activeLyricsFontWeightDelta}',
+          category: l10n.theme,
+          widget: const ActiveLyricsFontWeightSelectionTile(),
+        ),
+      ],
 
       // Dashboard
       SettingsSearchItem(
@@ -769,6 +954,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           widget: const PermanentAudioFocusChangeTile(),
         ),
       ],
+      SettingsSearchItem(
+        title: l10n.persistQueueTitle,
+        subtitle: l10n.persistQueueDesc,
+        category: l10n.audioPlayback,
+        widget: const PersistQueueTile(),
+      ),
 
       // Library
       SettingsSearchItem(
@@ -799,7 +990,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       // About
       SettingsSearchItem(
         title: 'Looper Player Version',
-        subtitle: 'Version 2.1.0',
+        subtitle: 'Version 2.2.0',
         category: l10n.aboutAndMaintainers,
         widget: const LooperVersionTile(),
       ),
@@ -880,6 +1071,18 @@ class SettingsCategoryScreen extends ConsumerWidget {
         if (settings.useNewFont) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const FontFamilySelectionTile(),
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const FontWeightSelectionTile(),
+        ],
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        const UseNewFontLyricsTile(),
+        if (settings.useNewFontLyrics) ...[
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const LyricsFontFamilySelectionTile(),
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const LyricsFontWeightSelectionTile(),
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const ActiveLyricsFontWeightSelectionTile(),
         ],
         // Darkness sliders
         if (settings.enableDynamicTheming) ...[
@@ -946,6 +1149,8 @@ class SettingsCategoryScreen extends ConsumerWidget {
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const SilenceBetweenTracksSlider(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
+        const PersistQueueTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
         const ManageAudioFocusTile(),
         if (settings.audioFocus) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
@@ -970,42 +1175,42 @@ class SettingsCategoryScreen extends ConsumerWidget {
       ];
     } else if (categoryId == 'about') {
       children = [
-        const LooperVersionTile(),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        const LyricsProviderTile(),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        AboutMaintainerRow(
+        const LooperVersionTile(), //1
+        const Divider(height: 1, indent: 72, color: Colors.white10), //2
+        const LyricsProviderTile(), //3
+        const Divider(height: 1, indent: 72, color: Colors.white10),//4
+        AboutMaintainerRow( //5
           name: 'Nilesh Suthar',
           role: l10n.creatorAndMaintainer,
           avatar: 'assets/about/maintainer_avatar.png',
           github: 'https://github.com/SthrNilshaaa',
           telegram: 'https://t.me/neelshy',
         ),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        AboutMaintainerRow(
+        const Divider(height: 1, indent: 72, color: Colors.white10), //6
+        AboutMaintainerRow( //7
           name: 'Karan Suthar',
           role: l10n.designerAndMaintainer,
           avatar: 'assets/about/designer_avatar.png',
           github: 'https://github.com/sthrkaran',
           telegram: 'https://t.me/karanwhy',
         ),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        AboutMaintainerRow(
+        const Divider(height: 1, indent: 72, color: Colors.white10), //8
+        AboutMaintainerRow( //9
           name: 'Madan Suthar',
           role: 'Active Contributor',
           avatar: 'assets/about/designer_avatar.png',
           github: 'https://github.com/',
           telegram: 'https://t.me/madansthr',
         ),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        Padding(
+        const Divider(height: 1, indent: 72, color: Colors.white10), //10
+        Padding(  //11
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 l10n.appInfoPrivacy.toUpperCase(),
-                style: TextStyle(
+                style: AppFonts.jostStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
                   color: Color(settings.accentColor).withValues(alpha: 0.8),
@@ -1078,7 +1283,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                     child: Center(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -1132,9 +1337,9 @@ class SettingsCategoryScreen extends ConsumerWidget {
                                     width: 1,
                                   ),
                                 ),
-                                child: const Text(
-                                  'Version 2.1',
-                                  style: TextStyle(
+                                child: Text(
+                                  'Version 2.2',
+                                  style: AppFonts.jostStyle(
                                     color: Colors.white,
                                     fontSize: 14,
                                     fontWeight: FontWeight.w500,
@@ -1179,9 +1384,9 @@ class SettingsCategoryScreen extends ConsumerWidget {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
+                              Text(
                                 'Maintainers',
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   color: Colors.white,
                                   fontSize: 26,
                                   fontWeight: FontWeight.bold,
@@ -1190,7 +1395,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                               const SizedBox(height: 4),
                               Text(
                                 'Person behind LooperPlayer',
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   color: Colors.white.withValues(alpha: 0.4),
                                   fontSize: 14,
                                 ),
@@ -1207,7 +1412,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                           useExpanded: false,
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Column(
-                            children: children.sublist(2, 5),
+                            children: children.sublist(4,9), //.sublist(2, 5),
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -1240,6 +1445,62 @@ class SettingsCategoryScreen extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PulsingHeart extends StatefulWidget {
+  const _PulsingHeart();
+
+  @override
+  State<_PulsingHeart> createState() => _PulsingHeartState();
+}
+
+class _PulsingHeartState extends State<_PulsingHeart> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: _scaleAnimation,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.redAccent.withValues(alpha: 0.1),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.redAccent.withValues(alpha: 0.2),
+              blurRadius: 15,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: const Icon(
+          LucideIcons.heart,
+          color: Colors.redAccent,
+          size: 32,
         ),
       ),
     );

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 2.1.0+8
+version: 2.2.0+10
 
 environment:
   sdk: ^3.11.0
@@ -48,10 +48,7 @@ dependencies:
   riverpod_annotation: ^2.3.5
 
   # Audio Playback
-  media_kit: ^1.1.10
-  media_kit_libs_linux: ^1.1.2
-  media_kit_libs_android_audio: ^1.3.8
-  media_kit_native_event_loop: ^1.0.9
+  mpv_audio_kit: ^0.4.2
 
   # Database
   isar: ^3.1.0+1
@@ -77,11 +74,7 @@ dependencies:
   palette_generator: ^0.3.3+3
   cached_network_image: ^3.3.1
   scrollable_positioned_list: ^0.3.8
-  dbus: ^0.7.12
   local_notifier: ^0.1.6
-  audio_service: ^0.18.18
-  audio_session: ^0.2.3
-  just_audio_background: ^0.0.1-beta.17
   share_plus: ^12.0.2
   ffmpeg_kit_flutter_new_full:
   marqueer: ^2.5.0
@@ -90,6 +83,7 @@ dependencies:
   flutter_displaymode: ^0.7.0
   flutter_performance_optimizer: ^1.0.3
   package_info_plus: ^9.0.1
+  home_widget: ^0.9.3
 
 dev_dependencies:
   flutter_test:
@@ -122,51 +116,118 @@ flutter:
   fonts:
     - family: Jost
       fonts:
+        - asset: assets/fonts/Jost/static/Jost-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Jost/static/Jost-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Jost/static/Jost-Light.ttf
+          weight: 300
         - asset: assets/fonts/Jost/static/Jost-Regular.ttf
+          weight: 400
         - asset: assets/fonts/Jost/static/Jost-Medium.ttf
           weight: 500
+        - asset: assets/fonts/Jost/static/Jost-SemiBold.ttf
+          weight: 600
         - asset: assets/fonts/Jost/static/Jost-Bold.ttf
           weight: 700
+        - asset: assets/fonts/Jost/static/Jost-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Jost/static/Jost-Black.ttf
+          weight: 900
     - family: Poppins
       fonts:
+        - asset: assets/fonts/Poppins/Poppins-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Poppins/Poppins-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Poppins/Poppins-Light.ttf
+          weight: 300
         - asset: assets/fonts/Poppins/Poppins-Regular.ttf
+          weight: 400
         - asset: assets/fonts/Poppins/Poppins-Medium.ttf
           weight: 500
+        - asset: assets/fonts/Poppins/Poppins-SemiBold.ttf
+          weight: 600
         - asset: assets/fonts/Poppins/Poppins-Bold.ttf
           weight: 700
+        - asset: assets/fonts/Poppins/Poppins-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Poppins/Poppins-Black.ttf
+          weight: 900
     - family: Space Grotesk
       fonts:
+        - asset: assets/fonts/Space_Grotesk/static/SpaceGrotesk-Light.ttf
+          weight: 300
         - asset: assets/fonts/Space_Grotesk/static/SpaceGrotesk-Regular.ttf
+          weight: 400
         - asset: assets/fonts/Space_Grotesk/static/SpaceGrotesk-Medium.ttf
           weight: 500
+        - asset: assets/fonts/Space_Grotesk/static/SpaceGrotesk-SemiBold.ttf
+          weight: 600
         - asset: assets/fonts/Space_Grotesk/static/SpaceGrotesk-Bold.ttf
           weight: 700
     - family: DM Sans
       fonts:
+        - asset: assets/fonts/DM_Sans/static/DMSans-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/DM_Sans/static/DMSans-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/DM_Sans/static/DMSans-Light.ttf
+          weight: 300
         - asset: assets/fonts/DM_Sans/static/DMSans-Regular.ttf
+          weight: 400
         - asset: assets/fonts/DM_Sans/static/DMSans-Medium.ttf
           weight: 500
+        - asset: assets/fonts/DM_Sans/static/DMSans-SemiBold.ttf
+          weight: 600
         - asset: assets/fonts/DM_Sans/static/DMSans-Bold.ttf
           weight: 700
+        - asset: assets/fonts/DM_Sans/static/DMSans-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/DM_Sans/static/DMSans-Black.ttf
+          weight: 900
     - family: Plus Jakarta Sans
       fonts:
+        - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Light.ttf
+          weight: 300
         - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Regular.ttf
+          weight: 400
         - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Medium.ttf
           weight: 500
+        - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-SemiBold.ttf
+          weight: 600
         - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-Bold.ttf
           weight: 700
+        - asset: assets/fonts/Plus_Jakarta_Sans/static/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
     - family: Sora
       fonts:
+        - asset: assets/fonts/Sora/static/Sora-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Sora/static/Sora-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Sora/static/Sora-Light.ttf
+          weight: 300
         - asset: assets/fonts/Sora/static/Sora-Regular.ttf
+          weight: 400
         - asset: assets/fonts/Sora/static/Sora-Medium.ttf
           weight: 500
+        - asset: assets/fonts/Sora/static/Sora-SemiBold.ttf
+          weight: 600
         - asset: assets/fonts/Sora/static/Sora-Bold.ttf
           weight: 700
+        - asset: assets/fonts/Sora/static/Sora-ExtraBold.ttf
+          weight: 800
     - family: Google Sans
       fonts:
         - asset: assets/fonts/Google_Sans/static/GoogleSans-Regular.ttf
+          weight: 400
         - asset: assets/fonts/Google_Sans/static/GoogleSans-Medium.ttf
           weight: 500
+        - asset: assets/fonts/Google_Sans/static/GoogleSans-SemiBold.ttf
+          weight: 600
         - asset: assets/fonts/Google_Sans/static/GoogleSans-Bold.ttf
           weight: 700
 

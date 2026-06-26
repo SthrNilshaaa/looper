@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:animations/animations.dart';
@@ -63,7 +65,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.read(playbackProvider.notifier).playFromFile(initialFile);
         // If playing from file, maybe skip the folder prompt for now
         if (settings.libraryFolders.isNotEmpty) {
-          ref.read(libraryProvider.notifier).scanSavedFolders();
+          ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
         }
         return;
       }
@@ -75,7 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       if (initialSongsEmpty) {
         print('ℹ️ Welcome screen mode: skipping auto-scan at startup to prevent premature permission popups/scanning');
       } else {
-        ref.read(libraryProvider.notifier).scanSavedFolders();
+        ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
       }
     });
   }
@@ -351,7 +353,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     AppLocalizations l10n,
   ) {
     if (library.isScanning && library.songs.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const AppLoadingIndicator();
     }
 
     return PageTransitionSwitcher(
@@ -610,7 +612,7 @@ class _HeaderButton extends StatelessWidget {
             SizedBox(width: 10.s),
             Text(
               label,
-              style: TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white,
                 fontSize: 14.ts,
                 fontWeight: FontWeight.normal,
@@ -665,7 +667,7 @@ class _SidebarItem extends StatelessWidget {
               ),
         title: Text(
           label,
-          style: TextStyle(
+          style: AppFonts.jostStyle(
             fontSize: 14.ts,
             color: isSelected ? selectedColor : unselectedColor,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

@@ -12,6 +12,7 @@ import 'package:looper_player/features/settings/presentation/settings_notifier.d
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import '../widgets/premium_section.dart';
 import '../widgets/empty_library_view.dart';
 import '../widgets/premium_loading_view.dart';
@@ -117,14 +118,14 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                                     size: 20,
                                   ),
                                 ),
-                                Text(
-                                  l10n.allSongs,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                                 Text(
+                                   l10n.allSongs,
+                                   style: AppFonts.jostStyle(
+                                     color: Colors.white,
+                                     fontSize: 24,
+                                     fontWeight: FontWeight.bold,
+                                   ),
+                                 ),
                                 PremiumSection(
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(10),
@@ -136,6 +137,7 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                                   height: 48,
                                   useExpanded: false,
                                   useBlur: true,
+                                  forceNoBlur: true,
                                   onTap: () {
                                     HapticFeedback.lightImpact();
                                     ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
@@ -182,8 +184,14 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                         child: PremiumSection(
                           width: 48,
                           height: 48,
-                          borderRadius: BorderRadius.circular(24),
-                          useBlur: true,
+                          // borderRadius: const BorderRadius.only(
+                          //   topLeft: Radius.circular(20),
+                          //   bottomLeft: Radius.circular(10),
+                          //   topRight: Radius.circular(20),
+                          //   bottomRight: Radius.circular(10),
+                          // ),
+                          borderRadius: BorderRadius.circular(48),
+                          useBlur: false,
                           useExpanded: false,
                           onTap: () {
                             HapticFeedback.mediumImpact();
@@ -193,7 +201,7 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                               ref.read(playbackProvider.notifier).setPlaylist(randomSongList, initialIndex: 0);
                             }
                           },
-                          child: const Icon(LucideIcons.shuffle, color: Colors.white, size: 18),
+                          child:Icon(LucideIcons.shuffle, color: Colors.white, size: 18),
                         ),
                       ),
                     ),

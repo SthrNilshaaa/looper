@@ -9,9 +9,9 @@
 -keep class com.arthenica.ffmpegkit.** { *; }
 -keep class com.antonkarpenko.ffmpegkit.** { *; }
 
-# MediaKit rules
--keep class com.alexmercerind.mediakit.** { *; }
--keep class com.alexmercerind.mediakit_video.** { *; }
+# mpv_audio_kit rules
+-keep class com.alesdrnz.mpv_audio_kit.** { *; }
+-keep class androidx.media3.** { *; }
 
 # Keep model classes (to prevent Isar stripping)
 -keep class looper_player.features.library.domain.models.** { *; }
@@ -21,9 +21,6 @@
 -keep @io.isar.Name class * { *; }
 -keep @io.isar.Ignore class * { *; }
 -keep @io.isar.TypeConverter class * { *; }
-
-# AudioService rules
--keep class com.ryanheise.audioservice.** { *; }
 
 # Keep resource identifiers
 -keep class **.R$* {

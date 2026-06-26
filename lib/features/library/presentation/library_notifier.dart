@@ -287,25 +287,35 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       return true;
     }
 
-    // 3. Request granular media permissions for Android 13+ (API 33+)
-    // or standard storage permission for Android 12 and below
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.audio,
-      Permission.storage,
-    ].request();
+    int sdkInt = 0;
+    try {
+      final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+      if (sdkMatch != null) {
+        sdkInt = int.parse(sdkMatch.group(1)!);
+      }
+    } catch (_) {}
+    print('🎵 Scanner: Android SDK Version parsed: $sdkInt. Full version: "${Platform.operatingSystemVersion}"');
 
-    bool isGranted = (statuses[Permission.audio]?.isGranted ?? false) || 
-                     (statuses[Permission.storage]?.isGranted ?? false);
+    bool isGranted = false;
+    if (sdkInt >= 33) {
+      isGranted = await Permission.audio.request().isGranted;
+      print('🎵 Scanner: Android 13+ permission request result: audio: $isGranted');
+    } else {
+      isGranted = await Permission.storage.request().isGranted;
+      print('🎵 Scanner: Android 12 and below permission request result: storage: $isGranted');
+    }
 
     // If still not granted, try requesting manageExternalStorage explicitly
     if (!isGranted) {
+      print('🎵 Scanner: Requesting manageExternalStorage since other permissions were not granted');
       isGranted = await Permission.manageExternalStorage.request().isGranted;
+      print('🎵 Scanner: Permission status AFTER manageExternalStorage request: $isGranted');
     }
 
     return isGranted;
   }
 
-  Future<void> scanSavedFolders() async {
+  Future<void> scanSavedFolders({bool showVisualIndicator = true}) async {
     if (!await _requestPermissions()) {
       print('❌ Permissions denied');
       return;
@@ -368,23 +378,31 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         }
       }
 
-      state = state.copyWith(isScanning: true);
+      if (showVisualIndicator) {
+        state = state.copyWith(isScanning: true);
+      }
       for (final path in scanRoots) {
         if (Directory(path).existsSync()) {
-          await scanLibrary(path, updateIsScanning: false);
+          await scanLibrary(path, updateIsScanning: showVisualIndicator);
         }
       }
-      state = state.copyWith(isScanning: false);
+      if (showVisualIndicator) {
+        state = state.copyWith(isScanning: false);
+      }
       return;
     }
 
-    state = state.copyWith(isScanning: true);
+    if (showVisualIndicator) {
+      state = state.copyWith(isScanning: true);
+    }
     for (final folder in folders) {
       if (Directory(folder).existsSync()) {
         await LibraryScanner().scanDirectory(folder);
       }
     }
-    state = state.copyWith(isScanning: false);
+    if (showVisualIndicator) {
+      state = state.copyWith(isScanning: false);
+    }
   }
 
   Future<void> resetAndRescan() async {
@@ -395,6 +413,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       await DbService.isar.albums.clear();
       await DbService.isar.artists.clear();
     });
+    await _ref.read(settingsProvider.notifier).updateLastPlayedSong(null);
 
     final folders = _ref.read(settingsProvider).libraryFolders;
     for (final folder in folders) {

@@ -1298,6 +1298,18 @@ abstract class AppLocalizations {
   /// **'Resume on Start'**
   String get resumeOnStartTitle;
 
+  /// No description provided for @persistQueueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Persist Last Queue'**
+  String get persistQueueTitle;
+
+  /// No description provided for @persistQueueDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the last playing song and queue on app restarts'**
+  String get persistQueueDesc;
+
   /// No description provided for @right.
   ///
   /// In en, this message translates to:
@@ -1819,6 +1831,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Year'**
   String get year;
+
+  /// No description provided for @supportUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Support Us'**
+  String get supportUs;
+
+  /// No description provided for @supportUsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Help keep Looper Player alive & open-source'**
+  String get supportUsDesc;
+
+  /// No description provided for @supportDevelopment.
+  ///
+  /// In en, this message translates to:
+  /// **'Support the Development'**
+  String get supportDevelopment;
+
+  /// No description provided for @supportDevelopmentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Looper Player is 100% free and open-source. If you enjoy using it, please consider supporting the creator with a donation. Every contribution helps keep the project active!'**
+  String get supportDevelopmentDesc;
+
+  /// No description provided for @useCustomFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Custom Font'**
+  String get useCustomFont;
+
+  /// No description provided for @useCustomFontDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Jost or other custom fonts. Otherwise, DM Sans is used.'**
+  String get useCustomFontDesc;
+
+  /// No description provided for @selectFontFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Font Family'**
+  String get selectFontFamily;
+
+  /// No description provided for @activeFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Active font: {fontName}'**
+  String activeFont(String fontName);
+
+  /// No description provided for @fontWeightAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Font Weight Adjustment'**
+  String get fontWeightAdjustment;
+
+  /// No description provided for @currentWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Current weight'**
+  String get currentWeight;
+
+  /// No description provided for @useCustomFontLyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Custom Font for Lyrics'**
+  String get useCustomFontLyrics;
+
+  /// No description provided for @useCustomFontLyricsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use custom font and weight for synchronized lyrics view'**
+  String get useCustomFontLyricsDesc;
+
+  /// No description provided for @lyricsFontFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Font Family'**
+  String get lyricsFontFamily;
+
+  /// No description provided for @activeLyricsFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Active lyrics font: {fontName}'**
+  String activeLyricsFont(String fontName);
+
+  /// No description provided for @lyricsFontWeightAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Font Weight Adjustment'**
+  String get lyricsFontWeightAdjustment;
+
+  /// No description provided for @giveStarOnGithub.
+  ///
+  /// In en, this message translates to:
+  /// **'Give Star on GitHub'**
+  String get giveStarOnGithub;
+
+  /// No description provided for @supportProjectLove.
+  ///
+  /// In en, this message translates to:
+  /// **'Support the project and show some love!'**
+  String get supportProjectLove;
+
+  /// No description provided for @sortAlphabeticalAZ.
+  ///
+  /// In en, this message translates to:
+  /// **'Alphabetical (A-Z)'**
+  String get sortAlphabeticalAZ;
+
+  /// No description provided for @sortAlphabeticalZA.
+  ///
+  /// In en, this message translates to:
+  /// **'Alphabetical (Z-A)'**
+  String get sortAlphabeticalZA;
+
+  /// No description provided for @sortRecentlyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Added'**
+  String get sortRecentlyAdded;
+
+  /// No description provided for @sortOldestAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest Added'**
+  String get sortOldestAdded;
+
+  /// No description provided for @sortYearNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Year (Newest)'**
+  String get sortYearNewest;
+
+  /// No description provided for @sortYearOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Year (Oldest)'**
+  String get sortYearOldest;
+
+  /// No description provided for @sortMostSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Songs'**
+  String get sortMostSongs;
+
+  /// No description provided for @sortLeastSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Least Songs'**
+  String get sortLeastSongs;
+
+  /// No description provided for @sortDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get sortDefault;
+
+  /// No description provided for @sortArtistAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist (A-Z)'**
+  String get sortArtistAsc;
+
+  /// No description provided for @sortAlbumAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'Album (A-Z)'**
+  String get sortAlbumAsc;
+
+  /// No description provided for @sortDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get sortDuration;
 }
 
 class _AppLocalizationsDelegate

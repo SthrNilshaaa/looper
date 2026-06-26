@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -6,6 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'premium_section.dart';
 
@@ -41,14 +43,7 @@ class EmptyLibraryView extends ConsumerWidget {
                     shape: BoxShape.circle,
                     color: Color(settings.accentColor).withValues(alpha: 0.06),
                   ),
-                  child: SizedBox(
-                    width: 48,
-                    height: 48,
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(settings.accentColor)),
-                      strokeWidth: 3,
-                    ),
-                  ),
+                  child: const AppLoadingIndicator(size: 96),
                 )
               else
                 Container(
@@ -75,7 +70,7 @@ class EmptyLibraryView extends ConsumerWidget {
                     ? l10n.scanningStorage
                     : title.toUpperCase(),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: AppFonts.jostStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -90,7 +85,7 @@ class EmptyLibraryView extends ConsumerWidget {
                     ? l10n.scanningStorageDesc
                     : l10n.emptyLibraryDesc,
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: AppFonts.jostStyle(
                   fontSize: 13,
                   color: Colors.white.withValues(alpha: 0.4),
                   height: 1.5,
@@ -130,7 +125,7 @@ class EmptyLibraryView extends ConsumerWidget {
                 // Loading indicator auxiliary status
                 Text(
                   l10n.scanningInBackground,
-                  style: TextStyle(
+                  style: AppFonts.jostStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,
                     color: Colors.white.withValues(alpha: 0.3),
@@ -198,7 +193,7 @@ class _EmptyActionButton extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 label,
-                style: TextStyle(
+                style: AppFonts.jostStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
                   color: isPrimary ? Colors.black : Colors.white,

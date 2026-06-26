@@ -8,6 +8,7 @@ import 'package:looper_player/ui/screens/android/player/android_expanded_player.
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
 
@@ -231,7 +232,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                                 tag: 'song_title',
                                 child: ScrollingText(
                                   text: song.title,
-                                  style: TextStyle(
+                                  style: AppFonts.jostStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 18.ts,
@@ -244,7 +245,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                                 tag: 'song_artist',
                                 child: ScrollingText(
                                   text: song.artist ?? 'Unknown Artist',
-                                  style: TextStyle(
+                                  style: AppFonts.jostStyle(
                                     color: Colors.white.withValues(alpha: 0.5),
                                     fontSize: 16.ts,
                                     letterSpacing: 0.2,

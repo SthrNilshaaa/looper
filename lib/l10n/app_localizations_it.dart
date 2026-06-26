@@ -648,6 +648,13 @@ class AppLocalizationsIt extends AppLocalizations {
   String get resumeOnStartTitle => 'Riprendi all\'avvio';
 
   @override
+  String get persistQueueTitle => 'Mantieni ultima coda';
+
+  @override
+  String get persistQueueDesc =>
+      'Salva l\'ultimo brano e la coda al riavvio dell\'applicazione';
+
+  @override
   String get right => 'Destra';
 
   @override
@@ -941,4 +948,100 @@ class AppLocalizationsIt extends AppLocalizations {
 
   @override
   String get year => 'Anno';
+
+  @override
+  String get supportUs => 'Supportaci';
+
+  @override
+  String get supportUsDesc =>
+      'Aiuta a mantener Looper Player attivo e open source';
+
+  @override
+  String get supportDevelopment => 'Supporta lo sviluppo';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player è gratuito al 100% e open source. Se ti piace usarlo, considera di supportare il creatore con una donazione. Ogni contributo aiuta a mantenere il progetto attivo!';
+
+  @override
+  String get useCustomFont => 'Usa carattere personalizzato';
+
+  @override
+  String get useCustomFontDesc =>
+      'Usa carattere e spessore personalizzati per la vista dei testi sincronizzati';
+
+  @override
+  String get selectFontFamily => 'Seleziona famiglia caratteri';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Carattere attivo: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Regolazione spessore carattere';
+
+  @override
+  String get currentWeight => 'Spessore attuale';
+
+  @override
+  String get useCustomFontLyrics => 'Carattere personalizzato per il testo';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Usa carattere e spessore personalizzati per la vista dei testi sincronizzati';
+
+  @override
+  String get lyricsFontFamily => 'Famiglia caratteri testo';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Carattere testo attivo: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'Regolazione spessore testo';
+
+  @override
+  String get giveStarOnGithub => 'Lascia una stella su GitHub';
+
+  @override
+  String get supportProjectLove =>
+      'Supporta il progetto e mostra il tuo apprezzamento!';
+
+  @override
+  String get sortAlphabeticalAZ => 'Alfabetico (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Alfabetico (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'Aggiunto di recente';
+
+  @override
+  String get sortOldestAdded => 'Meno recente';
+
+  @override
+  String get sortYearNewest => 'Anno (Più recente)';
+
+  @override
+  String get sortYearOldest => 'Anno (Meno recente)';
+
+  @override
+  String get sortMostSongs => 'Più canzoni';
+
+  @override
+  String get sortLeastSongs => 'Meno canzoni';
+
+  @override
+  String get sortDefault => 'Predefinito';
+
+  @override
+  String get sortArtistAsc => 'Artista (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'Album (A-Z)';
+
+  @override
+  String get sortDuration => 'Durata';
 }

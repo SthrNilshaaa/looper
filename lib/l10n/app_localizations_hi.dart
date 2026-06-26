@@ -644,6 +644,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get resumeOnStartTitle => 'शुरू होने पर फिर से शुरू करें';
 
   @override
+  String get persistQueueTitle => 'आखिरी कतार सहेजें';
+
+  @override
+  String get persistQueueDesc =>
+      'ऐप रीस्टार्ट होने पर आखिरी बजाया गया गाना और कतार सहेजें';
+
+  @override
   String get right => 'दायें';
 
   @override
@@ -934,4 +941,100 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get year => 'वर्ष';
+
+  @override
+  String get supportUs => 'हमारा समर्थन करें';
+
+  @override
+  String get supportUsDesc =>
+      'Looper Player को जीवित और ओपन-सोर्स रखने में मदद करें';
+
+  @override
+  String get supportDevelopment => 'विकास का समर्थन करें';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player 100% मुफ़्त और ओपन-सोर्स है। यदि आप इसका आनंद लेते हैं, तो कृपया दान देकर निर्माता का समर्थन करने पर विचार करें। हर योगदान परियोजना को सक्रिय रखने में मदद करता है!';
+
+  @override
+  String get useCustomFont => 'कस्टम फ़ॉन्ट का उपयोग करें';
+
+  @override
+  String get useCustomFontDesc =>
+      'Jost या अन्य कस्टम फ़ॉन्ट्स का उपयोग करें। अन्यथा, DM Sans का उपयोग किया जाएगा।';
+
+  @override
+  String get selectFontFamily => 'फ़ॉन्ट परिवार चुनें';
+
+  @override
+  String activeFont(String fontName) {
+    return 'सक्रिय फ़ॉन्ट: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'फ़ॉन्ट मोटाई समायोजन';
+
+  @override
+  String get currentWeight => 'वर्तमान मोटाई';
+
+  @override
+  String get useCustomFontLyrics => 'लिरिक्स के लिए कस्टम फ़ॉन्ट का उपयोग करें';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'समानक्रमिक लिरिक्स दृश्य के लिए कस्टम फ़ॉन्ट और मोटाई का उपयोग करें';
+
+  @override
+  String get lyricsFontFamily => 'बोल फ़ॉन्ट परिवार';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'सक्रिय बोल फ़ॉन्ट: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'बोल फ़ॉन्ट मोटाई समायोजन';
+
+  @override
+  String get giveStarOnGithub => 'GitHub पर स्टार दें';
+
+  @override
+  String get supportProjectLove =>
+      'परियोजना का समर्थन करें और कुछ प्यार दिखाएं!';
+
+  @override
+  String get sortAlphabeticalAZ => 'वर्णमाला (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'वर्णमाला (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'हाल ही में जोड़ा गया';
+
+  @override
+  String get sortOldestAdded => 'सबसे पुराना जोड़ा गया';
+
+  @override
+  String get sortYearNewest => 'वर्ष (नया)';
+
+  @override
+  String get sortYearOldest => 'वर्ष (पुराना)';
+
+  @override
+  String get sortMostSongs => 'सबसे अधिक गाने';
+
+  @override
+  String get sortLeastSongs => 'सबसे कम गाने';
+
+  @override
+  String get sortDefault => 'डिफ़ॉल्ट';
+
+  @override
+  String get sortArtistAsc => 'कलाकार (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'एल्बम (A-Z)';
+
+  @override
+  String get sortDuration => 'अवधि';
 }

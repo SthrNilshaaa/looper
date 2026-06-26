@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/ui_utils.dart';
 
@@ -13,13 +14,13 @@ class LooperVersionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: const Icon(LucideIcons.info, color: Colors.white70),
-      title: const Text(
+      title: Text(
         'Looper Player',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style: AppFonts.jostStyle(color: Colors.white, fontWeight: FontWeight.w500),
       ),
-      subtitle: const Text(
+      subtitle: Text(
         'Version 2.0.00',
-        style: TextStyle(color: Colors.white54, fontSize: 12),
+        style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
       ),
       onTap: () async {
         final Uri uri = Uri.parse('https://github.com/SthrNilshaaa/looper');
@@ -43,14 +44,14 @@ class LyricsProviderTile extends StatelessWidget {
       leading: const Icon(LucideIcons.music, color: Colors.white70),
       title: Text(
         l10n.lyricsProvider,
-        style: const TextStyle(
+        style: AppFonts.jostStyle(
           color: Colors.white,
           fontWeight: FontWeight.w500,
         ),
       ),
-      subtitle: const Text(
+      subtitle: Text(
         'lrclib.net',
-        style: TextStyle(color: Colors.white54, fontSize: 12),
+        style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
       ),
       trailing: const Icon(
         LucideIcons.externalLink,
@@ -74,6 +75,7 @@ class GitHubStarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(8),
@@ -87,17 +89,17 @@ class GitHubStarTile extends StatelessWidget {
           size: 22,
         ),
       ),
-      title: const Text(
-        'Give Star on Github',
-        style: TextStyle(
+      title: Text(
+        l10n.giveStarOnGithub,
+        style: AppFonts.jostStyle(
           color: Colors.white,
           fontSize: 15,
           fontWeight: FontWeight.w600,
         ),
       ),
       subtitle: Text(
-        'Support the project and show some love!',
-        style: TextStyle(
+        l10n.supportProjectLove,
+        style: AppFonts.jostStyle(
           color: Colors.white.withValues(alpha: 0.4),
           fontSize: 12,
         ),
@@ -145,7 +147,7 @@ class InfoSubTile extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: AppFonts.jostStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -154,7 +156,7 @@ class InfoSubTile extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 description,
-                style: TextStyle(
+                style: AppFonts.jostStyle(
                   fontSize: 12,
                   height: 1.5,
                   color: Colors.white.withValues(alpha: 0.5),
@@ -202,7 +204,7 @@ class AboutMaintainerRow extends StatelessWidget {
               children: [
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: AppFonts.jostStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -211,7 +213,7 @@ class AboutMaintainerRow extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   role,
-                  style: TextStyle(
+                  style: AppFonts.jostStyle(
                     color: Colors.white.withValues(alpha: 0.4),
                     fontSize: 13,
                   ),

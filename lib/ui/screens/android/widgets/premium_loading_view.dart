@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lottie/lottie.dart';
@@ -97,7 +98,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
                 Text(
                   widget.message ?? l10n.loadingMusicLibrary,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: AppFonts.jostStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -113,7 +114,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
                     loadingMessages[_loadingPhase],
                     key: ValueKey<int>(_loadingPhase),
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: AppFonts.jostStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: Colors.white.withValues(alpha: 0.35),

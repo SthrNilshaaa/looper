@@ -11,6 +11,8 @@ import 'package:ffmpeg_kit_flutter_new_full/return_code.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
+import 'package:looper_player/core/app_fonts.dart';
 
 class AudioAnalysisData {
   static const cacheVersion = 4;
@@ -799,15 +801,11 @@ class _AudioAnalysisCardState extends State<AudioAnalysisCard> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2.5),
-                ),
+                const AppLoadingIndicator(size: 48),
                 const SizedBox(height: 12),
                 Text(
                   isRescan ? "Re-analyzing audio stream..." : "Analyzing audio stream...",
-                  style: TextStyle(color: Colors.white70, fontSize: 13),
+                  style: AppFonts.jostStyle(color: Colors.white70, fontSize: 13),
                 ),
               ],
             ),
@@ -829,7 +827,7 @@ class _AudioAnalysisCardState extends State<AudioAnalysisCard> {
               Expanded(
                 child: Text(
                   _error!,
-                  style: TextStyle(color: cs.error, fontSize: 13),
+                  style: AppFonts.jostStyle(color: cs.error, fontSize: 13),
                 ),
               ),
               IconButton(
@@ -862,9 +860,9 @@ class _AudioAnalysisCardState extends State<AudioAnalysisCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         "Audio Quality Analysis",
-                        style: TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                           fontSize: 15,
@@ -873,7 +871,7 @@ class _AudioAnalysisCardState extends State<AudioAnalysisCard> {
                       const SizedBox(height: 2),
                       Text(
                         "Perform deep spectral and audio format analysis",
-                        style: TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Colors.white.withValues(alpha: 0.5),
                           fontSize: 12,
                         ),
@@ -1185,10 +1183,10 @@ class _AudioInfoCard extends StatelessWidget {
               children: [
                 Icon(Icons.analytics_outlined, color: cs.primary, size: 20),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: Text(
                     "Audio Stream Details",
-                    style: TextStyle(
+                    style: AppFonts.jostStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -1341,9 +1339,9 @@ class _AudioInfoCard extends StatelessWidget {
               const SizedBox(height: 8),
               Divider(color: Colors.white.withValues(alpha: 0.08)),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 "Per-Channel Metrics",
-                style: TextStyle(
+                style: AppFonts.jostStyle(
                   color: Colors.white60,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1458,13 +1456,13 @@ class _MetricChip extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '$label: ',
-            style: const TextStyle(color: Colors.white54, fontSize: 12),
+            style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
           ),
           Flexible(
             child: Text(
               value,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -1510,12 +1508,12 @@ class _SpectrogramView extends StatelessWidget {
               children: [
                 Text(
                   'Sample Rate: $sampleRate Hz',
-                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  style: AppFonts.jostStyle(color: Colors.white54, fontSize: 11),
                 ),
                 const Spacer(),
                 Text(
                   'Nyquist: ${(maxFreq / 1000).toStringAsFixed(1)} kHz',
-                  style: const TextStyle(color: Colors.white54, fontSize: 11),
+                  style: AppFonts.jostStyle(color: Colors.white54, fontSize: 11),
                 ),
               ],
             ),

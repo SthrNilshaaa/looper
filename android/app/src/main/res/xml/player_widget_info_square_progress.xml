@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="168dp"
+    android:minHeight="172dp"
+    android:minResizeWidth="100dp"
+    android:minResizeHeight="100dp"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/player_widget_square_progress"
+    android:previewLayout="@layout/player_widget_square_progress"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />

@@ -609,6 +609,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get resumeOnStartTitle => '起動時に再開';
 
   @override
+  String get persistQueueTitle => '最後のキューを保持';
+
+  @override
+  String get persistQueueDesc => 'アプリ再起動時に最後に再生した曲とキューを保存する';
+
+  @override
   String get right => '右寄せ';
 
   @override
@@ -883,4 +889,97 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get year => '年';
+
+  @override
+  String get supportUs => '支援する';
+
+  @override
+  String get supportUsDesc => 'Looper Player の継続とオープンソース活動を支援';
+
+  @override
+  String get supportDevelopment => '開発を支援';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player は 100% 無料でオープンソースです。気に入っていただけましたら、寄付による制作者の支援をご検討ください。すべての支援がプロジェクトの維持に役立ちます！';
+
+  @override
+  String get useCustomFont => 'カスタムフォントを使用';
+
+  @override
+  String get useCustomFontDesc =>
+      'Jost または他のカスタムフォントを使用します。そうでない場合は DM Sans が使用されます。';
+
+  @override
+  String get selectFontFamily => 'フォントファミリーの選択';
+
+  @override
+  String activeFont(String fontName) {
+    return '有効なフォント: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'フォントの太さ調整';
+
+  @override
+  String get currentWeight => '現在の太さ';
+
+  @override
+  String get useCustomFontLyrics => '歌詞にカスタムフォントを使用';
+
+  @override
+  String get useCustomFontLyricsDesc => '同期歌詞ビューでカスタムフォントと太さを使用します';
+
+  @override
+  String get lyricsFontFamily => '歌詞フォントファミリー';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return '有効な歌詞フォント: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => '歌詞フォントの太さ調整';
+
+  @override
+  String get giveStarOnGithub => 'GitHub でスターを付ける';
+
+  @override
+  String get supportProjectLove => 'プロジェクトをサポートして、愛を示しましょう！';
+
+  @override
+  String get sortAlphabeticalAZ => 'アルファベット順 (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'アルファベット順 (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => '追加日 (新しい順)';
+
+  @override
+  String get sortOldestAdded => '追加日 (古い順)';
+
+  @override
+  String get sortYearNewest => 'リリース年 (新しい順)';
+
+  @override
+  String get sortYearOldest => 'リリース年 (古い順)';
+
+  @override
+  String get sortMostSongs => '曲数が最も多い';
+
+  @override
+  String get sortLeastSongs => '曲数が最も少ない';
+
+  @override
+  String get sortDefault => 'デフォルト';
+
+  @override
+  String get sortArtistAsc => 'アーティスト (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'アルバム (A-Z)';
+
+  @override
+  String get sortDuration => '曲の長さ';
 }

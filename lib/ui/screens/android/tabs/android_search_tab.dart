@@ -3,6 +3,7 @@ import 'package:looper_player/features/search/presentation/search_view.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/widgets/global_search_bar.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/core/app_fonts.dart';
 
 class AndroidSearchTab extends StatelessWidget {
   const AndroidSearchTab({super.key});
@@ -18,7 +19,7 @@ class AndroidSearchTab extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Text(
               l10n.search,
-              style: const TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -29,8 +30,11 @@ class AndroidSearchTab extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
             child: GlobalSearchBar(autofocus: true),
           ),
-          const Expanded(
-            child: SearchView(),
+           Expanded(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal:4.0),
+              child: SearchView(),
+            ),
           ),
         ],
       ),
