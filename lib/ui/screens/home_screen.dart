@@ -75,7 +75,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       // permissions/scanning via interaction!
       final initialSongsEmpty = ref.read(libraryProvider).songs.isEmpty;
       if (initialSongsEmpty) {
-        print('ℹ️ Welcome screen mode: skipping auto-scan at startup to prevent premature permission popups/scanning');
+
       } else {
         ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
       }

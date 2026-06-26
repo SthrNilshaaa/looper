@@ -26,7 +26,7 @@ class UpdateService {
         }
       }
     } catch (e) {
-      debugPrint('Error checking for updates: $e');
+
     }
   }
 
@@ -100,7 +100,7 @@ class UpdateService {
             try {
               await launchUrl(uri, mode: LaunchMode.externalApplication);
             } catch (e) {
-              debugPrint('Error launching URL: $e');
+
             }
           },
         ),

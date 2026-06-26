@@ -27,7 +27,7 @@ class LooperVersionTile extends StatelessWidget {
         try {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } catch (e) {
-          debugPrint('Error launching URL: $e');
+
         }
       },
     );
@@ -63,7 +63,7 @@ class LyricsProviderTile extends StatelessWidget {
         try {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } catch (e) {
-          debugPrint('Error launching URL: $e');
+
         }
       },
     );
@@ -115,7 +115,7 @@ class GitHubStarTile extends StatelessWidget {
         try {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } catch (e) {
-          debugPrint('Error launching URL: $e');
+
         }
       },
     );
@@ -228,7 +228,7 @@ class AboutMaintainerRow extends StatelessWidget {
               try {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
               } catch (e) {
-                debugPrint('Error launching URL: $e');
+
               }
             },
             child: Container(
@@ -250,7 +250,7 @@ class AboutMaintainerRow extends StatelessWidget {
               try {
                 await launchUrl(uri, mode: LaunchMode.externalApplication);
               } catch (e) {
-                debugPrint('Error launching URL: $e');
+
               }
             },
             child: SizedBox(

@@ -22,28 +22,27 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   List<double> _createDefaultGains() {
     final list = List<double>.filled(48, 0.0);
     list[20] = -50.0; // Silence remove threshold dB
-    list[22] = 0.2;   // Crossfeed strength
+    list[22] = 0.2; // Crossfeed strength
     list[24] = -20.0; // Compressor threshold dB
-    list[25] = 2.0;   // Compressor ratio
-    list[26] = 20.0;  // Compressor attack ms
+    list[25] = 2.0; // Compressor ratio
+    list[26] = 20.0; // Compressor attack ms
     list[27] = 250.0; // Compressor release ms
     list[29] = -24.0; // Loudnorm target
-    list[31] = 2.5;   // Stereo width factor
-    list[34] = 1.0;   // Pitch shift
-    list[35] = 1.0;   // Tempo shift
-    list[36] = 0.0;   // ReplayGain mode
-    list[37] = 0.0;   // ReplayGain preamp
+    list[31] = 2.5; // Stereo width factor
+    list[34] = 1.0; // Pitch shift
+    list[35] = 1.0; // Tempo shift
+    list[36] = 0.0; // ReplayGain mode
+    list[37] = 0.0; // ReplayGain preamp
     list[39] = 150.0; // Speech highpass
-    list[40] = 4000.0;// Speech lowpass
-    list[44] = 1.0;   // Tone shelving enabled
-    list[45] = 1.0;   // Pitch/tempo enabled
+    list[40] = 4000.0; // Speech lowpass
+    list[44] = 1.0; // Tone shelving enabled
+    list[45] = 1.0; // Pitch/tempo enabled
     return list;
   }
 
   Future<void> _loadSettings() async {
     final settings = await DbService.isar.appSettings.get(0);
     if (settings != null) {
-
       // Migrate old settings record safely
       bool needsSave = false;
       if (settings.bgBrightness == 0.0) {
@@ -57,14 +56,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       // Since uninitialized booleans in old DB records default to false:
       // if keepBackgroundGradient is false, that is fine.
       // showHomeArtists defaults to true, but showHomeAlbums and showHomeGenres should default to false (off)!
-      if (!settings.showHomeArtists && !settings.showHomeAlbums && !settings.showHomeGenres) {
+      if (!settings.showHomeArtists &&
+          !settings.showHomeAlbums &&
+          !settings.showHomeGenres) {
         settings.showHomeArtists = true;
         settings.showHomeAlbums = false;
         settings.showHomeGenres = false;
         needsSave = true;
       }
       if (settings.homeSectionOrder.isEmpty) {
-        settings.homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres'];
+        settings.homeSectionOrder = [
+          'quick_picks',
+          'songs',
+          'albums',
+          'artists',
+          'genres',
+        ];
         needsSave = true;
       }
       if (settings.homeDarkness == 0.0 || settings.homeDarkness.isNaN) {
@@ -119,7 +126,13 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         ..showHomeArtists = true
         ..showHomeAlbums = false
         ..showHomeGenres = false
-        ..homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres']
+        ..homeSectionOrder = [
+          'quick_picks',
+          'songs',
+          'albums',
+          'artists',
+          'genres',
+        ]
         ..homeDarkness = 0.72
         ..songsDarkness = 0.72
         ..libraryDarkness = 0.72
@@ -133,6 +146,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         ..blurredArtworkForLyrics = true
         ..showPerformanceOptimizer = false
         ..equalizerEnabled = false
+        ..enableAudioCache = true
+        ..audioCacheSizeMB = 200
+        ..audioCacheSecs = 120
+        ..audioBackCacheSizeMB = 100
         ..persistQueue = true
         ..globalEqualizerGains = _createDefaultGains();
       await DbService.isar.writeTxn(() async {
@@ -150,9 +167,15 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   void _updateActiveFont([AppSettings? customState]) {
     final activeState = customState ?? state;
-    AppFonts.activeFontFamily = activeState.useNewFont ? (activeState.customFontFamily ?? 'Jost') : 'DM Sans';
-    AppFonts.appFontWeightDelta = activeState.useNewFont ? activeState.customFontWeightDelta : 0;
-    AppFonts.lyricsFontWeightDelta = activeState.useNewFontLyrics ? activeState.customFontWeightLyricsDelta : 0;
+    AppFonts.activeFontFamily = activeState.useNewFont
+        ? (activeState.customFontFamily ?? 'Jost')
+        : 'DM Sans';
+    AppFonts.appFontWeightDelta = activeState.useNewFont
+        ? activeState.customFontWeightDelta
+        : 0;
+    AppFonts.lyricsFontWeightDelta = activeState.useNewFontLyrics
+        ? activeState.customFontWeightLyricsDelta
+        : 0;
   }
 
   Future<void> updateLibraryFolders(List<String> folders) async {
@@ -225,7 +248,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..showHomeArtists = s.showHomeArtists
       ..showHomeAlbums = s.showHomeAlbums
       ..showHomeGenres = s.showHomeGenres
-      ..homeSectionOrder = List.from(s.homeSectionOrder.isEmpty ? ['quick_picks', 'songs', 'albums', 'artists', 'genres'] : s.homeSectionOrder)
+      ..homeSectionOrder = List.from(
+        s.homeSectionOrder.isEmpty
+            ? ['quick_picks', 'songs', 'albums', 'artists', 'genres']
+            : s.homeSectionOrder,
+      )
       ..enableSlideGesture = s.enableSlideGesture
       ..stopOnTaskRemoved = s.stopOnTaskRemoved
       ..persistQueue = s.persistQueue
@@ -261,7 +288,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..customFontWeightLyricsDelta = s.customFontWeightLyricsDelta
       ..activeLyricsFontWeightDelta = s.activeLyricsFontWeightDelta
       ..equalizerEnabled = s.equalizerEnabled
-      ..globalEqualizerGains = List.from(s.globalEqualizerGains.isEmpty ? _createDefaultGains() : s.globalEqualizerGains)
+      ..globalEqualizerGains = List.from(
+        s.globalEqualizerGains.isEmpty
+            ? _createDefaultGains()
+            : s.globalEqualizerGains,
+      )
       ..enableAudioCache = s.enableAudioCache
       ..audioCacheSizeMB = s.audioCacheSizeMB
       ..audioCacheSecs = s.audioCacheSecs
@@ -517,7 +548,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     if (!enabled) {
       // If dynamic theming is disabled, ensure accent color resets to default Green (0xFF41C25E)
       // if the current color is not one of the manual selection options.
-      const allowedColors = [0xFF41C25E, 0xFFF7EAA6, 0xFF448AFF]; // Green, Yellow, Blue Accent
+      const allowedColors = [
+        0xFF41C25E,
+        0xFFF7EAA6,
+        0xFF448AFF,
+      ]; // Green, Yellow, Blue Accent
       if (!allowedColors.contains(newState.accentColor)) {
         newState.accentColor = 0xFF41C25E;
       }
@@ -566,7 +601,11 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = newState;
   }
 
-  Future<void> updateLastQueueState(List<int> queueIds, int index, int? lastSongId) async {
+  Future<void> updateLastQueueState(
+    List<int> queueIds,
+    int index,
+    int? lastSongId,
+  ) async {
     final newState = _clone(state)
       ..lastQueueSongIds = queueIds
       ..lastQueueIndex = index

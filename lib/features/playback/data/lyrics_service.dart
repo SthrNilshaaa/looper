@@ -85,7 +85,7 @@ class LyricsService {
       ];
 
       for (final q in searchQueries) {
-        debugPrint('🔍 LyricsService: Searching for "$q"...');
+
         url = Uri.parse('$baseUrl/search').replace(queryParameters: {'q': q});
         response = await http.get(url);
 
@@ -97,7 +97,7 @@ class LyricsService {
               for (var result in results) {
                 final resultDuration = (result['duration'] as num?)?.toInt() ?? 0;
                 if ((resultDuration - durationSeconds).abs() < 10) {
-                  debugPrint('✅ Found duration-matched result for "$q"');
+
                   return LyricsResponse.fromJson(result);
                 }
               }
@@ -107,13 +107,13 @@ class LyricsService {
               (r) => r['syncedLyrics'] != null && r['syncedLyrics'].toString().isNotEmpty,
               orElse: () => results.first,
             );
-            debugPrint('✅ Found search result for "$q"');
+
             return LyricsResponse.fromJson(syncedResult);
           }
         }
       }
     } catch (e) {
-      debugPrint('❌ Error fetching lyrics: $e');
+
     }
     return null;
   }

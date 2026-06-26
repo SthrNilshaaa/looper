@@ -23,35 +23,61 @@ class EqualizerState {
     this.customFilterString = '',
   });
 
-  double get preampGain => currentSongGains.length > 18 ? currentSongGains[18] : 0.0;
-  bool get silenceTrimEnabled => currentSongGains.length > 19 ? currentSongGains[19] == 1.0 : false;
-  double get silenceTrimThreshold => currentSongGains.length > 20 ? currentSongGains[20] : -50.0;
-  bool get crossfeedEnabled => currentSongGains.length > 21 ? currentSongGains[21] == 1.0 : false;
-  double get crossfeedStrength => currentSongGains.length > 22 ? currentSongGains[22] : 0.2;
-  bool get compressorEnabled => currentSongGains.length > 23 ? currentSongGains[23] == 1.0 : false;
-  double get compressorThreshold => currentSongGains.length > 24 ? currentSongGains[24] : -20.0;
-  double get compressorRatio => currentSongGains.length > 25 ? currentSongGains[25] : 2.0;
-  double get compressorAttack => currentSongGains.length > 26 ? currentSongGains[26] : 20.0;
-  double get compressorRelease => currentSongGains.length > 27 ? currentSongGains[27] : 250.0;
-  bool get loudnormEnabled => currentSongGains.length > 28 ? currentSongGains[28] == 1.0 : false;
-  double get loudnormTarget => currentSongGains.length > 29 ? currentSongGains[29] : -24.0;
-  bool get stereoWidthEnabled => currentSongGains.length > 30 ? currentSongGains[30] == 1.0 : false;
-  double get stereoWidthFactor => currentSongGains.length > 31 ? currentSongGains[31] : 2.5;
-  double get bassGain => currentSongGains.length > 32 ? currentSongGains[32] : 0.0;
-  double get trebleGain => currentSongGains.length > 33 ? currentSongGains[33] : 0.0;
+  double get preampGain =>
+      currentSongGains.length > 18 ? currentSongGains[18] : 0.0;
+  bool get silenceTrimEnabled =>
+      currentSongGains.length > 19 ? currentSongGains[19] == 1.0 : false;
+  double get silenceTrimThreshold =>
+      currentSongGains.length > 20 ? currentSongGains[20] : -50.0;
+  bool get crossfeedEnabled =>
+      currentSongGains.length > 21 ? currentSongGains[21] == 1.0 : false;
+  double get crossfeedStrength =>
+      currentSongGains.length > 22 ? currentSongGains[22] : 0.2;
+  bool get compressorEnabled =>
+      currentSongGains.length > 23 ? currentSongGains[23] == 1.0 : false;
+  double get compressorThreshold =>
+      currentSongGains.length > 24 ? currentSongGains[24] : -20.0;
+  double get compressorRatio =>
+      currentSongGains.length > 25 ? currentSongGains[25] : 2.0;
+  double get compressorAttack =>
+      currentSongGains.length > 26 ? currentSongGains[26] : 20.0;
+  double get compressorRelease =>
+      currentSongGains.length > 27 ? currentSongGains[27] : 250.0;
+  bool get loudnormEnabled =>
+      currentSongGains.length > 28 ? currentSongGains[28] == 1.0 : false;
+  double get loudnormTarget =>
+      currentSongGains.length > 29 ? currentSongGains[29] : -24.0;
+  bool get stereoWidthEnabled =>
+      currentSongGains.length > 30 ? currentSongGains[30] == 1.0 : false;
+  double get stereoWidthFactor =>
+      currentSongGains.length > 31 ? currentSongGains[31] : 2.5;
+  double get bassGain =>
+      currentSongGains.length > 32 ? currentSongGains[32] : 0.0;
+  double get trebleGain =>
+      currentSongGains.length > 33 ? currentSongGains[33] : 0.0;
   double get pitch => currentSongGains.length > 34 ? currentSongGains[34] : 1.0;
   double get tempo => currentSongGains.length > 35 ? currentSongGains[35] : 1.0;
-  int get replayGainMode => currentSongGains.length > 36 ? currentSongGains[36].toInt() : 0;
-  double get replayGainPreamp => currentSongGains.length > 37 ? currentSongGains[37] : 0.0;
-  bool get speechFilterEnabled => currentSongGains.length > 38 ? currentSongGains[38] == 1.0 : false;
-  double get speechHighpass => currentSongGains.length > 39 ? currentSongGains[39] : 150.0;
-  double get speechLowpass => currentSongGains.length > 40 ? currentSongGains[40] : 4000.0;
+  int get replayGainMode =>
+      currentSongGains.length > 36 ? currentSongGains[36].toInt() : 0;
+  double get replayGainPreamp =>
+      currentSongGains.length > 37 ? currentSongGains[37] : 0.0;
+  bool get speechFilterEnabled =>
+      currentSongGains.length > 38 ? currentSongGains[38] == 1.0 : false;
+  double get speechHighpass =>
+      currentSongGains.length > 39 ? currentSongGains[39] : 150.0;
+  double get speechLowpass =>
+      currentSongGains.length > 40 ? currentSongGains[40] : 4000.0;
 
-  bool get lofiEnabled => currentSongGains.length > 41 ? currentSongGains[41] == 1.0 : false;
-  bool get reverbEnabled => currentSongGains.length > 42 ? currentSongGains[42] == 1.0 : false;
-  bool get surroundEnabled => currentSongGains.length > 43 ? currentSongGains[43] == 1.0 : false;
-  bool get shelvingEnabled => currentSongGains.length > 44 ? currentSongGains[44] == 1.0 : true;
-  bool get pitchTempoEnabled => currentSongGains.length > 45 ? currentSongGains[45] == 1.0 : true;
+  bool get lofiEnabled =>
+      currentSongGains.length > 41 ? currentSongGains[41] == 1.0 : false;
+  bool get reverbEnabled =>
+      currentSongGains.length > 42 ? currentSongGains[42] == 1.0 : false;
+  bool get surroundEnabled =>
+      currentSongGains.length > 43 ? currentSongGains[43] == 1.0 : false;
+  bool get shelvingEnabled =>
+      currentSongGains.length > 44 ? currentSongGains[44] == 1.0 : true;
+  bool get pitchTempoEnabled =>
+      currentSongGains.length > 45 ? currentSongGains[45] == 1.0 : true;
 
   EqualizerState copyWith({
     bool? enabled,
@@ -78,12 +104,14 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
   Song? _pendingSaveSong;
 
   EqualizerNotifier(this.ref)
-      : super(EqualizerState(
+    : super(
+        EqualizerState(
           enabled: false,
           globalGains: List.filled(48, 0.0),
           currentSongGains: List.filled(48, 0.0),
           currentSongHasCustom: false,
-        )) {
+        ),
+      ) {
     _init();
   }
 
@@ -169,50 +197,20 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
   }
 
   Future<void> toggleEqualizer(bool enabled) async {
-    if (!enabled) {
-      final defaultGains = _getDefaultGains();
-      final currentSong = ref.read(playbackProvider).currentSong;
-      
-      if (currentSong != null) {
-        ref.read(playbackProvider.notifier).updateSongEqualizer(
-          songId: currentSong.id,
-          hasCustom: false,
-          gains: null,
-        );
-        await DbService.isar.writeTxn(() async {
-          final dbSong = await DbService.isar.songs.get(currentSong.id);
-          if (dbSong != null) {
-            dbSong.hasCustomEqualizer = false;
-            dbSong.equalizerGains = null;
-            await DbService.isar.songs.put(dbSong);
-          }
-        });
-      }
-
-      state = state.copyWith(
-        enabled: false,
-        currentSongGains: defaultGains,
-        globalGains: defaultGains,
-        currentSongHasCustom: false,
-      );
-
-      await ref.read(settingsProvider.notifier).updateEqualizerEnabled(false);
-      await ref.read(settingsProvider.notifier).updateGlobalEqualizerGains(defaultGains);
-      applyEqualizerInstant();
-    } else {
-      state = state.copyWith(enabled: true);
-      await ref.read(settingsProvider.notifier).updateEqualizerEnabled(true);
-      applyEqualizerInstant();
-    }
+    state = state.copyWith(enabled: enabled);
+    await ref.read(settingsProvider.notifier).updateEqualizerEnabled(enabled);
+    applyEqualizerInstant();
   }
 
   void applyEqualizerInstant() {
     _debounceTimer?.cancel();
-    ref.read(audioServiceProvider).setEqualizerGains(
-      state.currentSongGains, 
-      state.enabled,
-      customFilter: state.customFilterString,
-    );
+    ref
+        .read(audioServiceProvider)
+        .setEqualizerGains(
+          state.currentSongGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
   }
 
   Future<void> setCustomFilterString(String filter) async {
@@ -220,9 +218,12 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     applyEqualizerInstant();
   }
 
-  Future<void> _setMultipleBands(Map<int, double> bandValues, {bool applyInstant = false}) async {
+  Future<void> _setMultipleBands(
+    Map<int, double> bandValues, {
+    bool applyInstant = false,
+  }) async {
     final newSongGains = List<double>.from(state.currentSongGains);
-    
+
     double clampBand(int bandIndex, double val) {
       if (bandIndex < 18) {
         return val.clamp(-20.0, 20.0);
@@ -276,7 +277,11 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         applyEqualizerInstant();
       } else {
         final audioSvc = ref.read(audioServiceProvider);
-        audioSvc.setEqualizerGains(newSongGains, state.enabled, customFilter: state.customFilterString);
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
       }
 
       _persistGainsDebounced(songGains: newSongGains, globalGains: null);
@@ -296,7 +301,11 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         applyEqualizerInstant();
       } else {
         final audioSvc = ref.read(audioServiceProvider);
-        audioSvc.setEqualizerGains(newGlobalGains, state.enabled, customFilter: state.customFilterString);
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
       }
 
       _persistGainsDebounced(songGains: null, globalGains: newGlobalGains);
@@ -311,7 +320,9 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     }
     await _setMultipleBands(gains, applyInstant: true);
   }
-  Future<void> setSilenceTrimThreshold(double db) async => setBandGain(20, db, applyInstant: false);
+
+  Future<void> setSilenceTrimThreshold(double db) async =>
+      setBandGain(20, db, applyInstant: false);
 
   Future<void> setCrossfeedEnabled(bool enabled) async {
     final gains = {21: enabled ? 1.0 : 0.0};
@@ -320,7 +331,9 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     }
     await _setMultipleBands(gains, applyInstant: true);
   }
-  Future<void> setCrossfeedStrength(double strength) async => setBandGain(22, strength, applyInstant: false);
+
+  Future<void> setCrossfeedStrength(double strength) async =>
+      setBandGain(22, strength, applyInstant: false);
 
   Future<void> setCompressorEnabled(bool enabled) async {
     final gains = {23: enabled ? 1.0 : 0.0};
@@ -332,10 +345,15 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     }
     await _setMultipleBands(gains, applyInstant: true);
   }
-  Future<void> setCompressorThreshold(double db) async => setBandGain(24, db, applyInstant: false);
-  Future<void> setCompressorRatio(double ratio) async => setBandGain(25, ratio, applyInstant: false);
-  Future<void> setCompressorAttack(double attack) async => setBandGain(26, attack, applyInstant: false);
-  Future<void> setCompressorRelease(double release) async => setBandGain(27, release, applyInstant: false);
+
+  Future<void> setCompressorThreshold(double db) async =>
+      setBandGain(24, db, applyInstant: false);
+  Future<void> setCompressorRatio(double ratio) async =>
+      setBandGain(25, ratio, applyInstant: false);
+  Future<void> setCompressorAttack(double attack) async =>
+      setBandGain(26, attack, applyInstant: false);
+  Future<void> setCompressorRelease(double release) async =>
+      setBandGain(27, release, applyInstant: false);
 
   Future<void> setLoudnormEnabled(bool enabled) async {
     final gains = {28: enabled ? 1.0 : 0.0};
@@ -344,7 +362,9 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     }
     await _setMultipleBands(gains, applyInstant: true);
   }
-  Future<void> setLoudnormTarget(double target) async => setBandGain(29, target, applyInstant: false);
+
+  Future<void> setLoudnormTarget(double target) async =>
+      setBandGain(29, target, applyInstant: false);
 
   Future<void> setStereoWidthEnabled(bool enabled) async {
     final gains = {30: enabled ? 1.0 : 0.0};
@@ -353,16 +373,24 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     }
     await _setMultipleBands(gains, applyInstant: true);
   }
-  Future<void> setStereoWidthFactor(double factor) async => setBandGain(31, factor, applyInstant: false);
 
-  Future<void> setBassGain(double db) async => setBandGain(32, db, applyInstant: false);
-  Future<void> setTrebleGain(double db) async => setBandGain(33, db, applyInstant: false);
+  Future<void> setStereoWidthFactor(double factor) async =>
+      setBandGain(31, factor, applyInstant: false);
 
-  Future<void> setPitch(double val) async => setBandGain(34, val, applyInstant: false);
-  Future<void> setTempo(double val) async => setBandGain(35, val, applyInstant: false);
+  Future<void> setBassGain(double db) async =>
+      setBandGain(32, db, applyInstant: false);
+  Future<void> setTrebleGain(double db) async =>
+      setBandGain(33, db, applyInstant: false);
 
-  Future<void> setReplayGainMode(int mode) async => setBandGain(36, mode.toDouble(), applyInstant: true);
-  Future<void> setReplayGainPreamp(double preamp) async => setBandGain(37, preamp, applyInstant: false);
+  Future<void> setPitch(double val) async =>
+      setBandGain(34, val, applyInstant: false);
+  Future<void> setTempo(double val) async =>
+      setBandGain(35, val, applyInstant: false);
+
+  Future<void> setReplayGainMode(int mode) async =>
+      setBandGain(36, mode.toDouble(), applyInstant: true);
+  Future<void> setReplayGainPreamp(double preamp) async =>
+      setBandGain(37, preamp, applyInstant: false);
 
   Future<void> setSpeechFilterEnabled(bool enabled) async {
     final gains = {38: enabled ? 1.0 : 0.0};
@@ -372,12 +400,18 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     }
     await _setMultipleBands(gains, applyInstant: true);
   }
-  Future<void> setSpeechHighpass(double freq) async => setBandGain(39, freq, applyInstant: false);
-  Future<void> setSpeechLowpass(double freq) async => setBandGain(40, freq, applyInstant: false);
 
-  Future<void> setLofiEnabled(bool enabled) async => setBandGain(41, enabled ? 1.0 : 0.0, applyInstant: true);
-  Future<void> setReverbEnabled(bool enabled) async => setBandGain(42, enabled ? 1.0 : 0.0, applyInstant: true);
-  Future<void> setSurroundEnabled(bool enabled) async => setBandGain(43, enabled ? 1.0 : 0.0, applyInstant: true);
+  Future<void> setSpeechHighpass(double freq) async =>
+      setBandGain(39, freq, applyInstant: false);
+  Future<void> setSpeechLowpass(double freq) async =>
+      setBandGain(40, freq, applyInstant: false);
+
+  Future<void> setLofiEnabled(bool enabled) async =>
+      setBandGain(41, enabled ? 1.0 : 0.0, applyInstant: true);
+  Future<void> setReverbEnabled(bool enabled) async =>
+      setBandGain(42, enabled ? 1.0 : 0.0, applyInstant: true);
+  Future<void> setSurroundEnabled(bool enabled) async =>
+      setBandGain(43, enabled ? 1.0 : 0.0, applyInstant: true);
 
   Future<void> setShelvingEnabled(bool enabled) async {
     final gains = {44: enabled ? 1.0 : 0.0};
@@ -464,7 +498,11 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     }
   }
 
-  Future<void> setBandGain(int bandIndex, double gain, {bool applyInstant = false}) async {
+  Future<void> setBandGain(
+    int bandIndex,
+    double gain, {
+    bool applyInstant = false,
+  }) async {
     double clampedGain = gain;
     if (bandIndex < 18) {
       clampedGain = gain.clamp(-20.0, 20.0);
@@ -499,7 +537,7 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     } else if (bandIndex == 40) {
       clampedGain = gain.clamp(3000.0, 6000.0);
     }
-    
+
     // Update active gains in memory immediately
     final newSongGains = List<double>.from(state.currentSongGains);
     newSongGains[bandIndex] = clampedGain;
@@ -522,13 +560,25 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         } else if (bandIndex == 18) {
           audioSvc.setLivePreamp(clampedGain);
         } else if (bandIndex == 19 || bandIndex == 20) {
-          audioSvc.setEqualizerGains(newSongGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newSongGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 21) {
-          audioSvc.setEqualizerGains(newSongGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newSongGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 22) {
           audioSvc.setLiveCrossfeed(clampedGain);
         } else if (bandIndex == 23) {
-          audioSvc.setEqualizerGains(newSongGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newSongGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 24) {
           audioSvc.setLiveCompressor(threshold: clampedGain);
         } else if (bandIndex == 25) {
@@ -538,9 +588,17 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         } else if (bandIndex == 27) {
           audioSvc.setLiveCompressor(release: clampedGain);
         } else if (bandIndex == 28 || bandIndex == 29) {
-          audioSvc.setEqualizerGains(newSongGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newSongGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 30) {
-          audioSvc.setEqualizerGains(newSongGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newSongGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 31) {
           audioSvc.setLiveStereoWidth(clampedGain);
         } else if (bandIndex == 32) {
@@ -552,24 +610,42 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         } else if (bandIndex == 35) {
           audioSvc.player.setRate(clampedGain);
         } else if (bandIndex == 36 || bandIndex == 37) {
-          final mode = bandIndex == 36 ? clampedGain.toInt() : (newSongGains.length > 36 ? newSongGains[36].toInt() : 0);
-          final preamp = bandIndex == 37 ? clampedGain : (newSongGains.length > 37 ? newSongGains[37] : 0.0);
+          final mode = bandIndex == 36
+              ? clampedGain.toInt()
+              : (newSongGains.length > 36 ? newSongGains[36].toInt() : 0);
+          final preamp = bandIndex == 37
+              ? clampedGain
+              : (newSongGains.length > 37 ? newSongGains[37] : 0.0);
           audioSvc.configureReplayGain(mode: mode, preamp: preamp);
         } else if (bandIndex == 38) {
-          audioSvc.setEqualizerGains(newSongGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newSongGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 39) {
           audioSvc.setLiveHighpass(clampedGain);
         } else if (bandIndex == 40) {
           audioSvc.setLiveLowpass(clampedGain);
+        } else if (bandIndex >= 41 && bandIndex <= 45) {
+          audioSvc.setEqualizerGains(
+            newSongGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else {
-          audioSvc.setEqualizerGains(newSongGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newSongGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         }
       }
 
       _persistGainsDebounced(songGains: newSongGains, globalGains: null);
     } else {
-      final newGlobalGains = List<double>.from(state.globalGains);
-      newGlobalGains[bandIndex] = clampedGain;
+      final newSongGains = List<double>.from(state.globalGains);
+      newSongGains[bandIndex] = clampedGain;
 
       state = state.copyWith(
         currentSongGains: newGlobalGains,
@@ -586,13 +662,25 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         } else if (bandIndex == 18) {
           audioSvc.setLivePreamp(clampedGain);
         } else if (bandIndex == 19 || bandIndex == 20) {
-          audioSvc.setEqualizerGains(newGlobalGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newGlobalGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 21) {
-          audioSvc.setEqualizerGains(newGlobalGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newGlobalGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 22) {
           audioSvc.setLiveCrossfeed(clampedGain);
         } else if (bandIndex == 23) {
-          audioSvc.setEqualizerGains(newGlobalGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newGlobalGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 24) {
           audioSvc.setLiveCompressor(threshold: clampedGain);
         } else if (bandIndex == 25) {
@@ -602,9 +690,17 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         } else if (bandIndex == 27) {
           audioSvc.setLiveCompressor(release: clampedGain);
         } else if (bandIndex == 28 || bandIndex == 29) {
-          audioSvc.setEqualizerGains(newGlobalGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newGlobalGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 30) {
-          audioSvc.setEqualizerGains(newGlobalGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newGlobalGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 31) {
           audioSvc.setLiveStereoWidth(clampedGain);
         } else if (bandIndex == 32) {
@@ -616,17 +712,35 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         } else if (bandIndex == 35) {
           audioSvc.player.setRate(clampedGain);
         } else if (bandIndex == 36 || bandIndex == 37) {
-          final mode = bandIndex == 36 ? clampedGain.toInt() : (newGlobalGains.length > 36 ? newGlobalGains[36].toInt() : 0);
-          final preamp = bandIndex == 37 ? clampedGain : (newGlobalGains.length > 37 ? newGlobalGains[37] : 0.0);
+          final mode = bandIndex == 36
+              ? clampedGain.toInt()
+              : (newGlobalGains.length > 36 ? newGlobalGains[36].toInt() : 0);
+          final preamp = bandIndex == 37
+              ? clampedGain
+              : (newGlobalGains.length > 37 ? newGlobalGains[37] : 0.0);
           audioSvc.configureReplayGain(mode: mode, preamp: preamp);
         } else if (bandIndex == 38) {
-          audioSvc.setEqualizerGains(newGlobalGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newGlobalGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else if (bandIndex == 39) {
           audioSvc.setLiveHighpass(clampedGain);
         } else if (bandIndex == 40) {
           audioSvc.setLiveLowpass(clampedGain);
+        } else if (bandIndex >= 41 && bandIndex <= 45) {
+          audioSvc.setEqualizerGains(
+            newGlobalGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         } else {
-          audioSvc.setEqualizerGains(newGlobalGains, state.enabled, customFilter: state.customFilterString);
+          audioSvc.setEqualizerGains(
+            newGlobalGains,
+            state.enabled,
+            customFilter: state.customFilterString,
+          );
         }
       }
 
@@ -638,11 +752,13 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     _flushPendingSaveSync();
     final currentSong = ref.read(playbackProvider).currentSong;
     if (currentSong != null) {
-      ref.read(playbackProvider.notifier).updateSongEqualizer(
-        songId: currentSong.id,
-        hasCustom: false,
-        gains: null,
-      );
+      ref
+          .read(playbackProvider.notifier)
+          .updateSongEqualizer(
+            songId: currentSong.id,
+            hasCustom: false,
+            gains: null,
+          );
 
       await DbService.isar.writeTxn(() async {
         final dbSong = await DbService.isar.songs.get(currentSong.id);
@@ -665,14 +781,14 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
 
   Future<void> applyCurrentGainsToGlobal() async {
     _flushPendingSaveSync();
-    
-    final activeGains = List<double>.from(state.currentSongGains);
-    
-    state = state.copyWith(
-      globalGains: activeGains,
-    );
 
-    await ref.read(settingsProvider.notifier).updateGlobalEqualizerGains(activeGains);
+    final activeGains = List<double>.from(state.currentSongGains);
+
+    state = state.copyWith(globalGains: activeGains);
+
+    await ref
+        .read(settingsProvider.notifier)
+        .updateGlobalEqualizerGains(activeGains);
   }
 
   Future<void> resetAllSongsEqualizerData() async {
@@ -714,7 +830,9 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
     _pendingSaveSong = null;
 
     if (globalGains != null) {
-      ref.read(settingsProvider.notifier).updateGlobalEqualizerGains(globalGains);
+      ref
+          .read(settingsProvider.notifier)
+          .updateGlobalEqualizerGains(globalGains);
     }
 
     if (saveSong != null && songGains != null) {
@@ -722,26 +840,31 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       if (currentSong?.id == saveSong.id) {
         state = state.copyWith(currentSongHasCustom: true);
       }
-      ref.read(playbackProvider.notifier).updateSongEqualizer(
-        songId: saveSong.id,
-        hasCustom: true,
-        gains: songGains,
-      );
+      ref
+          .read(playbackProvider.notifier)
+          .updateSongEqualizer(
+            songId: saveSong.id,
+            hasCustom: true,
+            gains: songGains,
+          );
 
-      DbService.isar.writeTxn(() async {
-        final dbSong = await DbService.isar.songs.get(saveSong.id);
-        if (dbSong != null) {
-          dbSong.hasCustomEqualizer = true;
-          dbSong.equalizerGains = songGains;
-          await DbService.isar.songs.put(dbSong);
-        }
-      }).catchError((e) {
-        debugPrint('Failed to save equalizer gains to DB: $e');
-      });
+      DbService.isar
+          .writeTxn(() async {
+            final dbSong = await DbService.isar.songs.get(saveSong.id);
+            if (dbSong != null) {
+              dbSong.hasCustomEqualizer = true;
+              dbSong.equalizerGains = songGains;
+              await DbService.isar.songs.put(dbSong);
+            }
+          })
+          .catchError((e) {});
     }
   }
 
-  void _persistGainsDebounced({List<double>? songGains, List<double>? globalGains}) {
+  void _persistGainsDebounced({
+    List<double>? songGains,
+    List<double>? globalGains,
+  }) {
     _debounceTimer?.cancel();
     if (songGains != null) {
       _pendingSongGains = songGains;
@@ -763,6 +886,7 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
   }
 }
 
-final equalizerProvider = StateNotifierProvider<EqualizerNotifier, EqualizerState>((ref) {
-  return EqualizerNotifier(ref);
-});
+final equalizerProvider =
+    StateNotifierProvider<EqualizerNotifier, EqualizerState>((ref) {
+      return EqualizerNotifier(ref);
+    });
