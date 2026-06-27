@@ -678,12 +678,6 @@ class AudioService {
       }
     }
 
-    // ── SoX resampler (last in chain, always active) ─────────────────────────
-    // Must be the final filter so it converts the processed float32 signal to
-    // the device's native sample rate using the highest-quality algorithm.
-    // Pass-through when input rate == output device rate (zero overhead).
-    customFilters.add(_soxrFilter);
-
     // 2. Dynamic Range Compressor
     final bool compEnabled =
         enabled && (gains.length > 23 ? gains[23] == 1.0 : false);
