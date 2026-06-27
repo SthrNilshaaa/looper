@@ -198,6 +198,42 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
 
   Future<void> toggleEqualizer(bool enabled) async {
     state = state.copyWith(enabled: enabled);
+
+    // When toggling on, reset sub-toggles to false in current/global state
+    if (enabled) {
+      final newSongGains = List<double>.from(state.currentSongGains);
+      final newGlobalGains = List<double>.from(state.globalGains);
+
+      // Disable toggles
+      if (newSongGains.length > 19) newSongGains[19] = 0.0; // silence trim
+      if (newSongGains.length > 21) newSongGains[21] = 0.0; // crossfeed
+      if (newSongGains.length > 23) newSongGains[23] = 0.0; // compressor
+      if (newSongGains.length > 28) newSongGains[28] = 0.0; // loudnorm
+      if (newSongGains.length > 30) newSongGains[30] = 0.0; // stereo width
+      if (newSongGains.length > 38) newSongGains[38] = 0.0; // speech filter
+      if (newSongGains.length > 41) newSongGains[41] = 0.0; // lofi
+      if (newSongGains.length > 42) newSongGains[42] = 0.0; // reverb
+      if (newSongGains.length > 43) newSongGains[43] = 0.0; // surround
+      if (newSongGains.length > 44) newSongGains[44] = 0.0; // shelving
+      // Don't disable pitchTempo (45) by default as it controls normal playback speed
+
+      if (newGlobalGains.length > 19) newGlobalGains[19] = 0.0;
+      if (newGlobalGains.length > 21) newGlobalGains[21] = 0.0;
+      if (newGlobalGains.length > 23) newGlobalGains[23] = 0.0;
+      if (newGlobalGains.length > 28) newGlobalGains[28] = 0.0;
+      if (newGlobalGains.length > 30) newGlobalGains[30] = 0.0;
+      if (newGlobalGains.length > 38) newGlobalGains[38] = 0.0;
+      if (newGlobalGains.length > 41) newGlobalGains[41] = 0.0;
+      if (newGlobalGains.length > 42) newGlobalGains[42] = 0.0;
+      if (newGlobalGains.length > 43) newGlobalGains[43] = 0.0;
+      if (newGlobalGains.length > 44) newGlobalGains[44] = 0.0;
+
+      state = state.copyWith(
+        currentSongGains: newSongGains,
+        globalGains: newGlobalGains,
+      );
+    }
+
     await ref.read(settingsProvider.notifier).updateEqualizerEnabled(enabled);
     applyEqualizerInstant();
   }
@@ -278,7 +314,7 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       } else {
         final audioSvc = ref.read(audioServiceProvider);
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newSongGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
@@ -292,7 +328,7 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       });
 
       state = state.copyWith(
-        currentSongGains: newGlobalGains,
+        currentSongGains: newSongGains,
         globalGains: newGlobalGains,
         currentSongHasCustom: false,
       );
@@ -644,8 +680,8 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
 
       _persistGainsDebounced(songGains: newSongGains, globalGains: null);
     } else {
-      final newSongGains = List<double>.from(state.globalGains);
-      newSongGains[bandIndex] = clampedGain;
+      final newGlobalGains = List<double>.from(state.globalGains);
+      newGlobalGains[bandIndex] = clampedGain;
 
       state = state.copyWith(
         currentSongGains: newGlobalGains,
