@@ -101,7 +101,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get audioCrossfadeDesc =>
-      'Overlap tracks smoothly when changing songs';
+      'When one song ends and the next begins, the current track fades out while the next track fades in at the same time. This gives a continuous, DJ-like flow.';
 
   @override
   String get audioFocusDenied =>
@@ -118,7 +118,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoCrossfadeDurationDesc =>
-      'Overlap duration when transitioning automatically';
+      'The overlap time used when the app automatically advances to the next track. Example: 2300ms means the next song starts 2.3 seconds before the current song fully ends.';
 
   @override
   String get backToMainView => 'BACK TO MAIN VIEW';
@@ -266,21 +266,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fadeDuration => 'Fade Duration';
 
   @override
-  String get fadeDurationDesc => 'Duration of play/pause/stop fade effect';
+  String get fadeDurationDesc =>
+      'How long the fade takes for play, pause, and stop actions. Example: 150ms means the audio becomes audible or silent very quickly, but still smoothly.';
 
   @override
   String get fadeOnSeek => 'Fade on Seek';
 
   @override
   String get fadeOnSeekDesc =>
-      'Smoothly fade audio volume out and in when seeking';
+      'Temporarily lower the volume while the user scrubs or jumps to another position, then bring it back up after the seek completes. This prevents pops, glitches, or harsh jumps during seeking.';
 
   @override
   String get fadePlayPauseStop => 'Fade Play/Pause/Stop';
 
   @override
   String get fadePlayPauseStopDesc =>
-      'Smoothly fade audio volume when playing, pausing or stopping';
+      'Smoothly ramp volume up when playback starts, and ramp it down when pausing or stopping. This avoids clicks and makes transitions feel natural.';
 
   @override
   String get favorites => 'Favorites';
@@ -415,7 +416,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get manageAudioFocusDesc =>
-      'Request and respond to system audio focus changes';
+      'Respond properly to system audio focus changes.';
 
   @override
   String get manageAudioFocusTitle => 'Manage Audio Focus';
@@ -425,11 +426,40 @@ class AppLocalizationsEn extends AppLocalizations {
       'Manage language preferences and caller focus state';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => 'Manual Crossfade Duration';
 
   @override
   String get manualCrossfadeDurationDesc =>
-      'Overlap duration when skipping manually';
+      'The overlap time used when the user manually skips to the next or previous track. Usually this can be different from auto-crossfade so manual skips feel more controlled.';
 
   @override
   String get matchingLyrics => 'MATCHING LYRICS';
@@ -634,7 +664,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get resumeOnStartDesc =>
-      'Resume playing automatically when Looper Player is started';
+      'Restore the previous playback state when the app or player service starts again.';
 
   @override
   String get resumeOnStartTitle => 'Resume on Start';
@@ -644,7 +674,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get persistQueueDesc =>
-      'Save the last playing song and queue on app restarts';
+      'Saves the last played song, queue order, and playback position so the app can restore the same session after restart. In real use, this means when the app is reopened, the user can continue from the same song list instead of starting over.';
 
   @override
   String get right => 'Right';
@@ -689,7 +719,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get seekFadeDuration => 'Seek Fade Duration';
 
   @override
-  String get seekFadeDurationDesc => 'Duration of seeking fade effect';
+  String get seekFadeDurationDesc =>
+      'How long the seek fade-out and fade-in takes. Example: 50ms is a very short protective fade around seek changes.';
 
   @override
   String get selectAppLanguage => 'Select application language';
@@ -751,7 +782,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get silenceBetweenTracksDesc =>
-      'Add a silence gap between tracks (0ms for gapless)';
+      'Adds a gap between songs. At 0ms, tracks play gaplessly. At a higher value, the app inserts a pause between tracks, which is useful for live recordings, playlists that need breathing room, or older-style album playback.';
 
   @override
   String get silenceBetweenTracksTitle => 'Silence Between Tracks';
@@ -835,6 +866,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toggleFavorite => 'Toggle Favorite';
+
+  @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
 
   @override
   String get topResult => 'Top Result';

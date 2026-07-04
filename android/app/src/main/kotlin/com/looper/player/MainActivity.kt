@@ -23,6 +23,7 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         var activeEngine: FlutterEngine? = null
+        var stopOnTaskRemoved: Boolean = false
 
         fun sendWidgetAction(context: Context, action: String) {
             val engine = activeEngine
@@ -41,7 +42,14 @@ class MainActivity : FlutterActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         activeEngine = flutterEngine
+        io.flutter.embedding.engine.FlutterEngineCache.getInstance().put("looper_cached_engine", flutterEngine)
         
+        try {
+            startService(Intent(this, LooperTaskService::class.java))
+        } catch (e: Exception) {
+            Log.e("LooperTaskService", "Failed to start LooperTaskService", e)
+        }
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "broadcastMetadata") {
                 val title = call.argument<String>("title")
@@ -51,6 +59,10 @@ class MainActivity : FlutterActivity() {
                 val isPlaying = call.argument<Boolean>("isPlaying") ?: false
 
                 sendPlaybackBroadcast(title, artist, album, duration, isPlaying)
+                result.success(null)
+            } else if (call.method == "setStopOnTaskRemoved") {
+                val value = call.argument<Boolean>("value") ?: false
+                stopOnTaskRemoved = value
                 result.success(null)
             } else if (call.method == "isOnCall") {
                 val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -173,9 +185,20 @@ class MainActivity : FlutterActivity() {
     }
 
 
+    override fun provideFlutterEngine(context: Context): FlutterEngine? {
+        return io.flutter.embedding.engine.FlutterEngineCache.getInstance().get("looper_cached_engine")
+    }
+
+    override fun shouldDestroyEngineWithHost(): Boolean {
+        return stopOnTaskRemoved
+    }
+
     override fun onDestroy() {
         releaseWakeLock()
         activeEngine = null
+        if (stopOnTaskRemoved) {
+            io.flutter.embedding.engine.FlutterEngineCache.getInstance().remove("looper_cached_engine")
+        }
         super.onDestroy()
     }
 

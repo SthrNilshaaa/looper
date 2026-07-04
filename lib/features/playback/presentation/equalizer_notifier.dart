@@ -156,6 +156,13 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
   void onSongChanged(Song? song) {
     _flushPendingSaveSync();
     final settings = ref.read(settingsProvider);
+    state = state.copyWith(
+      currentSongGains: _ensureLength(settings.globalEqualizerGains, 48),
+      globalGains: _ensureLength(settings.globalEqualizerGains, 48),
+      currentSongHasCustom: false,
+    );
+    // Comment out song specific settings loading
+    /*
     if (song == null) {
       state = state.copyWith(
         currentSongGains: List<double>.from(state.globalGains),
@@ -175,6 +182,7 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       currentSongHasCustom: hasCustom,
     );
     _pendingSaveSong = song;
+    */
   }
 
   List<double> _getDefaultGains() {
@@ -297,55 +305,29 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       return val;
     }
 
+    final newGlobalGains = List<double>.from(state.globalGains);
     bandValues.forEach((bandIndex, val) {
-      newSongGains[bandIndex] = clampBand(bandIndex, val);
+      newGlobalGains[bandIndex] = clampBand(bandIndex, val);
     });
 
-    final currentSong = ref.read(playbackProvider).currentSong;
+    state = state.copyWith(
+      currentSongGains: newGlobalGains,
+      globalGains: newGlobalGains,
+      currentSongHasCustom: false,
+    );
 
-    if (currentSong != null) {
-      state = state.copyWith(
-        currentSongGains: newSongGains,
-        currentSongHasCustom: true,
-      );
-
-      if (applyInstant) {
-        applyEqualizerInstant();
-      } else {
-        final audioSvc = ref.read(audioServiceProvider);
-        audioSvc.setEqualizerGains(
-          newSongGains,
-          state.enabled,
-          customFilter: state.customFilterString,
-        );
-      }
-
-      _persistGainsDebounced(songGains: newSongGains, globalGains: null);
+    if (applyInstant) {
+      applyEqualizerInstant();
     } else {
-      final newGlobalGains = List<double>.from(state.globalGains);
-      bandValues.forEach((bandIndex, val) {
-        newGlobalGains[bandIndex] = clampBand(bandIndex, val);
-      });
-
-      state = state.copyWith(
-        currentSongGains: newSongGains,
-        globalGains: newGlobalGains,
-        currentSongHasCustom: false,
+      final audioSvc = ref.read(audioServiceProvider);
+      audioSvc.setEqualizerGains(
+        newGlobalGains,
+        state.enabled,
+        customFilter: state.customFilterString,
       );
-
-      if (applyInstant) {
-        applyEqualizerInstant();
-      } else {
-        final audioSvc = ref.read(audioServiceProvider);
-        audioSvc.setEqualizerGains(
-          newGlobalGains,
-          state.enabled,
-          customFilter: state.customFilterString,
-        );
-      }
-
-      _persistGainsDebounced(songGains: null, globalGains: newGlobalGains);
     }
+
+    _persistGainsDebounced(songGains: null, globalGains: newGlobalGains);
   }
 
   // Support for new 45-gain layout setters with auto-restore on disable
@@ -574,214 +556,108 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       clampedGain = gain.clamp(3000.0, 6000.0);
     }
 
-    // Update active gains in memory immediately
-    final newSongGains = List<double>.from(state.currentSongGains);
-    newSongGains[bandIndex] = clampedGain;
+    // Update active gains in memory immediately (always global)
+    final newGlobalGains = List<double>.from(state.globalGains);
+    newGlobalGains[bandIndex] = clampedGain;
 
-    final currentSong = ref.read(playbackProvider).currentSong;
+    state = state.copyWith(
+      currentSongGains: newGlobalGains,
+      globalGains: newGlobalGains,
+      currentSongHasCustom: false,
+    );
 
-    if (currentSong != null) {
-      state = state.copyWith(
-        currentSongGains: newSongGains,
-        currentSongHasCustom: true,
-      );
-
-      if (applyInstant) {
-        applyEqualizerInstant();
-      } else {
-        // Dispatches live updates directly to the engine
-        final audioSvc = ref.read(audioServiceProvider);
-        if (bandIndex < 18) {
-          audioSvc.setLiveBandGain(bandIndex, clampedGain);
-        } else if (bandIndex == 18) {
-          audioSvc.setLivePreamp(clampedGain);
-        } else if (bandIndex == 19 || bandIndex == 20) {
-          audioSvc.setEqualizerGains(
-            newSongGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 21) {
-          audioSvc.setEqualizerGains(
-            newSongGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 22) {
-          audioSvc.setLiveCrossfeed(clampedGain);
-        } else if (bandIndex == 23) {
-          audioSvc.setEqualizerGains(
-            newSongGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 24) {
-          audioSvc.setLiveCompressor(threshold: clampedGain);
-        } else if (bandIndex == 25) {
-          audioSvc.setLiveCompressor(ratio: clampedGain);
-        } else if (bandIndex == 26) {
-          audioSvc.setLiveCompressor(attack: clampedGain);
-        } else if (bandIndex == 27) {
-          audioSvc.setLiveCompressor(release: clampedGain);
-        } else if (bandIndex == 28 || bandIndex == 29) {
-          audioSvc.setEqualizerGains(
-            newSongGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 30) {
-          audioSvc.setEqualizerGains(
-            newSongGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 31) {
-          audioSvc.setLiveStereoWidth(clampedGain);
-        } else if (bandIndex == 32) {
-          audioSvc.setLiveBass(clampedGain);
-        } else if (bandIndex == 33) {
-          audioSvc.setLiveTreble(clampedGain);
-        } else if (bandIndex == 34) {
-          audioSvc.player.setPitch(clampedGain);
-        } else if (bandIndex == 35) {
-          audioSvc.player.setRate(clampedGain);
-        } else if (bandIndex == 36 || bandIndex == 37) {
-          final mode = bandIndex == 36
-              ? clampedGain.toInt()
-              : (newSongGains.length > 36 ? newSongGains[36].toInt() : 0);
-          final preamp = bandIndex == 37
-              ? clampedGain
-              : (newSongGains.length > 37 ? newSongGains[37] : 0.0);
-          audioSvc.configureReplayGain(mode: mode, preamp: preamp);
-        } else if (bandIndex == 38) {
-          audioSvc.setEqualizerGains(
-            newSongGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 39) {
-          audioSvc.setLiveHighpass(clampedGain);
-        } else if (bandIndex == 40) {
-          audioSvc.setLiveLowpass(clampedGain);
-        } else if (bandIndex >= 41 && bandIndex <= 45) {
-          audioSvc.setEqualizerGains(
-            newSongGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else {
-          audioSvc.setEqualizerGains(
-            newSongGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        }
-      }
-
-      _persistGainsDebounced(songGains: newSongGains, globalGains: null);
+    if (applyInstant) {
+      applyEqualizerInstant();
     } else {
-      final newGlobalGains = List<double>.from(state.globalGains);
-      newGlobalGains[bandIndex] = clampedGain;
-
-      state = state.copyWith(
-        currentSongGains: newGlobalGains,
-        globalGains: newGlobalGains,
-        currentSongHasCustom: false,
-      );
-
-      if (applyInstant) {
-        applyEqualizerInstant();
+      final audioSvc = ref.read(audioServiceProvider);
+      if (bandIndex < 18) {
+        audioSvc.setLiveBandGain(bandIndex, clampedGain);
+      } else if (bandIndex == 18) {
+        audioSvc.setLivePreamp(clampedGain);
+      } else if (bandIndex == 19 || bandIndex == 20) {
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
+      } else if (bandIndex == 21) {
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
+      } else if (bandIndex == 22) {
+        audioSvc.setLiveCrossfeed(clampedGain);
+      } else if (bandIndex == 23) {
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
+      } else if (bandIndex == 24) {
+        audioSvc.setLiveCompressor(threshold: clampedGain);
+      } else if (bandIndex == 25) {
+        audioSvc.setLiveCompressor(ratio: clampedGain);
+      } else if (bandIndex == 26) {
+        audioSvc.setLiveCompressor(attack: clampedGain);
+      } else if (bandIndex == 27) {
+        audioSvc.setLiveCompressor(release: clampedGain);
+      } else if (bandIndex == 28 || bandIndex == 29) {
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
+      } else if (bandIndex == 30) {
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
+      } else if (bandIndex == 31) {
+        audioSvc.setLiveStereoWidth(clampedGain);
+      } else if (bandIndex == 32) {
+        audioSvc.setLiveBass(clampedGain);
+      } else if (bandIndex == 33) {
+        audioSvc.setLiveTreble(clampedGain);
+      } else if (bandIndex == 34) {
+        audioSvc.player.setPitch(clampedGain);
+      } else if (bandIndex == 35) {
+        audioSvc.player.setRate(clampedGain);
+      } else if (bandIndex == 36 || bandIndex == 37) {
+        final mode = bandIndex == 36
+            ? clampedGain.toInt()
+            : (newGlobalGains.length > 36 ? newGlobalGains[36].toInt() : 0);
+        final preamp = bandIndex == 37
+            ? clampedGain
+            : (newGlobalGains.length > 37 ? newGlobalGains[37] : 0.0);
+        audioSvc.configureReplayGain(mode: mode, preamp: preamp);
+      } else if (bandIndex == 38) {
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
+      } else if (bandIndex == 39) {
+        audioSvc.setLiveHighpass(clampedGain);
+      } else if (bandIndex == 40) {
+        audioSvc.setLiveLowpass(clampedGain);
+      } else if (bandIndex >= 41 && bandIndex <= 45) {
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
       } else {
-        final audioSvc = ref.read(audioServiceProvider);
-        if (bandIndex < 18) {
-          audioSvc.setLiveBandGain(bandIndex, clampedGain);
-        } else if (bandIndex == 18) {
-          audioSvc.setLivePreamp(clampedGain);
-        } else if (bandIndex == 19 || bandIndex == 20) {
-          audioSvc.setEqualizerGains(
-            newGlobalGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 21) {
-          audioSvc.setEqualizerGains(
-            newGlobalGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 22) {
-          audioSvc.setLiveCrossfeed(clampedGain);
-        } else if (bandIndex == 23) {
-          audioSvc.setEqualizerGains(
-            newGlobalGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 24) {
-          audioSvc.setLiveCompressor(threshold: clampedGain);
-        } else if (bandIndex == 25) {
-          audioSvc.setLiveCompressor(ratio: clampedGain);
-        } else if (bandIndex == 26) {
-          audioSvc.setLiveCompressor(attack: clampedGain);
-        } else if (bandIndex == 27) {
-          audioSvc.setLiveCompressor(release: clampedGain);
-        } else if (bandIndex == 28 || bandIndex == 29) {
-          audioSvc.setEqualizerGains(
-            newGlobalGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 30) {
-          audioSvc.setEqualizerGains(
-            newGlobalGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 31) {
-          audioSvc.setLiveStereoWidth(clampedGain);
-        } else if (bandIndex == 32) {
-          audioSvc.setLiveBass(clampedGain);
-        } else if (bandIndex == 33) {
-          audioSvc.setLiveTreble(clampedGain);
-        } else if (bandIndex == 34) {
-          audioSvc.player.setPitch(clampedGain);
-        } else if (bandIndex == 35) {
-          audioSvc.player.setRate(clampedGain);
-        } else if (bandIndex == 36 || bandIndex == 37) {
-          final mode = bandIndex == 36
-              ? clampedGain.toInt()
-              : (newGlobalGains.length > 36 ? newGlobalGains[36].toInt() : 0);
-          final preamp = bandIndex == 37
-              ? clampedGain
-              : (newGlobalGains.length > 37 ? newGlobalGains[37] : 0.0);
-          audioSvc.configureReplayGain(mode: mode, preamp: preamp);
-        } else if (bandIndex == 38) {
-          audioSvc.setEqualizerGains(
-            newGlobalGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else if (bandIndex == 39) {
-          audioSvc.setLiveHighpass(clampedGain);
-        } else if (bandIndex == 40) {
-          audioSvc.setLiveLowpass(clampedGain);
-        } else if (bandIndex >= 41 && bandIndex <= 45) {
-          audioSvc.setEqualizerGains(
-            newGlobalGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        } else {
-          audioSvc.setEqualizerGains(
-            newGlobalGains,
-            state.enabled,
-            customFilter: state.customFilterString,
-          );
-        }
+        audioSvc.setEqualizerGains(
+          newGlobalGains,
+          state.enabled,
+          customFilter: state.customFilterString,
+        );
       }
-
-      _persistGainsDebounced(songGains: null, globalGains: newGlobalGains);
     }
+
+    _persistGainsDebounced(songGains: null, globalGains: newGlobalGains);
   }
 
   Future<void> resetCurrentSongToDefault() async {
@@ -871,6 +747,8 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
           .updateGlobalEqualizerGains(globalGains);
     }
 
+    // Comment out song specific equalizer database saving
+    /*
     if (saveSong != null && songGains != null) {
       final currentSong = ref.read(playbackProvider).currentSong;
       if (currentSong?.id == saveSong.id) {
@@ -895,6 +773,7 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
           })
           .catchError((e) {});
     }
+    */
   }
 
   void _persistGainsDebounced({

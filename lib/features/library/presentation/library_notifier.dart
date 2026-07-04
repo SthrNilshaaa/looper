@@ -24,6 +24,7 @@ enum SongSortStrategy {
 
 class LibraryState {
   final bool isScanning;
+  final bool isInitialized;
   final List<Song> songs;
   final List<Artist> artists;
   final List<Album> albums;
@@ -33,6 +34,7 @@ class LibraryState {
 
   LibraryState({
     this.isScanning = false,
+    this.isInitialized = false,
     this.songs = const [],
     this.artists = const [],
     this.albums = const [],
@@ -43,6 +45,7 @@ class LibraryState {
 
   LibraryState copyWith({
     bool? isScanning,
+    bool? isInitialized,
     List<Song>? songs,
     List<Artist>? artists,
     List<Album>? albums,
@@ -52,6 +55,7 @@ class LibraryState {
   }) {
     return LibraryState(
       isScanning: isScanning ?? this.isScanning,
+      isInitialized: isInitialized ?? this.isInitialized,
       songs: songs ?? this.songs,
       artists: artists ?? this.artists,
       albums: albums ?? this.albums,
@@ -176,7 +180,10 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     }
 
     _songsSubscription = query.watch(fireImmediately: true).listen((songs) {
-      state = state.copyWith(songs: songs);
+      state = state.copyWith(
+        songs: songs,
+        isInitialized: true,
+      );
     });
   }
 
@@ -439,19 +446,16 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         final result = await LibraryScanner().scanDirectory(path);
         totalSongsFound = result.songsCount;
         
+        // Always add the selected root folder path to saved library folders
+        final settings = _ref.read(settingsProvider);
+        final newFolders = Set<String>.from(settings.libraryFolders)
+          ..add(path);
         if (totalSongsFound > 0) {
-          // Add the root folder and all subfolders where music was actually found!
-          final settings = _ref.read(settingsProvider);
-          final newFolders = Set<String>.from(settings.libraryFolders)
-            ..add(path)
-            ..addAll(result.musicFolders);
-          await _ref
-              .read(settingsProvider.notifier)
-              .updateLibraryFolders(newFolders.toList());
-
-        } else {
-
+          newFolders.addAll(result.musicFolders);
         }
+        await _ref
+            .read(settingsProvider.notifier)
+            .updateLibraryFolders(newFolders.toList());
       } else {
 
       }

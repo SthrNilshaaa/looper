@@ -532,10 +532,7 @@ class HomeDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.home,
       title: l10n.homeDarkness,
       subtitle: l10n.homeDarknessDesc,
-      value: ((settings.homeDarkness.isNaN || settings.homeDarkness == 0.0)
-              ? 0.72
-              : settings.homeDarkness) *
-          100,
+      value: (settings.homeDarkness.isNaN ? 0.72 : settings.homeDarkness) * 100,
       min: 0.0,
       max: 100.0,
       divisions: 100,
@@ -558,10 +555,7 @@ class SongsDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.music,
       title: l10n.songsDarkness,
       subtitle: l10n.songsDarknessDesc,
-      value: ((settings.songsDarkness.isNaN || settings.songsDarkness == 0.0)
-              ? 0.72
-              : settings.songsDarkness) *
-          100,
+      value: (settings.songsDarkness.isNaN ? 0.72 : settings.songsDarkness) * 100,
       min: 0.0,
       max: 100.0,
       divisions: 100,
@@ -584,10 +578,7 @@ class LibraryDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.library,
       title: l10n.libraryDarkness,
       subtitle: l10n.libraryDarknessDesc,
-      value: ((settings.libraryDarkness.isNaN || settings.libraryDarkness == 0.0)
-              ? 0.72
-              : settings.libraryDarkness) *
-          100,
+      value: (settings.libraryDarkness.isNaN ? 0.72 : settings.libraryDarkness) * 100,
       min: 0.0,
       max: 100.0,
       divisions: 100,
@@ -610,10 +601,7 @@ class MusicDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.playCircle,
       title: l10n.musicDarkness,
       subtitle: l10n.musicDarknessDesc,
-      value: ((settings.musicDarkness.isNaN || settings.musicDarkness == 0.0)
-              ? 0.62
-              : settings.musicDarkness) *
-          100,
+      value: (settings.musicDarkness.isNaN ? 0.62 : settings.musicDarkness) * 100,
       min: 0.0,
       max: 100.0,
       divisions: 100,
@@ -636,10 +624,7 @@ class LyricsDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.alignLeft,
       title: l10n.lyricsDarkness,
       subtitle: l10n.lyricsDarknessDesc,
-      value: ((settings.lyricsDarkness.isNaN || settings.lyricsDarkness == 0.0)
-              ? 0.55
-              : settings.lyricsDarkness) *
-          100,
+      value: (settings.lyricsDarkness.isNaN ? 0.55 : settings.lyricsDarkness) * 100,
       min: 0.0,
       max: 100.0,
       divisions: 100,

@@ -132,6 +132,7 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
         }
       }
     } catch (e) {
+      debugPrint('Error updating theme from image $imagePath: $e');
     } finally {
       _isUpdating = false;
     }

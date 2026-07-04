@@ -84,7 +84,7 @@ class AdvancedLyricLine extends ConsumerWidget {
     final alignmentString = settings.lyricsAlignment;
     final useDynamicColor = (settings.dynamicColorActiveLyrics && 
         (settings.enableDynamicTheming || settings.dynamicLyrics)) ||
-        (!settings.enableDynamicTheming && !settings.dynamicLyrics && settings.blurredArtworkForLyrics);
+        settings.blurredArtworkForLyrics;
 
     final textAlign = alignmentString == 'left'
         ? TextAlign.left
@@ -260,10 +260,10 @@ class AdvancedLyricLine extends ConsumerWidget {
         return isInstrumental
             ? Align(
                 alignment: iconAlignment,
-                child: Icon(
-                  Icons.music_note,
-                  color: Colors.white,
-                  size: 40 * fontScale,
+                child: Text(
+                  "♫",
+                  style: baseStyle,
+                  
                 ),
               )
             : Text(

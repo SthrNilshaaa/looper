@@ -14,6 +14,7 @@ import 'package:looper_player/features/playback/presentation/playback_notifier.d
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
 import 'package:looper_player/ui/widgets/app_refresh_indicator.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/playlists/presentation/playlist_view.dart';
@@ -490,226 +491,182 @@ void _showSortBottomSheet(
         builder: (context, ref, child) {
           final state = ref.watch(libraryProvider);
           final settings = ref.watch(settingsProvider);
-          final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
-          final isPureBlack = settings.darkTheme;
           final accentColor = Color(settings.accentColor);
 
-          final sheetBg = isPureBlack 
-              ? Colors.black 
-              : (useBlur ? Colors.black.withValues(alpha: 0.6) : const Color(0xFF1E1E1E));
-
-          Widget sheetContent = Container(
-            decoration: BoxDecoration(
-              color: sheetBg,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              border: Border.all(
-                color: isPureBlack ? Colors.white10 : Colors.white.withValues(alpha: 0.08),
-                width: 1,
-              ),
-            ),
+          return AppBottomSheetContainer(
             padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: SafeArea(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 12),
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.white24,
-                        borderRadius: BorderRadius.circular(2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8.0),
+                      child: Text(
+                        l10n.sortOrder,
+                        style: AppFonts.jostStyle(
+                          fontSize: 18, 
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Text(
-                          l10n.sortOrder,
-                          style: AppFonts.jostStyle(
-                            fontSize: 18, 
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                    TextButton.icon(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(libraryProvider.notifier).toggleSortOrder();
+                      },
+                      icon: Icon(
+                        state.isAscending ? LucideIcons.arrowUpAZ : LucideIcons.arrowDownAZ,
+                        size: 18,
+                      ),
+                      label: Text(state.isAscending ? l10n.ascending : l10n.descending),
+                      style: TextButton.styleFrom(
+                        foregroundColor: accentColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          ref.read(libraryProvider.notifier).toggleSortOrder();
-                        },
-                        icon: Icon(
-                          state.isAscending ? LucideIcons.arrowUpAZ : LucideIcons.arrowDownAZ,
-                          size: 18,
-                        ),
-                        label: Text(state.isAscending ? l10n.ascending : l10n.descending),
-                        style: TextButton.styleFrom(
-                          foregroundColor: accentColor,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Divider(color: Colors.white10, height: 24),
-                  Flexible(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
-                        child: PremiumSection(
-                          borderRadius: BorderRadius.circular(20),
-                          padding: EdgeInsets.zero,
-                          useExpanded: false,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _SortOption(
-                                label: l10n.dateAdded,
-                                icon: LucideIcons.calendar,
-                                isSelected: state.sortStrategy == SongSortStrategy.dateAdded,
-                                accentColor: accentColor,
-                                isLast: false,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .setSortStrategy(SongSortStrategy.dateAdded);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              _SortOption(
-                                label: l10n.title,
-                                icon: LucideIcons.type,
-                                isSelected: state.sortStrategy == SongSortStrategy.title,
-                                accentColor: accentColor,
-                                isLast: false,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .setSortStrategy(SongSortStrategy.title);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              _SortOption(
-                                label: l10n.artist,
-                                icon: LucideIcons.mic2,
-                                isSelected: state.sortStrategy == SongSortStrategy.artist,
-                                accentColor: accentColor,
-                                isLast: false,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .setSortStrategy(SongSortStrategy.artist);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              _SortOption(
-                                label: l10n.album,
-                                icon: LucideIcons.disc,
-                                isSelected: state.sortStrategy == SongSortStrategy.album,
-                                accentColor: accentColor,
-                                isLast: false,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .setSortStrategy(SongSortStrategy.album);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              _SortOption(
-                                label: l10n.duration,
-                                icon: LucideIcons.clock,
-                                isSelected: state.sortStrategy == SongSortStrategy.duration,
-                                accentColor: accentColor,
-                                isLast: false,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .setSortStrategy(SongSortStrategy.duration);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              _SortOption(
-                                label: l10n.year,
-                                icon: LucideIcons.calendarDays,
-                                isSelected: state.sortStrategy == SongSortStrategy.year,
-                                accentColor: accentColor,
-                                isLast: false,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .setSortStrategy(SongSortStrategy.year);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              _SortOption(
-                                label: l10n.mostPlayed,
-                                icon: LucideIcons.trendingUp,
-                                isSelected: state.sortStrategy == SongSortStrategy.playCount,
-                                accentColor: accentColor,
-                                isLast: false,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .setSortStrategy(SongSortStrategy.playCount);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                              _SortOption(
-                                label: l10n.recentlyPlayed,
-                                icon: LucideIcons.history,
-                                isSelected: state.sortStrategy == SongSortStrategy.lastPlayed,
-                                accentColor: accentColor,
-                                isLast: true,
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  ref
-                                      .read(libraryProvider.notifier)
-                                      .setSortStrategy(SongSortStrategy.lastPlayed);
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ],
-                          ),
+                    ),
+                  ],
+                ),
+                const Divider(color: Colors.white10, height: 24),
+                Flexible(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                      child: PremiumSection(
+                        borderRadius: BorderRadius.circular(20),
+                        padding: EdgeInsets.zero,
+                        useExpanded: false,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _SortOption(
+                              label: l10n.dateAdded,
+                              icon: LucideIcons.calendar,
+                              isSelected: state.sortStrategy == SongSortStrategy.dateAdded,
+                              accentColor: accentColor,
+                              isLast: false,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(libraryProvider.notifier)
+                                    .setSortStrategy(SongSortStrategy.dateAdded);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            _SortOption(
+                              label: l10n.title,
+                              icon: LucideIcons.type,
+                              isSelected: state.sortStrategy == SongSortStrategy.title,
+                              accentColor: accentColor,
+                              isLast: false,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(libraryProvider.notifier)
+                                    .setSortStrategy(SongSortStrategy.title);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            _SortOption(
+                              label: l10n.artist,
+                              icon: LucideIcons.mic2,
+                              isSelected: state.sortStrategy == SongSortStrategy.artist,
+                              accentColor: accentColor,
+                              isLast: false,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(libraryProvider.notifier)
+                                    .setSortStrategy(SongSortStrategy.artist);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            _SortOption(
+                              label: l10n.album,
+                              icon: LucideIcons.disc,
+                              isSelected: state.sortStrategy == SongSortStrategy.album,
+                              accentColor: accentColor,
+                              isLast: false,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(libraryProvider.notifier)
+                                    .setSortStrategy(SongSortStrategy.album);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            _SortOption(
+                              label: l10n.duration,
+                              icon: LucideIcons.clock,
+                              isSelected: state.sortStrategy == SongSortStrategy.duration,
+                              accentColor: accentColor,
+                              isLast: false,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(libraryProvider.notifier)
+                                    .setSortStrategy(SongSortStrategy.duration);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            _SortOption(
+                              label: l10n.year,
+                              icon: LucideIcons.calendarDays,
+                              isSelected: state.sortStrategy == SongSortStrategy.year,
+                              accentColor: accentColor,
+                              isLast: false,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(libraryProvider.notifier)
+                                    .setSortStrategy(SongSortStrategy.year);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            _SortOption(
+                              label: l10n.mostPlayed,
+                              icon: LucideIcons.trendingUp,
+                              isSelected: state.sortStrategy == SongSortStrategy.playCount,
+                              accentColor: accentColor,
+                              isLast: false,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(libraryProvider.notifier)
+                                    .setSortStrategy(SongSortStrategy.playCount);
+                                Navigator.pop(context);
+                              },
+                            ),
+                            _SortOption(
+                              label: l10n.recentlyPlayed,
+                              icon: LucideIcons.history,
+                              isSelected: state.sortStrategy == SongSortStrategy.lastPlayed,
+                              accentColor: accentColor,
+                              isLast: true,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref
+                                    .read(libraryProvider.notifier)
+                                    .setSortStrategy(SongSortStrategy.lastPlayed);
+                                Navigator.pop(context);
+                              },
+                            ),
+                          ],
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
           );
-
-          final bool showBlur = useBlur && !settings.enableDynamicTheming;
-
-          if (showBlur && !isPureBlack) {
-            return RepaintBoundary(
-              child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                  child: sheetContent,
-                ),
-              ),
-            );
-          }
-
-          return sheetContent;
         },
       );
     },

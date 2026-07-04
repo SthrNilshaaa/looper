@@ -366,7 +366,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
       ),
     );
 
-    final lyricsDarkness = (settings.lyricsDarkness.isNaN || settings.lyricsDarkness == 0.0)
+    final lyricsDarkness = settings.lyricsDarkness.isNaN
         ? 0.55
         : settings.lyricsDarkness;
 
@@ -376,12 +376,11 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
     final showDynamicBg = !isExiting &&
         _delayCompleted &&
         (settings.enableDynamicTheming || settings.dynamicLyrics) &&
+        !settings.blurredArtworkForLyrics &&
         song.artPath != null;
 
     final showBlurredArtworkBg = !isExiting &&
         _delayCompleted &&
-        !settings.enableDynamicTheming &&
-        !settings.dynamicLyrics &&
         settings.blurredArtworkForLyrics &&
         song.artPath != null;
 
@@ -415,10 +414,11 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                 duration: transitionDuration,
                 child: showDynamicBg
                     ? Consumer(
+                        key: ValueKey('fluid_bg_${song.path}'),
                         builder: (context, ref, child) {
                           final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
                           return FluidBackground(
-                            key: const ValueKey('fluid_bg'),
+                            key: ValueKey('fluid_bg_child_${song.path}'),
                             imageProvider: FileImage(File(song.artPath!)),
                             animate: isPlaying,
                             blurSigma: 80,
@@ -429,7 +429,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                       )
                     : (showBlurredArtworkBg
                         ? RepaintBoundary(
-                            key: const ValueKey('blurred_art_bg'),
+                            key: ValueKey('blurred_art_bg_${song.path}'),
                             child: Stack(
                               children: [
                                 Positioned.fill(
@@ -707,7 +707,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                             vertical: 8,
                           ),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                            color: Theme.of(context).colorScheme.primary,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
@@ -723,13 +723,13 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                               Icon(
                                 LucideIcons.refreshCw,
                                 size: 14,
-                                color: Theme.of(context).colorScheme.onPrimary,
+                                color: Colors.white,
                               ),
                               const SizedBox(width: 8),
                               Text(
                                 'Re-sync',
                                 style: AppFonts.jostStyle(
-                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  color: Colors.white,
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.5,

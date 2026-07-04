@@ -10,7 +10,6 @@ import 'package:looper_player/ui/widgets/color_maper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:animations/animations.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:file_picker/file_picker.dart';
 import '../widgets/player_bar.dart';
 import '../widgets/expanded_player.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
@@ -23,6 +22,7 @@ import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/presentation/smart_views.dart';
 import 'package:looper_player/ui/screens/settings_view.dart';
 import 'package:looper_player/ui/screens/welcome_screen.dart';
+import 'package:looper_player/ui/widgets/folder_picker_helper.dart';
 
 import 'package:looper_player/ui/widgets/collection_detail_view.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_view.dart';
@@ -38,6 +38,7 @@ import 'package:looper_player/features/playback/presentation/widgets/overlay_lyr
 import 'package:looper_player/core/update_service.dart';
 
 import 'android/android_main_screen.dart';
+import 'android/widgets/empty_library_view.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -70,15 +71,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         return;
       }
 
-      // If the library is currently empty, we DO NOT scan automatically at startup
-      // because we want the WelcomeScreen to serve as an intro where the user must manually trigger
-      // permissions/scanning via interaction!
-      final initialSongsEmpty = ref.read(libraryProvider).songs.isEmpty;
-      if (initialSongsEmpty) {
-
-      } else {
-        ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
-      }
+      // Always trigger background scan for saved/discovered folders on startup
+      ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
     });
   }
 
@@ -273,19 +267,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 // const SizedBox(width: 48),
                                                 Spacer(),
                                                 _HeaderButton(
-                                                  onTap: () async {
-                                                    final String? path =
-                                                        await FilePicker
-                                                            .platform
-                                                            .getDirectoryPath();
-                                                    if (path != null) {
-                                                      ref
-                                                          .read(
-                                                            libraryProvider
-                                                                .notifier,
-                                                          )
-                                                          .scanLibrary(path);
-                                                    }
+                                                  onTap: () {
+                                                    FolderPickerHelper.pickFolder(context, ref);
                                                   },
                                                   icon: LucideIcons.plus,
                                                   label: 'Add Folder',
@@ -352,7 +335,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BuildContext context,
     AppLocalizations l10n,
   ) {
-    if (library.isScanning && library.songs.isEmpty) {
+    if (!library.isInitialized || (library.isScanning && library.songs.isEmpty)) {
       return const AppLoadingIndicator();
     }
 
@@ -417,7 +400,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
-    return const WelcomeScreen();
+    return EmptyLibraryView(title: l10n.noSongsFound);
   }
 }
 
@@ -482,7 +465,7 @@ class Sidebar extends ConsumerWidget {
                           SizedBox(
                             height: 42,
                             child: SvgPicture.asset(
-                              'assets/main_logo.svg',
+                              'assets/main_logo_transparent.svg',
                               fit: BoxFit.contain,
                               colorMapper: AccentColorMapper(
                                 Theme.of(context).colorScheme.primary,

@@ -94,6 +94,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
 
 
   void _showLyrics(BuildContext context) {
+    HapticFeedback.lightImpact();
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
@@ -199,7 +200,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
     final settings = ref.watch(settingsProvider);
     final useBlur = settings.enableDynamicTheming;
     final enableSlide = settings.enableSlideGesture;
-    final musicDarkness = (settings.musicDarkness.isNaN || settings.musicDarkness == 0.0)
+    final musicDarkness = settings.musicDarkness.isNaN
         ? 0.62
         : settings.musicDarkness;
 
@@ -294,7 +295,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                         forceNoBlur: true,
                         useExpanded: false,
                         useBlur: true,
-                        forceBlur: true,
+                        
                         onTap: () {
                           HapticFeedback.lightImpact();
                           Navigator.of(context).pop();
@@ -648,6 +649,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                         showShadow: false,
                         useBlur: useBlur,
                         forceNoBlur: true,
+                        backgroundColor: song.isFavorite?  Colors.amber.withValues(alpha: 0.15):Colors.transparent,
                         onTap: () {
                          setState(() {
                             HapticFeedback.selectionClick();
@@ -1269,7 +1271,7 @@ class _GestureArtworkWithFeedbackState
               });
             });
             _snapController.forward(from: 0.0).then((_) {
-              ref.read(playbackProvider.notifier).skipPrevious();
+              ref.read(playbackProvider.notifier).skipPrevious(force: true);
             });
           }
         } else {

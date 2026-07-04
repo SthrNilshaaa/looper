@@ -5,13 +5,12 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
-import 'package:looper_player/core/providers.dart';
+import 'package:looper_player/ui/widgets/folder_picker_helper.dart';
 
 class SettingsView extends ConsumerWidget {
   const SettingsView({super.key});
@@ -315,99 +314,7 @@ class SettingsView extends ConsumerWidget {
                         },
                         isLast: false,
                       ),
-                    _PremiumSwitchRow(
-                      icon: LucideIcons.sliders,
-                      title: l10n.fadeOnSeek,
-                      subtitle: l10n.fadeOnSeekDesc,
-                      value: settings.fadeOnSeek,
-                      onChanged: (value) {
-                        HapticFeedback.lightImpact();
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateFadeOnSeek(value);
-                      },
-                      isLast: false,
-                    ),
-                    if (settings.fadeOnSeek)
-                      _PremiumSliderRow(
-                        icon: LucideIcons.sliders,
-                        title: l10n.seekFadeDuration,
-                        subtitle: l10n.seekFadeDurationDesc,
-                        value: settings.seekFadeLength.toDouble(),
-                        min: 10,
-                        max: 500,
-                        divisions: 49,
-                        suffix: 'ms',
-                        onChanged: (value) {
-                          ref
-                              .read(settingsProvider.notifier)
-                              .updateSeekFadeLength(value.round());
-                        },
-                        isLast: false,
-                      ),
-                    _PremiumSwitchRow(
-                      icon: LucideIcons.gitCompare,
-                      title: l10n.audioCrossfade,
-                      subtitle: l10n.audioCrossfadeDesc,
-                      value: settings.enableCrossfade,
-                      onChanged: (value) {
-                        HapticFeedback.lightImpact();
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateEnableCrossfade(value);
-                      },
-                      isLast: false,
-                    ),
-                    if (settings.enableCrossfade) ...[
-                      _PremiumSliderRow(
-                        icon: LucideIcons.sliders,
-                        title: l10n.autoCrossfadeDuration,
-                        subtitle: l10n.autoCrossfadeDurationDesc,
-                        value: settings.crossfadeLength.toDouble(),
-                        min: 100,
-                        max: 15000,
-                        divisions: 149,
-                        suffix: 'ms',
-                        onChanged: (value) {
-                          ref
-                              .read(settingsProvider.notifier)
-                              .updateCrossfadeLength(value.round());
-                        },
-                        isLast: false,
-                      ),
-                      _PremiumSliderRow(
-                        icon: LucideIcons.sliders,
-                        title: l10n.manualCrossfadeDuration,
-                        subtitle: l10n.manualCrossfadeDurationDesc,
-                        value: settings.shortManualCrossfadeLength.toDouble(),
-                        min: 10,
-                        max: 1000,
-                        divisions: 99,
-                        suffix: 'ms',
-                        onChanged: (value) {
-                          ref
-                              .read(settingsProvider.notifier)
-                              .updateShortManualCrossfadeLength(value.round());
-                        },
-                        isLast: false,
-                      ),
-                    ],
-                    _PremiumSliderRow(
-                      icon: LucideIcons.clock,
-                      title: l10n.silenceBetweenTracksTitle,
-                      subtitle: l10n.silenceBetweenTracksDesc,
-                      value: settings.silenceBetweenTracks.toDouble(),
-                      min: 0,
-                      max: 5000,
-                      divisions: 50,
-                      suffix: 'ms',
-                      onChanged: (value) {
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateSilenceBetweenTracks(value.round());
-                      },
-                      isLast: false,
-                    ),
+
                     _PremiumSwitchRow(
                       icon: LucideIcons.phoneCall,
                       title: l10n.manageAudioFocusTitle,
@@ -479,13 +386,9 @@ class SettingsView extends ConsumerWidget {
                       icon: LucideIcons.plus,
                       title: l10n.addFolder,
                       subtitle: l10n.selectFolderIndex,
-                      onTap: () async {
+                      onTap: () {
                         HapticFeedback.lightImpact();
-                        final String? path = await FilePicker.platform
-                            .getDirectoryPath();
-                        if (path != null) {
-                          ref.read(libraryProvider.notifier).scanLibrary(path);
-                        }
+                        FolderPickerHelper.pickFolder(context, ref);
                       },
                       isLast: false,
                     ),

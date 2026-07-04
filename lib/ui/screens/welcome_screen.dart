@@ -210,7 +210,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
             height: 100.s,
             width: 200.s,
             child: SvgPicture.asset(
-              'assets/main_logo.svg',
+              'assets/main_logo_transparent.svg',
               fit: BoxFit.contain,
               placeholderBuilder: (context) => Icon(
                 LucideIcons.music,

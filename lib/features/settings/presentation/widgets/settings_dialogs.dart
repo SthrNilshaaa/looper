@@ -8,6 +8,7 @@ import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 
 void showCustomColorPicker(
   BuildContext context,
@@ -18,15 +19,12 @@ void showCustomColorPicker(
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    backgroundColor: Colors.transparent,
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setModalState) {
           final currentAccent = ref.watch(settingsProvider).accentColor;
-          return Container(
+          return AppBottomSheetContainer(
             height: 650,
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
             child: Column(
@@ -106,10 +104,7 @@ void showReorderBottomSheet(
   showModalBottomSheet(
     context: context,
     useRootNavigator: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    backgroundColor: Colors.transparent,
     builder: (context) {
       final l10n = AppLocalizations.of(context)!;
       return StatefulBuilder(
@@ -149,23 +144,12 @@ void showReorderBottomSheet(
             },
           };
 
-          return Container(
+          return AppBottomSheetContainer(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
                 Text(
                   l10n.reorderDashboardSections,
                   style: AppFonts.jostStyle(

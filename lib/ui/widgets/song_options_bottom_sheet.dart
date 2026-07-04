@@ -350,7 +350,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                             ? 'Sleep Timer (${_formatSleepTimerRemaining(playbackState)})'
                             : 'Sleep Timer',
                         icon: LucideIcons.timer,
-                        iconColor: playbackState.isSleepTimerActive ? accentColor : Colors.white70,
+                        iconColor: playbackState.isSleepTimerActive ?  Colors.white70 : accentColor,
                         onTap: () {
                           HapticFeedback.lightImpact();
                           Navigator.pop(context);
@@ -360,7 +360,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                       _MenuOptionTile(
                         label: song.isFavorite ? l10n.removeFromFavorites : l10n.addToFavorites,
                         icon: song.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        iconColor: song.isFavorite ? Colors.redAccent : Colors.white70,
+                        iconColor: song.isFavorite ? Colors.redAccent :  accentColor,
                         onTap: () {
                           HapticFeedback.lightImpact();
                           ref.read(libraryProvider.notifier).toggleFavorite(song);
@@ -413,7 +413,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                       _MenuOptionTile(
                         label: l10n.songDetails,
                         icon: LucideIcons.info,
-                        iconColor: Colors.white70,
+                        iconColor: accentColor,
                         onTap: () {
                           HapticFeedback.lightImpact();
                           Navigator.pop(context);
@@ -429,7 +429,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                       _MenuOptionTile(
                         label: l10n.technicalInfoFrequency,
                         icon: LucideIcons.activity,
-                        iconColor: Colors.white70,
+                        iconColor: accentColor,
                         onTap: () {
                           HapticFeedback.lightImpact();
                           Navigator.pop(context);
@@ -444,7 +444,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                       _MenuOptionTile(
                         label: l10n.share,
                         icon: LucideIcons.share2,
-                        iconColor: Colors.white70,
+                        iconColor: accentColor,
                         onTap: () {
                           HapticFeedback.lightImpact();
                           ref.read(playbackProvider.notifier).shareSong(song);

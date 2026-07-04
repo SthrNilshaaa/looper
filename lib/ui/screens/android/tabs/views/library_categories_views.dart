@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,7 @@ import 'package:looper_player/features/library/presentation/library_notifier.dar
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:isar/isar.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
@@ -35,73 +37,38 @@ class CategoryDetailWrapper extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final settings = ref.read(settingsProvider);
-        final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
-
-        Widget content = Container(
-          decoration: BoxDecoration(
-            color: useBlur ? Colors.transparent : const Color(0xFF161613),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+        return AppBottomSheetContainer(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.sortBy,
+                style: AppFonts.jostStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.sortBy,
-                  style: AppFonts.jostStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (title == 'Albums') ...[
-                  _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, AlbumSortOption.nameAsc, albumSortProvider),
-                  _buildSortItem(context, ref, l10n.sortAlphabeticalZA, AlbumSortOption.nameDesc, albumSortProvider),
-                  _buildSortItem(context, ref, l10n.sortRecentlyAdded, AlbumSortOption.dateAddedNewest, albumSortProvider),
-                  _buildSortItem(context, ref, l10n.sortOldestAdded, AlbumSortOption.dateAddedOldest, albumSortProvider),
-                  _buildSortItem(context, ref, l10n.sortYearNewest, AlbumSortOption.yearNewest, albumSortProvider),
-                  _buildSortItem(context, ref, l10n.sortYearOldest, AlbumSortOption.yearOldest, albumSortProvider),
-                ] else if (title == 'Artists') ...[
-                  _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, ArtistSortOption.nameAsc, artistSortProvider),
-                  _buildSortItem(context, ref, l10n.sortAlphabeticalZA, ArtistSortOption.nameDesc, artistSortProvider),
-                ] else if (title == 'Genres') ...[
-                  _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, GenreSortOption.nameAsc, genreSortProvider),
-                  _buildSortItem(context, ref, l10n.sortAlphabeticalZA, GenreSortOption.nameDesc, genreSortProvider),
-                  _buildSortItem(context, ref, l10n.sortMostSongs, GenreSortOption.songCountDesc, genreSortProvider),
-                  _buildSortItem(context, ref, l10n.sortLeastSongs, GenreSortOption.songCountAsc, genreSortProvider),
-                ],
+              ),
+              const SizedBox(height: 16),
+              if (title == 'Albums') ...[
+                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, AlbumSortOption.nameAsc, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, AlbumSortOption.nameDesc, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortRecentlyAdded, AlbumSortOption.dateAddedNewest, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortOldestAdded, AlbumSortOption.dateAddedOldest, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortYearNewest, AlbumSortOption.yearNewest, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortYearOldest, AlbumSortOption.yearOldest, albumSortProvider),
+              ] else if (title == 'Artists') ...[
+                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, ArtistSortOption.nameAsc, artistSortProvider),
+                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, ArtistSortOption.nameDesc, artistSortProvider),
+              ] else if (title == 'Genres') ...[
+                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, GenreSortOption.nameAsc, genreSortProvider),
+                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, GenreSortOption.nameDesc, genreSortProvider),
+                _buildSortItem(context, ref, l10n.sortMostSongs, GenreSortOption.songCountDesc, genreSortProvider),
+                _buildSortItem(context, ref, l10n.sortLeastSongs, GenreSortOption.songCountAsc, genreSortProvider),
               ],
-            ),
+            ],
           ),
         );
-
-        if (useBlur) {
-          return PremiumSection(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-            useBlur: true,
-            useExpanded: false,
-            child: content,
-          );
-        }
-        return content;
       },
     );
   }
@@ -362,11 +329,22 @@ class ArtistsGridView extends ConsumerWidget {
           child: Column(
             children: [
               Expanded(
-                child: CircleAvatar(
-                  radius: 80,
-                  backgroundColor: Colors.white10,
-                  backgroundImage: artist.artistImageUrl != null ? FileImage(File(artist.artistImageUrl!)) : null,
-                  child: artist.artistImageUrl == null ? const Icon(LucideIcons.user, size: 40) : null,
+                child: ClipOval(
+                  child: OptimizedImage(
+                    imageUrl: artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : null,
+                    imagePath: artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : artist.artPath,
+                    fit: BoxFit.cover,
+                    placeholder: Container(
+                      color: Colors.white10,
+                      child: const Center(
+                        child: Icon(
+                          LucideIcons.user,
+                          size: 40,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),

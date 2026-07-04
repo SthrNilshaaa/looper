@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:looper_player/core/ui_utils.dart';
@@ -52,7 +51,7 @@ class HomeDashboard extends ConsumerWidget {
                 SizedBox(
                   height: 50.s,
                   child: SvgPicture.asset(
-                    'assets/main_logo.svg',
+                    'assets/main_logo_transparent.svg',
                     fit: BoxFit.contain,
                     colorMapper: AccentColorMapper(
                       Theme.of(context).colorScheme.primary,
@@ -664,13 +663,26 @@ class HomeDashboard extends ConsumerWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 50,
-              backgroundColor: Colors.white.withValues(alpha: 0.05),
-              backgroundImage: artist.artistImageUrl != null ? FileImage(File(artist.artistImageUrl!)) : null,
-              child: artist.artistImageUrl == null
-                  ? const Icon(LucideIcons.user, size: 32, color: Colors.white38)
-                  : null,
+            SizedBox(
+              width: 100,
+              height: 100,
+              child: ClipOval(
+                child: OptimizedImage(
+                  imageUrl: artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : null,
+                  imagePath: artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : artist.artPath,
+                  fit: BoxFit.cover,
+                  placeholder: Container(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    child: const Center(
+                      child: Icon(
+                        LucideIcons.user,
+                        size: 32,
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             Text(

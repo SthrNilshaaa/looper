@@ -91,6 +91,7 @@ class AppSettings {
   List<int> lastQueueSongIds = [];
   int lastQueueIndex = -1;
   double volume = 1.0;
+  int lastPositionMs = 0;
   bool shuffle = false;
   int repeatMode = 0; // 0: off, 1: one, 2: all
   String language = 'en';
@@ -101,6 +102,10 @@ class AppSettings {
   bool blurredArtworkForLyrics = true;
   int accentColor = 0xFF41C25E; // Default Green
   bool audioFocus = true;
+  bool audioFocusRequestOnPlay = true;
+  bool audioFocusReleaseOnPause = true;
+  bool audioFocusStopOnOtherSession = true;
+  bool audioFocusRestartOnGain = true;
   bool disableSquiggle = false;
   bool disableAnimatedDuration = false;
   bool disableBlur = true;
@@ -126,17 +131,11 @@ class AppSettings {
     'genres',
   ];
   bool enableSlideGesture = false;
-  bool stopOnTaskRemoved = false;
+  bool stopOnTaskRemoved = true;
   bool persistQueue = true;
 
-  bool enableCrossfade = false;
-  int crossfadeLength = 150; // ms (100ms-15000ms)
-  int shortManualCrossfadeLength = 200; // ms (10ms-1000ms)
   bool fadePlayPauseStop = true;
   int playPauseStopFadeLength = 150; // ms (10ms-1000ms)
-  bool fadeOnSeek = false;
-  int seekFadeLength = 50; // ms (10ms-500ms)
-  int silenceBetweenTracks = 0; // ms (0ms-5000ms)
   bool resumeAfterCall = true;
   bool resumeOnStart = false;
   bool permanentAudioFocusChange = false;

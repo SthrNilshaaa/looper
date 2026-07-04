@@ -38,6 +38,13 @@ class AudioService {
     }
   }
 
+  Future<void> setStopOnTaskRemoved(bool value) async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _broadcastChannel.invokeMethod('setStopOnTaskRemoved', {'value': value});
+    } catch (_) {}
+  }
+
   // Callbacks for UI/Queue control bindings
   void Function()? onNext;
   void Function()? onPrevious;
@@ -158,6 +165,10 @@ class AudioService {
 
   void _initMediaSession({
     InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume,
+    bool requestFocusOnPlay = true,
+    bool releaseFocusOnPause = true,
+    bool stopOnOtherSession = true,
+    bool restartOnFocusGain = true,
   }) {
     player.setMediaSession(
       MediaSession(
@@ -177,14 +188,30 @@ class AudioService {
           MediaAction.setRepeatMode,
         },
         interruptionPolicy: interruptionPolicy,
+        requestFocusOnPlay: requestFocusOnPlay,
+        releaseFocusOnPause: releaseFocusOnPause,
+        stopOnOtherSession: stopOnOtherSession,
+        restartOnFocusGain: restartOnFocusGain,
       ),
     );
   }
 
   /// Call this when the audioFocus setting changes so the interruption
   /// policy is re-published to the native media session.
-  void applyAudioFocusPolicy(InterruptionPolicy interruptionPolicy) {
-    _initMediaSession(interruptionPolicy: interruptionPolicy);
+  void applyAudioFocusPolicy(
+    InterruptionPolicy interruptionPolicy, {
+    bool requestFocusOnPlay = true,
+    bool releaseFocusOnPause = true,
+    bool stopOnOtherSession = true,
+    bool restartOnFocusGain = true,
+  }) {
+    _initMediaSession(
+      interruptionPolicy: interruptionPolicy,
+      requestFocusOnPlay: requestFocusOnPlay,
+      releaseFocusOnPause: releaseFocusOnPause,
+      stopOnOtherSession: stopOnOtherSession,
+      restartOnFocusGain: restartOnFocusGain,
+    );
   }
 
   // Listen to media session command streams
@@ -330,6 +357,10 @@ class AudioService {
     bool? equalizerEnabled,
     String? customFilter,
     InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume,
+    bool requestFocusOnPlay = true,
+    bool releaseFocusOnPause = true,
+    bool stopOnOtherSession = true,
+    bool restartOnFocusGain = true,
   }) async {
     if (equalizerGains != null) {
       _lastEqualizerGains = equalizerGains;
@@ -397,6 +428,10 @@ class AudioService {
           MediaAction.setRepeatMode,
         },
         interruptionPolicy: policy,
+        requestFocusOnPlay: requestFocusOnPlay,
+        releaseFocusOnPause: releaseFocusOnPause,
+        stopOnOtherSession: stopOnOtherSession,
+        restartOnFocusGain: restartOnFocusGain,
       ),
     );
 
@@ -470,22 +505,46 @@ class AudioService {
     if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
     if (_lastEqualizerGains == null) return;
     _lastEqualizerGains![bandIndex] = gain;
-    _triggerThrottledEq(
-      _lastEqualizerGains!,
-      _equalizerEnabled,
-      _customFilterString,
-    );
+    try {
+      await player.updateAudioEffects((e) {
+        final List<double> bandsFreq = [
+          65, 92, 131, 185, 262, 370, 523, 740, 1000, 1400, 2000, 2900, 4100, 5900, 8300, 11700, 16600, 20000
+        ];
+        final List<double> bandsWidth = [
+          20, 30, 40, 60, 80, 110, 160, 220, 300, 420, 600, 850, 1200, 1750, 2500, 3500, 5000, 6000
+        ];
+        final List<AnequalizerBand> bands = [];
+        for (int i = 0; i < 18; i++) {
+          final freq = bandsFreq[i];
+          final width = bandsWidth[i];
+          final currentGain = _lastEqualizerGains![i].clamp(-20.0, 20.0);
+          bands.add(
+            AnequalizerBand(
+              frequency: freq,
+              bandwidth: width,
+              gain: currentGain,
+              type: AnequalizerBandType.butterworth,
+            ),
+          );
+        }
+        final anequalizer = AnequalizerSettings(
+          enabled: _equalizerEnabled,
+        ).withBands(bands, channels: 2);
+        return e.copyWith(
+          superequalizer: const SuperequalizerSettings(enabled: false),
+          anequalizer: anequalizer,
+        );
+      });
+    } catch (_) {}
   }
 
   Future<void> setLivePreamp(double preamp) async {
     if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
     if (_lastEqualizerGains == null) return;
     _lastEqualizerGains![18] = preamp;
-    _triggerThrottledEq(
-      _lastEqualizerGains!,
-      _equalizerEnabled,
-      _customFilterString,
-    );
+    try {
+      await player.setVolumeGain(_equalizerEnabled ? preamp.clamp(-12.0, 12.0) : 0.0);
+    } catch (_) {}
   }
 
   Future<void> setLiveCompressor({
@@ -615,68 +674,34 @@ class AudioService {
     // Helper conversion dB -> ratio multiplier (e.g. 10^(dB/20))
     double dBToMultiplier(double dB) => math.pow(10.0, dB / 20.0).toDouble();
 
-    // 1. 18-band peaking equalizer chain (using lavfi-equalizer) and Pre-amp volume in custom filters list
-    final customFilters = <String>[];
+    // 1. 18-band anequalizer settings
+    final List<double> bandsFreq = [
+      65, 92, 131, 185, 262, 370, 523, 740, 1000, 1400, 2000, 2900, 4100, 5900, 8300, 11700, 16600, 20000
+    ];
+    final List<double> bandsWidth = [
+      20, 30, 40, 60, 80, 110, 160, 220, 300, 420, 600, 850, 1200, 1750, 2500, 3500, 5000, 6000
+    ];
 
+    final List<AnequalizerBand> bands = [];
     if (enabled) {
-      final List<double> bandsFreq = [
-        65,
-        92,
-        131,
-        185,
-        262,
-        370,
-        523,
-        740,
-        1000,
-        1400,
-        2000,
-        2900,
-        4100,
-        5900,
-        8300,
-        11700,
-        16600,
-        20000,
-      ];
-      final List<double> bandsWidth = [
-        20,
-        30,
-        40,
-        60,
-        80,
-        110,
-        160,
-        220,
-        300,
-        420,
-        600,
-        850,
-        1200,
-        1750,
-        2500,
-        3500,
-        5000,
-        6000,
-      ];
       for (int i = 0; i < 18; i++) {
         final freq = bandsFreq[i];
         final width = bandsWidth[i];
         final gain = i < gains.length ? gains[i].clamp(-20.0, 20.0) : 0.0;
-        customFilters.add(
-          '@eq${i + 1}:lavfi-equalizer=f=$freq:width_type=h:width=$width:g=$gain',
+        bands.add(
+          AnequalizerBand(
+            frequency: freq,
+            bandwidth: width,
+            gain: gain,
+            type: AnequalizerBandType.butterworth,
+          ),
         );
       }
-      final double preamp = gains.length > 18
-          ? gains[18].clamp(-12.0, 12.0)
-          : 0.0;
-      customFilters.add('@preamp:lavfi-volume=volume=${preamp}dB');
-
-      // User arbitrary raw filter --af string
-      if (customFilter != null && customFilter.trim().isNotEmpty) {
-        customFilters.add(customFilter.trim());
-      }
     }
+
+    final anequalizer = AnequalizerSettings(
+      enabled: enabled,
+    ).withBands(bands, channels: 2);
 
     // 2. Dynamic Range Compressor
     final bool compEnabled =
@@ -811,13 +836,15 @@ class AudioService {
         enabled && (gains.length > 43 ? gains[43] == 1.0 : false);
     final surround = surroundEnabled ? SurroundSettings(enabled: true) : null;
 
-    AudioEffects buildEffects(String? resampler) {
-      final List<String> finalCustomFilters = List<String>.from(customFilters);
-      if (resampler != null) {
-        finalCustomFilters.add(resampler);
+    AudioEffects buildEffects() {
+      final List<String> finalCustomFilters = [];
+      if (customFilter != null && customFilter.trim().isNotEmpty) {
+        finalCustomFilters.add(customFilter.trim());
       }
       return AudioEffects(
         custom: finalCustomFilters,
+        superequalizer: const SuperequalizerSettings(enabled: false),
+        anequalizer: anequalizer,
         acompressor: compressor,
         loudnorm: loudnorm,
         crossfeed: crossfeed,
@@ -834,42 +861,17 @@ class AudioService {
     }
 
     bool success = false;
-    if (_resamplerProbed) {
-      try {
-        final resampler = _resolvedResamplerFilter == 'none'
-            ? null
-            : _resolvedResamplerFilter;
-        await player.setAudioEffects(buildEffects(resampler));
-        success = true;
-      } catch (e) {
-        _resamplerProbed = false;
-      }
-    }
-
-    if (!_resamplerProbed) {
-      // 1. Try primary (soxr)
-      try {
-        await player.setAudioEffects(buildEffects(_soxrFilter));
-        _resolvedResamplerFilter = _soxrFilter;
-        _resamplerProbed = true;
-        success = true;
-      } catch (e) {
-        // 2. Try secondary (swr)
-        try {
-          await player.setAudioEffects(buildEffects(_swrFilter));
-          _resolvedResamplerFilter = _swrFilter;
-          _resamplerProbed = true;
-          success = true;
-        } catch (e2) {
-          // 3. Try tertiary (no resampler filter)
-          try {
-            await player.setAudioEffects(buildEffects(null));
-            _resolvedResamplerFilter = 'none';
-            _resamplerProbed = true;
-            success = true;
-          } catch (e3) {}
-        }
-      }
+    try {
+      final double preamp = gains.length > 18
+          ? gains[18].clamp(-12.0, 12.0)
+          : 0.0;
+      await player.setVolumeGain(enabled ? preamp : 0.0);
+      await player.setAudioEffects(buildEffects());
+      _resolvedResamplerFilter = 'none';
+      _resamplerProbed = true;
+      success = true;
+    } catch (e) {
+      debugPrint("Failed to set audio effects: $e");
     }
 
     if (success) {

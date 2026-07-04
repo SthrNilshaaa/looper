@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
@@ -300,66 +301,31 @@ class CollectionDetailView extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        final settings = ref.read(settingsProvider);
-        final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
         final l10n = AppLocalizations.of(context)!;
-
-        Widget content = Container(
-          decoration: BoxDecoration(
-            color: useBlur ? Colors.transparent : const Color(0xFF161613),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+        return AppBottomSheetContainer(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.sortBy,
+                style: AppFonts.jostStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  l10n.sortBy,
-                  style: AppFonts.jostStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildSortItem(context, ref, l10n.sortDefault, CollectionSortOption.defaultOrder),
-                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, CollectionSortOption.titleAsc),
-                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, CollectionSortOption.titleDesc),
-                _buildSortItem(context, ref, l10n.sortArtistAsc, CollectionSortOption.artistAsc),
-                _buildSortItem(context, ref, l10n.sortAlbumAsc, CollectionSortOption.albumAsc),
-                _buildSortItem(context, ref, l10n.sortDuration, CollectionSortOption.duration),
-                _buildSortItem(context, ref, l10n.sortYearNewest, CollectionSortOption.yearNewest),
-                _buildSortItem(context, ref, l10n.sortYearOldest, CollectionSortOption.yearOldest),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              _buildSortItem(context, ref, l10n.sortDefault, CollectionSortOption.defaultOrder),
+              _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, CollectionSortOption.titleAsc),
+              _buildSortItem(context, ref, l10n.sortAlphabeticalZA, CollectionSortOption.titleDesc),
+              _buildSortItem(context, ref, l10n.sortArtistAsc, CollectionSortOption.artistAsc),
+              _buildSortItem(context, ref, l10n.sortAlbumAsc, CollectionSortOption.albumAsc),
+              _buildSortItem(context, ref, l10n.sortDuration, CollectionSortOption.duration),
+              _buildSortItem(context, ref, l10n.sortYearNewest, CollectionSortOption.yearNewest),
+              _buildSortItem(context, ref, l10n.sortYearOldest, CollectionSortOption.yearOldest),
+            ],
           ),
         );
-
-        if (useBlur) {
-          return PremiumSection(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-            useBlur: true,
-            useExpanded: false,
-            child: content,
-          );
-        }
-        return content;
       },
     );
   }

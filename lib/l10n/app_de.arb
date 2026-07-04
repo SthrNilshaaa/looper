@@ -334,5 +334,17 @@
   "useCustomFont": "Benutzerdefinierte Schriftart verwenden",
   "useCustomFontDesc": "Jost oder andere benutzerdefinierte Schriftarten verwenden. Andernfalls wird DM Sans verwendet.",
   "useCustomFontLyrics": "Benutzerdefinierte Liedtext-Schriftart",
-  "useCustomFontLyricsDesc": "Benutzerdefinierte Schriftart und -gewicht für die synchronisierte Liedtextansicht verwenden"
+  "useCustomFontLyricsDesc": "Benutzerdefinierte Schriftart und -gewicht für die synchronisierte Liedtextansicht verwenden",
+  "audioFocusGetFocus": "Get Focus",
+  "audioFocusGetFocusDesc": "Request audio focus when playback begins.",
+  "audioFocusReleaseFocus": "Release Focus",
+  "audioFocusReleaseFocusDesc": "Release audio focus when playback pauses or stops.",
+  "audioFocusStopOnOtherSession": "Stop Music on Other Music Session",
+  "audioFocusStopOnOtherSessionDesc": "Pause playback when another app starts playing audio.",
+  "audioFocusRestartOnGain": "Restart Music on Focus Gain",
+  "audioFocusRestartOnGainDesc": "Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.",
+  "shuffleTitle": "Shuffle",
+  "shuffleDisabledDesc": "Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.",
+  "shuffleEnabledDesc": "Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.",
+  "shuffleSwitchingDesc": "Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled."
 }

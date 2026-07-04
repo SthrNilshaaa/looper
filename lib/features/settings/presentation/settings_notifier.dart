@@ -74,23 +74,23 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         ];
         needsSave = true;
       }
-      if (settings.homeDarkness == 0.0 || settings.homeDarkness.isNaN) {
+      if (settings.homeDarkness.isNaN || (settings.homeDarkness == 0.0 && !settings.settingsV3)) {
         settings.homeDarkness = 0.72;
         needsSave = true;
       }
-      if (settings.songsDarkness == 0.0 || settings.songsDarkness.isNaN) {
+      if (settings.songsDarkness.isNaN || (settings.songsDarkness == 0.0 && !settings.settingsV3)) {
         settings.songsDarkness = 0.72;
         needsSave = true;
       }
-      if (settings.libraryDarkness == 0.0 || settings.libraryDarkness.isNaN) {
+      if (settings.libraryDarkness.isNaN || (settings.libraryDarkness == 0.0 && !settings.settingsV3)) {
         settings.libraryDarkness = 0.72;
         needsSave = true;
       }
-      if (settings.musicDarkness == 0.0 || settings.musicDarkness.isNaN) {
+      if (settings.musicDarkness.isNaN || (settings.musicDarkness == 0.0 && !settings.settingsV3)) {
         settings.musicDarkness = 0.62;
         needsSave = true;
       }
-      if (settings.lyricsDarkness == 0.0 || settings.lyricsDarkness.isNaN) {
+      if (settings.lyricsDarkness.isNaN || (settings.lyricsDarkness == 0.0 && !settings.settingsV3)) {
         settings.lyricsDarkness = 0.55;
         needsSave = true;
       }
@@ -222,6 +222,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..lastQueueSongIds = List.from(s.lastQueueSongIds)
       ..lastQueueIndex = s.lastQueueIndex
       ..volume = s.volume
+      ..lastPositionMs = s.lastPositionMs
       ..shuffle = s.shuffle
       ..repeatMode = s.repeatMode
       ..language = s.language
@@ -231,6 +232,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..dynamicLyrics = s.dynamicLyrics
       ..accentColor = s.accentColor
       ..audioFocus = s.audioFocus
+      ..audioFocusRequestOnPlay = s.audioFocusRequestOnPlay
+      ..audioFocusReleaseOnPause = s.audioFocusReleaseOnPause
+      ..audioFocusStopOnOtherSession = s.audioFocusStopOnOtherSession
+      ..audioFocusRestartOnGain = s.audioFocusRestartOnGain
       ..disableSquiggle = s.disableSquiggle
       ..disableAnimatedDuration = s.disableAnimatedDuration
       ..disableBlur = s.disableBlur
@@ -256,14 +261,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..enableSlideGesture = s.enableSlideGesture
       ..stopOnTaskRemoved = s.stopOnTaskRemoved
       ..persistQueue = s.persistQueue
-      ..enableCrossfade = s.enableCrossfade
-      ..crossfadeLength = s.crossfadeLength
-      ..shortManualCrossfadeLength = s.shortManualCrossfadeLength
       ..fadePlayPauseStop = s.fadePlayPauseStop
       ..playPauseStopFadeLength = s.playPauseStopFadeLength
-      ..fadeOnSeek = s.fadeOnSeek
-      ..seekFadeLength = s.seekFadeLength
-      ..silenceBetweenTracks = s.silenceBetweenTracks
       ..resumeAfterCall = s.resumeAfterCall
       ..resumeOnStart = s.resumeOnStart
       ..permanentAudioFocusChange = s.permanentAudioFocusChange
@@ -351,31 +350,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     });
     state = newState;
   }
-
-  Future<void> updateEnableCrossfade(bool value) async {
-    final newState = _clone(state)..enableCrossfade = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
-  Future<void> updateCrossfadeLength(int value) async {
-    final newState = _clone(state)..crossfadeLength = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
-  Future<void> updateShortManualCrossfadeLength(int value) async {
-    final newState = _clone(state)..shortManualCrossfadeLength = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
   Future<void> updateFadePlayPauseStop(bool value) async {
     final newState = _clone(state)..fadePlayPauseStop = value;
     await DbService.isar.writeTxn(() async {
@@ -391,31 +365,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     });
     state = newState;
   }
-
-  Future<void> updateFadeOnSeek(bool value) async {
-    final newState = _clone(state)..fadeOnSeek = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
-  Future<void> updateSeekFadeLength(int value) async {
-    final newState = _clone(state)..seekFadeLength = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
-  Future<void> updateSilenceBetweenTracks(int value) async {
-    final newState = _clone(state)..silenceBetweenTracks = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
   Future<void> updateResumeAfterCall(bool value) async {
     final newState = _clone(state)..resumeAfterCall = value;
     await DbService.isar.writeTxn(() async {
@@ -543,6 +492,38 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = newState;
   }
 
+  Future<void> updateAudioFocusRequestOnPlay(bool enabled) async {
+    final newState = _clone(state)..audioFocusRequestOnPlay = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAudioFocusReleaseOnPause(bool enabled) async {
+    final newState = _clone(state)..audioFocusReleaseOnPause = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAudioFocusStopOnOtherSession(bool enabled) async {
+    final newState = _clone(state)..audioFocusStopOnOtherSession = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAudioFocusRestartOnGain(bool enabled) async {
+    final newState = _clone(state)..audioFocusRestartOnGain = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
   Future<void> updateDynamicTheming(bool enabled) async {
     final newState = _clone(state)..enableDynamicTheming = enabled;
     if (!enabled) {
@@ -604,12 +585,20 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> updateLastQueueState(
     List<int> queueIds,
     int index,
-    int? lastSongId,
-  ) async {
+    int? lastSongId, {
+    int? positionMs,
+  }) async {
     final newState = _clone(state)
       ..lastQueueSongIds = queueIds
       ..lastQueueIndex = index
-      ..lastPlayedSongId = lastSongId;
+      ..lastPlayedSongId = lastSongId
+      ..lastPositionMs = positionMs ?? 0;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateLastPosition(int positionMs) async {
+    final newState = _clone(state)..lastPositionMs = positionMs;
     await _save(newState);
     state = newState;
   }

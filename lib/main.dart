@@ -141,15 +141,15 @@ class MyApp extends ConsumerWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) {
-          final showPerformanceOptimizer = settings?.showPerformanceOptimizer ?? false;
-          return PerformanceOptimizer(
-            enabled: showPerformanceOptimizer,
-            showDashboard: showPerformanceOptimizer,
-            enableInReleaseMode: true,
-            child: child!,
-          );
-        },
+        // builder: (context, child) {
+        //   final showPerformanceOptimizer = settings?.showPerformanceOptimizer ?? false;
+        //   return PerformanceOptimizer(
+        //     enabled: showPerformanceOptimizer,
+        //     showDashboard: showPerformanceOptimizer,
+        //     enableInReleaseMode: true,
+        //     child: child!,
+        //   );
+        // },
         home: buildHome(),
       );
     }

@@ -3,51 +3,60 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 import 'package:looper_player/core/app_fonts.dart';
 
 import 'package:looper_player/l10n/app_localizations.dart';
 
-class QueueBottomSheet extends ConsumerWidget {
+class QueueBottomSheet extends ConsumerStatefulWidget {
   const QueueBottomSheet({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<QueueBottomSheet> createState() => _QueueBottomSheetState();
+}
+
+class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
+  String? _initialSongPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _initialSongPath = ref.read(playbackProvider).currentSong?.path;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final queue = ref.watch(playbackProvider.select((s) => s.queue));
     final currentSongPath = ref.watch(playbackProvider.select((s) => s.currentSong?.path));
+    final settings = ref.watch(settingsProvider);
+    final accentColor = Color(settings.accentColor);
     final l10n = AppLocalizations.of(context)!;
 
-    // Rotate the queue list so that the current song is at the top
-    final currentIdx = queue.indexWhere((s) => s.path == currentSongPath);
+    // Rotate the queue list so that the initial song is at the top,
+    // preventing list items from jumping around while the sheet is open.
+    final rotationIdx = _initialSongPath != null
+        ? queue.indexWhere((s) => s.path == _initialSongPath)
+        : -1;
+
     final List<Song> displayedQueue;
-    if (currentIdx != -1) {
+    if (rotationIdx != -1) {
       displayedQueue = [
-        ...queue.sublist(currentIdx),
-        ...queue.sublist(0, currentIdx),
+        ...queue.sublist(rotationIdx),
+        ...queue.sublist(0, rotationIdx),
       ];
     } else {
       displayedQueue = List.from(queue);
     }
 
-    return Container(
+    return AppBottomSheetContainer(
       height: MediaQuery.of(context).size.height * 0.75,
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainer,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+      padding: EdgeInsets.zero,
       child: Column(
         children: [
-          const SizedBox(height: 12),
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[600],
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -71,18 +80,19 @@ class QueueBottomSheet extends ConsumerWidget {
               buildDefaultDragHandles: false,
               itemCount: displayedQueue.length,
               onReorder: (oldIndex, newIndex) {
-                if (newIndex == 0) newIndex = 1;
                 ref
                     .read(playbackProvider.notifier)
-                    .reorderQueue(oldIndex, newIndex);
+                    .reorderQueue(oldIndex, newIndex, rotationSongPath: _initialSongPath);
               },
               itemBuilder: (context, index) {
                 final song = displayedQueue[index];
                 final isCurrent = currentSongPath == song.path;
-                final originalIndex = queue.indexWhere((s) => s.path == song.path);
+                final absoluteIndex = rotationIdx != -1
+                    ? (rotationIdx + index) % queue.length
+                    : index;
 
                 return Material(
-                  key: ValueKey('queue_sheet_${song.path}_$index'),
+                  key: ValueKey('queue_sheet_${song.path}_$absoluteIndex'),
                   color: Colors.transparent,
                   child: ListTile(
                     leading: ClipRRect(
@@ -97,7 +107,7 @@ class QueueBottomSheet extends ConsumerWidget {
                     title: Text(
                       song.title,
                       style: AppFonts.jostStyle(
-                        color: isCurrent ? Colors.yellow[200] : Colors.white,
+                        color: isCurrent ? accentColor : Colors.white,
                         fontWeight: isCurrent
                             ? FontWeight.bold
                             : FontWeight.normal,
@@ -115,9 +125,9 @@ class QueueBottomSheet extends ConsumerWidget {
                         ? Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 LucideIcons.volume2,
-                                color: Colors.yellow,
+                                color: accentColor,
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
@@ -130,7 +140,7 @@ class QueueBottomSheet extends ConsumerWidget {
                                 onPressed: () {
                                   ref
                                       .read(playbackProvider.notifier)
-                                      .removeFromQueue(originalIndex);
+                                      .removeFromQueue(absoluteIndex);
                                 },
                               ),
                             ],
@@ -147,7 +157,7 @@ class QueueBottomSheet extends ConsumerWidget {
                                 onPressed: () {
                                   ref
                                       .read(playbackProvider.notifier)
-                                      .removeFromQueue(originalIndex);
+                                      .removeFromQueue(absoluteIndex);
                                 },
                               ),
                               ReorderableDragStartListener(
@@ -160,7 +170,7 @@ class QueueBottomSheet extends ConsumerWidget {
                             ],
                           ),
                     onTap: () {
-                      ref.read(playbackProvider.notifier).playAtIndex(originalIndex);
+                      ref.read(playbackProvider.notifier).playAtIndex(absoluteIndex);
                     },
                   ),
                 );

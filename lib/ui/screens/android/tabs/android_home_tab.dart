@@ -157,19 +157,26 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 46,
-              backgroundColor: Colors.white.withValues(alpha: 0.05),
-              backgroundImage: artist.artistImageUrl != null
-                  ? FileImage(File(artist.artistImageUrl!))
-                  : null,
-              child: artist.artistImageUrl == null
-                  ? const Icon(
-                      LucideIcons.user,
-                      size: 28,
-                      color: Colors.white38,
-                    )
-                  : null,
+            SizedBox(
+              width: 92,
+              height: 92,
+              child: ClipOval(
+                child: OptimizedImage(
+                  imageUrl: artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : null,
+                  imagePath: artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : artist.artPath,
+                  fit: BoxFit.cover,
+                  placeholder: Container(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    child: const Center(
+                      child: Icon(
+                        LucideIcons.user,
+                        size: 28,
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
@@ -468,7 +475,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
         break;
     }
 
-    if (library.isScanning && library.songs.isEmpty) {
+    if (!library.isInitialized || (library.isScanning && library.songs.isEmpty)) {
       return const PremiumLoadingView();
     }
 
@@ -485,6 +492,9 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
     // Sort songs by date added (newest first)
     final dateAddedSongs = List<Song>.from(library.songs);
     dateAddedSongs.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+
+    final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
+
 
     final orderedSlivers = <Widget>[
       SliverToBoxAdapter(
@@ -503,7 +513,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                 width: 48,
                 height: 48,
                 useExpanded: false,
-                useBlur: true,
+                useBlur: useBlur,
+                forceNoBlur: true,
                 onTap: () {
                   HapticFeedback.lightImpact();
                   ref
@@ -517,14 +528,14 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                 ),
               ),
               //const SizedBox(width: 4),
-               Text(
-                              "Looper Player",
-                              style: AppFonts.jostStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+              //  Text(
+              //                 "Looper Player",
+              //                 style: AppFonts.jostStyle(
+              //                   color: Colors.white,
+              //                   fontSize: 24,
+              //                   fontWeight: FontWeight.bold,
+              //                 ),
+              //               ),
               PremiumSection(
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(10),
@@ -535,7 +546,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                 width: 48,
                 height: 48,
                 useExpanded: false,
-                useBlur: true,
+                useBlur: useBlur,
+                forceNoBlur: true,
                 onTap: () {
                   HapticFeedback.lightImpact();
                   ref
@@ -592,7 +604,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     ),
                     height: 40,
                     useExpanded: false,
-                    useBlur: true,
+                    useBlur: useBlur,
+                    forceNoBlur: true,
                     onTap: () {
                       if (allQuickPicks.isNotEmpty) {
                         HapticFeedback.mediumImpact();
@@ -820,7 +833,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     ),
                     height: 40,
                     useExpanded: false,
-                    useBlur: true,
+                    useBlur: useBlur,
+                    forceNoBlur: true,
                     onTap: () {
                       HapticFeedback.lightImpact();
                       ref

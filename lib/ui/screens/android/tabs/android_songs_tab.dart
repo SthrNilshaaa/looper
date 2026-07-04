@@ -74,7 +74,7 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
     final song = ref.watch(playbackProvider.select((s) => s.currentSong));
     final l10n = AppLocalizations.of(context)!;
     
-    if (library.isScanning && library.songs.isEmpty) {
+    if (!library.isInitialized || (library.isScanning && library.songs.isEmpty)) {
       return const PremiumLoadingView();
     }
 

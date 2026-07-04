@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +16,7 @@ import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 
 import 'widgets/settings_widgets.dart';
 import 'widgets/settings_dialogs.dart';
@@ -52,36 +55,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       barrierColor: Colors.black54,
       builder: (context) {
         const coffeeUrl = 'https://buymeacoffee.com/sthrnilshaaa';
-        final settings = ref.read(settingsProvider);
         final l10n = AppLocalizations.of(context)!;
 
-        Widget dialogContent = Container(
-          decoration: BoxDecoration(
-            color: useBlur ? Colors.transparent : const Color(0xFF0F0F0C),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.05),
-              width: 1,
-            ),
-          ),
+        return AppBottomSheetContainer(
           padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 24),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 24),
                 const _PulsingHeart(),
                 const SizedBox(height: 16),
                 Text(
@@ -157,19 +139,6 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             ),
           ),
         );
-
-        if (useBlur) {
-          return PremiumSection(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(30),
-              topRight: Radius.circular(30),
-            ),
-            useBlur: true,
-            useExpanded: false,
-            child: dialogContent,
-          );
-        }
-        return dialogContent;
       },
     ).whenComplete(() {
       ref.read(supportUsSheetVisibleProvider.notifier).state = false;
@@ -710,14 +679,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           ),
         ],
       ],
-      if (!settings.enableDynamicTheming)
+      //if (!settings.enableDynamicTheming)
         SettingsSearchItem(
           title: l10n.dynamicLyricsBg,
           subtitle: l10n.dynamicBgOnlyLyrics,
           category: l10n.theme,
           widget: const DynamicLyricsBgTile(),
         ),
-      if (!settings.enableDynamicTheming && !settings.dynamicLyrics)
+      if ( !settings.dynamicLyrics)
         SettingsSearchItem(
           title: 'Blurred Artwork for Lyrics',
           subtitle:
@@ -889,45 +858,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           category: l10n.audioPlayback,
           widget: const FadeDurationSlider(),
         ),
-      SettingsSearchItem(
-        title: l10n.fadeOnSeek,
-        subtitle: l10n.fadeOnSeekDesc,
-        category: l10n.audioPlayback,
-        widget: const FadeOnSeekTile(),
-      ),
-      if (settings.fadeOnSeek)
-        SettingsSearchItem(
-          title: l10n.seekFadeDuration,
-          subtitle: l10n.seekFadeDurationDesc,
-          category: l10n.audioPlayback,
-          widget: const SeekFadeDurationSlider(),
-        ),
-      SettingsSearchItem(
-        title: l10n.audioCrossfade,
-        subtitle: l10n.audioCrossfadeDesc,
-        category: l10n.audioPlayback,
-        widget: const AudioCrossfadeTile(),
-      ),
-      if (settings.enableCrossfade) ...[
-        SettingsSearchItem(
-          title: l10n.autoCrossfadeDuration,
-          subtitle: l10n.autoCrossfadeDurationDesc,
-          category: l10n.audioPlayback,
-          widget: const AutoCrossfadeDurationSlider(),
-        ),
-        SettingsSearchItem(
-          title: l10n.manualCrossfadeDuration,
-          subtitle: l10n.manualCrossfadeDurationDesc,
-          category: l10n.audioPlayback,
-          widget: const ManualCrossfadeDurationSlider(),
-        ),
-      ],
-      SettingsSearchItem(
-        title: l10n.silenceBetweenTracksTitle,
-        subtitle: l10n.silenceBetweenTracksDesc,
-        category: l10n.audioPlayback,
-        widget: const SilenceBetweenTracksSlider(),
-      ),
+
       SettingsSearchItem(
         title: l10n.manageAudioFocusTitle,
         subtitle: l10n.manageAudioFocusDesc,
@@ -936,10 +867,28 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       if (settings.audioFocus) ...[
         SettingsSearchItem(
-          title: l10n.resumeAfterCallTitle,
-          subtitle: l10n.resumeAfterCallDesc,
+          title: l10n.audioFocusGetFocus,
+          subtitle: l10n.audioFocusGetFocusDesc,
           category: l10n.audioPlayback,
-          widget: const ResumeAfterCallTile(),
+          widget: const AudioFocusRequestOnPlayTile(),
+        ),
+        SettingsSearchItem(
+          title: l10n.audioFocusReleaseFocus,
+          subtitle: l10n.audioFocusReleaseFocusDesc,
+          category: l10n.audioPlayback,
+          widget: const AudioFocusReleaseOnPauseTile(),
+        ),
+        SettingsSearchItem(
+          title: l10n.audioFocusStopOnOtherSession,
+          subtitle: l10n.audioFocusStopOnOtherSessionDesc,
+          category: l10n.audioPlayback,
+          widget: const AudioFocusStopOnOtherSessionTile(),
+        ),
+        SettingsSearchItem(
+          title: l10n.audioFocusRestartOnGain,
+          subtitle: l10n.audioFocusRestartOnGainDesc,
+          category: l10n.audioPlayback,
+          widget: const AudioFocusRestartOnGainTile(),
         ),
         SettingsSearchItem(
           title: l10n.resumeOnStartTitle,
@@ -947,13 +896,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           category: l10n.audioPlayback,
           widget: const ResumeOnStartTile(),
         ),
-        SettingsSearchItem(
-          title: l10n.permanentFocusChangePause,
-          subtitle: l10n.permanentFocusChangePauseDesc,
-          category: l10n.audioPlayback,
-          widget: const PermanentAudioFocusChangeTile(),
-        ),
       ],
+      SettingsSearchItem(
+        title: l10n.shuffleTitle,
+        subtitle: l10n.shuffleSwitchingDesc,
+        category: l10n.audioPlayback,
+        widget: const ShuffleTile(),
+      ),
       SettingsSearchItem(
         title: l10n.persistQueueTitle,
         subtitle: l10n.persistQueueDesc,
@@ -1040,14 +989,12 @@ class SettingsCategoryScreen extends ConsumerWidget {
             const CustomAccentColorTile(),
           ],
         ],
-        if (!settings.enableDynamicTheming) ...[
+       // if (!settings.enableDynamicTheming) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const DynamicLyricsBgTile(),
-        ],
-        if (!settings.enableDynamicTheming && !settings.dynamicLyrics) ...[
+       // ],
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const BlurredArtworkLyricsTile(),
-        ],
         if (settings.enableDynamicTheming || settings.dynamicLyrics) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const DynamicColorActiveLyricsTile(),
@@ -1102,6 +1049,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const LyricsDarknessSlider(),
         ],
+        //const PerformanceOptimizerTile(),
       ];
     } else if (categoryId == 'dashboard') {
       children = [
@@ -1132,33 +1080,24 @@ class SettingsCategoryScreen extends ConsumerWidget {
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const FadeDurationSlider(),
         ],
+
         const Divider(height: 1, indent: 72, color: Colors.white10),
-        const FadeOnSeekTile(),
-        if (settings.fadeOnSeek) ...[
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const SeekFadeDurationSlider(),
-        ],
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        const AudioCrossfadeTile(),
-        if (settings.enableCrossfade) ...[
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const AutoCrossfadeDurationSlider(),
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const ManualCrossfadeDurationSlider(),
-        ],
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        const SilenceBetweenTracksSlider(),
+        const ShuffleTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const PersistQueueTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const ManageAudioFocusTile(),
         if (settings.audioFocus) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
-          const ResumeAfterCallTile(),
+          const AudioFocusRequestOnPlayTile(),
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const AudioFocusReleaseOnPauseTile(),
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const AudioFocusStopOnOtherSessionTile(),
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const AudioFocusRestartOnGainTile(),
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const ResumeOnStartTile(),
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const PermanentAudioFocusChangeTile(),
         ],
       ];
     } else if (categoryId == 'library') {
@@ -1188,7 +1127,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
         ),
         const Divider(height: 1, indent: 72, color: Colors.white10), //6
         AboutMaintainerRow( //7
-          name: 'Karan Suthar',
+          name: 'Krn.',
           role: l10n.designerAndMaintainer,
           avatar: 'assets/about/designer_avatar.png',
           github: 'https://github.com/sthrkaran',
@@ -1317,7 +1256,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                           child: Row(
                             children: [
                               SvgPicture.asset(
-                                'assets/main_logo.svg',
+                                'assets/main_logo_transparent.svg',
                                 height: 36,
                                 fit: BoxFit.contain,
                               ),
@@ -1412,7 +1351,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                           useExpanded: false,
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Column(
-                            children: children.sublist(4,9), //.sublist(2, 5),
+                            children: children.sublist(4,7), //.sublist(2, 5),
                           ),
                         ),
                         const SizedBox(height: 32),

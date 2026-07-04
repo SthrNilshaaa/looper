@@ -22,15 +22,6 @@ class PlayerBar extends ConsumerWidget {
     final song = ref.watch(playbackProvider.select((s) => s.currentSong));
     if (song == null) return const SizedBox.shrink();
 
-    // Hide bar when the song was only restored from DB on startup but the user
-    // hasn't started playback yet (resumeOnStart = false). Once the user presses
-    // play, isRestoredSession is cleared and the bar becomes visible.
-    final isRestoredSession = ref.watch(
-      playbackProvider.select((s) => s.isRestoredSession),
-    );
-    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
-    if (isRestoredSession && !isPlaying) return const SizedBox.shrink();
-
     return const _PremiumPlayerBar();
   }
 }

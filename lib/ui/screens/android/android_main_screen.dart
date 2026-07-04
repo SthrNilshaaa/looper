@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/core/navigation_provider.dart';
@@ -53,6 +54,11 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
   void initState() {
     super.initState();
     _requestNotificationPermissionIfNeeded();
+    
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await ref.read(settingsProvider.notifier).initialization;
+      ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
+    });
   }
 
   Future<void> _requestNotificationPermissionIfNeeded() async {
@@ -208,7 +214,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
               : rootItem == NavItem.library
                   ? settings.libraryDarkness
                   : 0.72;
-      return (val.isNaN || val == 0.0) ? 0.72 : val;
+      return val.isNaN ? 0.72 : val;
     }();
 
     final isSetupComplete = isWelcomeBypassed ||

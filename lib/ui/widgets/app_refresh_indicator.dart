@@ -143,8 +143,8 @@ class _AppRefreshIndicatorState extends State<AppRefreshIndicator> with TickerPr
   @override
   Widget build(BuildContext context) {
     final indicatorY = _isRefreshing 
-        ? 20.0 
-        : (_dragOffset * 0.7 ).clamp(20.0, 60.0); // smooth dampening
+        ? 10.0 
+        : (_dragOffset * 0.7 ).clamp(1.0, 10.0); // smooth dampening
 
     return NotificationListener<ScrollNotification>(
       onNotification: _handleScrollNotification,

@@ -6,6 +6,7 @@ import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
@@ -363,22 +364,14 @@ class _SongResultCard extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: song.artPath != null
-                              ? DecorationImage(
-                                  image: FileImage(File(song.artPath!)),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                          color: Colors.white10,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: OptimizedImage(
+                          imagePath: song.artPath,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
                         ),
-                        child: song.artPath == null
-                            ? const Icon(LucideIcons.music, size: 32)
-                            : null,
                       ),
                       const SizedBox(width: 20),
                       Expanded(
@@ -497,22 +490,14 @@ class _SongResultCard extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: song.artPath != null
-                              ? DecorationImage(
-                                  image: FileImage(File(song.artPath!)),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                          color: Colors.white10,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: OptimizedImage(
+                          imagePath: song.artPath,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
                         ),
-                        child: song.artPath == null
-                            ? const Icon(LucideIcons.music, size: 32)
-                            : null,
                       ),
                       const SizedBox(width: 20),
                       Expanded(
@@ -732,23 +717,22 @@ class _AlbumResultCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            SizedBox(
+              width: 120,
               height: 120,
-              decoration: BoxDecoration(
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                image: album.artPath != null
-                    ? DecorationImage(
-                        image: FileImage(File(album.artPath!)),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-                color: Colors.grey.withValues(alpha: 
-                  ref.watch(settingsProvider).enableDynamicTheming ? 0.8 : 0.1,
+                child: OptimizedImage(
+                  imagePath: album.artPath,
+                  fit: BoxFit.cover,
+                  placeholder: Container(
+                    color: Colors.grey.withValues(alpha:
+                      ref.watch(settingsProvider).enableDynamicTheming ? 0.8 : 0.1,
+                    ),
+                    child: const Center(child: Icon(LucideIcons.music)),
+                  ),
                 ),
               ),
-              child: album.artPath == null
-                  ? const Center(child: Icon(LucideIcons.music))
-                  : null,
             ),
             const SizedBox(height: 8),
             Text(
