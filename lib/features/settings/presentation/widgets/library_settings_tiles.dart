@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'settings_dialogs.dart';
@@ -17,10 +18,7 @@ class AddFolderTile extends ConsumerWidget {
       leading: const Icon(LucideIcons.plus, color: Colors.white70),
       title: Text(
         l10n.addFolder,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       trailing: const Icon(
         LucideIcons.chevronRight,
@@ -48,10 +46,7 @@ class SyncLyricsOfflineTile extends ConsumerWidget {
       leading: const Icon(LucideIcons.downloadCloud, color: Colors.white70),
       title: Text(
         l10n.syncLyricsOffline,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       trailing: const Icon(
         LucideIcons.chevronRight,
@@ -79,10 +74,7 @@ class RescanLibraryTile extends ConsumerWidget {
       leading: const Icon(LucideIcons.refreshCcw, color: Colors.white70),
       title: Text(
         l10n.rescanLibrary,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       trailing: const Icon(
         LucideIcons.chevronRight,
@@ -110,7 +102,7 @@ class ResetLibraryTile extends ConsumerWidget {
       leading: const Icon(LucideIcons.trash2, color: Colors.redAccent),
       title: Text(
         l10n.resetLibrary,
-        style: const TextStyle(
+        style: AppFonts.jostStyle(
           color: Colors.redAccent,
           fontWeight: FontWeight.w600,
         ),
@@ -127,3 +119,9 @@ class ResetLibraryTile extends ConsumerWidget {
     );
   }
 }
+
+TextStyle _tileTitleStyle() => AppFonts.jostStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w500,
+    );
+

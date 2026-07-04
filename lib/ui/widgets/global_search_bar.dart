@@ -115,10 +115,9 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                 },
                 decoration: InputDecoration(
                   hintText: l10n.searchSongsHint,
-                  hintStyle: TextStyle(
+                  hintStyle: AppFonts.jostStyle(
                     color: Colors.white.withValues(alpha: 0.5),
                     fontSize: 14,
-                    fontFamily: AppFonts.jost,
                   ),
                   prefixIcon: SizedBox(
                     width: 50,
@@ -158,7 +157,7 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: AppFonts.jostStyle(color: Colors.white, fontSize: 14),
                 canRequestFocus: true,
               ),
             );

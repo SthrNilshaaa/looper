@@ -20,8 +20,8 @@ class AppIcons {
   static const String lyrics = '${_base}lyrics_button_icon.svg';
 
   // Common Actions
-  static const String like = '${_base}liked.svg';
-  static const String unlike = '${_base}unliked.svg';
+  static const String like = '${_base}liked_icon.svg';
+  static const String unlike = '${_base}liked_icon.svg';
   static const String heart = '${_base}liked_icon.svg';
   static const String more = '${_base}menu_button_icon.svg'; // more/menu
   static const String back = '${_base}left_arrow_icon.svg';

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:media_kit/media_kit.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
@@ -12,6 +12,7 @@ import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_performance_optimizer/flutter_performance_optimizer.dart';
 
 import 'core/db_service.dart';
+import 'core/app_fonts.dart';
 import 'ui/screens/home_screen.dart';
 
 import 'package:metadata_god/metadata_god.dart';
@@ -22,6 +23,7 @@ import 'package:local_notifier/local_notifier.dart';
 
 final dbInitializerProvider = FutureProvider<void>((ref) async {
   await DbService.init();
+  await ref.read(settingsProvider.notifier).initialization;
 });
 
 void main(List<String> args) async {
@@ -36,8 +38,8 @@ void main(List<String> args) async {
   // Initialize MetadataGod
   MetadataGod.initialize();
 
-  // Initialize MediaKit
-  MediaKit.ensureInitialized();
+  // Initialize MpvAudioKit
+  MpvAudioKit.ensureInitialized();
 
   // Initialize Window Manager
   if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
@@ -59,7 +61,7 @@ void main(List<String> args) async {
   try {
     await FlutterDisplayMode.setHighRefreshRate();
   } catch (e) {
-    debugPrint('Error setting high refresh rate: $e');
+
   }
 
   runApp(
@@ -76,30 +78,46 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dbInit = ref.watch(dbInitializerProvider);
+    final isInitialized = dbInit.asData != null;
 
-    return dbInit.when(
-      data: (_) => const MainApp(),
-      loading: () => const PreAppLoadingScreen(),
-      error: (err, stack) => MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark(),
-        home: Scaffold(
+    final themeState = isInitialized ? ref.watch(themeProvider) : null;
+    final settings = isInitialized ? ref.watch(settingsProvider) : null;
+
+    Widget buildHome() {
+      return dbInit.when(
+        data: (_) => KeyboardHandler(
+          key: ValueKey('${settings!.useNewFont}_${settings.customFontFamily}_${settings.customFontWeightDelta}_${settings.useNewFontLyrics}_${settings.customFontFamilyLyrics}_${settings.customFontWeightLyricsDelta}'),
+          child: const HomeScreen(),
+        ),
+        loading: () => const PreAppLoadingScreenContent(),
+        error: (err, stack) => Scaffold(
           body: Center(
             child: Text('Error initializing database: $err'),
           ),
         ),
+      );
+    }
+
+    // Build the MaterialApp using either dynamic/loaded settings or fallback values.
+    final ColorScheme colorScheme = (themeState != null)
+        ? themeState.colorScheme
+        : ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.dark);
+
+    final bool useNewFont = settings?.useNewFont ?? false;
+    final String customFontFamily = settings?.customFontFamily ?? '';
+    final int customFontWeightDelta = settings?.customFontWeightDelta ?? 0;
+    final String language = settings?.language ?? '';
+
+    final String fontFamily = useNewFont ? (customFontFamily.isEmpty ? 'Jost' : customFontFamily) : 'DM Sans';
+
+    final textTheme = AppFonts.adjustTextTheme(
+      ThemeData.dark().textTheme.apply(
+        fontFamily: fontFamily,
+        displayColor: Colors.white,
+        bodyColor: Colors.white70,
       ),
+      useNewFont ? customFontWeightDelta : 0,
     );
-  }
-}
-
-class MainApp extends ConsumerWidget {
-  const MainApp({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final themeState = ref.watch(themeProvider);
-    final settings = ref.watch(settingsProvider);
 
     Widget buildMaterialApp(ColorScheme colorScheme) {
       return MaterialApp(
@@ -110,16 +128,12 @@ class MainApp extends ConsumerWidget {
         theme: ThemeData(
           useMaterial3: true,
           colorScheme: colorScheme,
-          fontFamily: settings.useNewFont ? (settings.customFontFamily.isEmpty ? 'Jost' : settings.customFontFamily) : 'DM Sans',
-          textTheme: ThemeData.dark().textTheme.apply(
-            fontFamily: settings.useNewFont ? (settings.customFontFamily.isEmpty ? 'Jost' : settings.customFontFamily) : 'DM Sans',
-            displayColor: Colors.white,
-            bodyColor: Colors.white70,
-          ),
+          fontFamily: fontFamily,
+          textTheme: textTheme,
         ),
         themeAnimationDuration: const Duration(milliseconds: 1000),
         themeAnimationCurve: Curves.easeInOut,
-        locale: settings.language.isEmpty || settings.language == 'system' ? null : Locale(settings.language),
+        locale: language.isEmpty || language == 'system' ? null : Locale(language),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -127,95 +141,39 @@ class MainApp extends ConsumerWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) {
-          return PerformanceOptimizer(
-            enabled: settings.showPerformanceOptimizer,
-            showDashboard: settings.showPerformanceOptimizer,
-            enableInReleaseMode: true,
-            child: child!,
-          );
-        },
-        home: const KeyboardHandler(child: HomeScreen()),
+        // builder: (context, child) {
+        //   final showPerformanceOptimizer = settings?.showPerformanceOptimizer ?? false;
+        //   return PerformanceOptimizer(
+        //     enabled: showPerformanceOptimizer,
+        //     showDashboard: showPerformanceOptimizer,
+        //     enableInReleaseMode: true,
+        //     child: child!,
+        //   );
+        // },
+        home: buildHome(),
       );
     }
 
-    if (!settings.enableDynamicTheming) {
-      return buildMaterialApp(themeState.colorScheme);
+    if (settings == null || !settings.enableDynamicTheming) {
+      return buildMaterialApp(colorScheme);
     }
 
-    // When dynamic theming is enabled, we use the extracted album colors
-    // We can also wrap in DynamicColorBuilder if we want system fallback
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
-        // If themeState.isDynamic is false (no song playing), we could fallback to system
-        return buildMaterialApp(themeState.colorScheme);
+        return buildMaterialApp(colorScheme);
       },
     );
   }
 }
 
-class PreAppLoadingScreen extends StatelessWidget {
-  const PreAppLoadingScreen({super.key});
+class PreAppLoadingScreenContent extends StatelessWidget {
+  const PreAppLoadingScreenContent({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: Scaffold(
-        backgroundColor: const Color(0xFF0F0F0C),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.02),
-                borderRadius: BorderRadius.circular(30),
-                border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  width: 1,
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    width: 300,
-                    height: 250,
-                    child: Lottie.asset(
-                      'assets/loading.json',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'LOOPER PLAYER',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      letterSpacing: 3.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Initializing System...',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.35),
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
+    return const Scaffold(
+      backgroundColor: Color(0xFF0F0F0C),
+      body: SizedBox.shrink(),
     );
   }
 }

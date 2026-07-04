@@ -1,558 +1,462 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'dart:io';
-import 'package:media_kit/media_kit.dart';
-import 'package:dbus/dbus.dart';
-import 'mpris.dart';
-import 'package:audio_service/audio_service.dart' as asrv;
-import 'package:audio_session/audio_session.dart' as asrv_sess;
-import 'audio_handler.dart';
-import 'db_service.dart';
-import 'package:looper_player/features/library/domain/models/models.dart';
-import 'package:looper_player/core/providers.dart';
-import 'package:looper_player/l10n/app_localizations.dart';
+import 'dart:convert';
+import 'dart:async';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:mpv_audio_kit/mpv_audio_kit.dart';
+import 'dart:math' as math;
 
 class AudioService {
   late final Player player;
-  late final Player player2;
-  MPRISPlayer? _mprisPlayer;
-  DBusClient? _dBusClient;
-  MyAudioHandler? _audioHandler;
-  bool _playOnInterruptionEnd = false;
-  bool _pausedByCall = false;
+  List<double>? _lastEqualizerGains;
+  bool _equalizerEnabled = false;
+  String? _customFilterString;
+
+  Timer? _liveEqThrottleTimer;
+  List<double>? _throttledGains;
+  bool _throttledEnabled = false;
+  String? _throttledCustomFilter;
+
+  // True between `play()` call and first non-empty playlist event — used
+  // to trigger a deferred EQ application once FILE_LOADED populates items.
+  bool _pendingEqApply = false;
+
+  static String? _resolvedResamplerFilter;
+  static bool _resamplerProbed = false;
 
   static const _broadcastChannel = MethodChannel('com.looper.player/broadcast');
 
   Future<bool> isOnCall() async {
     if (!Platform.isAndroid) return false;
     try {
-      final bool? result = await _broadcastChannel.invokeMethod<bool>('isOnCall');
+      final bool? result = await _broadcastChannel.invokeMethod<bool>(
+        'isOnCall',
+      );
       return result ?? false;
     } catch (e) {
-      debugPrint('Error checking call state: $e');
       return false;
     }
   }
 
-  // Callbacks for controls
+  Future<void> setStopOnTaskRemoved(bool value) async {
+    if (!Platform.isAndroid) return;
+    try {
+      await _broadcastChannel.invokeMethod('setStopOnTaskRemoved', {'value': value});
+    } catch (_) {}
+  }
+
+  // Callbacks for UI/Queue control bindings
   void Function()? onNext;
   void Function()? onPrevious;
   void Function(Duration)? onSeek;
   void Function()? onFavoriteToggle;
   void Function()? onShuffleToggle;
+  void Function()? onRepeatToggle;
   void Function()? onPlay;
   void Function()? onPause;
   void Function()? onPlayPause;
 
   AudioService() {
-    player = Player(
-      configuration: const PlayerConfiguration(
-        title: 'Looper Player',
-      ),
-    );
-    player2 = Player(
-      configuration: const PlayerConfiguration(
-        title: 'Looper Player Crossfade',
-      ),
-    );
-    // Set high-precision position updates for lyrics sync (15ms)
-    if (Platform.isAndroid || Platform.isIOS || Platform.isLinux || Platform.isWindows) {
-      try {
-        // Using dynamic as some versions of media_kit don't expose setProperty in the interface
-        (player as dynamic).setProperty('playback-time-update-interval', '0.015');
-        (player2 as dynamic).setProperty('playback-time-update-interval', '0.015');
-      } catch (e) {
-        debugPrint('Failed to set playback-time-update-interval: $e');
-      }
-    }
-    _initMpris();
-    _initAndroidAudioHandler();
-    _initAndroidBroadcasts();
-    _initAudioSession();
-  }
+    player = Player();
+    _initPlayer();
 
-  final Map<Player, int> _activeFadeIds = {};
-
-  void cancelFade(Player p) {
-    _activeFadeIds[p] = (_activeFadeIds[p] ?? 0) + 1;
-  }
-
-  Future<void> fadeVolume(Player p, double start, double end, Duration duration) async {
-    final fadeId = (_activeFadeIds[p] ?? 0) + 1;
-    _activeFadeIds[p] = fadeId;
-
-    final steps = 20;
-    final interval = duration.inMilliseconds ~/ steps;
-    if (interval <= 0) {
-      if (_activeFadeIds[p] == fadeId) {
-        p.setVolume(end * 100);
-      }
-      return;
-    }
-    for (int i = 0; i <= steps; i++) {
-      if (_activeFadeIds[p] != fadeId) {
-        return;
-      }
-      final t = i / steps;
-      final currentVol = start + (end - start) * t;
-      p.setVolume(currentVol * 100);
-      await Future.delayed(Duration(milliseconds: interval));
-    }
-  }
-
-  void _initAndroidBroadcasts() {
-    if (!Platform.isAndroid) return;
-
-    player.stream.playing.listen((playing) {
-      _sendAndroidBroadcast(playing);
-    });
-
-    player.stream.playlist.listen((_) {
-      _sendAndroidBroadcast(player.state.playing);
-    });
-  }
-
-  void _sendAndroidBroadcast(bool isPlaying) {
-    if (!Platform.isAndroid) return;
-
-    final media = player.state.playlist.medias.isNotEmpty &&
-            player.state.playlist.index >= 0 &&
-            player.state.playlist.index < player.state.playlist.medias.length
-        ? player.state.playlist.medias[player.state.playlist.index]
-        : null;
-
-    if (media != null && media.extras != null) {
-      const channel = MethodChannel('com.looper.player/broadcast');
-      channel.invokeMethod('broadcastMetadata', {
-        'title': media.extras!['title'],
-        'artist': media.extras!['artist'],
-        'album': media.extras!['album'],
-        'duration': player.state.duration.inMilliseconds,
-        'isPlaying': isPlaying,
-      });
-    }
-  }
-
-  Future<void> _initAndroidAudioHandler() async {
-    if (!Platform.isAndroid) return;
-
-    try {
-      _audioHandler = await asrv.AudioService.init(
-        builder: () => MyAudioHandler(player),
-        config: const asrv.AudioServiceConfig(
-          androidNotificationChannelId:
-              'com.looper.player.channel.audio.v3',
-          androidNotificationChannelName: 'Audio Playback',
-          androidNotificationOngoing: true,
-          androidNotificationIcon: 'drawable/ic_notification_session',
-        ),
-      );
-
-      _audioHandler?.onNext = () {
-        if (onNext != null) onNext!();
-      };
-
-      _audioHandler?.onPrevious = () {
-        if (onPrevious != null) onPrevious!();
-      };
-
-      _audioHandler?.onSeek = (duration) {
-        if (onSeek != null) onSeek!(duration);
-      };
-
-      _audioHandler?.onFavoriteToggle = () {
-        if (onFavoriteToggle != null) onFavoriteToggle!();
-      };
-
-      _audioHandler?.onShuffleToggle = () {
-        if (onShuffleToggle != null) onShuffleToggle!();
-      };
-
-      _audioHandler?.onPlay = () {
-        if (onPlay != null) {
-          onPlay!();
-        } else {
-          resume();
-        }
-      };
-
-      _audioHandler?.onPause = () {
-        if (onPause != null) {
-          onPause!();
-        } else {
-          pause();
-        }
-      };
-    } catch (e) {
-      debugPrint('Failed to init audio handler: $e');
-    }
-  }
-
-  Future<void> _initAudioSession() async {
-    if (!Platform.isAndroid) return;
-    try {
-      final session = await asrv_sess.AudioSession.instance;
-      await session.configure(const asrv_sess.AudioSessionConfiguration.music());
-
-      session.interruptionEventStream.listen((event) {
-        debugPrint('🎵 AudioSession: Interruption event received: begin=${event.begin}, type=${event.type}');
-        _handleAudioInterruption(event);
-      });
-
-      session.becomingNoisyEventStream.listen((_) async {
-        debugPrint('🎵 AudioSession: Becoming noisy (headphones unplugged). Pausing...');
-        try {
-          final settings = await DbService.isar.appSettings.get(0);
-          if (settings == null || !settings.audioFocus) return;
-          await pause();
-        } catch (e) {
-          debugPrint('Error handling noisy event: $e');
-        }
-      });
-    } catch (e) {
-      debugPrint('Failed to initialize AudioSession: $e');
-    }
-  }
-
-  Future<void> _handleAudioInterruption(asrv_sess.AudioInterruptionEvent event) async {
-    try {
-      final settings = await DbService.isar.appSettings.get(0);
-      if (settings == null || !settings.audioFocus) return;
-
-      bool isCall = false;
-      if (Platform.isAndroid) {
-        isCall = await isOnCall();
-      }
-
-      if (event.begin) {
-        switch (event.type) {
-          case asrv_sess.AudioInterruptionType.duck:
-            player.setVolume(player.state.volume * 0.2);
-            break;
-          case asrv_sess.AudioInterruptionType.pause:
-          case asrv_sess.AudioInterruptionType.unknown:
-            if (isCall) {
-              if (player.state.playing) {
-                _pausedByCall = true;
-                _playOnInterruptionEnd = true;
-                debugPrint('🎵 AudioSession: Paused by call. Will auto-resume on call end if setting enabled.');
-              } else {
-                _pausedByCall = false;
-                _playOnInterruptionEnd = false;
-              }
-              await player.pause();
-            } else {
-              _pausedByCall = false;
-              if (settings.permanentAudioFocusChange) {
-                if (player.state.playing) {
-                  _playOnInterruptionEnd = (event.type == asrv_sess.AudioInterruptionType.pause);
-                  debugPrint('🎵 AudioSession: Interruption began (non-call). Pausing playback.');
-                } else {
-                  _playOnInterruptionEnd = false;
-                }
-                await player.pause();
-              }
-            }
-            break;
-        }
-      } else {
-        switch (event.type) {
-          case asrv_sess.AudioInterruptionType.duck:
-            player.setVolume(settings.volume * 100);
-            break;
-          case asrv_sess.AudioInterruptionType.pause:
-          case asrv_sess.AudioInterruptionType.unknown:
-            if (_pausedByCall) {
-              _pausedByCall = false;
-              if (settings.resumeAfterCall && _playOnInterruptionEnd) {
-                _playOnInterruptionEnd = false;
-                debugPrint('🎵 AudioSession: Call ended. Auto-resuming playback...');
-                await resume();
-              }
-            } else {
-              if (_playOnInterruptionEnd) {
-                _playOnInterruptionEnd = false;
-                debugPrint('🎵 AudioSession: Interruption ended. Auto-resuming playback...');
-                await resume();
-              }
-            }
-            break;
-        }
-      }
-    } catch (e) {
-      debugPrint('Error handling audio interruption: $e');
-    }
-  }
-
-  Future<bool> _requestAudioFocus() async {
-    try {
-      final settings = await DbService.isar.appSettings.get(0);
-      if (settings == null || !settings.audioFocus) return true;
-
-      final session = await asrv_sess.AudioSession.instance;
-      final success = await session.setActive(true);
-      if (!success) {
-        debugPrint('Audio focus request denied (e.g., active call).');
-        
-        final context = scaffoldMessengerKey.currentContext;
-        String message = 'Playback paused: Audio focus denied by system';
-        if (context != null) {
-          try {
-            final l10n = AppLocalizations.of(context);
-            if (l10n != null) {
-              message = l10n.audioFocusDenied;
-            }
-          } catch (e) {
-            debugPrint('Failed to get AppLocalizations: $e');
-          }
-        }
-        
-        scaffoldMessengerKey.currentState?.clearSnackBars();
-        scaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(
-            content: Text(
-              message,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-            ),
-            backgroundColor: Colors.redAccent.shade700,
-            duration: const Duration(seconds: 4),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            margin: const EdgeInsets.only(
-              bottom: 24,
-              left: 24,
-              right: 24,
-            ),
-          ),
-        );
-      }
-      return success;
-    } catch (e) {
-      debugPrint('Error requesting audio focus: $e');
-      return true;
-    }
-  }
-
-  void updatePlaybackState({
-    required bool isPlaying,
-    required bool isFavorite,
-    required bool isShuffle,
-  }) {
-    if (Platform.isAndroid && _audioHandler != null) {
-      _audioHandler!.updateControls(
-        isPlaying: isPlaying,
-        isFavorite: isFavorite,
-        isShuffle: isShuffle,
-      );
-    }
-  }
-
-  Future<void> _initMpris() async {
-    if (!Platform.isLinux) return;
-    try {
-      _dBusClient = DBusClient.session();
-      _mprisPlayer = MPRISPlayer();
-
-      _mprisPlayer!.onPlay = () {
-        if (onPlay != null) {
-          onPlay!();
-        } else {
-          player.play();
-        }
-      };
-      _mprisPlayer!.onPause = () {
-        if (onPause != null) {
-          onPause!();
-        } else {
-          player.pause();
-        }
-      };
-      _mprisPlayer!.onPlayPause = () {
-        if (onPlayPause != null) {
-          onPlayPause!();
-        } else {
-          player.playOrPause();
-        }
-      };
-      _mprisPlayer!.onSeek = (offset) {
-        final current = player.state.position;
-        player.seek(current + Duration(microseconds: offset));
-      };
-      _mprisPlayer!.onNext = () {
-        if (onNext != null) onNext!();
-      };
-      _mprisPlayer!.onPrevious = () {
-        if (onPrevious != null) onPrevious!();
-      };
-
-      await _dBusClient!.requestName('org.mpris.MediaPlayer2.looper_player');
-      await _dBusClient!.registerObject(_mprisPlayer!);
-
-      // Set initial status
-      _mprisPlayer!.updatePlaybackStatus(
-        player.state.playing ? 'Playing' : 'Paused',
-      );
-
-      player.stream.playing.listen((playing) {
-        _mprisPlayer!.updatePlaybackStatus(playing ? 'Playing' : 'Paused');
-      });
-
-      player.stream.position.listen((position) {
-        _mprisPlayer!.position = position.inMicroseconds;
-      });
-
-      player.stream.duration.listen((duration) {
-        _updateMprisMetadata(player.state.playlist.index);
-      });
-    } catch (e) {
-      debugPrint('Failed to initialize MPRIS: $e');
-    }
-  }
-
-  void _updateMprisMetadata(int index) {
-    if (_mprisPlayer == null) return;
-
-    // We update metadata when song changes or duration is loaded
-    try {
-      final currentMedia =
-          player.state.playlist.medias.isNotEmpty &&
-              index >= 0 &&
-              index < player.state.playlist.medias.length
-          ? player.state.playlist.medias[index]
-          : null;
-
-      if (currentMedia != null && currentMedia.extras != null) {
-        final extras = currentMedia.extras!;
-        final mprisMetadata = <String, DBusValue>{};
-        final trackId =
-            '/org/mpris/MediaPlayer2/Track/${currentMedia.uri.hashCode.abs()}';
-        mprisMetadata['mpris:trackid'] = DBusObjectPath(trackId);
-
-        if (extras['title'] != null) {
-          mprisMetadata['xesam:title'] = DBusString(extras['title'].toString());
-        }
-        if (extras['artist'] != null) {
-          mprisMetadata['xesam:artist'] = DBusArray.string([
-            extras['artist'].toString(),
-          ]);
-        }
-        if (extras['album'] != null) {
-          mprisMetadata['xesam:album'] = DBusString(extras['album'].toString());
-        }
-        if (extras['artPath'] != null) {
-          mprisMetadata['mpris:artUrl'] = DBusString(
-            'file://${extras['artPath']}',
+    // ── EQ deferred-apply on FILE_LOADED ────────────────────────────────────────
+    // `player.open()` sends a loadfile command and returns before mpv
+    // fires FILE_LOADED. At that point `playlist.items` is still empty,
+    // so calling `setEqualizerGains()` immediately after `open()` hits the
+    // empty-guard and bails — the EQ is never applied.
+    //
+    // Fix: set `_pendingEqApply = true` before `open()`, then watch the
+    // playlist stream. The first time items becomes non-empty (= FILE_LOADED
+    // has fired and the filter chain is live) we apply the pending EQ.
+    player.stream.playlist.listen((playlist) {
+      if (_pendingEqApply && playlist.items.isNotEmpty) {
+        _pendingEqApply = false;
+        if (_lastEqualizerGains != null) {
+          setEqualizerGains(
+            _lastEqualizerGains!,
+            _equalizerEnabled,
+            customFilter: _customFilterString,
           );
         }
-
-        // Use player duration if available, otherwise fallback to metadata
-        final duration = player.state.duration;
-        if (duration.inMilliseconds > 0) {
-          mprisMetadata['mpris:length'] = DBusInt64(duration.inMicroseconds);
-        } else if (extras['duration'] != null) {
-          final durationMs = int.tryParse(extras['duration'].toString()) ?? 0;
-          if (durationMs > 0) {
-            mprisMetadata['mpris:length'] = DBusInt64(durationMs * 1000);
-          }
-        }
-
-        _mprisPlayer!.updateMetadata(mprisMetadata);
       }
+    });
+
+    _attachMediaSessionListeners();
+  }
+
+  Future<void> _initPlayer() async {
+    // ── Precision position updates for lyrics sync (15ms tick) ──────────────
+    try {
+      await player.setRawProperty('playback-time-update-interval', '0.015');
+    } catch (e) {}
+
+    // ── Audio format: 32-bit float through typed API ─────────────────────────
+    // All internal processing (EQ, DSP, mixing) happens in float32 precision.
+    // This is the maximum internal bit depth mpv supports and avoids any
+    // integer quantisation until the final AO hand-off.
+    try {
+      await player.setAudioFormat(Format.float32);
     } catch (e) {
-      debugPrint('Error updating MPRIS metadata: $e');
+      // Fallback to raw property if typed API fails (device incompatibility)
+      try {
+        await player.setRawProperty('audio-format', 'float');
+      } catch (_) {}
+    }
+
+    // ── Volume ceiling: 150% for full ReplayGain/preamp headroom ────────────
+    // Default 100% = 0 dBFS headroom. Raising to 150% gives ~3.5 dB of
+    // headroom so ReplayGain preamp values (+6 dB) don't get soft-clipped
+    // internally before reaching the AO.
+    try {
+      await player.setRawProperty('volume-max', '150');
+    } catch (e) {}
+
+    // ── Audio buffer: 2 seconds — glitch-free under CPU pressure ────────────
+    try {
+      await player.setRawProperty('audio-buffer', '4.0');
+    } catch (e) {}
+
+    // ── Readahead: 10 seconds — essential for large lossless files ──────────
+    // FLAC/WAV at 24-bit/192kHz can have very large frames; short readahead
+    // causes micro-stutters on storage-bound devices.
+    try {
+      await player.setRawProperty('demuxer-readahead-secs', '20');
+    } catch (e) {}
+
+    // ── Keep audio device open with silence (no click on play/pause) ─────────
+    try {
+      await player.setRawProperty('audio-stream-silence', 'yes');
+    } catch (e) {}
+
+    // ── Gapless: true gapless at the engine level ────────────────────────────
+    try {
+      await player.setRawProperty('gapless-audio', 'yes');
+    } catch (e) {}
+
+    // ── Downmix normalisation: prevents clipping on multi-channel sources ────
+    try {
+      await player.setRawProperty('audio-normalize-downmix', 'yes');
+    } catch (e) {}
+
+    // ── ReplayGain anti-clip ─────────────────────────────────────────────────
+    try {
+      await player.setRawProperty('replaygain-clip', 'yes');
+    } catch (e) {}
+
+    // ── Disable mpv's built-in scaletempo pitch-correction ──────────────────
+    // When `setRate(1.0)`, mpv still inserts scaletempo as a no-op by default.
+    // We manage pitch/tempo explicitly via AudioEffects → rubberband/scaletempo,
+    // so this internal tap only wastes CPU and introduces a resampling stage.
+    try {
+      await player.setRawProperty('audio-pitch-correction', 'no');
+    } catch (e) {}
+
+    // ── Force software decode (preserves full 32-bit float path) ────────────
+    // Android AAudio/OpenSL hardware decode paths may reduce internal bit depth
+    // or bypass the AF filter chain. SW decode guarantees our float32 pipeline
+    // reaches the AO untouched.
+    try {
+      await player.setRawProperty('hwdec', 'no');
+    } catch (e) {}
+
+    _initMediaSession();
+  }
+
+  void _initMediaSession({
+    InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume,
+    bool requestFocusOnPlay = true,
+    bool releaseFocusOnPause = true,
+    bool stopOnOtherSession = true,
+    bool restartOnFocusGain = true,
+  }) {
+    player.setMediaSession(
+      MediaSession(
+        appName: 'Looper Player',
+        desktopEntry: 'looper_player',
+        autoApplyPlaylistNavigation:
+            false, // Let our PlaybackNotifier coordinate queue actions
+        actions: const {
+          MediaAction.play,
+          MediaAction.pause,
+          MediaAction.playPause,
+          MediaAction.next,
+          MediaAction.previous,
+          MediaAction.seek,
+          MediaAction.like,
+          MediaAction.setShuffle,
+          MediaAction.setRepeatMode,
+        },
+        interruptionPolicy: interruptionPolicy,
+        requestFocusOnPlay: requestFocusOnPlay,
+        releaseFocusOnPause: releaseFocusOnPause,
+        stopOnOtherSession: stopOnOtherSession,
+        restartOnFocusGain: restartOnFocusGain,
+      ),
+    );
+  }
+
+  /// Call this when the audioFocus setting changes so the interruption
+  /// policy is re-published to the native media session.
+  void applyAudioFocusPolicy(
+    InterruptionPolicy interruptionPolicy, {
+    bool requestFocusOnPlay = true,
+    bool releaseFocusOnPause = true,
+    bool stopOnOtherSession = true,
+    bool restartOnFocusGain = true,
+  }) {
+    _initMediaSession(
+      interruptionPolicy: interruptionPolicy,
+      requestFocusOnPlay: requestFocusOnPlay,
+      releaseFocusOnPause: releaseFocusOnPause,
+      stopOnOtherSession: stopOnOtherSession,
+      restartOnFocusGain: restartOnFocusGain,
+    );
+  }
+
+  // Listen to media session command streams
+  void _attachMediaSessionListeners() {
+    player.stream.mediaSessionCommands.listen((cmd) {
+      if (cmd is MediaSessionCommandPlay) {
+        onPlay?.call();
+      } else if (cmd is MediaSessionCommandPause) {
+        onPause?.call();
+      } else if (cmd is MediaSessionCommandPlayPause) {
+        onPlayPause?.call();
+      } else if (cmd is MediaSessionCommandNext) {
+        onNext?.call();
+      } else if (cmd is MediaSessionCommandPrevious) {
+        onPrevious?.call();
+      } else if (cmd is MediaSessionCommandSeekTo) {
+        onSeek?.call(cmd.position);
+      } else if (cmd is MediaSessionCommandSetShuffle) {
+        onShuffleToggle?.call();
+      } else if (cmd is MediaSessionCommandSetRepeatMode) {
+        // Repeat mode toggling is handled by a custom callback; reuse onNext as a proxy
+        // The actual nextRepeatMode() is called via onRepeatToggle
+        onRepeatToggle?.call();
+      } else if (cmd is MediaSessionCommandLike) {
+        onFavoriteToggle?.call();
+      }
+    });
+  }
+
+  // --- Caching Configurations ---
+
+  Future<void> configureCache({
+    required bool enabled,
+    required int maxBytes,
+    required int cacheSecs,
+    required int backBytes,
+  }) async {
+    try {
+      await player.setCache(
+        CacheSettings(
+          mode: enabled ? Cache.yes : Cache.no,
+          secs: Duration(seconds: cacheSecs),
+        ),
+      );
+      await player.setDemuxer(
+        DemuxerSettings(maxBytes: maxBytes, maxBackBytes: backBytes),
+      );
+    } catch (e) {}
+  }
+
+  // --- ReplayGain Scaling ---
+
+  Future<void> configureReplayGain({
+    required int mode, // 0 = off, 1 = track, 2 = album
+    required double preamp,
+  }) async {
+    try {
+      final rgMode = mode == 1
+          ? ReplayGain.track
+          : (mode == 2 ? ReplayGain.album : ReplayGain.no);
+      await player.setReplayGain(
+        ReplayGainSettings(
+          mode: rgMode,
+          preamp: preamp,
+          clip: true, // Limit peaks to prevent digital clipping
+        ),
+      );
+    } catch (e) {}
+  }
+
+  // --- Multi-track Audio Stream Handling ---
+
+  Future<List<Map<String, dynamic>>> getAudioTracks() async {
+    try {
+      final String? trackListJson = await player.getRawProperty('track-list');
+      if (trackListJson == null) return [];
+      final List<dynamic> rawTracks = jsonDecode(trackListJson);
+      return rawTracks
+          .where((t) => t['type'] == 'audio')
+          .map(
+            (t) => {
+              'id': t['id'] as int,
+              'title': t['title'] ?? 'Track ${t['id']}',
+              'lang': t['lang'] ?? 'unknown',
+              'codec': t['codec'] ?? 'unknown',
+              'channels': t['demux-channels'] ?? 2,
+              'selected': t['selected'] as bool? ?? false,
+            },
+          )
+          .toList();
+    } catch (e) {
+      return [];
     }
   }
 
-  Future<void> play(String path, {Map<String, dynamic>? metadata, bool play = true}) async {
-    _playOnInterruptionEnd = false; // Reset auto-resume on fresh manual play
-    if (play && Platform.isAndroid) {
-      final hasFocus = await _requestAudioFocus();
-      if (!hasFocus) {
-        debugPrint('🎵 Playback aborted: Failed to acquire Audio Focus.');
-        return;
-      }
-    }
-
-    final extras = metadata?.map((k, v) => MapEntry(k, v.toString()));
-    await player.open(Media(path, extras: extras), play: play);
-
-    if (Platform.isAndroid && _audioHandler != null && metadata != null) {
-      final item = asrv.MediaItem(
-        id: path,
-        album: metadata['album']?.toString(),
-        title: metadata['title']?.toString() ?? 'Unknown Title',
-        artist: metadata['artist']?.toString(),
-        duration: metadata['duration'] != null
-            ? Duration(
-                milliseconds:
-                    int.tryParse(metadata['duration'].toString()) ?? 0,
-              )
-            : null,
-        artUri: metadata['artPath'] != null
-            ? Uri.file(metadata['artPath'])
-            : null,
+  Future<void> selectAudioTrack(int trackId) async {
+    try {
+      // Find matching track
+      final activeTracks = player.state.tracks.where((t) => t.type == 'audio');
+      final match = activeTracks.firstWhere(
+        (t) => t.id == trackId,
+        orElse: () => activeTracks.first,
       );
-      _audioHandler?.updateMediaItem(item);
+      await player.setAudioTrack(Track.id(match.id));
+    } catch (e) {}
+  }
+
+  // --- Hardware Device Routing ---
+
+  Future<List<Map<String, String>>> getAudioDevices() async {
+    try {
+      return player.state.audioDevices
+          .map((d) => {'name': d.name, 'description': d.description})
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<void> routeAudioDevice(String deviceName) async {
+    try {
+      final match = player.state.audioDevices.firstWhere(
+        (d) => d.name == deviceName,
+        orElse: () => player.state.audioDevices.first,
+      );
+      await player.setAudioDevice(match);
+    } catch (e) {}
+  }
+
+  Future<void> configureHardwareExclusive(bool exclusive) async {
+    try {
+      await player.setAudioExclusive(exclusive);
+    } catch (e) {}
+  }
+
+  // --- Playback Controls ---
+
+  Future<void> play(
+    String path, {
+    Map<String, dynamic>? metadata,
+    bool play = true,
+    List<double>? equalizerGains,
+    bool? equalizerEnabled,
+    String? customFilter,
+    InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume,
+    bool requestFocusOnPlay = true,
+    bool releaseFocusOnPause = true,
+    bool stopOnOtherSession = true,
+    bool restartOnFocusGain = true,
+  }) async {
+    if (equalizerGains != null) {
+      _lastEqualizerGains = equalizerGains;
+    }
+    if (equalizerEnabled != null) {
+      _equalizerEnabled = equalizerEnabled;
+    }
+    if (customFilter != null) {
+      _customFilterString = customFilter;
     }
 
-    if (_mprisPlayer != null && metadata != null) {
-      final mprisMetadata = <String, DBusValue>{};
-      // Use a proper track ID instead of NoTrack to help some shells
-      final trackId = '/org/mpris/MediaPlayer2/Track/${path.hashCode.abs()}';
-      mprisMetadata['mpris:trackid'] = DBusObjectPath(trackId);
+    // Signal that we want EQ applied once FILE_LOADED fires.
+    // This replaces the post-open() immediate call that always raced
+    // against an empty playlist.
+    _pendingEqApply = _lastEqualizerGains != null;
+    _filtersInitialized = false; // Reset so deferred apply does a full rewrite
 
-      if (metadata['title'] != null) {
-        mprisMetadata['xesam:title'] = DBusString(metadata['title'].toString());
-      }
-      if (metadata['artist'] != null) {
-        mprisMetadata['xesam:artist'] = DBusArray.string([
-          metadata['artist'].toString(),
-        ]);
-      }
-      if (metadata['album'] != null) {
-        mprisMetadata['xesam:album'] = DBusString(metadata['album'].toString());
-      }
-      if (metadata['artPath'] != null) {
-        mprisMetadata['mpris:artUrl'] = DBusString(
-          'file://${metadata['artPath']}',
-        );
-      }
-      if (metadata['duration'] != null) {
-        final durationMs = int.tryParse(metadata['duration'].toString()) ?? 0;
-        if (durationMs > 0) {
-          mprisMetadata['mpris:length'] = DBusInt64(durationMs * 1000);
-        }
-      }
+    final artPath = metadata?['artPath']?.toString();
+    final policy = interruptionPolicy;
 
-      await _mprisPlayer!.updateMetadata(mprisMetadata);
+    MediaSessionArtwork artwork = MediaSessionArtwork.embedded;
+    if (artPath != null) {
+      if (artPath.startsWith('http://') || artPath.startsWith('https://')) {
+        artwork = MediaSessionArtwork.uri(Uri.parse(artPath));
+      } else {
+        try {
+          final file = File(artPath);
+          if (await file.exists()) {
+            final bytes = await file.readAsBytes();
+            final ext = artPath.split('.').last.toLowerCase();
+            final mimeType = switch (ext) {
+              'png' => 'image/png',
+              'webp' => 'image/webp',
+              'gif' => 'image/gif',
+              'bmp' => 'image/bmp',
+              _ => 'image/jpeg',
+            };
+            artwork = MediaSessionArtwork.custom(
+              CoverArt(bytes: bytes, mimeType: mimeType),
+            );
+          }
+        } catch (e) {}
+      }
     }
+
+    // Update local MediaSession options dynamically
+    player.setMediaSession(
+      MediaSession(
+        title: metadata?['title']?.toString(),
+        artist: metadata?['artist']?.toString(),
+        album: metadata?['album']?.toString(),
+        artwork: artwork,
+        appName: 'Looper Player',
+        desktopEntry: 'looper_player',
+        autoApplyPlaylistNavigation: false,
+        actions: const {
+          MediaAction.play,
+          MediaAction.pause,
+          MediaAction.playPause,
+          MediaAction.next,
+          MediaAction.previous,
+          MediaAction.seek,
+          MediaAction.like,
+          MediaAction.setShuffle,
+          MediaAction.setRepeatMode,
+        },
+        interruptionPolicy: policy,
+        requestFocusOnPlay: requestFocusOnPlay,
+        releaseFocusOnPause: releaseFocusOnPause,
+        stopOnOtherSession: stopOnOtherSession,
+        restartOnFocusGain: restartOnFocusGain,
+      ),
+    );
+
+    final media = Media(
+      path,
+      extras: {
+        'title': metadata?['title']?.toString() ?? 'Unknown Title',
+        'artist': metadata?['artist']?.toString() ?? 'Unknown Artist',
+        'album': metadata?['album']?.toString() ?? 'Unknown Album',
+        'artPath': artPath,
+        'duration': metadata?['duration']?.toString(),
+      },
+    );
+
+    // Native prefetch enqueuing will occur natively at the player level.
+    // EQ is now applied via the playlist stream listener (deferred to FILE_LOADED)
+    // so we do NOT call setEqualizerGains() here — that would race the empty playlist.
+    await player.open(media, play: play);
   }
 
   Future<void> pause() async {
-    _playOnInterruptionEnd = false; // User manually paused! Reset auto-resume
     await player.pause();
-    if (Platform.isAndroid) {
-      try {
-        final session = await asrv_sess.AudioSession.instance;
-        await session.setActive(false);
-      } catch (e) {
-        debugPrint('Error deactivating audio session: $e');
-      }
-    }
   }
 
   Future<void> resume() async {
-    _playOnInterruptionEnd = false; // Reset auto-resume on manual resume
-    if (Platform.isAndroid) {
-      final hasFocus = await _requestAudioFocus();
-      if (!hasFocus) {
-        debugPrint('🎵 Resume aborted: Failed to acquire Audio Focus.');
-        return;
-      }
-    }
     await player.play();
   }
 
@@ -562,22 +466,489 @@ class AudioService {
 
   Future<void> stop() async {
     await player.stop();
-    if (_mprisPlayer != null) {
-      _mprisPlayer!.updatePlaybackStatus('Stopped');
-    }
-    if (Platform.isAndroid) {
-      try {
-        final session = await asrv_sess.AudioSession.instance;
-        await session.setActive(false);
-      } catch (e) {
-        debugPrint('Error deactivating audio session: $e');
-      }
-    }
   }
 
   void dispose() {
+    _liveEqThrottleTimer?.cancel();
     player.dispose();
-    player2.dispose();
-    _dBusClient?.close();
+  }
+
+  // --- Advanced DSP Settings Pipeline ---
+
+  bool _filtersInitialized = false;
+
+  void _triggerThrottledEq(
+    List<double> gains,
+    bool enabled,
+    String? customFilter,
+  ) {
+    _throttledGains = List<double>.from(gains);
+    _throttledEnabled = enabled;
+    _throttledCustomFilter = customFilter;
+    if (_liveEqThrottleTimer == null || !_liveEqThrottleTimer!.isActive) {
+      _liveEqThrottleTimer = Timer(const Duration(milliseconds: 100), () {
+        _applyThrottledEq();
+      });
+    }
+  }
+
+  Future<void> _applyThrottledEq() async {
+    if (_throttledGains == null) return;
+    await setEqualizerGains(
+      _throttledGains!,
+      _throttledEnabled,
+      customFilter: _throttledCustomFilter,
+    );
+  }
+
+  Future<void> setLiveBandGain(int bandIndex, double gain) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    if (_lastEqualizerGains == null) return;
+    _lastEqualizerGains![bandIndex] = gain;
+    try {
+      await player.updateAudioEffects((e) {
+        final List<double> bandsFreq = [
+          65, 92, 131, 185, 262, 370, 523, 740, 1000, 1400, 2000, 2900, 4100, 5900, 8300, 11700, 16600, 20000
+        ];
+        final List<double> bandsWidth = [
+          20, 30, 40, 60, 80, 110, 160, 220, 300, 420, 600, 850, 1200, 1750, 2500, 3500, 5000, 6000
+        ];
+        final List<AnequalizerBand> bands = [];
+        for (int i = 0; i < 18; i++) {
+          final freq = bandsFreq[i];
+          final width = bandsWidth[i];
+          final currentGain = _lastEqualizerGains![i].clamp(-20.0, 20.0);
+          bands.add(
+            AnequalizerBand(
+              frequency: freq,
+              bandwidth: width,
+              gain: currentGain,
+              type: AnequalizerBandType.butterworth,
+            ),
+          );
+        }
+        final anequalizer = AnequalizerSettings(
+          enabled: _equalizerEnabled,
+        ).withBands(bands, channels: 2);
+        return e.copyWith(
+          superequalizer: const SuperequalizerSettings(enabled: false),
+          anequalizer: anequalizer,
+        );
+      });
+    } catch (_) {}
+  }
+
+  Future<void> setLivePreamp(double preamp) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    if (_lastEqualizerGains == null) return;
+    _lastEqualizerGains![18] = preamp;
+    try {
+      await player.setVolumeGain(_equalizerEnabled ? preamp.clamp(-12.0, 12.0) : 0.0);
+    } catch (_) {}
+  }
+
+  Future<void> setLiveCompressor({
+    double? threshold,
+    double? ratio,
+    double? attack,
+    double? release,
+  }) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    try {
+      await player.updateAudioEffects((e) {
+        final current =
+            e.acompressor ?? const AcompressorSettings(enabled: true);
+        double dBToMultiplier(double dB) =>
+            math.pow(10.0, dB / 20.0).toDouble();
+        return e.copyWith(
+          acompressor: current.copyWith(
+            threshold: threshold != null
+                ? dBToMultiplier(threshold.clamp(-40.0, 0.0))
+                : current.threshold,
+            ratio: ratio ?? current.ratio,
+            attack: attack ?? current.attack,
+            release: release ?? current.release,
+          ),
+        );
+      });
+    } catch (e) {}
+  }
+
+  Future<void> setLiveBass(double gain) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    try {
+      await player.updateAudioEffects((e) {
+        final current = e.bass ?? const BassSettings(enabled: true, f: 100.0);
+        return e.copyWith(bass: current.copyWith(g: gain.clamp(-10.0, 15.0)));
+      });
+    } catch (e) {}
+  }
+
+  Future<void> setLiveTreble(double gain) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    try {
+      await player.updateAudioEffects((e) {
+        final current =
+            e.treble ?? const TrebleSettings(enabled: true, f: 8000.0);
+        return e.copyWith(treble: current.copyWith(g: gain.clamp(-10.0, 15.0)));
+      });
+    } catch (e) {}
+  }
+
+  Future<void> setLiveStereoWidth(double m) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    try {
+      await player.updateAudioEffects((e) {
+        final current =
+            e.extrastereo ?? const ExtrastereoSettings(enabled: true);
+        return e.copyWith(
+          extrastereo: current.copyWith(m: m.clamp(-10.0, 10.0)),
+        );
+      });
+    } catch (e) {}
+  }
+
+  Future<void> setLiveCrossfeed(double strength) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    try {
+      await player.updateAudioEffects((e) {
+        final current = e.crossfeed ?? const CrossfeedSettings(enabled: true);
+        return e.copyWith(
+          crossfeed: current.copyWith(strength: strength.clamp(0.0, 1.0)),
+        );
+      });
+    } catch (e) {}
+  }
+
+  Future<void> setLiveHighpass(double f) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    try {
+      await player.updateAudioEffects((e) {
+        final current = e.highpass ?? const HighpassSettings(enabled: true);
+        return e.copyWith(highpass: current.copyWith(f: f.clamp(100.0, 300.0)));
+      });
+    } catch (e) {}
+  }
+
+  Future<void> setLiveLowpass(double f) async {
+    if (!_filtersInitialized || player.state.playlist.items.isEmpty) return;
+    try {
+      await player.updateAudioEffects((e) {
+        final current = e.lowpass ?? const LowpassSettings(enabled: true);
+        return e.copyWith(
+          lowpass: current.copyWith(f: f.clamp(3000.0, 6000.0)),
+        );
+      });
+    } catch (e) {}
+  }
+
+  // ── SoX resampler filter string (injected last in every customFilters list)
+  // Placed last so it is the final stage before the AO — ensuring the output
+  // rate conversion (when needed) uses SoX 28-bit sinc with TPDF dither.
+  // AudioEffects.custom is the sole writer of mpv's `af` property, so this
+  // is the correct place for any persistent base filter.
+  static const String _soxrFilter =
+      '@aek_soxr:lavfi-aresample=resampler=soxr:precision=28:dither_method=triangular_hp';
+  static const String _swrFilter =
+      '@aek_soxr:lavfi-aresample=resampler=swr:dither_method=triangular';
+
+  Future<void> setEqualizerGains(
+    List<double> gains,
+    bool enabled, {
+    String? customFilter,
+  }) async {
+    _liveEqThrottleTimer?.cancel();
+    _lastEqualizerGains = gains;
+    _equalizerEnabled = enabled;
+    _customFilterString = customFilter;
+
+    if (player.state.playlist.items.isEmpty) {
+      // FILE_LOADED hasn't fired yet — the playlist stream listener will
+      // apply EQ once items populate. Mark _pendingEqApply so it triggers.
+
+      _pendingEqApply = true;
+      _filtersInitialized = false;
+      return;
+    }
+
+    // Helper conversion dB -> ratio multiplier (e.g. 10^(dB/20))
+    double dBToMultiplier(double dB) => math.pow(10.0, dB / 20.0).toDouble();
+
+    // 1. 18-band anequalizer settings
+    final List<double> bandsFreq = [
+      65, 92, 131, 185, 262, 370, 523, 740, 1000, 1400, 2000, 2900, 4100, 5900, 8300, 11700, 16600, 20000
+    ];
+    final List<double> bandsWidth = [
+      20, 30, 40, 60, 80, 110, 160, 220, 300, 420, 600, 850, 1200, 1750, 2500, 3500, 5000, 6000
+    ];
+
+    final List<AnequalizerBand> bands = [];
+    if (enabled) {
+      for (int i = 0; i < 18; i++) {
+        final freq = bandsFreq[i];
+        final width = bandsWidth[i];
+        final gain = i < gains.length ? gains[i].clamp(-20.0, 20.0) : 0.0;
+        bands.add(
+          AnequalizerBand(
+            frequency: freq,
+            bandwidth: width,
+            gain: gain,
+            type: AnequalizerBandType.butterworth,
+          ),
+        );
+      }
+    }
+
+    final anequalizer = AnequalizerSettings(
+      enabled: enabled,
+    ).withBands(bands, channels: 2);
+
+    // 2. Dynamic Range Compressor
+    final bool compEnabled =
+        enabled && (gains.length > 23 ? gains[23] == 1.0 : false);
+    final compressor = compEnabled
+        ? AcompressorSettings(
+            enabled: true,
+            threshold: gains.length > 24
+                ? dBToMultiplier(gains[24].clamp(-40.0, 0.0))
+                : 0.125,
+            ratio: gains.length > 25 ? gains[25].clamp(1.0, 20.0) : 2.0,
+            attack: gains.length > 26 ? gains[26].clamp(0.01, 2000.0) : 20.0,
+            release: gains.length > 27 ? gains[27].clamp(0.01, 9000.0) : 250.0,
+          )
+        : null;
+
+    // 3. Loudness Normalization
+    final bool loudnormEnabled =
+        enabled && (gains.length > 28 ? gains[28] == 1.0 : false);
+    final loudnorm = loudnormEnabled
+        ? LoudnormSettings(
+            enabled: true,
+            I: gains.length > 29 ? gains[29].clamp(-70.0, -5.0) : -24.0,
+            LRA: 11.0,
+            TP: -1.5,
+          )
+        : null;
+
+    // 4. Headphone Crossfeed
+    final bool crossfeedEnabled =
+        enabled && (gains.length > 21 ? gains[21] == 1.0 : false);
+    final crossfeed = crossfeedEnabled
+        ? CrossfeedSettings(
+            enabled: true,
+            strength: gains.length > 22 ? gains[22].clamp(0.0, 1.0) : 0.2,
+          )
+        : null;
+
+    // 5. Stereo Width Expansion
+    final bool widthEnabled =
+        enabled && (gains.length > 30 ? gains[30] == 1.0 : false);
+    final extrastereo = widthEnabled
+        ? ExtrastereoSettings(
+            enabled: true,
+            m: gains.length > 31 ? gains[31].clamp(-10.0, 10.0) : 2.5,
+          )
+        : null;
+
+    // 6. Bass & Treble tone shelving
+    final bool shelvingEnabled =
+        enabled && (gains.length > 44 ? gains[44] == 1.0 : true);
+    final double bassGain = shelvingEnabled
+        ? (gains.length > 32 ? gains[32] : 0.0)
+        : 0.0;
+    final double trebleGain = shelvingEnabled
+        ? (gains.length > 33 ? gains[33] : 0.0)
+        : 0.0;
+    final bass = shelvingEnabled
+        ? BassSettings(enabled: true, g: bassGain.clamp(-10.0, 15.0), f: 100.0)
+        : null;
+    final treble = shelvingEnabled
+        ? TrebleSettings(
+            enabled: true,
+            g: trebleGain.clamp(-10.0, 15.0),
+            f: 8000.0,
+          )
+        : null;
+
+    // 7. Silence Trim
+    final bool trimEnabled =
+        enabled && (gains.length > 19 ? gains[19] == 1.0 : false);
+    final silenceremove = trimEnabled
+        ? SilenceremoveSettings(
+            enabled: true,
+            start_periods: 1,
+            start_threshold: gains.length > 20
+                ? dBToMultiplier(gains[20].clamp(-60.0, -30.0))
+                : 0.003,
+            stop_periods: 1,
+            stop_threshold: gains.length > 20
+                ? dBToMultiplier(gains[20].clamp(-60.0, -30.0))
+                : 0.003,
+          )
+        : null;
+
+    // 8. Lofi (acrusher + lowpass)
+    final bool lofiEnabled =
+        enabled && (gains.length > 41 ? gains[41] == 1.0 : false);
+    final acrusher = lofiEnabled
+        ? AcrusherSettings(enabled: true, bits: 8.0, samples: 4.0, mix: 0.5)
+        : null;
+
+    // 9. Speech Enhancement Filter (highpass + lowpass)
+    final bool speechEnabled =
+        enabled && (gains.length > 38 ? gains[38] == 1.0 : false);
+    final double hpCutoff = gains.length > 39
+        ? gains[39].clamp(100.0, 300.0)
+        : 150.0;
+    final double lpCutoff = gains.length > 40
+        ? gains[40].clamp(3000.0, 6000.0)
+        : 4000.0;
+
+    final highpass = speechEnabled
+        ? HighpassSettings(enabled: true, f: hpCutoff)
+        : null;
+
+    // Merge lowpass cutoff between Lofi and Speech
+    final LowpassSettings? lowpass;
+    if (lofiEnabled) {
+      lowpass = const LowpassSettings(enabled: true, f: 3000.0);
+    } else if (speechEnabled) {
+      lowpass = LowpassSettings(enabled: true, f: lpCutoff);
+    } else {
+      lowpass = null;
+    }
+
+    // 10. Reverb (aecho)
+    final bool reverbEnabled =
+        enabled && (gains.length > 42 ? gains[42] == 1.0 : false);
+    final aecho = reverbEnabled
+        ? AechoSettings(
+            enabled: true,
+            delays: '40|60',
+            decays: '0.4|0.3',
+            in_gain: 0.8,
+            out_gain: 0.5,
+          )
+        : null;
+
+    // 11. Surround
+    final bool surroundEnabled =
+        enabled && (gains.length > 43 ? gains[43] == 1.0 : false);
+    final surround = surroundEnabled ? SurroundSettings(enabled: true) : null;
+
+    AudioEffects buildEffects() {
+      final List<String> finalCustomFilters = [];
+      if (customFilter != null && customFilter.trim().isNotEmpty) {
+        finalCustomFilters.add(customFilter.trim());
+      }
+      return AudioEffects(
+        custom: finalCustomFilters,
+        superequalizer: const SuperequalizerSettings(enabled: false),
+        anequalizer: anequalizer,
+        acompressor: compressor,
+        loudnorm: loudnorm,
+        crossfeed: crossfeed,
+        extrastereo: extrastereo,
+        bass: bass,
+        treble: treble,
+        silenceremove: silenceremove,
+        acrusher: acrusher,
+        lowpass: lowpass,
+        highpass: highpass,
+        aecho: aecho,
+        surround: surround,
+      );
+    }
+
+    bool success = false;
+    try {
+      final double preamp = gains.length > 18
+          ? gains[18].clamp(-12.0, 12.0)
+          : 0.0;
+      await player.setVolumeGain(enabled ? preamp : 0.0);
+      await player.setAudioEffects(buildEffects());
+      _resolvedResamplerFilter = 'none';
+      _resamplerProbed = true;
+      success = true;
+    } catch (e) {
+      debugPrint("Failed to set audio effects: $e");
+    }
+
+    if (success) {
+      _filtersInitialized = true;
+      // Rubberband Tempo and Pitch Shift (gain index 34-35) - keep these working even if master EQ is disabled
+      final bool pitchTempoEnabled = gains.length > 45
+          ? gains[45] == 1.0
+          : true;
+      final double pitch = pitchTempoEnabled
+          ? (gains.length > 34 ? gains[34].clamp(0.5, 2.0) : 1.0)
+          : 1.0;
+      final double tempo = pitchTempoEnabled
+          ? (gains.length > 35 ? gains[35].clamp(0.5, 3.0) : 1.0)
+          : 1.0;
+      try {
+        await player.setPitch(pitch);
+        await player.setRate(tempo);
+
+        // ReplayGain (gain index 36-37)
+        final int rgMode = gains.length > 36 ? gains[36].toInt() : 0;
+        final double rgPreamp = gains.length > 37 ? gains[37] : 0.0;
+        await configureReplayGain(mode: rgMode, preamp: rgPreamp);
+      } catch (e) {}
+    }
+  }
+
+  Future<Map<String, String>> getAudioOutputCapabilities() async {
+    final Map<String, String> capabilities = {};
+    try {
+      capabilities['Active Codec'] =
+          await player.getRawProperty('audio-codec-name') ?? 'N/A';
+    } catch (_) {}
+    try {
+      capabilities['Output Device'] =
+          await player.getRawProperty('audio-device') ?? 'Default';
+    } catch (_) {}
+    try {
+      final String? format = await player.getRawProperty(
+        'audio-out-detected-format',
+      );
+      capabilities['Output Format'] = format ?? 'N/A';
+    } catch (_) {}
+    try {
+      final String? sampleRate = await player.getRawProperty(
+        'audio-out-detected-samplerate',
+      );
+      capabilities['Output Sample Rate'] = sampleRate != null
+          ? '$sampleRate Hz'
+          : 'N/A';
+    } catch (_) {}
+    try {
+      final String? channels = await player.getRawProperty(
+        'audio-out-detected-channels',
+      );
+      capabilities['Output Channels'] = channels ?? 'N/A';
+    } catch (_) {}
+    try {
+      final String? sampleRate = await player.getRawProperty(
+        'audio-params/samplerate',
+      );
+      capabilities['Source Sample Rate'] = sampleRate != null
+          ? '$sampleRate Hz'
+          : 'N/A';
+    } catch (_) {}
+    try {
+      final String? format = await player.getRawProperty('audio-params/format');
+      capabilities['Source Format'] = format ?? 'N/A';
+    } catch (_) {}
+    try {
+      final String? channels = await player.getRawProperty(
+        'audio-params/channel-count',
+      );
+      capabilities['Source Channels'] = channels ?? 'N/A';
+    } catch (_) {}
+    try {
+      capabilities['Resampler Filter'] = _resolvedResamplerFilter ?? 'None';
+    } catch (_) {}
+    return capabilities;
   }
 }

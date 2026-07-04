@@ -1,14 +1,15 @@
 import 'dart:io';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:animations/animations.dart';
 import 'package:window_manager/window_manager.dart';
-import 'package:file_picker/file_picker.dart';
 import '../widgets/player_bar.dart';
 import '../widgets/expanded_player.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
@@ -21,6 +22,7 @@ import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/presentation/smart_views.dart';
 import 'package:looper_player/ui/screens/settings_view.dart';
 import 'package:looper_player/ui/screens/welcome_screen.dart';
+import 'package:looper_player/ui/widgets/folder_picker_helper.dart';
 
 import 'package:looper_player/ui/widgets/collection_detail_view.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_view.dart';
@@ -36,6 +38,7 @@ import 'package:looper_player/features/playback/presentation/widgets/overlay_lyr
 import 'package:looper_player/core/update_service.dart';
 
 import 'android/android_main_screen.dart';
+import 'android/widgets/empty_library_view.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -63,20 +66,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ref.read(playbackProvider.notifier).playFromFile(initialFile);
         // If playing from file, maybe skip the folder prompt for now
         if (settings.libraryFolders.isNotEmpty) {
-          ref.read(libraryProvider.notifier).scanSavedFolders();
+          ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
         }
         return;
       }
 
-      // If the library is currently empty, we DO NOT scan automatically at startup
-      // because we want the WelcomeScreen to serve as an intro where the user must manually trigger
-      // permissions/scanning via interaction!
-      final initialSongsEmpty = ref.read(libraryProvider).songs.isEmpty;
-      if (initialSongsEmpty) {
-        print('ℹ️ Welcome screen mode: skipping auto-scan at startup to prevent premature permission popups/scanning');
-      } else {
-        ref.read(libraryProvider.notifier).scanSavedFolders();
-      }
+      // Always trigger background scan for saved/discovered folders on startup
+      ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
     });
   }
 
@@ -271,19 +267,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                 // const SizedBox(width: 48),
                                                 Spacer(),
                                                 _HeaderButton(
-                                                  onTap: () async {
-                                                    final String? path =
-                                                        await FilePicker
-                                                            .platform
-                                                            .getDirectoryPath();
-                                                    if (path != null) {
-                                                      ref
-                                                          .read(
-                                                            libraryProvider
-                                                                .notifier,
-                                                          )
-                                                          .scanLibrary(path);
-                                                    }
+                                                  onTap: () {
+                                                    FolderPickerHelper.pickFolder(context, ref);
                                                   },
                                                   icon: LucideIcons.plus,
                                                   label: 'Add Folder',
@@ -350,8 +335,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     BuildContext context,
     AppLocalizations l10n,
   ) {
-    if (library.isScanning && library.songs.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+    if (!library.isInitialized || (library.isScanning && library.songs.isEmpty)) {
+      return const AppLoadingIndicator();
     }
 
     return PageTransitionSwitcher(
@@ -415,7 +400,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildEmptyState(BuildContext context, AppLocalizations l10n) {
-    return const WelcomeScreen();
+    return EmptyLibraryView(title: l10n.noSongsFound);
   }
 }
 
@@ -480,7 +465,7 @@ class Sidebar extends ConsumerWidget {
                           SizedBox(
                             height: 42,
                             child: SvgPicture.asset(
-                              'assets/main_logo.svg',
+                              'assets/main_logo_transparent.svg',
                               fit: BoxFit.contain,
                               colorMapper: AccentColorMapper(
                                 Theme.of(context).colorScheme.primary,
@@ -610,7 +595,7 @@ class _HeaderButton extends StatelessWidget {
             SizedBox(width: 10.s),
             Text(
               label,
-              style: TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white,
                 fontSize: 14.ts,
                 fontWeight: FontWeight.normal,
@@ -665,7 +650,7 @@ class _SidebarItem extends StatelessWidget {
               ),
         title: Text(
           label,
-          style: TextStyle(
+          style: AppFonts.jostStyle(
             fontSize: 14.ts,
             color: isSelected ? selectedColor : unselectedColor,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,

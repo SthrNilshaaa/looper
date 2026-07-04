@@ -429,6 +429,35 @@ class AppLocalizationsDe extends AppLocalizations {
       'Verwalten Sie Spracheinstellungen und Anruferfokusstatus';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => 'Dauer bei manueller Überblendung';
 
   @override
@@ -648,6 +677,13 @@ class AppLocalizationsDe extends AppLocalizations {
   String get resumeOnStartTitle => 'Wiedergabe beim Start fortsetzen';
 
   @override
+  String get persistQueueTitle => 'Letzte Warteschlange beibehalten';
+
+  @override
+  String get persistQueueDesc =>
+      'Letzten Titel und Warteschlange bei App-Neustarts speichern';
+
+  @override
   String get right => 'Rechts';
 
   @override
@@ -841,6 +877,21 @@ class AppLocalizationsDe extends AppLocalizations {
   String get toggleFavorite => 'Favoriten umschalten';
 
   @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+
+  @override
   String get topResult => 'Top-Ergebnis';
 
   @override
@@ -940,4 +991,100 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get year => 'Jahr';
+
+  @override
+  String get supportUs => 'Unterstützen Sie uns';
+
+  @override
+  String get supportUsDesc =>
+      'Helfen Sie mit, Looper Player am Leben und quelloffen zu halten';
+
+  @override
+  String get supportDevelopment => 'Entwicklung unterstützen';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player ist zu 100% kostenlos und quelloffen. Wenn Sie ihn gerne nutzen, unterstützen Sie den Entwickler bitte mit einer Spende. Jeder Beitrag hilft, das Projekt aktiv zu halten!';
+
+  @override
+  String get useCustomFont => 'Benutzerdefinierte Schriftart verwenden';
+
+  @override
+  String get useCustomFontDesc =>
+      'Jost oder andere benutzerdefinierte Schriftarten verwenden. Andernfalls wird DM Sans verwendet.';
+
+  @override
+  String get selectFontFamily => 'Schriftfamilie auswählen';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Aktive Schriftart: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Schriftgewichtsanpassung';
+
+  @override
+  String get currentWeight => 'Aktuelles Gewicht';
+
+  @override
+  String get useCustomFontLyrics => 'Benutzerdefinierte Liedtext-Schriftart';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Benutzerdefinierte Schriftart und -gewicht für die synchronisierte Liedtextansicht verwenden';
+
+  @override
+  String get lyricsFontFamily => 'Liedtext-Schriftfamilie';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Aktive Liedtext-Schriftart: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'Liedtext-Schriftgewichtsanpassung';
+
+  @override
+  String get giveStarOnGithub => 'Stern auf GitHub geben';
+
+  @override
+  String get supportProjectLove =>
+      'Unterstützen Sie das Projekt und zeigen Sie Ihre Begeisterung!';
+
+  @override
+  String get sortAlphabeticalAZ => 'Alphabetisch (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Alphabetisch (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'Kürzlich hinzugefügt';
+
+  @override
+  String get sortOldestAdded => 'Ältest hinzugefügt';
+
+  @override
+  String get sortYearNewest => 'Jahr (Neueste)';
+
+  @override
+  String get sortYearOldest => 'Jahr (Älteste)';
+
+  @override
+  String get sortMostSongs => 'Mehrste Titel';
+
+  @override
+  String get sortLeastSongs => 'Wenigste Titel';
+
+  @override
+  String get sortDefault => 'Standard';
+
+  @override
+  String get sortArtistAsc => 'Künstler (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'Album (A-Z)';
+
+  @override
+  String get sortDuration => 'Dauer';
 }

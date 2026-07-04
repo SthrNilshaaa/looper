@@ -24,6 +24,7 @@ enum SongSortStrategy {
 
 class LibraryState {
   final bool isScanning;
+  final bool isInitialized;
   final List<Song> songs;
   final List<Artist> artists;
   final List<Album> albums;
@@ -33,6 +34,7 @@ class LibraryState {
 
   LibraryState({
     this.isScanning = false,
+    this.isInitialized = false,
     this.songs = const [],
     this.artists = const [],
     this.albums = const [],
@@ -43,6 +45,7 @@ class LibraryState {
 
   LibraryState copyWith({
     bool? isScanning,
+    bool? isInitialized,
     List<Song>? songs,
     List<Artist>? artists,
     List<Album>? albums,
@@ -52,6 +55,7 @@ class LibraryState {
   }) {
     return LibraryState(
       isScanning: isScanning ?? this.isScanning,
+      isInitialized: isInitialized ?? this.isInitialized,
       songs: songs ?? this.songs,
       artists: artists ?? this.artists,
       albums: albums ?? this.albums,
@@ -73,7 +77,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       settingsProvider.select((s) => s.libraryFolders),
       (previous, next) async {
         if (previous != null && previous != next) {
-          print('📂 LibraryNotifier: Library folders changed. Syncing database...');
+
           await syncSongsWithFolders(next);
           _loadLibrary(); // Force-reload lists immediately
         }
@@ -176,7 +180,10 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     }
 
     _songsSubscription = query.watch(fireImmediately: true).listen((songs) {
-      state = state.copyWith(songs: songs);
+      state = state.copyWith(
+        songs: songs,
+        isInitialized: true,
+      );
     });
   }
 
@@ -239,7 +246,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         await Future.delayed(const Duration(milliseconds: 2000));
       }
     } catch (e) {
-      print('Error in background artist image fetch: $e');
+
     } finally {
       _isFetchingArtistImages = false;
     }
@@ -287,27 +294,37 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       return true;
     }
 
-    // 3. Request granular media permissions for Android 13+ (API 33+)
-    // or standard storage permission for Android 12 and below
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.audio,
-      Permission.storage,
-    ].request();
+    int sdkInt = 0;
+    try {
+      final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+      if (sdkMatch != null) {
+        sdkInt = int.parse(sdkMatch.group(1)!);
+      }
+    } catch (_) {}
 
-    bool isGranted = (statuses[Permission.audio]?.isGranted ?? false) || 
-                     (statuses[Permission.storage]?.isGranted ?? false);
+
+    bool isGranted = false;
+    if (sdkInt >= 33) {
+      isGranted = await Permission.audio.request().isGranted;
+
+    } else {
+      isGranted = await Permission.storage.request().isGranted;
+
+    }
 
     // If still not granted, try requesting manageExternalStorage explicitly
     if (!isGranted) {
+
       isGranted = await Permission.manageExternalStorage.request().isGranted;
+
     }
 
     return isGranted;
   }
 
-  Future<void> scanSavedFolders() async {
+  Future<void> scanSavedFolders({bool showVisualIndicator = true}) async {
     if (!await _requestPermissions()) {
-      print('❌ Permissions denied');
+
       return;
     }
     final folders = _ref.read(settingsProvider).libraryFolders;
@@ -364,27 +381,35 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
             }
           }
         } catch (e) {
-          print('⚠️ Error searching for SD cards: $e');
+
         }
       }
 
-      state = state.copyWith(isScanning: true);
+      if (showVisualIndicator) {
+        state = state.copyWith(isScanning: true);
+      }
       for (final path in scanRoots) {
         if (Directory(path).existsSync()) {
-          await scanLibrary(path, updateIsScanning: false);
+          await scanLibrary(path, updateIsScanning: showVisualIndicator);
         }
       }
-      state = state.copyWith(isScanning: false);
+      if (showVisualIndicator) {
+        state = state.copyWith(isScanning: false);
+      }
       return;
     }
 
-    state = state.copyWith(isScanning: true);
+    if (showVisualIndicator) {
+      state = state.copyWith(isScanning: true);
+    }
     for (final folder in folders) {
       if (Directory(folder).existsSync()) {
         await LibraryScanner().scanDirectory(folder);
       }
     }
-    state = state.copyWith(isScanning: false);
+    if (showVisualIndicator) {
+      state = state.copyWith(isScanning: false);
+    }
   }
 
   Future<void> resetAndRescan() async {
@@ -395,6 +420,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       await DbService.isar.albums.clear();
       await DbService.isar.artists.clear();
     });
+    await _ref.read(settingsProvider.notifier).updateLastPlayedSong(null);
 
     final folders = _ref.read(settingsProvider).libraryFolders;
     for (final folder in folders) {
@@ -407,7 +433,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
 
   Future<int> scanLibrary(String path, {bool updateIsScanning = true}) async {
     if (!await _requestPermissions()) return 0;
-    print('📂 Starting scan for: $path');
+
     if (updateIsScanning) {
       state = state.copyWith(isScanning: true);
     }
@@ -416,34 +442,31 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     try {
       final dir = Directory(path);
       if (dir.existsSync()) {
-        print('✅ Directory exists: $path');
+
         final result = await LibraryScanner().scanDirectory(path);
         totalSongsFound = result.songsCount;
         
+        // Always add the selected root folder path to saved library folders
+        final settings = _ref.read(settingsProvider);
+        final newFolders = Set<String>.from(settings.libraryFolders)
+          ..add(path);
         if (totalSongsFound > 0) {
-          // Add the root folder and all subfolders where music was actually found!
-          final settings = _ref.read(settingsProvider);
-          final newFolders = Set<String>.from(settings.libraryFolders)
-            ..add(path)
-            ..addAll(result.musicFolders);
-          await _ref
-              .read(settingsProvider.notifier)
-              .updateLibraryFolders(newFolders.toList());
-          print('📁 Added folders & subfolders to library: $path ($totalSongsFound songs across ${result.musicFolders.length} folders)');
-        } else {
-          print('ℹ️ No music found in: $path (not adding to settings)');
+          newFolders.addAll(result.musicFolders);
         }
+        await _ref
+            .read(settingsProvider.notifier)
+            .updateLibraryFolders(newFolders.toList());
       } else {
-        print('❌ Directory does NOT exist or is inaccessible: $path');
+
       }
     } catch (e) {
-      print('❌ Error during scan: $e');
+
     }
 
     if (updateIsScanning) {
       state = state.copyWith(isScanning: false);
     }
-    print('🏁 Scan finished for: $path');
+
     return totalSongsFound;
   }
 
@@ -475,7 +498,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       if (songsToDelete.isNotEmpty) {
         final idsToDelete = songsToDelete.map((s) => s.id).toList();
         await DbService.isar.songs.deleteAll(idsToDelete);
-        print('🧹 LibraryNotifier: Deleted ${idsToDelete.length} songs that belong to removed folders.');
+
         
         // Clean up empty albums & artists
         final remainingSongs = await DbService.isar.songs.where().findAll();
@@ -487,14 +510,14 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         final albumsToDelete = allAlbums.where((a) => !activeAlbumNames.contains(a.name)).map((a) => a.id).toList();
         if (albumsToDelete.isNotEmpty) {
           await DbService.isar.albums.deleteAll(albumsToDelete);
-          print('🧹 LibraryNotifier: Cleaned up ${albumsToDelete.length} orphaned albums.');
+
         }
 
         final allArtists = await DbService.isar.artists.where().findAll();
         final artistsToDelete = allArtists.where((art) => !activeArtistNames.contains(art.name)).map((art) => art.id).toList();
         if (artistsToDelete.isNotEmpty) {
           await DbService.isar.artists.deleteAll(artistsToDelete);
-          print('🧹 LibraryNotifier: Cleaned up ${artistsToDelete.length} orphaned artists.');
+
         }
       }
     });

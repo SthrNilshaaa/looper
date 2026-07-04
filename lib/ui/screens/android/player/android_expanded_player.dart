@@ -3,27 +3,24 @@ import 'dart:io';
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:isar/isar.dart';
+import 'package:looper_player/core/db_service.dart';
+import 'package:looper_player/core/navigation_provider.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/widgets/song_options_bottom_sheet.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/core/ui_utils.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
-import 'package:squiggly_slider/slider.dart';
 import 'package:looper_player/ui/screens/android/widgets/queue_bottom_sheet.dart';
-import 'package:looper_player/ui/screens/android/widgets/song_details_bottom_sheet.dart';
-import 'package:looper_player/features/playback/presentation/lyrics_view.dart';
 import 'package:looper_player/ui/widgets/premium_progress_bar.dart';
 import '../widgets/premium_section.dart';
 import 'android_lyrics_screen.dart';
-import 'package:looper_player/l10n/app_localizations.dart';
-import '../song/song_info_screen.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
-import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
-import 'package:looper_player/features/playback/domain/lyric_models.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:looper_player/features/playback/data/audio_analyzer.dart';
 
@@ -95,149 +92,9 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
     }
   }
 
-  void _showRenameDialog(BuildContext context, WidgetRef ref, Song song) {
-    final controller = TextEditingController(text: song.title);
-    showDialog(
-      context: context,
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
-        return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-          title: Text(
-            l10n.renameSong,
-            style: const TextStyle(color: Colors.white),
-          ),
-          content: TextField(
-            controller: controller,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              labelText: l10n.newTitle,
-              labelStyle: const TextStyle(color: Colors.grey),
-              enabledBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey),
-              ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                l10n.cancel,
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                final navigator = Navigator.of(context);
-                final result = await ref
-                    .read(playbackProvider.notifier)
-                    .renameSong(song, controller.text);
-                if (context.mounted) {
-                  navigator.pop(); // Close dialog
-                  String message = '';
-                  Color bgColor = Colors.transparent;
-                  if (result == FileActionResult.success) {
-                    message = 'Song renamed successfully';
-                    bgColor = Colors.green.shade800;
-                  } else if (result == FileActionResult.dbOnly) {
-                    message = 'Song renamed in app library (physical file read-only)';
-                    bgColor = Colors.orange.shade800;
-                  } else {
-                    message = 'Failed to rename song';
-                    bgColor = Colors.red.shade800;
-                  }
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        message,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      backgroundColor: bgColor,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              },
-              child: Text(
-                l10n.rename,
-                style: const TextStyle(color: Colors.yellow),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showDeleteDialog(BuildContext context, WidgetRef ref, Song song) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final l10n = AppLocalizations.of(context)!;
-        return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-          title: Text(
-            l10n.deleteSong,
-            style: const TextStyle(color: Colors.white),
-          ),
-          content: Text(
-            l10n.deleteSongConfirm,
-            style: const TextStyle(color: Colors.grey),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                l10n.cancel,
-                style: const TextStyle(color: Colors.grey),
-              ),
-            ),
-            TextButton(
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                final navigator = Navigator.of(context);
-                final result = await ref.read(playbackProvider.notifier).deleteSong(song);
-                if (context.mounted) {
-                  navigator.pop(); // Close dialog
-                  String message = '';
-                  Color bgColor = Colors.transparent;
-                  if (result == FileActionResult.success) {
-                    message = 'Song deleted successfully';
-                    bgColor = Colors.green.shade800;
-                    navigator.pop(); // Close expanded player
-                  } else if (result == FileActionResult.dbOnly) {
-                    message = 'Song removed from library (physical file read-only)';
-                    bgColor = Colors.orange.shade800;
-                    navigator.pop(); // Close expanded player
-                  } else {
-                    message = 'Failed to delete song';
-                    bgColor = Colors.red.shade800;
-                  }
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        message,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                      backgroundColor: bgColor,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                }
-              },
-              child: Text(
-                l10n.delete,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   void _showLyrics(BuildContext context) {
+    HapticFeedback.lightImpact();
     Navigator.of(context).push(
       PageRouteBuilder(
         pageBuilder: (context, animation, secondaryAnimation) =>
@@ -259,12 +116,13 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
   @override
   Widget build(BuildContext context) {
     final song = ref.watch(playbackProvider.select((s) => s.currentSong));
+    final l10n = AppLocalizations.of(context)!;
 
     if (song == null) {
       return Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        body: const Center(
-          child: Text('No song playing', style: TextStyle(color: Colors.white)),
+        body:  Center(
+          child: Text('No song playing', style: AppFonts.jostStyle(color: Colors.white)),
         ),
       );
     }
@@ -342,7 +200,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
     final settings = ref.watch(settingsProvider);
     final useBlur = settings.enableDynamicTheming;
     final enableSlide = settings.enableSlideGesture;
-    final musicDarkness = (settings.musicDarkness.isNaN || settings.musicDarkness == 0.0)
+    final musicDarkness = settings.musicDarkness.isNaN
         ? 0.62
         : settings.musicDarkness;
 
@@ -384,7 +242,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                   return FadeTransition(opacity: animation, child: child);
                 },
                 child: BlurredBackgroundArt(
-                  key: ValueKey(song!.artPath),
+                  key: ValueKey(song.artPath),
                   song: song,
                 ),
               ),
@@ -436,7 +294,8 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                         height: 48,
                         forceNoBlur: true,
                         useExpanded: false,
-                        useBlur: useBlur,
+                        useBlur: true,
+                        
                         onTap: () {
                           HapticFeedback.lightImpact();
                           Navigator.of(context).pop();
@@ -455,9 +314,9 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const Text(
+                          Text(
                             'Now Playing',
-                            style: TextStyle(
+                            style: AppFonts.jostStyle(
                               color: Colors.white,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -480,7 +339,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                               ),
                               child: Text(
                                 qualityText,
-                                style: const TextStyle(
+                                style: AppFonts.jostStyle(
                                   color: Colors.white70,
                                   fontSize: 9,
                                   fontWeight: FontWeight.w600,
@@ -490,34 +349,68 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                             ),
                         ],
                       ),
-                      PremiumSection(
-                        borderRadius: BorderRadius.circular(32),
-                        width: 48,
-                        height: 48,
-                        useExpanded: false,
-                        showShadow: false,
-                        forceNoBlur: true,
-                        useBlur: useBlur,
-                        onTap: () {
-                          HapticFeedback.mediumImpact();
-                          showModalBottomSheet(
-                            context: context,
-                            useRootNavigator: true,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (context) => const QueueBottomSheet(),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final isSleepActive = ref.watch(playbackProvider.select((s) => s.isSleepTimerActive));
+                          final durationRemaining = ref.watch(playbackProvider.select((s) => s.sleepTimerDurationRemaining));
+                          final durationInitial = ref.watch(playbackProvider.select((s) => s.sleepTimerDurationInitial));
+                          final songsRemaining = ref.watch(playbackProvider.select((s) => s.sleepTimerSongsRemaining));
+                          final songsInitial = ref.watch(playbackProvider.select((s) => s.sleepTimerSongsInitial));
+
+                          Widget iconChild;
+                          if (isSleepActive) {
+                            double progress = 1.0;
+                            String label = '';
+                            if (durationRemaining != null) {
+                              if (durationInitial != null && durationInitial.inMilliseconds > 0) {
+                                progress = (durationRemaining.inMilliseconds / durationInitial.inMilliseconds).clamp(0.0, 1.0);
+                              }
+                              final minutes = durationRemaining.inMinutes;
+                              if (minutes >= 1) {
+                                label = '${minutes}m';
+                              } else {
+                                final seconds = durationRemaining.inSeconds;
+                                label = '${seconds}s';
+                              }
+                            } else if (songsRemaining != null) {
+                              if (songsInitial != null && songsInitial > 0) {
+                                progress = (songsRemaining / songsInitial).clamp(0.0, 1.0);
+                              }
+                              label = '$songsRemaining';
+                            }
+
+                            iconChild = SleepTimerClock(
+                              progress: progress,
+                              label: label,
+                              color: Theme.of(context).colorScheme.primary,
+                            );
+                          } else {
+                            iconChild = SvgPicture.asset(
+                              AppIcons.more,
+                              colorFilter: const ColorFilter.mode(
+                                Colors.white,
+                                BlendMode.srcIn,
+                              ),
+                              width: AppIcons.expandedPlayerSecondaryControl.s,
+                              height: AppIcons.expandedPlayerSecondaryControl.s,
+                            );
+                          }
+
+                          return PremiumSection(
+                            height: 48,
+                            width:48,
+                            useBlur: true,
+                            useExpanded: false,
+                            showShadow: false,
+                            forceNoBlur: true,
+                            onTap: () => _showMoreOptionsBottomSheet(context, ref),
+                            borderRadius: BorderRadius.circular(32),
+                            
+                            child: iconChild,
                           );
                         },
-                        child: SvgPicture.asset(
-                          AppIcons.queue,
-                          colorFilter: const ColorFilter.mode(
-                            Colors.white,
-                            BlendMode.srcIn,
-                          ),
-                          width: AppIcons.sizeTiny.s,
-                          height: AppIcons.sizeTiny.s,
-                        ),
                       ),
+                      
                     ],
                   ),
                 ),
@@ -569,13 +462,13 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                                     final Hero toHero =
                                         toHeroContext.widget as Hero;
 
-                                    final fallbackFrom = const TextStyle(
+                                    final fallbackFrom = AppFonts.jostStyle(
                                       color: Colors.white,
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       letterSpacing: 0.3,
                                     );
-                                    final fallbackTo = const TextStyle(
+                                    final fallbackTo = AppFonts.jostStyle(
                                       color: Colors.white,
                                       fontSize: 24,
                                       fontWeight: FontWeight.bold,
@@ -621,7 +514,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                                   },
                               child: ScrollingText(
                                 text: song.title,
-                                style: const TextStyle(
+                                style: AppFonts.jostStyle(
                                   color: Colors.white,
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
@@ -645,14 +538,14 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                                     final Hero toHero =
                                         toHeroContext.widget as Hero;
 
-                                    final fallbackFrom = TextStyle(
+                                    final fallbackFrom = AppFonts.jostStyle(
                                       color: Colors.white.withValues(
                                         alpha: 0.5,
                                       ),
                                       fontSize: 14,
                                       letterSpacing: 0.2,
                                     );
-                                    final fallbackTo = TextStyle(
+                                    final fallbackTo = AppFonts.jostStyle(
                                       color: Colors.white.withValues(
                                         alpha: 0.6,
                                       ),
@@ -697,12 +590,39 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                                       },
                                     );
                                   },
-                              child: ScrollingText(
-                                text: song.artist ?? 'Unknown Artist',
-                                style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.6),
-                                  fontSize: 18,
-                                  letterSpacing: 0.2,
+                              child: Material(
+                                color:Colors.transparent,
+                                child: InkWell(
+                                  onTap: ()async{
+                                    if (song.artist != null) {
+                                      final artistSongs = await DbService.isar.songs
+                                          .filter()
+                                          .artistEqualTo(song.artist!)
+                                          .findAll();
+                                      final artist = await DbService.isar.artists
+                                          .filter()
+                                          .nameEqualTo(song.artist!)
+                                          .findFirst();
+                                      ref
+                                          .read(appNavigationProvider.notifier)
+                                          .showCollection(
+                                        title: song.artist!,
+                                        subtitle: l10n.artists,
+                                        art: artist?.artPath ?? song.artPath,
+                                        imageUrl: artist?.artistImageUrl,
+                                        songs: artistSongs,
+                                      );
+                                    }
+                                    Navigator.pop(context);
+                                  },
+                                  child: ScrollingText(
+                                    text: song.artist ?? 'Unknown Artist',
+                                    style: AppFonts.jostStyle(
+                                      color: Colors.white.withValues(alpha: 0.6),
+                                      fontSize: 18,
+                                      letterSpacing: 0.2,
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
@@ -729,6 +649,7 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                         showShadow: false,
                         useBlur: useBlur,
                         forceNoBlur: true,
+                        backgroundColor: song.isFavorite?  Colors.amber.withValues(alpha: 0.15):Colors.transparent,
                         onTap: () {
                          setState(() {
                             HapticFeedback.selectionClick();
@@ -736,22 +657,19 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                          });
                         },
                         child: Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top:3.0),
-                            child: SvgPicture.asset(
-                              song.isFavorite ?
-                              AppIcons.like:
-                              AppIcons.unlike,
-                              colorFilter: ColorFilter.mode(
-                                song.isFavorite
-                                    ? Colors.yellow
-                                    : Colors.white.withValues(alpha: 0.4),
-                                    
-                                BlendMode.srcIn,
-                              ),
-                              width: AppIcons.sizeMedium.s,
-                              height: AppIcons.sizeMedium.s,
+                          child: SvgPicture.asset(
+                            song.isFavorite ?
+                            AppIcons.like:
+                            AppIcons.unlike,
+                            colorFilter: ColorFilter.mode(
+                              song.isFavorite
+                                  ? Colors.yellow
+                                  : Colors.white.withValues(alpha: 0.4),
+                                  
+                              BlendMode.srcIn,
                             ),
+                            width: AppIcons.sizeLarge.s,
+                            height: AppIcons.sizeLarge.s,
                           ),
                         ),
                       ),
@@ -769,17 +687,23 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                       final position = ref.watch(playbackProvider.select((s) => s.position));
                       final duration = ref.watch(playbackProvider.select((s) => s.duration));
                       final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
-                      return ExpressiveSlider(
-                        position: position,
-                        duration: duration,
-                        isPlaying: isPlaying,
-                        onSeek: (pos) =>
-                            ref.read(playbackProvider.notifier).seek(pos),
-                        onSeekStart: () =>
-                            ref.read(playbackProvider.notifier).startScrubbing(),
-                        onSeekEnd: () =>
-                            ref.read(playbackProvider.notifier).stopScrubbing(),
-                        color: Theme.of(context).colorScheme.primary,
+                      return Hero(
+                        tag: 'player_seek_bar',
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: ExpressiveSlider(
+                            position: position,
+                            duration: duration,
+                            isPlaying: isPlaying,
+                            onSeek: (pos) =>
+                                ref.read(playbackProvider.notifier).seek(pos),
+                            onSeekStart: () =>
+                                ref.read(playbackProvider.notifier).startScrubbing(),
+                            onSeekEnd: () =>
+                                ref.read(playbackProvider.notifier).stopScrubbing(),
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -1014,26 +938,38 @@ class _AndroidExpandedPlayerState extends ConsumerState<AndroidExpandedPlayer>
                       const SizedBox(width: 6),
                       // More
                       PremiumSection(
-                        height: 64,
-                        useBlur: useBlur,
-                        showShadow: false,
-
-                        forceNoBlur: true,
-                        onTap: () => _showMoreOptionsBottomSheet(context, ref),
+                        //borderRadius: BorderRadius.circular(32),
                         borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(12),
-                          bottomLeft: Radius.circular(12),
-                          topRight: Radius.circular(32),
-                          bottomRight: Radius.circular(32),
-                        ),
+                              topLeft: Radius.circular(12),
+                              bottomLeft: Radius.circular(12),
+                              topRight: Radius.circular(32),
+                              bottomRight: Radius.circular(32),
+                            ),
+                        //width: 48,
+                        height:64,
+                        //height: 48,
+                        //useExpanded: false,
+                        showShadow: false,
+                        forceNoBlur: true,
+                        useBlur: useBlur,
+                        onTap: () {
+                          HapticFeedback.mediumImpact();
+                          showModalBottomSheet(
+                            context: context,
+                            useRootNavigator: true,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => const QueueBottomSheet(),
+                          );
+                        },
                         child: SvgPicture.asset(
-                          AppIcons.more,
+                          AppIcons.queue,
                           colorFilter: const ColorFilter.mode(
                             Colors.white70,
                             BlendMode.srcIn,
                           ),
-                          width: AppIcons.expandedPlayerSecondaryControl.s,
-                          height: AppIcons.expandedPlayerSecondaryControl.s,
+                          width: AppIcons.sizeTiny.s,
+                          height: AppIcons.sizeTiny.s,
                         ),
                       ),
                     ],
@@ -1335,7 +1271,7 @@ class _GestureArtworkWithFeedbackState
               });
             });
             _snapController.forward(from: 0.0).then((_) {
-              ref.read(playbackProvider.notifier).skipPrevious();
+              ref.read(playbackProvider.notifier).skipPrevious(force: true);
             });
           }
         } else {
@@ -1382,10 +1318,9 @@ class _GestureArtworkWithFeedbackState
                               bgSong.artPath!.startsWith('http')
                           ? bgSong.artPath
                           : null,
-                      width: artSize,
-                      height: artSize,
                       borderRadius: BorderRadius.circular(24),
                       fit: BoxFit.cover,
+                      cacheWidth: (screenWidth * dpr).toInt(),
                     ),
                   ),
                 ),
@@ -1494,9 +1429,9 @@ class _GestureArtworkWithFeedbackState
                                 size: 48,
                               ),
                               const SizedBox(height: 6),
-                              const Text(
+                              Text(
                                 '-10s',
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -1516,9 +1451,9 @@ class _GestureArtworkWithFeedbackState
                                 size: 48,
                               ),
                               const SizedBox(height: 6),
-                              const Text(
+                              Text(
                                 '+10s',
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -1537,9 +1472,9 @@ class _GestureArtworkWithFeedbackState
                                 size: 48,
                               ),
                               const SizedBox(height: 6),
-                              const Text(
+                              Text(
                                 'Next',
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -1558,9 +1493,9 @@ class _GestureArtworkWithFeedbackState
                                 size: 48,
                               ),
                               const SizedBox(height: 6),
-                              const Text(
+                              Text(
                                 'Previous',
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 14,
@@ -1624,11 +1559,11 @@ class BlurredBackgroundArt extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = song.artPath;
     if (path == null) return const SizedBox.shrink();
-    return Transform.scale(
-      scale: 1.08,
-      child: ImageFiltered(
-        imageFilter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: RepaintBoundary(
+    return RepaintBoundary(
+      child: Transform.scale(
+        scale: 1.08,
+        child: ImageFiltered(
+          imageFilter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Image.file(
             File(path),
             fit: BoxFit.cover,
@@ -1653,7 +1588,7 @@ class ForegroundAlbumArt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.sizeOf(context).width;
-    final artSize = screenWidth - 48;
+    final double dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
 
     return AspectRatio(
       aspectRatio: 1.0,
@@ -1664,11 +1599,99 @@ class ForegroundAlbumArt extends StatelessWidget {
         imageUrl: song.artPath != null && song.artPath!.startsWith('http')
             ? song.artPath
             : null,
-        width: artSize,
-        height: artSize,
         borderRadius: BorderRadius.circular(24),
         fit: BoxFit.cover,
+        cacheWidth: (screenWidth * dpr).toInt(),
       ),
     );
+  }
+}
+
+class SleepTimerClock extends StatelessWidget {
+  final double progress;
+  final String label;
+  final Color color;
+
+  const SleepTimerClock({
+    super.key,
+    required this.progress,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final double size = 28.s;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CustomPaint(
+            size: Size(size, size),
+            painter: _SleepTimerClockPainter(
+              progress: progress,
+              color: color,
+            ),
+          ),
+          Text(
+            label,
+            style: GoogleFonts.jost(
+              fontSize: 8.5.sp,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SleepTimerClockPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+
+  _SleepTimerClockPainter({
+    required this.progress,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 2.0) / 2;
+
+    // Draw background circle track
+    final bgPaint = Paint()
+      ..color = color.withValues(alpha: 0.15)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    canvas.drawCircle(center, radius, bgPaint);
+
+    // Draw active progress arc clockwise starting from top (-pi / 2)
+    if (progress > 0) {
+      final activePaint = Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..strokeCap = StrokeCap.round;
+
+      const startAngle = -3.141592653589793 / 2;
+      final sweepAngle = 2 * 3.141592653589793 * progress;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        activePaint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SleepTimerClockPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }

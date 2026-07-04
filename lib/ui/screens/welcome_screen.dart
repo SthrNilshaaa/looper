@@ -30,11 +30,13 @@ class WelcomeScreen extends ConsumerStatefulWidget {
   ConsumerState<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindingObserver {
+class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
+    with WidgetsBindingObserver {
   WelcomeState _currentState = WelcomeState.initial;
   String _scanStatusMessage = "Initializing scanner...";
-  
-  bool _permissionGranted = false; // true if standard audio/storage OR all files is granted
+
+  bool _permissionGranted =
+      false; // true if standard audio/storage OR all files is granted
   bool _notificationGranted = false;
   bool _audioGranted = false;
   bool _allFilesGranted = false;
@@ -68,7 +70,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
     if (Platform.isAndroid) {
       notif = await Permission.notification.isGranted;
       all = await Permission.manageExternalStorage.isGranted;
-      aud = (await Permission.audio.isGranted) || (await Permission.storage.isGranted);
+      aud =
+          (await Permission.audio.isGranted) ||
+          (await Permission.storage.isGranted);
     } else {
       notif = true;
       aud = true;
@@ -124,7 +128,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             left: -150,
             child: _GlowOrb(color: colorScheme.primary.withValues(alpha: 0.08)),
           ),
-          
+
           // Subtle vignette overlay
           Positioned.fill(
             child: Container(
@@ -147,7 +151,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 24.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28.0,
+                    vertical: 24.0,
+                  ),
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 500),
                     switchInCurve: Curves.easeInOutCubic,
@@ -203,7 +210,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             height: 100.s,
             width: 200.s,
             child: SvgPicture.asset(
-              'assets/main_logo.svg',
+              'assets/main_logo_transparent.svg',
               fit: BoxFit.contain,
               placeholderBuilder: (context) => Icon(
                 LucideIcons.music,
@@ -322,7 +329,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   ],
                 ),
                 const SizedBox(height: 16),
-                
+
                 // 1. Notification Permission Row
                 _buildPermissionRow(
                   title: l10n.notificationAccess.toUpperCase(),
@@ -337,7 +344,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   padding: EdgeInsets.symmetric(vertical: 12.0),
                   child: Divider(height: 1, color: Colors.white10),
                 ),
-                
+
                 // 2. Music & Audio Permission Row
                 _buildPermissionRow(
                   title: l10n.musicAudioAccess.toUpperCase(),
@@ -352,7 +359,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   padding: EdgeInsets.symmetric(vertical: 12.0),
                   child: Divider(height: 1, color: Colors.white10),
                 ),
-                
+
                 // 3. All Files Permission Row (Highly recommended)
                 _buildPermissionRow(
                   title: l10n.allFilesAccess.toUpperCase(),
@@ -360,9 +367,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                   isGranted: _allFilesGranted,
                   onGrant: _requestAllFilesPermission,
                   colorScheme: colorScheme,
-                  accentColor: Color(settings.accentColor), 
+                  accentColor: Color(settings.accentColor),
                   l10n: l10n,
-                  
                 ),
               ],
             ),
@@ -384,7 +390,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
                         // Automatically scan first if database is empty
                         await _startStorageScanFlow();
                         if (ref.read(libraryProvider).songs.isNotEmpty) {
-                          ref.read(welcomeBypassedProvider.notifier).state = true;
+                          ref.read(welcomeBypassedProvider.notifier).state =
+                              true;
                         }
                       }
                     }
@@ -407,16 +414,25 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             if (_permissionGranted && librarySongs.isNotEmpty) ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Color(settings.accentColor).withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Color(settings.accentColor).withValues(alpha: 0.15)),
+                  border: Border.all(
+                    color: Color(settings.accentColor).withValues(alpha: 0.15),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.checkCircle2, color: Color(settings.accentColor), size: 18.s),
+                    Icon(
+                      LucideIcons.checkCircle2,
+                      color: Color(settings.accentColor),
+                      size: 18.s,
+                    ),
                     const SizedBox(width: 10),
                     Text(
                       l10n.scanCompleteSongsDetected(librarySongs.length),
@@ -472,7 +488,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           margin: const EdgeInsets.only(top: 2.0),
           padding: const EdgeInsets.all(6.0),
           decoration: BoxDecoration(
-            color: isGranted ? accentColor.withValues(alpha: 0.12) : Colors.white.withValues(alpha: 0.03),
+            color: isGranted
+                ? accentColor.withValues(alpha: 0.12)
+                : Colors.white.withValues(alpha: 0.03),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -514,7 +532,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
             child: TextButton(
               style: TextButton.styleFrom(
                 backgroundColor: accentColor.withValues(alpha: 0.15),
-                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 0.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14.0,
+                  vertical: 0.0,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
@@ -532,7 +553,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           )
         else
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10.0,
+              vertical: 4.0,
+            ),
             decoration: BoxDecoration(
               color: accentColor.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(10),
@@ -561,10 +585,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         SizedBox(
           width: 400.s,
           height: 300.s,
-          child: Lottie.asset(
-            'assets/loading.json',
-            fit: BoxFit.contain,
-          ),
+          child: Lottie.asset('assets/loading.json', fit: BoxFit.contain),
         ),
         const SizedBox(height: 24),
         Text(
@@ -611,11 +632,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
               width: 1.5,
             ),
           ),
-          child: Icon(
-            LucideIcons.searchCode,
-            size: 48.s,
-            color: Colors.amber,
-          ),
+          child: Icon(LucideIcons.searchCode, size: 48.s, color: Colors.amber),
         ),
         const SizedBox(height: 24),
 
@@ -726,11 +743,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
               shape: BoxShape.circle,
             ),
             child: Center(
-              child: Icon(
-                icon,
-                size: 16.s,
-                color: colorScheme.primary,
-              ),
+              child: Icon(icon, size: 16.s, color: colorScheme.primary),
             ),
           ),
           const SizedBox(width: 16),
@@ -779,9 +792,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
       if (mounted) {
         final localizations = AppLocalizations.of(context)!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(localizations.storagePermissionRequired),
-          ),
+          SnackBar(content: Text(localizations.storagePermissionRequired)),
         );
         setState(() {
           _currentState = WelcomeState.initial;
@@ -791,7 +802,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
     }
 
     setState(() {
-      _scanStatusMessage = "Traversing standard device directories recursively...";
+      _scanStatusMessage =
+          "Traversing standard device directories recursively...";
     });
 
     // Determine scan roots including all popular directories for maximum coverage
@@ -800,7 +812,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
       String defaultPath = '${Platform.environment['HOME']}/Music';
       try {
         final result = await Process.run('xdg-user-dir', ['MUSIC']);
-        if (result.exitCode == 0 && result.stdout.toString().trim().isNotEmpty) {
+        if (result.exitCode == 0 &&
+            result.stdout.toString().trim().isNotEmpty) {
           defaultPath = result.stdout.toString().trim();
         }
       } catch (_) {}
@@ -829,10 +842,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
       try {
         final storageDir = Directory('/storage');
         if (await storageDir.exists()) {
-          final List<FileSystemEntity> entities = await storageDir.list().toList();
+          final List<FileSystemEntity> entities = await storageDir
+              .list()
+              .toList();
           for (final entity in entities) {
             final name = p.context.basename(entity.path);
-            if (name != 'emulated' && name != 'self' && name != 'knox-emulated' && !name.contains('-')) {
+            if (name != 'emulated' &&
+                name != 'self' &&
+                name != 'knox-emulated' &&
+                !name.contains('-')) {
               if (await Permission.manageExternalStorage.isGranted) {
                 scanRoots.add(entity.path);
               } else {
@@ -853,7 +871,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         setState(() {
           _scanStatusMessage = "Analyzing path: ${p.context.basename(path)}...";
         });
-        final count = await ref.read(libraryProvider.notifier).scanLibrary(path);
+        final count = await ref
+            .read(libraryProvider.notifier)
+            .scanLibrary(path);
         totalSongsDiscovered += count;
       }
     }
@@ -863,9 +883,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
         _currentState = WelcomeState.noSongs;
       });
     } else {
-      setState(() {
-        _currentState = WelcomeState.initial;
-      });
+      ref.read(welcomeBypassedProvider.notifier).state = true;
     }
   }
 
@@ -887,9 +905,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen> with WidgetsBindi
           _currentState = WelcomeState.noSongs;
         });
       } else {
-        setState(() {
-          _currentState = WelcomeState.initial;
-        });
+        ref.read(welcomeBypassedProvider.notifier).state = true;
       }
     }
   }
@@ -906,12 +922,7 @@ class _GlowOrb extends StatelessWidget {
       height: 320.s,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: RadialGradient(
-          colors: [
-            color,
-            color.withValues(alpha: 0),
-          ],
-        ),
+        gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
       ),
     );
   }
@@ -939,8 +950,8 @@ class _PremiumButton extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         gradient: LinearGradient(
-          colors: isEnabled 
-              ? gradientColors 
+          colors: isEnabled
+              ? gradientColors
               : [
                   Colors.white.withValues(alpha: 0.05),
                   Colors.white.withValues(alpha: 0.02),

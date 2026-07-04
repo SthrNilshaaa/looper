@@ -34,7 +34,7 @@ class ArtistImageService {
         }
       }
     } catch (e) {
-      debugPrint('Error fetching artist image: $e');
+
     }
     return null;
   }
@@ -53,7 +53,7 @@ class ArtistImageService {
         return file.path;
       }
     } catch (e) {
-      debugPrint('Error downloading artist image: $e');
+
     }
     return null;
   }

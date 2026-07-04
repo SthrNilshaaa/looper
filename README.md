@@ -3,6 +3,10 @@
 </p>
 
 <p align="center">
+  <img src="https://readme-typing-svg.herokuapp.com?font=Lexend+Giga&size=30&pause=1200&color=B4BEFE&center=true&vCenter=true&width=900&lines=Experience+Music+in+Cyber-Glass+Aesthetics;High-Fidelity+Playback%2C+made+easy" />
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Platform-Linux%20%7C%20Android-blueviolet?style=for-the-badge&logo=linux&logoColor=white" />
   <img src="https://img.shields.io/badge/UI--UX-Glassmorphism%20%2F%20Neo--Blur-FF007F?style=for-the-badge&logo=figma&logoColor=white" />
   <img src="https://img.shields.io/badge/Built%20With-Flutter%20%26%20Dart-02569B?style=for-the-badge&logo=flutter&logoColor=white" />
@@ -28,27 +32,30 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
 │                        LOOPER PLAYER FEATURES                          │
-├───────────────────────────────────────┬────────────────────────────────┤
-│ 🔮 GLASSMORPHIC CYBER-UI              │ ⚡ ULTRA-PERFORMANT ENGINE     │
-│   Full real-time blur and glowing     │   Sub-millisecond local scans, │
-│   gradients that match album art.     │   indexing libraries of 50k+.  │
-├───────────────────────────────────────┼────────────────────────────────┤
-│ 🎤 SYNCHRONIZED LRC LYRICS            │ 📱 CROSS-PLATFORM PARITY       │
-│   Real-time fluid line animations     │   Seamlessly engineered for    │
-│   and interactive lyrics search.      │   both Linux and Android.      │
-├───────────────────────────────────────┼────────────────────────────────┤
-│ 🔒 100% PRIVATE & OFFLINE             │ 🎵 CUSTOMIZABLE AUDIO CONTROL  │
-│   Zero trackers. Zero telemetry.      │   Gapless playback and advanced│
-│   All data stays local.               │   audio focus management.      │
+│├───────────────────────────────────────┬────────────────────────────────┤
+│🔮 GLASSMORPHIC CYBER-UI              │ ⚡ ULTRA-PERFORMANT ENGINE     │
+│  Full real-time blur and glowing     │   Sub-millisecond local scans, │
+│  gradients that match album art.     │   indexing libraries of 50k+.  │
+│├───────────────────────────────────────┼────────────────────────────────┤
+│🎤 SYNCHRONIZED LRC LYRICS            │ 📱 CROSS-PLATFORM PARITY       │
+│  Real-time fluid line animations     │   Seamlessly engineered for    │
+│  and interactive lyrics search.      │   both Linux and Android.      │
+│├───────────────────────────────────────┼────────────────────────────────┤
+│🔒 100% PRIVATE & OFFLINE             │ 🎵 CUSTOMIZABLE AUDIO CONTROL  │
+│  Zero trackers. Zero telemetry.      │   Gapless playback and advanced│
+│  All data stays local.               │   audio focus management.      │
 └───────────────────────────────────────┴────────────────────────────────┘
 ```
 
 - **Dynamic Theme & Neo-Blur Aesthetics**: The entire interface—buttons, borders, text accents, and ambient background blurs—morphs dynamically to blend beautifully with the album art of the active song, featuring smooth crossfade transitions.
-- **Advanced Lyrics Engine**: Synchronized scrolling LRC lyrics with dynamic, tactile line-by-line animations, interactive tap-to-seek playback integration, font scaling, and display keep-awake modes.
+- **Advanced Lyrics Engine**: Synchronized scrolling LRC lyrics with dynamic, tactile line-by-line animations, interactive tap-to-seek playback integration, font scaling, and display keep-awake modes. Supports dynamic fluid or blurred album art background layouts on both Linux and Android.
+- **Interactive 18-Band Graphical Equalizer**: Drag-to-shape 18-band custom equalizer curve with decibel grid lines, decibel ranges (+/- 20 dB), frequency bands (65Hz to 20kHz), zero-snapping logic, and real-time FFI filter adjustments.
+- **Play/Pause Loop State Machine**: Non-blocking control structure that updates UI button states and system notification widgets instantly while processing volume fades and native player changes sequentially in the background.
+- **Playback Persistence & Queue Restore**: Automatically saves and restores the last active playlist queue, currently loaded song, and precise seek position (down to the millisecond) when restarting the app.
 - **Resilient Offline File Operations**: Full audio engine state release and file-lock management when renaming or deleting tracks on local storage, backed by immediate, colorful alerts through custom glassmorphic SnackBars.
 - **Fully Responsive & Adaptive Layouts**: The dashboard and detail pages (such as the playlist header) intelligently reflow between horizontal rows and vertical columns to fit perfectly on standard, large, and extremely narrow devices alike.
 - **Sub-Second Search & Local Library Scans**: Instant global scanning and indexing of 50k+ local libraries, with micro-latency search matching song titles, artists, albums, and even specific lyric phrases.
-- **Interactive Android & Linux Parity**: Native media keys, MPRIS controls on Linux, automatic audio focus transitions, and beautiful permission onboarding on Android.
+- **Interactive Android & Linux Parity**: Native media keys, MPRIS controls on Linux, automatic audio focus transitions, and persistent notification control on Android even when the app is swiped away from task cards.
 
 ---
 
@@ -182,4 +189,3 @@ Connect with the developers for feature requests, bug reports, or discussion:
 **Nilesh Suthar**
 [![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/SthrNilshaaa)
 [![Telegram](https://img.shields.io/badge/Telegram-26A5E4?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/neelshy)
-

@@ -1,9 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/core/app_fonts.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
@@ -107,7 +110,7 @@ class SearchView extends ConsumerWidget {
               : resultsAsync.when(
                   data: (results) => _buildResults(results, ref, context),
                   loading: () =>
-                      const Center(child: CircularProgressIndicator()),
+                      const AppLoadingIndicator(),
                   error: (e, s) => Center(child: Text('Error: $e')),
                 ),
         ),
@@ -129,7 +132,7 @@ class SearchView extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             l10n.searchLibraryHint,
-            style: const TextStyle(color: Colors.grey),
+            style: AppFonts.jostStyle(color: Colors.grey),
           ),
         ],
       ),
@@ -173,7 +176,7 @@ class SearchView extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     l10n.artists,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+                    style: AppFonts.jostStyle(fontSize: 18, fontWeight: FontWeight.normal),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -200,7 +203,7 @@ class SearchView extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     l10n.albums,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+                    style: AppFonts.jostStyle(fontSize: 18, fontWeight: FontWeight.normal),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -254,7 +257,7 @@ class SearchView extends ConsumerWidget {
       children: [
         Text(
           l10n.topResult,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+          style: AppFonts.jostStyle(fontSize: 18, fontWeight: FontWeight.normal),
         ),
         const SizedBox(height: 12),
         _SongResultCard(
@@ -361,22 +364,14 @@ class _SongResultCard extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: song.artPath != null
-                              ? DecorationImage(
-                                  image: FileImage(File(song.artPath!)),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                          color: Colors.white10,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: OptimizedImage(
+                          imagePath: song.artPath,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
                         ),
-                        child: song.artPath == null
-                            ? const Icon(LucideIcons.music, size: 32)
-                            : null,
                       ),
                       const SizedBox(width: 20),
                       Expanded(
@@ -385,7 +380,7 @@ class _SongResultCard extends ConsumerWidget {
                           children: [
                             Text(
                               song.title,
-                              style: const TextStyle(
+                              style: AppFonts.jostStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.normal,
                               ),
@@ -395,13 +390,13 @@ class _SongResultCard extends ConsumerWidget {
                             const SizedBox(height: 4),
                             Text(
                               song.artist ?? l10n.unknownArtist,
-                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                              style: AppFonts.jostStyle(fontSize: 14, color: Colors.grey),
                             ),
                             if (lyricSnippet == null) ...[
                               const SizedBox(height: 2),
                               Text(
                                 song.album ?? l10n.unknownAlbum,
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   fontSize: 12,
                                   color: Colors.grey.withValues(alpha: 0.7),
                                 ),
@@ -446,7 +441,7 @@ class _SongResultCard extends ConsumerWidget {
                               const SizedBox(width: 6),
                               Text(
                                 l10n.matchingLyrics,
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: colorScheme.primary,
@@ -460,12 +455,12 @@ class _SongResultCard extends ConsumerWidget {
                             context: context,
                             text: lyricSnippet,
                             query: searchQuery ?? '',
-                            baseStyle: TextStyle(
+                            baseStyle: AppFonts.jostStyle(
                               fontSize: 13,
                               color: Colors.white.withValues(alpha: 0.85),
                               fontStyle: FontStyle.italic,
                             ),
-                            highlightStyle: TextStyle(
+                            highlightStyle: AppFonts.jostStyle(
                               fontSize: 13,
                               color: colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -495,22 +490,14 @@ class _SongResultCard extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          image: song.artPath != null
-                              ? DecorationImage(
-                                  image: FileImage(File(song.artPath!)),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                          color: Colors.white10,
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: OptimizedImage(
+                          imagePath: song.artPath,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.cover,
                         ),
-                        child: song.artPath == null
-                            ? const Icon(LucideIcons.music, size: 32)
-                            : null,
                       ),
                       const SizedBox(width: 20),
                       Expanded(
@@ -519,7 +506,7 @@ class _SongResultCard extends ConsumerWidget {
                           children: [
                             Text(
                               song.title,
-                              style: const TextStyle(
+                              style: AppFonts.jostStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.normal,
                               ),
@@ -529,13 +516,13 @@ class _SongResultCard extends ConsumerWidget {
                             const SizedBox(height: 4),
                             Text(
                               song.artist ?? l10n.unknownArtist,
-                              style: const TextStyle(fontSize: 14, color: Colors.grey),
+                              style: AppFonts.jostStyle(fontSize: 14, color: Colors.grey),
                             ),
                             if (lyricSnippet == null) ...[
                               const SizedBox(height: 2),
                               Text(
                                 song.album ?? l10n.unknownAlbum,
-                                style: TextStyle(
+                                style: AppFonts.jostStyle(
                                   fontSize: 12,
                                   color: Colors.grey.withValues(alpha: 0.7),
                                 ),
@@ -580,7 +567,7 @@ class _SongResultCard extends ConsumerWidget {
                               const SizedBox(width: 6),
                               Text(
                                 l10n.matchingLyrics,
-                                style: TextStyle(
+                              style: AppFonts.jostStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                   color: colorScheme.primary,
@@ -594,12 +581,12 @@ class _SongResultCard extends ConsumerWidget {
                             context: context,
                             text: lyricSnippet,
                             query: searchQuery ?? '',
-                            baseStyle: TextStyle(
+                            baseStyle: AppFonts.jostStyle(
                               fontSize: 13,
                               color: Colors.white.withValues(alpha: 0.85),
                               fontStyle: FontStyle.italic,
                             ),
-                            highlightStyle: TextStyle(
+                            highlightStyle: AppFonts.jostStyle(
                               fontSize: 13,
                               color: colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -693,7 +680,7 @@ class _ArtistResultCard extends ConsumerWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12),
+              style: AppFonts.jostStyle(fontSize: 12),
             ),
           ],
         ),
@@ -730,30 +717,29 @@ class _AlbumResultCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
+            SizedBox(
+              width: 120,
               height: 120,
-              decoration: BoxDecoration(
+              child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                image: album.artPath != null
-                    ? DecorationImage(
-                        image: FileImage(File(album.artPath!)),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-                color: Colors.grey.withValues(alpha: 
-                  ref.watch(settingsProvider).enableDynamicTheming ? 0.8 : 0.1,
+                child: OptimizedImage(
+                  imagePath: album.artPath,
+                  fit: BoxFit.cover,
+                  placeholder: Container(
+                    color: Colors.grey.withValues(alpha:
+                      ref.watch(settingsProvider).enableDynamicTheming ? 0.8 : 0.1,
+                    ),
+                    child: const Center(child: Icon(LucideIcons.music)),
+                  ),
                 ),
               ),
-              child: album.artPath == null
-                  ? const Center(child: Icon(LucideIcons.music))
-                  : null,
             ),
             const SizedBox(height: 8),
             Text(
               album.name,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: AppFonts.jostStyle(
                 fontWeight: FontWeight.normal,
                 fontSize: 13,
               ),
@@ -762,7 +748,7 @@ class _AlbumResultCard extends ConsumerWidget {
               album.artist ?? l10n.unknownArtist,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: Colors.grey, fontSize: 11),
+              style: AppFonts.jostStyle(color: Colors.grey, fontSize: 11),
             ),
           ],
         ),

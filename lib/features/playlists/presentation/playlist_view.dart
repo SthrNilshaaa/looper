@@ -7,6 +7,7 @@ import 'package:looper_player/features/playback/presentation/playback_notifier.d
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
+import 'package:looper_player/core/app_fonts.dart';
 
 class PlaylistNotifier extends StateNotifier<List<Playlist>> {
   PlaylistNotifier() : super([]) {
@@ -83,11 +84,11 @@ class PlaylistView extends ConsumerWidget {
                     color: Colors.grey.withValues(alpha: 0.2),
                   ),
                   const SizedBox(height: 16),
-                  const Text('No playlists yet'),
+                  Text('No playlists yet', style: AppFonts.jostStyle(color: Colors.grey)),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => _showCreateDialog(context, ref),
-                    child: const Text('Create Playlist'),
+                    child: Text('Create Playlist', style: AppFonts.jostStyle()),
                   ),
                 ],
               ),
@@ -198,13 +199,13 @@ class _PlaylistCard extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             playlist.name,
-            style: const TextStyle(fontWeight: FontWeight.normal),
+            style: AppFonts.jostStyle(fontWeight: FontWeight.normal),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           Text(
             '${playlist.songPaths.length} songs',
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: AppFonts.jostStyle(color: Colors.grey, fontSize: 12),
           ),
         ],
       ),

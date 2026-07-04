@@ -1,16 +1,20 @@
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="20"
-    android:viewportHeight="18">
-    <group
-        android:scaleX="0.6"
-        android:scaleY="0.6"
-        android:translateX="4.0"
-        android:translateY="3.6">
-        <path
-            android:strokeColor="#FFFFFF"
-            android:strokeWidth="1.5"
-            android:pathData="M10.54 2.73633C12.598 0.597837 14.7643 0.40264 16.376 1.13965C18.035 1.89837 19.25 3.70319 19.25 5.85352C19.2499 8.05031 18.3505 9.744 17.0615 11.1953C15.7469 12.6754 14.0899 13.8423 12.5742 15.0361L12.5732 15.0371C12.0477 15.4523 11.578 15.8159 11.126 16.0801C10.6738 16.3443 10.3097 16.4648 10 16.4648C9.69054 16.4648 9.32644 16.3444 8.87402 16.0801C8.42171 15.8157 7.95177 15.4516 7.42578 15.0371H7.42676C5.91114 13.8419 4.25341 12.6749 2.93848 11.1943C1.64949 9.74293 0.750085 8.04964 0.75 5.85254C0.75 3.70178 1.96528 1.89805 3.62402 1.13965C5.23566 0.402974 7.40188 0.59775 9.45996 2.73633L10 3.29785L10.54 2.73633Z" />
-    </group>
+<!--
+  ~ Copyright (C) 2026 The Android Open Source Project
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~      http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="24dp" android:tint="#FFFFFF" android:viewportHeight="24" android:viewportWidth="24" android:width="24dp">
+      
+    <path android:fillColor="@android:color/white" android:pathData="M22,9.24l-7.19,-0.62L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21 12,17.27 18.18,21l-1.63,-7.03L22,9.24zM12,15.4l-3.76,2.27 1,-4.28 -3.32,-2.88 4.38,-0.38L12,6.1l1.71,4.04 4.38,0.38 -3.32,2.88 1,4.28L12,15.4z"/>
+    
 </vector>

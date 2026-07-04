@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/data/audio_analyzer.dart';
@@ -14,6 +15,7 @@ import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:intl/intl.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/ui/screens/android/widgets/audio_analysis_widget.dart';
+import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 
 class SongInfoScreen extends ConsumerStatefulWidget {
   final Song song;
@@ -175,7 +177,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                         // Live audio quality analysis card
                         Text(
                           l10n.acousticSpectralAnalysis,
-                          style: const TextStyle(
+                          style: AppFonts.jostStyle(
                             color: Colors.white70,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -202,10 +204,20 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(LucideIcons.chevronLeft, color: Colors.white),
-            onPressed: () => Navigator.pop(context),
+          PremiumSection(
+            useExpanded: false,
+             borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          bottomLeft: Radius.circular(32),
+                          topRight: Radius.circular(10),
+                          bottomRight: Radius.circular(10),
+                        ),
+            width: 44,
+            height: 44,
+            onTap: () => Navigator.pop(context),
+            child: const Icon(LucideIcons.chevronLeft, color: Colors.white, size: 20),
           ),
+          const SizedBox(width: 12),
           Text(
             l10n.songDetails,
             style: AppFonts.jostStyle(
@@ -299,9 +311,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               color: Colors.white.withValues(alpha: 0.04),
-              child: const Center(
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
+              child: const AppLoadingIndicator(),
             ),
           );
         }
@@ -382,7 +392,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                           children: [
                             Text(
                               _lyricsExpanded ? l10n.showLess : l10n.showMore,
-                              style: TextStyle(
+                              style: AppFonts.jostStyle(
                                 color: Theme.of(context).colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 13,
@@ -455,11 +465,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                     ),
                     if (isLoading) ...[
                       const SizedBox(width: 12),
-                      const SizedBox(
-                        width: 12,
-                        height: 12,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
+                      const AppLoadingIndicator(size: 24),
                     ],
                   ],
                 ),

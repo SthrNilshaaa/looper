@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
@@ -36,7 +37,7 @@ class FavoritesView extends ConsumerWidget {
       data: (songs) => songs.isEmpty
           ? _buildEmpty(context, LucideIcons.heart, l10n.noFavoritesYet)
           : SongsList(songs: songs),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const AppLoadingIndicator(),
       error: (e, s) => Center(child: Text('Error: $e')),
     );
   }
@@ -67,7 +68,7 @@ class RecentlyPlayedView extends ConsumerWidget {
       data: (songs) => songs.isEmpty
           ? _buildEmpty(context, LucideIcons.clock, l10n.noHistoryYet)
           : SongsList(songs: songs),
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const AppLoadingIndicator(),
       error: (e, s) => Center(child: Text('Error: $e')),
     );
   }

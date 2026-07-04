@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
@@ -15,23 +16,7 @@
         android:enableOnBackInvokedCallback="true"
         android:requestLegacyExternalStorage="true">
 
-        <!-- ADD THIS FOR AUDIO_SERVICE -->
-        <service android:name="com.ryanheise.audioservice.AudioService"
-            android:foregroundServiceType="mediaPlayback"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.media.browse.MediaBrowserService" />
-            </intent-filter>
-        </service>
-
-        <receiver android:name="com.ryanheise.audioservice.MediaButtonReceiver"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
-            </intent-filter>
-        </receiver>
-
-        <!-- Player Widget Receiver -->
+        <!-- Player Widget Providers -->
         <receiver android:name="com.looper.player.PlayerWidgetProvider"
             android:exported="true">
             <intent-filter>
@@ -44,6 +29,48 @@
             </intent-filter>
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/player_widget_info" />
+        </receiver>
+
+        <receiver android:name="com.looper.player.PlayerWidgetProviderSquareArtwork"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.looper.player.ACTION_PLAY_PAUSE" />
+                <action android:name="com.looper.player.ACTION_NEXT" />
+                <action android:name="com.looper.player.ACTION_PREV" />
+                <action android:name="com.looper.player.ACTION_SHUFFLE" />
+                <action android:name="com.looper.player.ACTION_REPEAT" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/player_widget_info_square_artwork" />
+        </receiver>
+
+        <receiver android:name="com.looper.player.PlayerWidgetProviderSquareProgress"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.looper.player.ACTION_PLAY_PAUSE" />
+                <action android:name="com.looper.player.ACTION_NEXT" />
+                <action android:name="com.looper.player.ACTION_PREV" />
+                <action android:name="com.looper.player.ACTION_SHUFFLE" />
+                <action android:name="com.looper.player.ACTION_REPEAT" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/player_widget_info_square_progress" />
+        </receiver>
+
+        <receiver android:name="com.looper.player.PlayerWidgetProviderLargeLyrics"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.looper.player.ACTION_PLAY_PAUSE" />
+                <action android:name="com.looper.player.ACTION_NEXT" />
+                <action android:name="com.looper.player.ACTION_PREV" />
+                <action android:name="com.looper.player.ACTION_SHUFFLE" />
+                <action android:name="com.looper.player.ACTION_REPEAT" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/player_widget_info_large_lyrics" />
         </receiver>
 
         <activity
@@ -73,6 +100,23 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <service
+            android:name="com.alesdrnz.mpv_audio_kit.media_session.MpvMediaSessionService"
+            android:enabled="true"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            tools:node="merge">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+                <action android:name="android.intent.action.MEDIA_BUTTON" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name="com.looper.player.LooperTaskService"
+            android:enabled="true"
+            android:exported="false" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

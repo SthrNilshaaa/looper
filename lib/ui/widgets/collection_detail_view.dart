@@ -5,6 +5,7 @@ import 'dart:ui';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
@@ -13,6 +14,20 @@ import 'package:looper_player/features/playlists/presentation/playlist_view.dart
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/core/app_fonts.dart';
+
+final collectionSortProvider = StateProvider.autoDispose<CollectionSortOption>((ref) => CollectionSortOption.defaultOrder);
+
+enum CollectionSortOption {
+  defaultOrder,
+  titleAsc,
+  titleDesc,
+  artistAsc,
+  albumAsc,
+  duration,
+  yearNewest,
+  yearOldest,
+}
 
 class CollectionDetailView extends ConsumerWidget {
   final String title;
@@ -52,6 +67,34 @@ class CollectionDetailView extends ConsumerWidget {
         ? (playlistSongsAsync.value ?? <Song>[])
         : songs;
 
+    final sortOption = ref.watch(collectionSortProvider);
+    final sortedSongs = List<Song>.from(songsToRender);
+    switch (sortOption) {
+      case CollectionSortOption.defaultOrder:
+        break;
+      case CollectionSortOption.titleAsc:
+        sortedSongs.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+        break;
+      case CollectionSortOption.titleDesc:
+        sortedSongs.sort((a, b) => b.title.toLowerCase().compareTo(a.title.toLowerCase()));
+        break;
+      case CollectionSortOption.artistAsc:
+        sortedSongs.sort((a, b) => (a.artist ?? '').toLowerCase().compareTo((b.artist ?? '').toLowerCase()));
+        break;
+      case CollectionSortOption.albumAsc:
+        sortedSongs.sort((a, b) => (a.album ?? '').toLowerCase().compareTo((b.album ?? '').toLowerCase()));
+        break;
+      case CollectionSortOption.duration:
+        sortedSongs.sort((a, b) => (a.duration ?? 0).compareTo(b.duration ?? 0));
+        break;
+      case CollectionSortOption.yearNewest:
+        sortedSongs.sort((a, b) => (b.year ?? 0).compareTo(a.year ?? 0));
+        break;
+      case CollectionSortOption.yearOldest:
+        sortedSongs.sort((a, b) => (a.year ?? 0).compareTo(b.year ?? 0));
+        break;
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
@@ -67,9 +110,18 @@ class CollectionDetailView extends ConsumerWidget {
                     children: [
                       Padding(
                         padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
-                        child: IconButton(
-                          icon: const Icon(LucideIcons.chevronLeft, color: Colors.white),
-                          onPressed: () => ref.read(appNavigationProvider.notifier).goBack(),
+                        child: PremiumSection(
+                          useExpanded: false,
+                           borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(32),
+                          bottomLeft: Radius.circular(32),
+                          topRight: Radius.circular(10),
+                          bottomRight: Radius.circular(10),
+                        ),
+                          width: 44,
+                          height: 44,
+                          onTap: () => ref.read(appNavigationProvider.notifier).goBack(),
+                          child: const Icon(LucideIcons.chevronLeft, color: Colors.white, size: 20),
                         ),
                       ),
                       // Header - Now always a Row for cover and name
@@ -81,7 +133,7 @@ class CollectionDetailView extends ConsumerWidget {
                                 children: [
                                   Center(child: _buildArt(context, true)),
                                   const SizedBox(height: 20),
-                                  _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, songsToRender),
+                                  _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, sortedSongs),
                                 ],
                               )
                             : Row(
@@ -89,27 +141,27 @@ class CollectionDetailView extends ConsumerWidget {
                                 children: [
                                   _buildArt(context, true),
                                   const SizedBox(width: 20),
-                                  Expanded(child: _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, songsToRender)),
+                                  Expanded(child: _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, sortedSongs)),
                                 ],
                               ),
                       ),
                     ],
                   ),
                 ),
-                if (songsToRender.isNotEmpty)
+                if (sortedSongs.isNotEmpty)
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) {
-                        final song = songsToRender[index];
+                        final song = sortedSongs[index];
                         final l10n = AppLocalizations.of(context)!;
                         return SongTile(
                           song: song,
                           l10n: l10n,
-                          songs: songsToRender,
+                          songs: sortedSongs,
                           playlist: reactivePlaylist,
                         );
                       },
-                      childCount: songsToRender.length,
+                      childCount: sortedSongs.length,
                     ),
                   ),
                 const SliverToBoxAdapter(
@@ -151,7 +203,7 @@ class CollectionDetailView extends ConsumerWidget {
       children: [
         Text(
           titleToRender,
-          style: const TextStyle(
+          style: AppFonts.jostStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
             color: Colors.white,
@@ -163,7 +215,7 @@ class CollectionDetailView extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             subtitle!,
-            style: TextStyle(
+            style: AppFonts.jostStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.5),
             ),
@@ -191,7 +243,7 @@ class CollectionDetailView extends ConsumerWidget {
                   const SizedBox(width: 6),
                   Text(
                     AppLocalizations.of(context)!.playAll,
-                    style: const TextStyle(
+                    style: AppFonts.jostStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 14,
@@ -213,6 +265,18 @@ class CollectionDetailView extends ConsumerWidget {
               },
               child: const Icon(LucideIcons.shuffle, size: 16, color: Colors.white),
             ),
+            const SizedBox(width: 8),
+            PremiumSection(
+              borderRadius: BorderRadius.circular(12),
+              width: 44,
+              height: 44,
+              useExpanded: false,
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _showSortBottomSheet(context, ref);
+              },
+              child: const Icon(LucideIcons.arrowUpDown, size: 16, color: Colors.white),
+            ),
             if (reactivePlaylist != null) ...[
               const SizedBox(width: 8),
               PremiumSection(
@@ -227,6 +291,79 @@ class CollectionDetailView extends ConsumerWidget {
           ],
         ),
       ],
+    );
+  }
+
+  void _showSortBottomSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
+        return AppBottomSheetContainer(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.sortBy,
+                style: AppFonts.jostStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              _buildSortItem(context, ref, l10n.sortDefault, CollectionSortOption.defaultOrder),
+              _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, CollectionSortOption.titleAsc),
+              _buildSortItem(context, ref, l10n.sortAlphabeticalZA, CollectionSortOption.titleDesc),
+              _buildSortItem(context, ref, l10n.sortArtistAsc, CollectionSortOption.artistAsc),
+              _buildSortItem(context, ref, l10n.sortAlbumAsc, CollectionSortOption.albumAsc),
+              _buildSortItem(context, ref, l10n.sortDuration, CollectionSortOption.duration),
+              _buildSortItem(context, ref, l10n.sortYearNewest, CollectionSortOption.yearNewest),
+              _buildSortItem(context, ref, l10n.sortYearOldest, CollectionSortOption.yearOldest),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSortItem(
+    BuildContext context,
+    WidgetRef ref,
+    String label,
+    CollectionSortOption value,
+  ) {
+    final current = ref.watch(collectionSortProvider);
+    final isSelected = current == value;
+    final accentColor = Color(ref.read(settingsProvider).accentColor);
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        ref.read(collectionSortProvider.notifier).state = value;
+        Navigator.pop(context);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: AppFonts.jostStyle(
+                color: isSelected ? accentColor : Colors.white70,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 15,
+              ),
+            ),
+            if (isSelected)
+              Icon(LucideIcons.check, color: accentColor, size: 20),
+          ],
+        ),
+      ),
     );
   }
 
@@ -280,7 +417,7 @@ class CollectionDetailView extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           playlist.name,
-                          style: const TextStyle(
+                          style: AppFonts.jostStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -313,10 +450,10 @@ class CollectionDetailView extends ConsumerWidget {
                             children: [
                               const Icon(LucideIcons.edit2, size: 22, color: Colors.greenAccent),
                               const SizedBox(width: 16),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Rename Playlist',
-                                  style: TextStyle(
+                                  style: AppFonts.jostStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 16,
@@ -351,10 +488,10 @@ class CollectionDetailView extends ConsumerWidget {
                             children: [
                               const Icon(LucideIcons.trash2, size: 22, color: Colors.redAccent),
                               const SizedBox(width: 16),
-                              const Expanded(
+                              Expanded(
                                 child: Text(
                                   'Delete Playlist',
-                                  style: TextStyle(
+                                  style: AppFonts.jostStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                     fontSize: 16,
@@ -409,7 +546,7 @@ class CollectionDetailView extends ConsumerWidget {
             controller: controller,
             decoration: InputDecoration(hintText: l10n.newPlaylist),
             autofocus: true,
-            style: const TextStyle(color: Colors.white),
+            style: AppFonts.jostStyle(color: Colors.white),
           ),
           actions: [
             TextButton(
@@ -455,7 +592,7 @@ class CollectionDetailView extends ConsumerWidget {
                 Navigator.pop(context); // Close dialog
                 ref.read(appNavigationProvider.notifier).goBack(); // Go back using appNavigationProvider to stay in sync
               },
-              child: Text(l10n.delete, style: const TextStyle(color: Colors.redAccent)),
+              child: Text(l10n.delete, style: AppFonts.jostStyle(color: Colors.redAccent)),
             ),
           ],
         );

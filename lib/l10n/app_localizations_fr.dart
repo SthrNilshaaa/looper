@@ -431,6 +431,35 @@ class AppLocalizationsFr extends AppLocalizations {
       'Gérer les préférences de langue et l\'état de focus des appels';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => 'Durée du fondu enchaîné manuel';
 
   @override
@@ -651,6 +680,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get resumeOnStartTitle => 'Reprendre au démarrage';
 
   @override
+  String get persistQueueTitle => 'Conserver la dernière file';
+
+  @override
+  String get persistQueueDesc =>
+      'Sauvegarder le dernier morceau et la file d\'attente lors du redémarrage';
+
+  @override
   String get right => 'Droite';
 
   @override
@@ -844,6 +880,21 @@ class AppLocalizationsFr extends AppLocalizations {
   String get toggleFavorite => 'Ajouter/Retirer des favoris';
 
   @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+
+  @override
   String get topResult => 'Meilleur résultat';
 
   @override
@@ -942,4 +993,101 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get year => 'Année';
+
+  @override
+  String get supportUs => 'Nous soutenir';
+
+  @override
+  String get supportUsDesc =>
+      'Aider à garder Looper Player vivant et open-source';
+
+  @override
+  String get supportDevelopment => 'Soutenir le développement';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player est 100% gratuit et open-source. Si vous aimez l\'utiliser, pensez à soutenir le créateur par un don. Chaque contribution aide à maintenir le projet actif !';
+
+  @override
+  String get useCustomFont => 'Utiliser une police personnalisée';
+
+  @override
+  String get useCustomFontDesc =>
+      'Utiliser Jost ou d\'autres polices personnalisées. Sinon, DM Sans est utilisée.';
+
+  @override
+  String get selectFontFamily => 'Sélectionner la famille de polices';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Police active : $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Ajustement de la graisse de police';
+
+  @override
+  String get currentWeight => 'Graisse actuelle';
+
+  @override
+  String get useCustomFontLyrics => 'Police personnalisée pour les paroles';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Utiliser une police et graisse personnalisées pour les paroles synchronisées';
+
+  @override
+  String get lyricsFontFamily => 'Famille de polices des paroles';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Police de paroles active : $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment =>
+      'Ajustement de la graisse des paroles';
+
+  @override
+  String get giveStarOnGithub => 'Donner une étoile sur GitHub';
+
+  @override
+  String get supportProjectLove =>
+      'Soutenez le projet et montrez votre intérêt !';
+
+  @override
+  String get sortAlphabeticalAZ => 'Alphabétique (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Alphabétique (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'Récemment ajoutés';
+
+  @override
+  String get sortOldestAdded => 'Ajouts les plus anciens';
+
+  @override
+  String get sortYearNewest => 'Année (Plus récente)';
+
+  @override
+  String get sortYearOldest => 'Année (Plus ancienne)';
+
+  @override
+  String get sortMostSongs => 'Plus de chansons';
+
+  @override
+  String get sortLeastSongs => 'Moins de chansons';
+
+  @override
+  String get sortDefault => 'Par défaut';
+
+  @override
+  String get sortArtistAsc => 'Artiste (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'Album (A-Z)';
+
+  @override
+  String get sortDuration => 'Durée';
 }

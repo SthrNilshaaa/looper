@@ -41,12 +41,12 @@ class LyricsNotifier extends StateNotifier<LyricsState> {
 
   LyricsNotifier(this.ref) : super(LyricsState());
 
-  void fetchForSong(Song song) {
-    _fetchLyrics(song);
+  void fetchForSong(Song song, {bool force = false}) {
+    _fetchLyrics(song, force: force);
   }
 
-  Future<void> _fetchLyrics(Song song) async {
-    if (state.songId == song.id && state.rawLrc != null) return;
+  Future<void> _fetchLyrics(Song song, {bool force = false}) async {
+    if (!force && state.songId == song.id && state.rawLrc != null) return;
 
     state = state.copyWith(
       isLoading: true,

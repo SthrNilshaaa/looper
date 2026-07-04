@@ -6,7 +6,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   dynamic_color
   isar_flutter_libs
   local_notifier
-  media_kit_libs_linux
+  mpv_audio_kit
   screen_retriever_linux
   url_launcher_linux
   window_manager
@@ -14,7 +14,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   jni
-  media_kit_native_event_loop
   metadata_god
 )
 

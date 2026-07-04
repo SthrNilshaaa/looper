@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Full-bleed background artwork -->
+    <ImageView
+        android:id="@+id/widget_artwork"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@mipmap/ic_launcher" />
+
+    <!-- Vertical gradient overlay (fades out at bottom to keep text and controls visible) -->
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/widget_gradient_vertical" />
+
+    <!-- Bottom details & controls container -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="bottom|center_horizontal"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingBottom="16dp">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:singleLine="true"
+            android:gravity="center"
+            android:text="Song Title"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/widget_artist"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:gravity="center"
+            android:text="Artist Name"
+            android:textColor="#CCFFFFFF"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <!-- Previous button -->
+            <ImageButton
+                android:id="@+id/widget_prev"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_prev"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside"
+                android:layout_marginRight="6dp" />
+
+            <!-- Circular Play/Pause button -->
+            <RelativeLayout
+                android:id="@+id/widget_play_pause_container"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginRight="6dp">
+
+                <ImageView
+                    android:id="@+id/widget_play_pause_background"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:src="@drawable/widget_button_background" />
+
+                <ImageView
+                    android:id="@+id/widget_play_pause"
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/ic_play" />
+            </RelativeLayout>
+
+            <!-- Next button -->
+            <ImageButton
+                android:id="@+id/widget_next"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_next"
+                android:background="@android:color/transparent"
+                android:scaleType="centerInside" />
+        </LinearLayout>
+    </LinearLayout>
+</RelativeLayout>

@@ -31,10 +31,17 @@ class Song {
   DateTime? lastPlayed;
   bool isFavorite = false;
   String? lyrics;
+  bool hasCustomEqualizer = false;
+  List<double>? equalizerGains;
 
   // Metadata for search
   @Index(type: IndexType.value, caseSensitive: false)
-  List<String> get searchTerms => [title, artist ?? '', album ?? '', lyrics ?? ''];
+  List<String> get searchTerms => [
+    title,
+    artist ?? '',
+    album ?? '',
+    lyrics ?? '',
+  ];
 }
 
 @collection
@@ -81,17 +88,24 @@ class AppSettings {
 
   List<String> libraryFolders = [];
   int? lastPlayedSongId;
+  List<int> lastQueueSongIds = [];
+  int lastQueueIndex = -1;
   double volume = 1.0;
+  int lastPositionMs = 0;
   bool shuffle = false;
   int repeatMode = 0; // 0: off, 1: one, 2: all
   String language = 'en';
   bool enableDynamicTheming = false;
-  bool darkTheme = false;
+  bool darkTheme = true;
   bool saveDynamicColor = true;
   bool dynamicLyrics = false;
   bool blurredArtworkForLyrics = true;
   int accentColor = 0xFF41C25E; // Default Green
   bool audioFocus = true;
+  bool audioFocusRequestOnPlay = true;
+  bool audioFocusReleaseOnPause = true;
+  bool audioFocusStopOnOtherSession = true;
+  bool audioFocusRestartOnGain = true;
   bool disableSquiggle = false;
   bool disableAnimatedDuration = false;
   bool disableBlur = true;
@@ -109,26 +123,27 @@ class AppSettings {
   bool showHomeArtists = true;
   bool showHomeAlbums = false;
   bool showHomeGenres = true;
-  List<String> homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres'];
+  List<String> homeSectionOrder = [
+    'quick_picks',
+    'songs',
+    'albums',
+    'artists',
+    'genres',
+  ];
   bool enableSlideGesture = false;
-  bool stopOnTaskRemoved = false;
+  bool stopOnTaskRemoved = true;
+  bool persistQueue = true;
 
-  bool enableCrossfade = false;
-  int crossfadeLength = 150; // ms (100ms-15000ms)
-  int shortManualCrossfadeLength = 200; // ms (10ms-1000ms)
   bool fadePlayPauseStop = true;
   int playPauseStopFadeLength = 150; // ms (10ms-1000ms)
-  bool fadeOnSeek = false;
-  int seekFadeLength = 50; // ms (10ms-500ms)
-  int silenceBetweenTracks = 0; // ms (0ms-5000ms)
   bool resumeAfterCall = true;
   bool resumeOnStart = false;
-  bool permanentAudioFocusChange = true;
+  bool permanentAudioFocusChange = false;
   bool dynamicColorActiveLyrics = true;
   String lyricsAlignment = 'left'; // 'left', 'center', 'right'
   bool dynamicAccentColor = true;
   int sortStrategyIndex = 0;
-  bool sortAscending = false;
+  bool sortAscending = true;
 
   double homeDarkness = 0.62;
   double songsDarkness = 0.62;
@@ -138,4 +153,18 @@ class AppSettings {
 
   bool useNewFont = false;
   String customFontFamily = 'Jost';
+  int customFontWeight = 400;
+  int customFontWeightDelta = 0;
+  bool useNewFontLyrics = false;
+  String customFontFamilyLyrics = 'Sora';
+  String customFontWeightLyrics = 'Normal';
+  int customFontWeightLyricsDelta = 0;
+  int activeLyricsFontWeightDelta = 0;
+  bool equalizerEnabled = false;
+  List<double> globalEqualizerGains = [];
+  bool enableAudioCache = true;
+  int audioCacheSizeMB = 200;
+  int audioCacheSecs = 120;
+  int audioBackCacheSizeMB = 100;
+  bool exclusiveHardwareMode = false;
 }

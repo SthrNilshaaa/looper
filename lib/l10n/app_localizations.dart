@@ -299,7 +299,7 @@ abstract class AppLocalizations {
   /// No description provided for @audioCrossfadeDesc.
   ///
   /// In en, this message translates to:
-  /// **'Overlap tracks smoothly when changing songs'**
+  /// **'When one song ends and the next begins, the current track fades out while the next track fades in at the same time. This gives a continuous, DJ-like flow.'**
   String get audioCrossfadeDesc;
 
   /// No description provided for @audioFocusDenied.
@@ -329,7 +329,7 @@ abstract class AppLocalizations {
   /// No description provided for @autoCrossfadeDurationDesc.
   ///
   /// In en, this message translates to:
-  /// **'Overlap duration when transitioning automatically'**
+  /// **'The overlap time used when the app automatically advances to the next track. Example: 2300ms means the next song starts 2.3 seconds before the current song fully ends.'**
   String get autoCrossfadeDurationDesc;
 
   /// No description provided for @backToMainView.
@@ -599,7 +599,7 @@ abstract class AppLocalizations {
   /// No description provided for @fadeDurationDesc.
   ///
   /// In en, this message translates to:
-  /// **'Duration of play/pause/stop fade effect'**
+  /// **'How long the fade takes for play, pause, and stop actions. Example: 150ms means the audio becomes audible or silent very quickly, but still smoothly.'**
   String get fadeDurationDesc;
 
   /// No description provided for @fadeOnSeek.
@@ -611,7 +611,7 @@ abstract class AppLocalizations {
   /// No description provided for @fadeOnSeekDesc.
   ///
   /// In en, this message translates to:
-  /// **'Smoothly fade audio volume out and in when seeking'**
+  /// **'Temporarily lower the volume while the user scrubs or jumps to another position, then bring it back up after the seek completes. This prevents pops, glitches, or harsh jumps during seeking.'**
   String get fadeOnSeekDesc;
 
   /// No description provided for @fadePlayPauseStop.
@@ -623,7 +623,7 @@ abstract class AppLocalizations {
   /// No description provided for @fadePlayPauseStopDesc.
   ///
   /// In en, this message translates to:
-  /// **'Smoothly fade audio volume when playing, pausing or stopping'**
+  /// **'Smoothly ramp volume up when playback starts, and ramp it down when pausing or stopping. This avoids clicks and makes transitions feel natural.'**
   String get fadePlayPauseStopDesc;
 
   /// No description provided for @favorites.
@@ -875,7 +875,7 @@ abstract class AppLocalizations {
   /// No description provided for @manageAudioFocusDesc.
   ///
   /// In en, this message translates to:
-  /// **'Request and respond to system audio focus changes'**
+  /// **'Respond properly to system audio focus changes.'**
   String get manageAudioFocusDesc;
 
   /// No description provided for @manageAudioFocusTitle.
@@ -890,6 +890,54 @@ abstract class AppLocalizations {
   /// **'Manage language preferences and caller focus state'**
   String get manageLanguageAndFocus;
 
+  /// No description provided for @audioFocusGetFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Focus'**
+  String get audioFocusGetFocus;
+
+  /// No description provided for @audioFocusGetFocusDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Request audio focus when playback begins.'**
+  String get audioFocusGetFocusDesc;
+
+  /// No description provided for @audioFocusReleaseFocus.
+  ///
+  /// In en, this message translates to:
+  /// **'Release Focus'**
+  String get audioFocusReleaseFocus;
+
+  /// No description provided for @audioFocusReleaseFocusDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Release audio focus when playback pauses or stops.'**
+  String get audioFocusReleaseFocusDesc;
+
+  /// No description provided for @audioFocusStopOnOtherSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop Music on Other Music Session'**
+  String get audioFocusStopOnOtherSession;
+
+  /// No description provided for @audioFocusStopOnOtherSessionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause playback when another app starts playing audio.'**
+  String get audioFocusStopOnOtherSessionDesc;
+
+  /// No description provided for @audioFocusRestartOnGain.
+  ///
+  /// In en, this message translates to:
+  /// **'Restart Music on Focus Gain'**
+  String get audioFocusRestartOnGain;
+
+  /// No description provided for @audioFocusRestartOnGainDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.'**
+  String get audioFocusRestartOnGainDesc;
+
   /// No description provided for @manualCrossfadeDuration.
   ///
   /// In en, this message translates to:
@@ -899,7 +947,7 @@ abstract class AppLocalizations {
   /// No description provided for @manualCrossfadeDurationDesc.
   ///
   /// In en, this message translates to:
-  /// **'Overlap duration when skipping manually'**
+  /// **'The overlap time used when the user manually skips to the next or previous track. Usually this can be different from auto-crossfade so manual skips feel more controlled.'**
   String get manualCrossfadeDurationDesc;
 
   /// No description provided for @matchingLyrics.
@@ -1289,7 +1337,7 @@ abstract class AppLocalizations {
   /// No description provided for @resumeOnStartDesc.
   ///
   /// In en, this message translates to:
-  /// **'Resume playing automatically when Looper Player is started'**
+  /// **'Restore the previous playback state when the app or player service starts again.'**
   String get resumeOnStartDesc;
 
   /// No description provided for @resumeOnStartTitle.
@@ -1297,6 +1345,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Resume on Start'**
   String get resumeOnStartTitle;
+
+  /// No description provided for @persistQueueTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Persist Last Queue'**
+  String get persistQueueTitle;
+
+  /// No description provided for @persistQueueDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves the last played song, queue order, and playback position so the app can restore the same session after restart. In real use, this means when the app is reopened, the user can continue from the same song list instead of starting over.'**
+  String get persistQueueDesc;
 
   /// No description provided for @right.
   ///
@@ -1379,7 +1439,7 @@ abstract class AppLocalizations {
   /// No description provided for @seekFadeDurationDesc.
   ///
   /// In en, this message translates to:
-  /// **'Duration of seeking fade effect'**
+  /// **'How long the seek fade-out and fade-in takes. Example: 50ms is a very short protective fade around seek changes.'**
   String get seekFadeDurationDesc;
 
   /// No description provided for @selectAppLanguage.
@@ -1493,7 +1553,7 @@ abstract class AppLocalizations {
   /// No description provided for @silenceBetweenTracksDesc.
   ///
   /// In en, this message translates to:
-  /// **'Add a silence gap between tracks (0ms for gapless)'**
+  /// **'Adds a gap between songs. At 0ms, tracks play gaplessly. At a higher value, the app inserts a pause between tracks, which is useful for live recordings, playlists that need breathing room, or older-style album playback.'**
   String get silenceBetweenTracksDesc;
 
   /// No description provided for @silenceBetweenTracksTitle.
@@ -1651,6 +1711,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Toggle Favorite'**
   String get toggleFavorite;
+
+  /// No description provided for @shuffleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Shuffle'**
+  String get shuffleTitle;
+
+  /// No description provided for @shuffleDisabledDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.'**
+  String get shuffleDisabledDesc;
+
+  /// No description provided for @shuffleEnabledDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.'**
+  String get shuffleEnabledDesc;
+
+  /// No description provided for @shuffleSwitchingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.'**
+  String get shuffleSwitchingDesc;
 
   /// No description provided for @topResult.
   ///
@@ -1819,6 +1903,180 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Year'**
   String get year;
+
+  /// No description provided for @supportUs.
+  ///
+  /// In en, this message translates to:
+  /// **'Support Us'**
+  String get supportUs;
+
+  /// No description provided for @supportUsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Help keep Looper Player alive & open-source'**
+  String get supportUsDesc;
+
+  /// No description provided for @supportDevelopment.
+  ///
+  /// In en, this message translates to:
+  /// **'Support the Development'**
+  String get supportDevelopment;
+
+  /// No description provided for @supportDevelopmentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Looper Player is 100% free and open-source. If you enjoy using it, please consider supporting the creator with a donation. Every contribution helps keep the project active!'**
+  String get supportDevelopmentDesc;
+
+  /// No description provided for @useCustomFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Custom Font'**
+  String get useCustomFont;
+
+  /// No description provided for @useCustomFontDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Jost or other custom fonts. Otherwise, DM Sans is used.'**
+  String get useCustomFontDesc;
+
+  /// No description provided for @selectFontFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Font Family'**
+  String get selectFontFamily;
+
+  /// No description provided for @activeFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Active font: {fontName}'**
+  String activeFont(String fontName);
+
+  /// No description provided for @fontWeightAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Font Weight Adjustment'**
+  String get fontWeightAdjustment;
+
+  /// No description provided for @currentWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Current weight'**
+  String get currentWeight;
+
+  /// No description provided for @useCustomFontLyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Custom Font for Lyrics'**
+  String get useCustomFontLyrics;
+
+  /// No description provided for @useCustomFontLyricsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use custom font and weight for synchronized lyrics view'**
+  String get useCustomFontLyricsDesc;
+
+  /// No description provided for @lyricsFontFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Font Family'**
+  String get lyricsFontFamily;
+
+  /// No description provided for @activeLyricsFont.
+  ///
+  /// In en, this message translates to:
+  /// **'Active lyrics font: {fontName}'**
+  String activeLyricsFont(String fontName);
+
+  /// No description provided for @lyricsFontWeightAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Font Weight Adjustment'**
+  String get lyricsFontWeightAdjustment;
+
+  /// No description provided for @giveStarOnGithub.
+  ///
+  /// In en, this message translates to:
+  /// **'Give Star on GitHub'**
+  String get giveStarOnGithub;
+
+  /// No description provided for @supportProjectLove.
+  ///
+  /// In en, this message translates to:
+  /// **'Support the project and show some love!'**
+  String get supportProjectLove;
+
+  /// No description provided for @sortAlphabeticalAZ.
+  ///
+  /// In en, this message translates to:
+  /// **'Alphabetical (A-Z)'**
+  String get sortAlphabeticalAZ;
+
+  /// No description provided for @sortAlphabeticalZA.
+  ///
+  /// In en, this message translates to:
+  /// **'Alphabetical (Z-A)'**
+  String get sortAlphabeticalZA;
+
+  /// No description provided for @sortRecentlyAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently Added'**
+  String get sortRecentlyAdded;
+
+  /// No description provided for @sortOldestAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Oldest Added'**
+  String get sortOldestAdded;
+
+  /// No description provided for @sortYearNewest.
+  ///
+  /// In en, this message translates to:
+  /// **'Year (Newest)'**
+  String get sortYearNewest;
+
+  /// No description provided for @sortYearOldest.
+  ///
+  /// In en, this message translates to:
+  /// **'Year (Oldest)'**
+  String get sortYearOldest;
+
+  /// No description provided for @sortMostSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Most Songs'**
+  String get sortMostSongs;
+
+  /// No description provided for @sortLeastSongs.
+  ///
+  /// In en, this message translates to:
+  /// **'Least Songs'**
+  String get sortLeastSongs;
+
+  /// No description provided for @sortDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get sortDefault;
+
+  /// No description provided for @sortArtistAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'Artist (A-Z)'**
+  String get sortArtistAsc;
+
+  /// No description provided for @sortAlbumAsc.
+  ///
+  /// In en, this message translates to:
+  /// **'Album (A-Z)'**
+  String get sortAlbumAsc;
+
+  /// No description provided for @sortDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get sortDuration;
 }
 
 class _AppLocalizationsDelegate

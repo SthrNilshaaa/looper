@@ -398,6 +398,35 @@ class AppLocalizationsZh extends AppLocalizations {
   String get manageLanguageAndFocus => '管理语言偏好和呼叫者焦点状态';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => '手动交叉淡化时长';
 
   @override
@@ -603,6 +632,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get resumeOnStartTitle => '启动时恢复播放';
 
   @override
+  String get persistQueueTitle => '保留上次播放队列';
+
+  @override
+  String get persistQueueDesc => '应用重启时保存上次播放的歌曲和队列';
+
+  @override
   String get right => '居右';
 
   @override
@@ -782,6 +817,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get toggleFavorite => '切换收藏夹';
 
   @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+
+  @override
   String get topResult => '最高结果';
 
   @override
@@ -870,4 +920,96 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get year => '年份';
+
+  @override
+  String get supportUs => '支持我们';
+
+  @override
+  String get supportUsDesc => '帮助 Looper Player 保持活力与开源';
+
+  @override
+  String get supportDevelopment => '支持开发';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player 是 100% 免费且开源的。如果您喜欢它，请考虑通过捐赠支持创作者。每一次捐助都有助于保持项目的活力！';
+
+  @override
+  String get useCustomFont => '使用自定义字体';
+
+  @override
+  String get useCustomFontDesc => '使用 Jost 或其他自定义字体。否则将使用 DM Sans 字体。';
+
+  @override
+  String get selectFontFamily => '选择字体系列';
+
+  @override
+  String activeFont(String fontName) {
+    return '当前字体：$fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => '字体粗细调节';
+
+  @override
+  String get currentWeight => '当前字重';
+
+  @override
+  String get useCustomFontLyrics => '在歌词中使用自定义字体';
+
+  @override
+  String get useCustomFontLyricsDesc => '在歌词同步视图中使用自定义字体和字重';
+
+  @override
+  String get lyricsFontFamily => '歌词字体系列';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return '当前歌词字体：$fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => '歌词字重调节';
+
+  @override
+  String get giveStarOnGithub => '在 GitHub 上给个星星';
+
+  @override
+  String get supportProjectLove => '支持本项目并表达您的喜爱！';
+
+  @override
+  String get sortAlphabeticalAZ => '按字母顺序 (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => '按字母顺序 (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => '最近添加';
+
+  @override
+  String get sortOldestAdded => '最早添加';
+
+  @override
+  String get sortYearNewest => '年份 (最新)';
+
+  @override
+  String get sortYearOldest => '年份 (最旧)';
+
+  @override
+  String get sortMostSongs => '歌曲最多';
+
+  @override
+  String get sortLeastSongs => '歌曲最少';
+
+  @override
+  String get sortDefault => '默认';
+
+  @override
+  String get sortArtistAsc => '歌手 (A-Z)';
+
+  @override
+  String get sortAlbumAsc => '专辑 (A-Z)';
+
+  @override
+  String get sortDuration => '时长';
 }

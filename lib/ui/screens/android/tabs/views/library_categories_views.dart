@@ -1,21 +1,115 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
-import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
-import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:isar/isar.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/core/app_fonts.dart';
+
+enum AlbumSortOption { nameAsc, nameDesc, dateAddedNewest, dateAddedOldest, yearNewest, yearOldest }
+enum ArtistSortOption { nameAsc, nameDesc }
+enum GenreSortOption { nameAsc, nameDesc, songCountDesc, songCountAsc }
+
+final albumSortProvider = StateProvider<AlbumSortOption>((ref) => AlbumSortOption.nameAsc);
+final artistSortProvider = StateProvider<ArtistSortOption>((ref) => ArtistSortOption.nameAsc);
+final genreSortProvider = StateProvider<GenreSortOption>((ref) => GenreSortOption.nameAsc);
 
 class CategoryDetailWrapper extends ConsumerWidget {
   final String title;
   final Widget child;
   const CategoryDetailWrapper({super.key, required this.title, required this.child});
+
+  void _showSortBottomSheet(BuildContext context, WidgetRef ref, String title, AppLocalizations l10n) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return AppBottomSheetContainer(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                l10n.sortBy,
+                style: AppFonts.jostStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (title == 'Albums') ...[
+                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, AlbumSortOption.nameAsc, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, AlbumSortOption.nameDesc, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortRecentlyAdded, AlbumSortOption.dateAddedNewest, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortOldestAdded, AlbumSortOption.dateAddedOldest, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortYearNewest, AlbumSortOption.yearNewest, albumSortProvider),
+                _buildSortItem(context, ref, l10n.sortYearOldest, AlbumSortOption.yearOldest, albumSortProvider),
+              ] else if (title == 'Artists') ...[
+                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, ArtistSortOption.nameAsc, artistSortProvider),
+                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, ArtistSortOption.nameDesc, artistSortProvider),
+              ] else if (title == 'Genres') ...[
+                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, GenreSortOption.nameAsc, genreSortProvider),
+                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, GenreSortOption.nameDesc, genreSortProvider),
+                _buildSortItem(context, ref, l10n.sortMostSongs, GenreSortOption.songCountDesc, genreSortProvider),
+                _buildSortItem(context, ref, l10n.sortLeastSongs, GenreSortOption.songCountAsc, genreSortProvider),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSortItem<T>(
+    BuildContext context,
+    WidgetRef ref,
+    String label,
+    T value,
+    StateProvider<T> provider,
+  ) {
+    final current = ref.watch(provider);
+    final isSelected = current == value;
+    final accentColor = Color(ref.read(settingsProvider).accentColor);
+
+    return InkWell(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        ref.read(provider.notifier).state = value;
+        Navigator.pop(context);
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: AppFonts.jostStyle(
+                color: isSelected ? accentColor : Colors.white70,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 15,
+              ),
+            ),
+            if (isSelected)
+              Icon(LucideIcons.check, color: accentColor, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -48,18 +142,59 @@ class CategoryDetailWrapper extends ConsumerWidget {
         break;
     }
 
+    final showSortButton = title == 'Albums' || title == 'Artists' || title == 'Genres';
+
     return Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(translatedTitle, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft),
-          onPressed: () => ref.read(appNavigationProvider.notifier).goBack(),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+              child: Row(
+                children: [
+                  PremiumSection(
+                    useExpanded: false,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      bottomLeft: Radius.circular(32),
+                      topRight: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
+                    width: 44,
+                    height: 44,
+                    onTap: () => ref.read(appNavigationProvider.notifier).goBack(),
+                    child: const Icon(LucideIcons.chevronLeft, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      translatedTitle,
+                      style: AppFonts.jostStyle(fontWeight: FontWeight.bold, fontSize: 24, color: Colors.white),
+                    ),
+                  ),
+                  if (showSortButton) ...[
+                    const SizedBox(width: 8),
+                    PremiumSection(
+                      useExpanded: false,
+                      borderRadius: BorderRadius.circular(22),
+                      width: 44,
+                      height: 44,
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        _showSortBottomSheet(context, ref, title, l10n);
+                      },
+                      child: const Icon(LucideIcons.arrowUpDown, color: Colors.white, size: 18),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Expanded(child: child),
+          ],
         ),
       ),
-      body: child,
     );
   }
 }
@@ -70,10 +205,33 @@ class AlbumsGridView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
+    final sortOption = ref.watch(albumSortProvider);
+    final Stream<List<Album>> albumStream;
+    switch (sortOption) {
+      case AlbumSortOption.nameAsc:
+        albumStream = DbService.isar.albums.where().sortByName().watch(fireImmediately: true);
+        break;
+      case AlbumSortOption.nameDesc:
+        albumStream = DbService.isar.albums.where().sortByNameDesc().watch(fireImmediately: true);
+        break;
+      case AlbumSortOption.dateAddedNewest:
+        albumStream = DbService.isar.albums.where().sortByDateAddedDesc().watch(fireImmediately: true);
+        break;
+      case AlbumSortOption.dateAddedOldest:
+        albumStream = DbService.isar.albums.where().sortByDateAdded().watch(fireImmediately: true);
+        break;
+      case AlbumSortOption.yearNewest:
+        albumStream = DbService.isar.albums.where().sortByYearDesc().watch(fireImmediately: true);
+        break;
+      case AlbumSortOption.yearOldest:
+        albumStream = DbService.isar.albums.where().sortByYear().watch(fireImmediately: true);
+        break;
+    }
+
     return StreamBuilder<List<Album>>(
-      stream: DbService.isar.albums.where().sortByName().watch(fireImmediately: true),
+      stream: albumStream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+        if (!snapshot.hasData) return const AppLoadingIndicator();
         final albums = snapshot.data!;
         if (albums.isEmpty) return Center(child: Text(l10n.noAlbumsFound));
 
@@ -111,8 +269,8 @@ class AlbumsGridView extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(album.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text(album.artist ?? l10n.unknownArtist, style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(album.name, style: AppFonts.jostStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  Text(album.artist ?? l10n.unknownArtist, style: AppFonts.jostStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
                 ],
               ),
             );
@@ -134,6 +292,14 @@ class ArtistsGridView extends ConsumerWidget {
 
     if (artists.isEmpty) return Center(child: Text(l10n.noArtistsFound));
 
+    final sortOption = ref.watch(artistSortProvider);
+    final sortedArtists = List<Artist>.from(artists);
+    if (sortOption == ArtistSortOption.nameAsc) {
+      sortedArtists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    } else {
+      sortedArtists.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+    }
+
     return GridView.builder(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -142,32 +308,47 @@ class ArtistsGridView extends ConsumerWidget {
         crossAxisSpacing: 24,
         childAspectRatio: 0.8,
       ),
-      itemCount: artists.length,
+      itemCount: sortedArtists.length,
       itemBuilder: (context, index) {
-        final artist = artists[index];
+        final artist = sortedArtists[index];
         return InkWell(
           onTap: () async {
             final songs = await DbService.isar.songs.filter().artistEqualTo(artist.name).findAll();
+            // Correctly distinguish between a local downloaded image and a remote URL
+            final imageUrl = artist.artistImageUrl;
+            final bool isLocalImage = imageUrl != null && !imageUrl.startsWith('http');
+            final bool isNetworkImage = imageUrl != null && imageUrl.startsWith('http');
             ref.read(appNavigationProvider.notifier).showCollection(
               title: artist.name,
               subtitle: l10n.artist,
-              art: artist.artPath,
-              imageUrl: artist.artistImageUrl,
+              art: isLocalImage ? imageUrl : artist.artPath,
+              imageUrl: isNetworkImage ? imageUrl : null,
               songs: songs,
             );
           },
           child: Column(
             children: [
               Expanded(
-                child: CircleAvatar(
-                  radius: 80,
-                  backgroundColor: Colors.white10,
-                  backgroundImage: artist.artistImageUrl != null ? FileImage(File(artist.artistImageUrl!)) : null,
-                  child: artist.artistImageUrl == null ? const Icon(LucideIcons.user, size: 40) : null,
+                child: ClipOval(
+                  child: OptimizedImage(
+                    imageUrl: artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : null,
+                    imagePath: artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : artist.artPath,
+                    fit: BoxFit.cover,
+                    placeholder: Container(
+                      color: Colors.white10,
+                      child: const Center(
+                        child: Icon(
+                          LucideIcons.user,
+                          size: 40,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(height: 12),
-              Text(artist.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(artist.name, style: AppFonts.jostStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
             ],
           ),
         );
@@ -190,7 +371,23 @@ class GenresGridView extends ConsumerWidget {
       final genre = song.genre ?? l10n.unknown;
       genresMap.putIfAbsent(genre, () => []).add(song);
     }
-    final genres = genresMap.keys.toList()..sort();
+
+    final sortOption = ref.watch(genreSortProvider);
+    final genres = genresMap.keys.toList();
+    switch (sortOption) {
+      case GenreSortOption.nameAsc:
+        genres.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        break;
+      case GenreSortOption.nameDesc:
+        genres.sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
+        break;
+      case GenreSortOption.songCountDesc:
+        genres.sort((a, b) => genresMap[b]!.length.compareTo(genresMap[a]!.length));
+        break;
+      case GenreSortOption.songCountAsc:
+        genres.sort((a, b) => genresMap[a]!.length.compareTo(genresMap[b]!.length));
+        break;
+    }
 
     return GridView.builder(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
@@ -218,11 +415,19 @@ class GenresGridView extends ConsumerWidget {
         );
 
         return InkWell(
-          onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
-            title: genre,
-            subtitle: l10n.genre,
-            songs: genreSongs,
-          ),
+          onTap: () {
+            // Pick the first song with art as the genre cover
+            final firstWithArt = genreSongs.firstWhere(
+              (s) => s.artPath != null,
+              orElse: () => genreSongs.first,
+            );
+            ref.read(appNavigationProvider.notifier).showCollection(
+              title: genre,
+              subtitle: l10n.genre,
+              art: firstWithArt.artPath,
+              songs: genreSongs,
+            );
+          },
           borderRadius: BorderRadius.circular(24),
           child: Container(
             clipBehavior: Clip.antiAlias,
@@ -308,7 +513,7 @@ class GenresGridView extends ConsumerWidget {
                     children: [
                       Text(
                         genre,
-                        style: const TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -319,7 +524,7 @@ class GenresGridView extends ConsumerWidget {
                       ),
                       Text(
                         '${genreSongs.length} ${l10n.songs}',
-                        style: TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Colors.white.withValues(alpha: 0.75),
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -363,7 +568,7 @@ class FoldersListView extends ConsumerWidget {
           child: ListTile(
             leading: const Icon(LucideIcons.folder, color: Colors.amberAccent),
             title: Text(folderName),
-            subtitle: Text(folderPath, style: const TextStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+            subtitle: Text(folderPath, style: AppFonts.jostStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
             trailing: Text('${folderSongs.length} ${l10n.songs}'),
             onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
               title: folderName,

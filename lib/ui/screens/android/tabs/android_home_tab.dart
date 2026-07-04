@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/ui/widgets/song_options_bottom_sheet.dart';
 import 'package:flutter/services.dart';
@@ -20,6 +21,7 @@ import '../widgets/premium_section.dart';
 import '../widgets/song_details_bottom_sheet.dart';
 import '../widgets/empty_library_view.dart';
 import '../widgets/premium_loading_view.dart';
+import 'views/library_categories_views.dart';
 
 class AndroidHomeTab extends ConsumerStatefulWidget {
   const AndroidHomeTab({super.key});
@@ -71,7 +73,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: AppFonts.jostStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -92,7 +94,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     children: [
                       Text(
                         actionText,
-                        style: const TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Colors.white,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -136,13 +138,18 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
               .filter()
               .artistEqualTo(artist.name)
               .findAll();
+          final imageUrl = artist.artistImageUrl;
+          final bool isLocalImage = imageUrl != null && !imageUrl.startsWith('http');
+          final bool isNetworkImage = imageUrl != null && imageUrl.startsWith('http');
           ref
               .read(appNavigationProvider.notifier)
               .showCollection(
                 title: artist.name,
                 subtitle: l10n.artist,
-                art: artist.artPath,
-                imageUrl: artist.artistImageUrl,
+
+            art: isLocalImage ? imageUrl : artist.artPath,
+            imageUrl: isNetworkImage ? imageUrl : null,
+
                 songs: songs,
               );
         },
@@ -150,24 +157,31 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircleAvatar(
-              radius: 46,
-              backgroundColor: Colors.white.withValues(alpha: 0.05),
-              backgroundImage: artist.artistImageUrl != null
-                  ? FileImage(File(artist.artistImageUrl!))
-                  : null,
-              child: artist.artistImageUrl == null
-                  ? const Icon(
-                      LucideIcons.user,
-                      size: 28,
-                      color: Colors.white38,
-                    )
-                  : null,
+            SizedBox(
+              width: 92,
+              height: 92,
+              child: ClipOval(
+                child: OptimizedImage(
+                  imageUrl: artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : null,
+                  imagePath: artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : artist.artPath,
+                  fit: BoxFit.cover,
+                  placeholder: Container(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    child: const Center(
+                      child: Icon(
+                        LucideIcons.user,
+                        size: 28,
+                        color: Colors.white38,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 8),
             Text(
               artist.name,
-              style: const TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -220,7 +234,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
             const SizedBox(height: 8),
             Text(
               album.name,
-              style: const TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -230,7 +244,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
             ),
             Text(
               album.artist ?? l10n.unknownArtist,
-              style: const TextStyle(color: Colors.white38, fontSize: 11),
+              style: AppFonts.jostStyle(color: Colors.white38, fontSize: 11),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -263,11 +277,16 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
       child: InkWell(
         onTap: () {
           HapticFeedback.lightImpact();
+          final firstWithArt = genreSongs.firstWhere(
+                (s) => s.artPath != null,
+            orElse: () => genreSongs.first,
+          );
           ref
               .read(appNavigationProvider.notifier)
               .showCollection(
                 title: genre,
                 subtitle: l10n.genre,
+            art: firstWithArt.artPath,
                 songs: genreSongs,
               );
         },
@@ -356,7 +375,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                   children: [
                     Text(
                       genre,
-                      style: const TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -367,7 +386,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     ),
                     Text(
                       '${genreSongs.length} ${l10n.songs}',
-                      style: TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white.withValues(alpha: 0.75),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -391,14 +410,72 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
 
+    final albumSort = ref.watch(albumSortProvider);
+    final artistSort = ref.watch(artistSortProvider);
+    final genreSort = ref.watch(genreSortProvider);
+
     final genresMap = <String, List<Song>>{};
     for (var song in library.songs) {
       final genre = song.genre ?? l10n.unknown;
       genresMap.putIfAbsent(genre, () => []).add(song);
     }
-    final genres = genresMap.keys.toList()..sort();
+    
+    final genres = genresMap.keys.toList();
+    switch (genreSort) {
+      case GenreSortOption.nameAsc:
+        genres.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        break;
+      case GenreSortOption.nameDesc:
+        genres.sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
+        break;
+      case GenreSortOption.songCountDesc:
+        genres.sort((a, b) => genresMap[b]!.length.compareTo(genresMap[a]!.length));
+        break;
+      case GenreSortOption.songCountAsc:
+        genres.sort((a, b) => genresMap[a]!.length.compareTo(genresMap[b]!.length));
+        break;
+    }
 
-    if (library.isScanning && library.songs.isEmpty) {
+    final artists = List<Artist>.from(library.artists);
+    if (artistSort == ArtistSortOption.nameAsc) {
+      artists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    } else {
+      artists.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+    }
+
+    final albums = List<Album>.from(library.albums);
+    switch (albumSort) {
+      case AlbumSortOption.nameAsc:
+        albums.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        break;
+      case AlbumSortOption.nameDesc:
+        albums.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+        break;
+      case AlbumSortOption.dateAddedNewest:
+        albums.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+        break;
+      case AlbumSortOption.dateAddedOldest:
+        albums.sort((a, b) => a.dateAdded.compareTo(b.dateAdded));
+        break;
+      case AlbumSortOption.yearNewest:
+        albums.sort((a, b) {
+          if (a.year == null && b.year == null) return 0;
+          if (a.year == null) return 1;
+          if (b.year == null) return -1;
+          return b.year!.compareTo(a.year!);
+        });
+        break;
+      case AlbumSortOption.yearOldest:
+        albums.sort((a, b) {
+          if (a.year == null && b.year == null) return 0;
+          if (a.year == null) return 1;
+          if (b.year == null) return -1;
+          return a.year!.compareTo(b.year!);
+        });
+        break;
+    }
+
+    if (!library.isInitialized || (library.isScanning && library.songs.isEmpty)) {
       return const PremiumLoadingView();
     }
 
@@ -415,6 +492,9 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
     // Sort songs by date added (newest first)
     final dateAddedSongs = List<Song>.from(library.songs);
     dateAddedSongs.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+
+    final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
+
 
     final orderedSlivers = <Widget>[
       SliverToBoxAdapter(
@@ -433,7 +513,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                 width: 48,
                 height: 48,
                 useExpanded: false,
-                useBlur: true,
+                useBlur: useBlur,
+                forceNoBlur: true,
                 onTap: () {
                   HapticFeedback.lightImpact();
                   ref
@@ -447,14 +528,14 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                 ),
               ),
               //const SizedBox(width: 4),
-               Text(
-                              "Looper Player",
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+              //  Text(
+              //                 "Looper Player",
+              //                 style: AppFonts.jostStyle(
+              //                   color: Colors.white,
+              //                   fontSize: 24,
+              //                   fontWeight: FontWeight.bold,
+              //                 ),
+              //               ),
               PremiumSection(
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(10),
@@ -465,7 +546,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                 width: 48,
                 height: 48,
                 useExpanded: false,
-                useBlur: true,
+                useBlur: useBlur,
+                forceNoBlur: true,
                 onTap: () {
                   HapticFeedback.lightImpact();
                   ref
@@ -498,7 +580,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     children: [
                       Text(
                         l10n.quickPicks,
-                        style: const TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -506,7 +588,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                       ),
                       Text(
                         l10n.todayMixForYou,
-                        style: TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Colors.white.withValues(alpha: 0.4),
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -522,7 +604,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     ),
                     height: 40,
                     useExpanded: false,
-                    useBlur: true,
+                    useBlur: useBlur,
+                    forceNoBlur: true,
                     onTap: () {
                       if (allQuickPicks.isNotEmpty) {
                         HapticFeedback.mediumImpact();
@@ -544,7 +627,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                         const SizedBox(width: 8),
                         Text(
                           l10n.play,
-                          style: const TextStyle(
+                          style: AppFonts.jostStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                           ),
@@ -668,7 +751,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                                           right: 8,
                                           child: Text(
                                             song.title,
-                                            style: const TextStyle(
+                                            style: AppFonts.jostStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.w500,
                                               fontSize: 13,
@@ -736,7 +819,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                 children: [
                   Text(
                     l10n.songs,
-                    style: const TextStyle(
+                    style: AppFonts.jostStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -750,7 +833,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     ),
                     height: 40,
                     useExpanded: false,
-                    useBlur: true,
+                    useBlur: useBlur,
+                    forceNoBlur: true,
                     onTap: () {
                       HapticFeedback.lightImpact();
                       ref
@@ -762,7 +846,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                       children: [
                         Text(
                           l10n.viewAll,
-                          style: const TextStyle(
+                          style: AppFonts.jostStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                           ),
@@ -803,7 +887,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
         );
       } else if (section == 'artists') {
-        if (settings.showHomeArtists && library.artists.isNotEmpty) {
+        if (settings.showHomeArtists && artists.isNotEmpty) {
           orderedSlivers.add(
             _buildHorizontalSection(
               title: l10n.artists,
@@ -814,15 +898,15 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     .read(appNavigationProvider.notifier)
                     .setItem(NavItem.artists);
               },
-              itemCount: library.artists.length,
+              itemCount: artists.length,
               itemBuilder: (context, index) {
-                return _buildArtistItem(library.artists[index], l10n);
+                return _buildArtistItem(artists[index], l10n);
               },
             ),
           );
         }
       } else if (section == 'albums') {
-        if (settings.showHomeAlbums && library.albums.isNotEmpty) {
+        if (settings.showHomeAlbums && albums.isNotEmpty) {
           orderedSlivers.add(
             _buildHorizontalSection(
               title: l10n.albums,
@@ -833,9 +917,9 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab>
                     .read(appNavigationProvider.notifier)
                     .setItem(NavItem.albums);
               },
-              itemCount: library.albums.length,
+              itemCount: albums.length,
               itemBuilder: (context, index) {
-                return _buildAlbumItem(library.albums[index], l10n);
+                return _buildAlbumItem(albums[index], l10n);
               },
             ),
           );

@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/core/app_fonts.dart';
 
 class QueueView extends ConsumerWidget {
   const QueueView({super.key});
@@ -15,6 +17,18 @@ class QueueView extends ConsumerWidget {
     final queue = ref.watch(playbackProvider.select((s) => s.queue));
     final currentSongPath = ref.watch(playbackProvider.select((s) => s.currentSong?.path));
     final l10n = AppLocalizations.of(context)!;
+
+    // Rotate the queue list so that the current song is at the top
+    final currentIdx = queue.indexWhere((s) => s.path == currentSongPath);
+    final List<Song> displayedQueue;
+    if (currentIdx != -1) {
+      displayedQueue = [
+        ...queue.sublist(currentIdx),
+        ...queue.sublist(0, currentIdx),
+      ];
+    } else {
+      displayedQueue = List.from(queue);
+    }
 
     return Column(
       children: [
@@ -28,7 +42,7 @@ class QueueView extends ConsumerWidget {
               if (!Platform.isAndroid)
                 Text(
                   l10n.playQueue,
-                  style: const TextStyle(fontSize: 32, fontWeight: FontWeight.normal),
+                  style: AppFonts.jostStyle(fontSize: 32, fontWeight: FontWeight.normal),
                 ),
               const Spacer(),
               if (queue.isNotEmpty)
@@ -43,29 +57,32 @@ class QueueView extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: queue.isEmpty
+          child: displayedQueue.isEmpty
               ? Center(
                   child: Text(
                     l10n.queueIsEmpty,
-                    style: const TextStyle(color: Colors.grey, fontSize: 16),
+                    style: AppFonts.jostStyle(color: Colors.grey, fontSize: 16),
                   ),
                 )
               : ReorderableListView.builder(
+                  buildDefaultDragHandles: false,
                   padding: EdgeInsets.only(
                     left: 24,
                     right: 24,
                     top: 16,
                     bottom: Platform.isAndroid ? 200 : 16,
                   ),
-                  itemCount: queue.length,
+                  itemCount: displayedQueue.length,
                   onReorder: (oldIndex, newIndex) {
+                    if (newIndex == 0) newIndex = 1;
                     ref
                         .read(playbackProvider.notifier)
                         .reorderQueue(oldIndex, newIndex);
                   },
                   itemBuilder: (context, index) {
-                    final song = queue[index];
+                    final song = displayedQueue[index];
                     final isCurrent = currentSongPath == song.path;
+                    final originalIndex = queue.indexWhere((s) => s.path == song.path);
 
                     return Dismissible(
                       key: ValueKey('queue_view_${song.path}_$index'),
@@ -73,7 +90,7 @@ class QueueView extends ConsumerWidget {
                       onDismissed: (_) {
                         ref
                             .read(playbackProvider.notifier)
-                            .removeFromQueue(index);
+                            .removeFromQueue(originalIndex);
                       },
                       background: Container(
                         alignment: Alignment.centerRight,
@@ -104,7 +121,7 @@ class QueueView extends ConsumerWidget {
                             ),
                             title: Text(
                               song.title,
-                              style: TextStyle(
+                              style: AppFonts.jostStyle(
                                 fontWeight: isCurrent
                                     ? FontWeight.normal
                                     : FontWeight.normal,
@@ -117,20 +134,32 @@ class QueueView extends ConsumerWidget {
                             ),
                             subtitle: Text(
                               song.artist ?? 'Unknown Artist',
-                              style: const TextStyle(fontSize: 12),
+                              style: AppFonts.jostStyle(fontSize: 12),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            trailing: Padding(
-                              padding: const EdgeInsets.only(right: 20.0),
-                              child: const Icon(
-                                LucideIcons.gripVertical,
-                                size: 24,
-                                color: Colors.grey,
-                              ),
-                            ),
+                            trailing: isCurrent
+                                ? const Padding(
+                                    padding: EdgeInsets.only(right: 20.0),
+                                    child: Icon(
+                                      LucideIcons.volume2,
+                                      color: Colors.yellow,
+                                      size: 20,
+                                    ),
+                                  )
+                                : ReorderableDragStartListener(
+                                    index: index,
+                                    child: const Padding(
+                                      padding: EdgeInsets.only(right: 20.0),
+                                      child: Icon(
+                                        LucideIcons.gripVertical,
+                                        size: 24,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
                             onTap: () =>
-                                ref.read(playbackProvider.notifier).playAtIndex(index),
+                                ref.read(playbackProvider.notifier).playAtIndex(originalIndex),
                           ),
                         ),
                       ),

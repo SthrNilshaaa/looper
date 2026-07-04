@@ -1,14 +1,18 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/ui/widgets/fluid_background.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'widgets/advanced_lyric_renderer.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'overlay_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 
 enum LyricsSyncMode { line, word, char }
 
@@ -38,7 +42,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     try {
       await WakelockPlus.enable();
     } catch (e) {
-      debugPrint('Failed to enable wakelock: $e');
+
     }
   }
 
@@ -46,7 +50,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     try {
       await WakelockPlus.disable();
     } catch (e) {
-      debugPrint('Failed to disable wakelock: $e');
+
     }
   }
 
@@ -54,16 +58,63 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
   Widget build(BuildContext context) {
     final lyricsState = ref.watch(lyricsProvider);
     final primaryColor = Theme.of(context).colorScheme.primary;
+    //final playback = ref.watch(playbackProvider);
+    // final song = playback.currentSong;
+    // final settings = ref.watch(settingsProvider);
+
+    // final lyricsDarkness = settings.lyricsDarkness.isNaN
+    //     ? 0.55
+    //     : settings.lyricsDarkness;
+
+    // final showDynamicBg = (settings.enableDynamicTheming || settings.dynamicLyrics) &&
+    //     !settings.blurredArtworkForLyrics &&
+    //     song?.artPath != null;
+
+    // final showBlurredArtworkBg = settings.blurredArtworkForLyrics &&
+    //     song?.artPath != null;
 
     return Stack(
       children: [
+        // if (showDynamicBg)
+        //   Positioned.fill(
+        //     child: FluidBackground(
+        //       key: ValueKey('lyrics_fluid_bg_${song!.path}'),
+        //       imageProvider: FileImage(File(song.artPath!)),
+        //       animate: playback.isPlaying,
+        //       blurSigma: 80,
+        //       overlayDarken: lyricsDarkness,
+        //       child: const SizedBox.expand(),
+        //     ),
+        //   )
+        // else if (showBlurredArtworkBg)
+        //   Positioned.fill(
+        //     child: Stack(
+        //       children: [
+        //         Positioned.fill(
+        //           child: ImageFiltered(
+        //             imageFilter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+        //             child: Image.file(
+        //               File(song!.artPath!),
+        //               fit: BoxFit.cover,
+        //               filterQuality: FilterQuality.low,
+        //             ),
+        //           ),
+        //         ),
+        //         Positioned.fill(
+        //           child: Container(
+        //             color: Colors.black.withValues(alpha: lyricsDarkness),
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
         Column(
           children: [
             //const SizedBox(height: 48), // Space for floating button
             if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
             Expanded(
               child: lyricsState.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const AppLoadingIndicator()
                   : lyricsState.rawLrc == null
                   ? Center(
                       child: Column(
@@ -95,20 +146,6 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             ),
           ],
         ),
-        // Positioned(
-        //   top: 16,
-        //   right: 16,
-        //   child: IconButton(
-        //     icon: const Icon(
-        //       LucideIcons.pictureInPicture2,
-        //       color: Colors.white70,
-        //     ),
-        //     tooltip: 'Overlay Lyrics',
-        //     onPressed: () {
-        //       ref.read(overlayServiceProvider).toggleOverlay();
-        //     },
-        //   ),
-        // ),
       ],
     );
   }
@@ -209,7 +246,7 @@ class _ModeButton extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: AppFonts.jostStyle(
             fontSize: isShort ? 10 : 11,
             fontWeight: FontWeight.normal,
             color: isSelected

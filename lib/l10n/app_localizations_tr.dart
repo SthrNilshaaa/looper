@@ -431,6 +431,35 @@ class AppLocalizationsTr extends AppLocalizations {
       'Dil tercihlerini ve arayanın odaklanma durumunu yönetin';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => 'Manuel Geçiş Süresi';
 
   @override
@@ -648,6 +677,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get resumeOnStartTitle => 'Başlangıçta Sürdür';
 
   @override
+  String get persistQueueTitle => 'Son Sırayı Koru';
+
+  @override
+  String get persistQueueDesc =>
+      'Uygulama yeniden başlatıldığında son oynatılan şarkıyı ve sırayı kaydet';
+
+  @override
   String get right => 'Sağa Hizala';
 
   @override
@@ -842,6 +878,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get toggleFavorite => 'Favoriyi Değiştir';
 
   @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+
+  @override
   String get topResult => 'En İyi Sonuç';
 
   @override
@@ -940,4 +991,100 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get year => 'Yıl';
+
+  @override
+  String get supportUs => 'Bizi Destekleyin';
+
+  @override
+  String get supportUsDesc =>
+      'Looper Player\'ın aktif ve açık kaynaklı kalmasına yardımcı olun';
+
+  @override
+  String get supportDevelopment => 'Geliştirmeyi Destekle';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player %100 ücretsiz ve açık kaynaklıdır. Kullanmaktan keyif alıyorsanız, lütfen bağış yaparak yaratıcıyı desteklemeyi düşünün. Her katkı projenin aktif kalmasına yardımcı olur!';
+
+  @override
+  String get useCustomFont => 'Özel Yazı Tipi Kullan';
+
+  @override
+  String get useCustomFontDesc =>
+      'Jost veya diğer özel yazı tiplerini kullanın. Aksi takdirde, DM Sans kullanılır.';
+
+  @override
+  String get selectFontFamily => 'Yazı Tipi Ailesi Seçin';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Aktif yazı tipi: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Yazı Tipi Kalınlık Ayarı';
+
+  @override
+  String get currentWeight => 'Mevcut kalınlık';
+
+  @override
+  String get useCustomFontLyrics => 'Şarkı Sözleri İçin Özel Yazı Tipi Kullan';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Senkronize şarkı sözü görünümü için özel yazı tipi ve kalınlık kullanın';
+
+  @override
+  String get lyricsFontFamily => 'Şarkı Sözü Yazı Tipi Ailesi';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Aktif şarkı sözü yazı tipi: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment =>
+      'Şarkı Sözü Yazı Tipi Kalınlık Ayarı';
+
+  @override
+  String get giveStarOnGithub => 'GitHub\'da Yıldız Ver';
+
+  @override
+  String get supportProjectLove => 'Projeyi destekleyin ve sevginizi gösterin!';
+
+  @override
+  String get sortAlphabeticalAZ => 'Alfabetik (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'Alfabetik (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'Son eklenen';
+
+  @override
+  String get sortOldestAdded => 'En eski eklenen';
+
+  @override
+  String get sortYearNewest => 'Yıl (En yeni)';
+
+  @override
+  String get sortYearOldest => 'Yıl (En eski)';
+
+  @override
+  String get sortMostSongs => 'En çok şarkı';
+
+  @override
+  String get sortLeastSongs => 'En az şarkı';
+
+  @override
+  String get sortDefault => 'Varsayılan';
+
+  @override
+  String get sortArtistAsc => 'Sanatçı (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'Albüm (A-Z)';
+
+  @override
+  String get sortDuration => 'Süre';
 }

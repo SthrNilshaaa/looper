@@ -31,10 +31,10 @@ class LibraryScanner {
   ];
 
   Future<ScanResult> scanDirectory(String path, {bool addFolderToSettings = false}) async {
-    print('🔍 Scanner: Scanning directory: $path');
+
     final dir = Directory(path);
     if (!await dir.exists()) {
-      print('❌ Scanner: Directory does not exist: $path');
+
       return ScanResult(songsCount: 0, musicFolders: {});
     }
 
@@ -74,10 +74,10 @@ class LibraryScanner {
     try {
       await traverse(dir);
     } catch (e) {
-      print('❌ Scanner: Critical error during traversal of $path: $e');
+
     }
 
-    print('🎵 Scanner: Found ${filesToProcess.length} audio files in $path');
+
 
     if (filesToProcess.isEmpty) {
       // Clean up any songs in Isar that were in this folder
@@ -120,19 +120,43 @@ class LibraryScanner {
       await DbService.isar.writeTxn(() async {
         await DbService.isar.songs.deleteAll(idsToDelete);
       });
-      print('🗑️ Scanner: Pruned ${idsToDelete.length} deleted songs from database');
+
+    }
+
+    // Check and update dateAdded of existing songs to match file modification time
+    final List<Song> songsToUpdate = [];
+    for (final file in filesToProcess) {
+      final dbSong = dbSongsMap[file.path];
+      if (dbSong != null) {
+        try {
+          final fileDate = file.lastModifiedSync();
+          // If the difference is more than 5 seconds, update it to the file date
+          if (dbSong.dateAdded.difference(fileDate).inSeconds.abs() > 5) {
+            dbSong.dateAdded = fileDate;
+            songsToUpdate.add(dbSong);
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (songsToUpdate.isNotEmpty) {
+
+      await DbService.isar.writeTxn(() async {
+        await DbService.isar.songs.putAll(songsToUpdate);
+      });
     }
 
     // Find new files to process (on disk but not in DB)
     final List<File> newFilesToProcess = filesToProcess.where((f) => !dbSongsMap.containsKey(f.path)).toList();
 
+
     // If requested, add discovered folders to settings
     if (addFolderToSettings) {
-      print('📂 Scanner: Discovered ${musicFolders.length} folders with music');
+
     }
 
     if (newFilesToProcess.isNotEmpty) {
-      print('🆕 Scanner: Parsing metadata for ${newFilesToProcess.length} new files...');
+
       
       final settings = await DbService.isar.appSettings.get(0);
       final downloadIfMissing = (settings?.downloadArtwork ?? false) && (settings?.enableInternet ?? true);
@@ -158,7 +182,7 @@ class LibraryScanner {
       }
 
       if (allResults.isNotEmpty) {
-        print('💾 Scanner: Writing ${allResults.length} parsed items to database in a single transaction...');
+
         await DbService.isar.writeTxn(() async {
           for (final data in allResults) {
             final song = data['song'] as Song;
@@ -200,7 +224,7 @@ class LibraryScanner {
         });
       }
     } else {
-      print('⚡ Scanner: All ${filesToProcess.length} files are up to date! Skipping parsing.');
+
     }
 
     return ScanResult(songsCount: filesToProcess.length, musicFolders: musicFolders);
@@ -214,7 +238,7 @@ class LibraryScanner {
         metadata = await MetadataGod.readMetadata(file: file.path)
             .timeout(const Duration(milliseconds: 800));
       } catch (e) {
-        print('⚠️ MetadataGod failed or timed out for ${file.path}: $e');
+
       }
 
       String? artPath;
@@ -227,6 +251,13 @@ class LibraryScanner {
 
       final lyrics = await MetadataService.getEmbeddedLyrics(file.path);
 
+      DateTime fileDate;
+      try {
+        fileDate = file.lastModifiedSync();
+      } catch (_) {
+        fileDate = DateTime.now();
+      }
+
       final song = Song()
         ..path = file.path
         ..title = metadata?.title ?? p.basenameWithoutExtension(file.path)
@@ -238,7 +269,7 @@ class LibraryScanner {
         ..year = metadata?.year
         ..artPath = artPath
         ..lyrics = lyrics
-        ..dateAdded = DateTime.now();
+        ..dateAdded = fileDate;
 
       if (artPath == null && downloadArtworkIfMissing) {
         artPath = await ArtworkDownloaderService().downloadArtworkForSong(song);
@@ -251,7 +282,7 @@ class LibraryScanner {
         'artPath': artPath
       };
     } catch (e) {
-      print('❌ Final error extracting metadata for ${file.path}: $e');
+
       return null;
     }
   }

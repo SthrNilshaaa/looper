@@ -402,6 +402,35 @@ class AppLocalizationsKo extends AppLocalizations {
   String get manageLanguageAndFocus => '언어 기본 설정 및 발신자 초점 상태 관리';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => '수동 크로스페이드 시간';
 
   @override
@@ -610,6 +639,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get resumeOnStartTitle => '시작 시 재개';
 
   @override
+  String get persistQueueTitle => '마지막 대기열 유지';
+
+  @override
+  String get persistQueueDesc => '앱 재시작 시 마지막 재생 곡과 대기열 저장';
+
+  @override
   String get right => '오른쪽';
 
   @override
@@ -791,6 +826,21 @@ class AppLocalizationsKo extends AppLocalizations {
   String get toggleFavorite => '즐겨찾기 전환';
 
   @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+
+  @override
   String get topResult => '상위 결과';
 
   @override
@@ -883,4 +933,97 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get year => '연도';
+
+  @override
+  String get supportUs => '후원하기';
+
+  @override
+  String get supportUsDesc => 'Looper Player가 유지되고 오픈 소스로 남을 수 있도록 돕기';
+
+  @override
+  String get supportDevelopment => '개발 지원';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player는 100% 무료이며 오픈 소스입니다. 마음에 드셨다면 제작자에게 후원을 고려해 주세요. 모든 기부는 프로젝트 활성화에 도움이 됩니다!';
+
+  @override
+  String get useCustomFont => '사용자 정의 글꼴 사용';
+
+  @override
+  String get useCustomFontDesc =>
+      'Jost 또는 기타 사용자 정의 글꼴을 사용합니다. 그렇지 않으면 DM Sans가 사용됩니다.';
+
+  @override
+  String get selectFontFamily => '글꼴 패밀리 선택';
+
+  @override
+  String activeFont(String fontName) {
+    return '활성 글꼴: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => '글꼴 굵기 조정';
+
+  @override
+  String get currentWeight => '현재 굵기';
+
+  @override
+  String get useCustomFontLyrics => '가사에 사용자 정의 글꼴 사용';
+
+  @override
+  String get useCustomFontLyricsDesc => '동기화 가사 보기에 사용자 정의 글꼴과 굵기 사용';
+
+  @override
+  String get lyricsFontFamily => '가사 글꼴 패밀리';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return '활성 가사 글꼴: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => '가사 글꼴 굵기 조정';
+
+  @override
+  String get giveStarOnGithub => 'GitHub에서 스타 주기';
+
+  @override
+  String get supportProjectLove => '프로젝트를 지원하고 격려해 주세요!';
+
+  @override
+  String get sortAlphabeticalAZ => '가나다순 (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => '역순 (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => '최근에 추가됨';
+
+  @override
+  String get sortOldestAdded => '가장 오래전에 추가됨';
+
+  @override
+  String get sortYearNewest => '연도 (최신순)';
+
+  @override
+  String get sortYearOldest => '연도 (오래된순)';
+
+  @override
+  String get sortMostSongs => '곡이 가장 많음';
+
+  @override
+  String get sortLeastSongs => '곡이 가장 적음';
+
+  @override
+  String get sortDefault => '기본';
+
+  @override
+  String get sortArtistAsc => '아티스트 (A-Z)';
+
+  @override
+  String get sortAlbumAsc => '앨범 (A-Z)';
+
+  @override
+  String get sortDuration => '재생 시간';
 }

@@ -426,6 +426,35 @@ class AppLocalizationsHi extends AppLocalizations {
       'भाषा प्राथमिकताएं और कॉलर फ़ोकस प्रबंधित करें';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => 'मैनुअल क्रॉसफ़ेड अवधि';
 
   @override
@@ -644,6 +673,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get resumeOnStartTitle => 'शुरू होने पर फिर से शुरू करें';
 
   @override
+  String get persistQueueTitle => 'आखिरी कतार सहेजें';
+
+  @override
+  String get persistQueueDesc =>
+      'ऐप रीस्टार्ट होने पर आखिरी बजाया गया गाना और कतार सहेजें';
+
+  @override
   String get right => 'दायें';
 
   @override
@@ -836,6 +872,21 @@ class AppLocalizationsHi extends AppLocalizations {
   String get toggleFavorite => 'पसंदीदा टॉगल करें';
 
   @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+
+  @override
   String get topResult => 'शीर्ष परिणाम';
 
   @override
@@ -934,4 +985,100 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get year => 'वर्ष';
+
+  @override
+  String get supportUs => 'हमारा समर्थन करें';
+
+  @override
+  String get supportUsDesc =>
+      'Looper Player को जीवित और ओपन-सोर्स रखने में मदद करें';
+
+  @override
+  String get supportDevelopment => 'विकास का समर्थन करें';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player 100% मुफ़्त और ओपन-सोर्स है। यदि आप इसका आनंद लेते हैं, तो कृपया दान देकर निर्माता का समर्थन करने पर विचार करें। हर योगदान परियोजना को सक्रिय रखने में मदद करता है!';
+
+  @override
+  String get useCustomFont => 'कस्टम फ़ॉन्ट का उपयोग करें';
+
+  @override
+  String get useCustomFontDesc =>
+      'Jost या अन्य कस्टम फ़ॉन्ट्स का उपयोग करें। अन्यथा, DM Sans का उपयोग किया जाएगा।';
+
+  @override
+  String get selectFontFamily => 'फ़ॉन्ट परिवार चुनें';
+
+  @override
+  String activeFont(String fontName) {
+    return 'सक्रिय फ़ॉन्ट: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'फ़ॉन्ट मोटाई समायोजन';
+
+  @override
+  String get currentWeight => 'वर्तमान मोटाई';
+
+  @override
+  String get useCustomFontLyrics => 'लिरिक्स के लिए कस्टम फ़ॉन्ट का उपयोग करें';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'समानक्रमिक लिरिक्स दृश्य के लिए कस्टम फ़ॉन्ट और मोटाई का उपयोग करें';
+
+  @override
+  String get lyricsFontFamily => 'बोल फ़ॉन्ट परिवार';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'सक्रिय बोल फ़ॉन्ट: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'बोल फ़ॉन्ट मोटाई समायोजन';
+
+  @override
+  String get giveStarOnGithub => 'GitHub पर स्टार दें';
+
+  @override
+  String get supportProjectLove =>
+      'परियोजना का समर्थन करें और कुछ प्यार दिखाएं!';
+
+  @override
+  String get sortAlphabeticalAZ => 'वर्णमाला (A-Z)';
+
+  @override
+  String get sortAlphabeticalZA => 'वर्णमाला (Z-A)';
+
+  @override
+  String get sortRecentlyAdded => 'हाल ही में जोड़ा गया';
+
+  @override
+  String get sortOldestAdded => 'सबसे पुराना जोड़ा गया';
+
+  @override
+  String get sortYearNewest => 'वर्ष (नया)';
+
+  @override
+  String get sortYearOldest => 'वर्ष (पुराना)';
+
+  @override
+  String get sortMostSongs => 'सबसे अधिक गाने';
+
+  @override
+  String get sortLeastSongs => 'सबसे कम गाने';
+
+  @override
+  String get sortDefault => 'डिफ़ॉल्ट';
+
+  @override
+  String get sortArtistAsc => 'कलाकार (A-Z)';
+
+  @override
+  String get sortAlbumAsc => 'एल्बम (A-Z)';
+
+  @override
+  String get sortDuration => 'अवधि';
 }

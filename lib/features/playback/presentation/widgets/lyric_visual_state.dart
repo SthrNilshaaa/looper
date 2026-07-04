@@ -29,6 +29,8 @@ class LyricVisualState {
     required int relativeIndex,
     required bool isActive,
     double progress = 0.0,
+    int activeWeightDelta = 0,
+    int inactiveWeightDelta = 0,
   }) {
     final distance = relativeIndex.abs().toDouble();
 
@@ -50,12 +52,17 @@ class LyricVisualState {
     final clampedDistance = distance.clamp(0.0, 5.0);
     final yOffset = isActive ? 0.0 : dir * (clampedDistance * 5.0);
 
+    final baseIndex = isActive ? 8 : 4; // w900 for active, w500 for inactive
+    final delta = isActive ? activeWeightDelta : inactiveWeightDelta;
+    final adjustedIndex = (baseIndex + delta).clamp(0, 8);
+    final weight = FontWeight.values[adjustedIndex];
+
     return LyricVisualState(
       opacity: isActive ? 1.0 : baseOpacity,
       scale: isActive ? 1.0 : baseScale,
       blur: isActive ? 0.0 : blur,
       yOffset: yOffset,
-      fontWeight: isActive ? FontWeight.w900 : FontWeight.w500,
+      fontWeight: weight,
     );
   }
 }

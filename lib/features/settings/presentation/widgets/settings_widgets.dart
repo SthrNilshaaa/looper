@@ -62,10 +62,10 @@ class MaintainerTile extends StatelessWidget {
     final Uri uri = Uri.parse(url);
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-        debugPrint('Could not launch $url');
+
       }
     } catch (e) {
-      debugPrint('Error launching URL: $e');
+
     }
   }
 
@@ -80,7 +80,7 @@ class MaintainerTile extends StatelessWidget {
       ),
       title: Text(
         name,
-        style: const TextStyle(
+        style: AppFonts.jostStyle(
           color: Colors.white,
           fontWeight: FontWeight.w600,
           fontSize: 15,
@@ -88,7 +88,7 @@ class MaintainerTile extends StatelessWidget {
       ),
       subtitle: Text(
         role,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
       ),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
@@ -132,11 +132,11 @@ class LibraryFoldersList extends ConsumerWidget {
               leading: const Icon(LucideIcons.folder, color: Colors.white70),
               title: Text(
                 path.split('/').last,
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                style: AppFonts.jostStyle(color: Colors.white, fontSize: 14),
               ),
               subtitle: Text(
                 path,
-                style: const TextStyle(color: Colors.white54, fontSize: 11),
+                style: AppFonts.jostStyle(color: Colors.white54, fontSize: 11),
               ),
               trailing: IconButton(
                 icon: const Icon(
@@ -199,7 +199,7 @@ class SettingsSliderTile extends ConsumerWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w500,
                         fontSize: 15,
@@ -208,7 +208,7 @@ class SettingsSliderTile extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white54,
                         fontSize: 12,
                       ),
@@ -218,7 +218,7 @@ class SettingsSliderTile extends ConsumerWidget {
               ),
               Text(
                 '${value.round()}$suffix',
-                style: const TextStyle(
+                style: AppFonts.jostStyle(
                   color: Colors.white70,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,

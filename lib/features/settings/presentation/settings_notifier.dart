@@ -19,10 +19,30 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     initialization = _loadSettings();
   }
 
+  List<double> _createDefaultGains() {
+    final list = List<double>.filled(48, 0.0);
+    list[20] = -50.0; // Silence remove threshold dB
+    list[22] = 0.2; // Crossfeed strength
+    list[24] = -20.0; // Compressor threshold dB
+    list[25] = 2.0; // Compressor ratio
+    list[26] = 20.0; // Compressor attack ms
+    list[27] = 250.0; // Compressor release ms
+    list[29] = -24.0; // Loudnorm target
+    list[31] = 2.5; // Stereo width factor
+    list[34] = 1.0; // Pitch shift
+    list[35] = 1.0; // Tempo shift
+    list[36] = 0.0; // ReplayGain mode
+    list[37] = 0.0; // ReplayGain preamp
+    list[39] = 150.0; // Speech highpass
+    list[40] = 4000.0; // Speech lowpass
+    list[44] = 1.0; // Tone shelving enabled
+    list[45] = 1.0; // Pitch/tempo enabled
+    return list;
+  }
+
   Future<void> _loadSettings() async {
     final settings = await DbService.isar.appSettings.get(0);
     if (settings != null) {
-
       // Migrate old settings record safely
       bool needsSave = false;
       if (settings.bgBrightness == 0.0) {
@@ -36,33 +56,41 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       // Since uninitialized booleans in old DB records default to false:
       // if keepBackgroundGradient is false, that is fine.
       // showHomeArtists defaults to true, but showHomeAlbums and showHomeGenres should default to false (off)!
-      if (!settings.showHomeArtists && !settings.showHomeAlbums && !settings.showHomeGenres) {
+      if (!settings.showHomeArtists &&
+          !settings.showHomeAlbums &&
+          !settings.showHomeGenres) {
         settings.showHomeArtists = true;
         settings.showHomeAlbums = false;
         settings.showHomeGenres = false;
         needsSave = true;
       }
       if (settings.homeSectionOrder.isEmpty) {
-        settings.homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres'];
+        settings.homeSectionOrder = [
+          'quick_picks',
+          'songs',
+          'albums',
+          'artists',
+          'genres',
+        ];
         needsSave = true;
       }
-      if (settings.homeDarkness == 0.0 || settings.homeDarkness.isNaN) {
+      if (settings.homeDarkness.isNaN || (settings.homeDarkness == 0.0 && !settings.settingsV3)) {
         settings.homeDarkness = 0.72;
         needsSave = true;
       }
-      if (settings.songsDarkness == 0.0 || settings.songsDarkness.isNaN) {
+      if (settings.songsDarkness.isNaN || (settings.songsDarkness == 0.0 && !settings.settingsV3)) {
         settings.songsDarkness = 0.72;
         needsSave = true;
       }
-      if (settings.libraryDarkness == 0.0 || settings.libraryDarkness.isNaN) {
+      if (settings.libraryDarkness.isNaN || (settings.libraryDarkness == 0.0 && !settings.settingsV3)) {
         settings.libraryDarkness = 0.72;
         needsSave = true;
       }
-      if (settings.musicDarkness == 0.0 || settings.musicDarkness.isNaN) {
+      if (settings.musicDarkness.isNaN || (settings.musicDarkness == 0.0 && !settings.settingsV3)) {
         settings.musicDarkness = 0.62;
         needsSave = true;
       }
-      if (settings.lyricsDarkness == 0.0 || settings.lyricsDarkness.isNaN) {
+      if (settings.lyricsDarkness.isNaN || (settings.lyricsDarkness == 0.0 && !settings.settingsV3)) {
         settings.lyricsDarkness = 0.55;
         needsSave = true;
       }
@@ -76,6 +104,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         settings.dynamicLyrics = false;
         settings.blurredArtworkForLyrics = true;
         settings.settingsV3 = true;
+        needsSave = true;
+      }
+      if (settings.globalEqualizerGains.length < 48) {
+        settings.globalEqualizerGains = _createDefaultGains();
         needsSave = true;
       }
       if (needsSave) {
@@ -94,7 +126,13 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         ..showHomeArtists = true
         ..showHomeAlbums = false
         ..showHomeGenres = false
-        ..homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres']
+        ..homeSectionOrder = [
+          'quick_picks',
+          'songs',
+          'albums',
+          'artists',
+          'genres',
+        ]
         ..homeDarkness = 0.72
         ..songsDarkness = 0.72
         ..libraryDarkness = 0.72
@@ -106,7 +144,14 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         ..settingsV3 = true
         ..dynamicLyrics = false
         ..blurredArtworkForLyrics = true
-        ..showPerformanceOptimizer = false;
+        ..showPerformanceOptimizer = false
+        ..equalizerEnabled = false
+        ..enableAudioCache = true
+        ..audioCacheSizeMB = 200
+        ..audioCacheSecs = 120
+        ..audioBackCacheSizeMB = 100
+        ..persistQueue = true
+        ..globalEqualizerGains = _createDefaultGains();
       await DbService.isar.writeTxn(() async {
         await DbService.isar.appSettings.put(defaultSettings);
       });
@@ -120,8 +165,17 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     }
   }
 
-  void _updateActiveFont() {
-    AppFonts.activeFontFamily = state.useNewFont ? (state.customFontFamily ?? 'Jost') : 'DM Sans';
+  void _updateActiveFont([AppSettings? customState]) {
+    final activeState = customState ?? state;
+    AppFonts.activeFontFamily = activeState.useNewFont
+        ? (activeState.customFontFamily ?? 'Jost')
+        : 'DM Sans';
+    AppFonts.appFontWeightDelta = activeState.useNewFont
+        ? activeState.customFontWeightDelta
+        : 0;
+    AppFonts.lyricsFontWeightDelta = activeState.useNewFontLyrics
+        ? activeState.customFontWeightLyricsDelta
+        : 0;
   }
 
   Future<void> updateLibraryFolders(List<String> folders) async {
@@ -165,7 +219,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..id = s.id
       ..libraryFolders = List.from(s.libraryFolders)
       ..lastPlayedSongId = s.lastPlayedSongId
+      ..lastQueueSongIds = List.from(s.lastQueueSongIds)
+      ..lastQueueIndex = s.lastQueueIndex
       ..volume = s.volume
+      ..lastPositionMs = s.lastPositionMs
       ..shuffle = s.shuffle
       ..repeatMode = s.repeatMode
       ..language = s.language
@@ -175,6 +232,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..dynamicLyrics = s.dynamicLyrics
       ..accentColor = s.accentColor
       ..audioFocus = s.audioFocus
+      ..audioFocusRequestOnPlay = s.audioFocusRequestOnPlay
+      ..audioFocusReleaseOnPause = s.audioFocusReleaseOnPause
+      ..audioFocusStopOnOtherSession = s.audioFocusStopOnOtherSession
+      ..audioFocusRestartOnGain = s.audioFocusRestartOnGain
       ..disableSquiggle = s.disableSquiggle
       ..disableAnimatedDuration = s.disableAnimatedDuration
       ..disableBlur = s.disableBlur
@@ -192,17 +253,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..showHomeArtists = s.showHomeArtists
       ..showHomeAlbums = s.showHomeAlbums
       ..showHomeGenres = s.showHomeGenres
-      ..homeSectionOrder = List.from(s.homeSectionOrder.isEmpty ? ['quick_picks', 'songs', 'albums', 'artists', 'genres'] : s.homeSectionOrder)
+      ..homeSectionOrder = List.from(
+        s.homeSectionOrder.isEmpty
+            ? ['quick_picks', 'songs', 'albums', 'artists', 'genres']
+            : s.homeSectionOrder,
+      )
       ..enableSlideGesture = s.enableSlideGesture
       ..stopOnTaskRemoved = s.stopOnTaskRemoved
-      ..enableCrossfade = s.enableCrossfade
-      ..crossfadeLength = s.crossfadeLength
-      ..shortManualCrossfadeLength = s.shortManualCrossfadeLength
+      ..persistQueue = s.persistQueue
       ..fadePlayPauseStop = s.fadePlayPauseStop
       ..playPauseStopFadeLength = s.playPauseStopFadeLength
-      ..fadeOnSeek = s.fadeOnSeek
-      ..seekFadeLength = s.seekFadeLength
-      ..silenceBetweenTracks = s.silenceBetweenTracks
       ..resumeAfterCall = s.resumeAfterCall
       ..resumeOnStart = s.resumeOnStart
       ..permanentAudioFocusChange = s.permanentAudioFocusChange
@@ -218,7 +278,25 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..lyricsDarkness = s.lyricsDarkness
       ..showPerformanceOptimizer = s.showPerformanceOptimizer
       ..useNewFont = s.useNewFont
-      ..customFontFamily = s.customFontFamily;
+      ..customFontFamily = s.customFontFamily
+      ..customFontWeight = s.customFontWeight
+      ..customFontWeightDelta = s.customFontWeightDelta
+      ..useNewFontLyrics = s.useNewFontLyrics
+      ..customFontFamilyLyrics = s.customFontFamilyLyrics
+      ..customFontWeightLyrics = s.customFontWeightLyrics
+      ..customFontWeightLyricsDelta = s.customFontWeightLyricsDelta
+      ..activeLyricsFontWeightDelta = s.activeLyricsFontWeightDelta
+      ..equalizerEnabled = s.equalizerEnabled
+      ..globalEqualizerGains = List.from(
+        s.globalEqualizerGains.isEmpty
+            ? _createDefaultGains()
+            : s.globalEqualizerGains,
+      )
+      ..enableAudioCache = s.enableAudioCache
+      ..audioCacheSizeMB = s.audioCacheSizeMB
+      ..audioCacheSecs = s.audioCacheSecs
+      ..audioBackCacheSizeMB = s.audioBackCacheSizeMB
+      ..exclusiveHardwareMode = s.exclusiveHardwareMode;
   }
 
   Future<void> updateBlurredArtworkForLyrics(bool value) async {
@@ -272,31 +350,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     });
     state = newState;
   }
-
-  Future<void> updateEnableCrossfade(bool value) async {
-    final newState = _clone(state)..enableCrossfade = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
-  Future<void> updateCrossfadeLength(int value) async {
-    final newState = _clone(state)..crossfadeLength = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
-  Future<void> updateShortManualCrossfadeLength(int value) async {
-    final newState = _clone(state)..shortManualCrossfadeLength = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
   Future<void> updateFadePlayPauseStop(bool value) async {
     final newState = _clone(state)..fadePlayPauseStop = value;
     await DbService.isar.writeTxn(() async {
@@ -312,31 +365,6 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     });
     state = newState;
   }
-
-  Future<void> updateFadeOnSeek(bool value) async {
-    final newState = _clone(state)..fadeOnSeek = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
-  Future<void> updateSeekFadeLength(int value) async {
-    final newState = _clone(state)..seekFadeLength = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
-  Future<void> updateSilenceBetweenTracks(int value) async {
-    final newState = _clone(state)..silenceBetweenTracks = value;
-    await DbService.isar.writeTxn(() async {
-      await DbService.isar.appSettings.put(newState);
-    });
-    state = newState;
-  }
-
   Future<void> updateResumeAfterCall(bool value) async {
     final newState = _clone(state)..resumeAfterCall = value;
     await DbService.isar.writeTxn(() async {
@@ -347,6 +375,14 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> updateResumeOnStart(bool value) async {
     final newState = _clone(state)..resumeOnStart = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updatePersistQueue(bool value) async {
+    final newState = _clone(state)..persistQueue = value;
     await DbService.isar.writeTxn(() async {
       await DbService.isar.appSettings.put(newState);
     });
@@ -456,12 +492,48 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = newState;
   }
 
+  Future<void> updateAudioFocusRequestOnPlay(bool enabled) async {
+    final newState = _clone(state)..audioFocusRequestOnPlay = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAudioFocusReleaseOnPause(bool enabled) async {
+    final newState = _clone(state)..audioFocusReleaseOnPause = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAudioFocusStopOnOtherSession(bool enabled) async {
+    final newState = _clone(state)..audioFocusStopOnOtherSession = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAudioFocusRestartOnGain(bool enabled) async {
+    final newState = _clone(state)..audioFocusRestartOnGain = enabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
   Future<void> updateDynamicTheming(bool enabled) async {
     final newState = _clone(state)..enableDynamicTheming = enabled;
     if (!enabled) {
       // If dynamic theming is disabled, ensure accent color resets to default Green (0xFF41C25E)
       // if the current color is not one of the manual selection options.
-      const allowedColors = [0xFF41C25E, 0xFFF7EAA6, 0xFF448AFF]; // Green, Yellow, Blue Accent
+      const allowedColors = [
+        0xFF41C25E,
+        0xFFF7EAA6,
+        0xFF448AFF,
+      ]; // Green, Yellow, Blue Accent
       if (!allowedColors.contains(newState.accentColor)) {
         newState.accentColor = 0xFF41C25E;
       }
@@ -506,6 +578,27 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> updateLastPlayedSong(int? songId) async {
     final newState = _clone(state)..lastPlayedSongId = songId;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateLastQueueState(
+    List<int> queueIds,
+    int index,
+    int? lastSongId, {
+    int? positionMs,
+  }) async {
+    final newState = _clone(state)
+      ..lastQueueSongIds = queueIds
+      ..lastQueueIndex = index
+      ..lastPlayedSongId = lastSongId
+      ..lastPositionMs = positionMs ?? 0;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateLastPosition(int positionMs) async {
+    final newState = _clone(state)..lastPositionMs = positionMs;
     await _save(newState);
     state = newState;
   }
@@ -579,15 +672,106 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> updateUseNewFont(bool value) async {
     final newState = _clone(state)..useNewFont = value;
     await _save(newState);
+    _updateActiveFont(newState);
     state = newState;
-    _updateActiveFont();
   }
 
   Future<void> updateCustomFontFamily(String value) async {
     final newState = _clone(state)..customFontFamily = value;
     await _save(newState);
+    _updateActiveFont(newState);
     state = newState;
-    _updateActiveFont();
+  }
+
+  Future<void> updateCustomFontWeight(int value) async {
+    final newState = _clone(state)..customFontWeight = value;
+    await _save(newState);
+    _updateActiveFont(newState);
+    state = newState;
+  }
+
+  Future<void> updateCustomFontWeightDelta(int value) async {
+    final newState = _clone(state)..customFontWeightDelta = value;
+    await _save(newState);
+    _updateActiveFont(newState);
+    state = newState;
+  }
+
+  Future<void> updateUseNewFontLyrics(bool value) async {
+    final newState = _clone(state)..useNewFontLyrics = value;
+    await _save(newState);
+    _updateActiveFont(newState);
+    state = newState;
+  }
+
+  Future<void> updateCustomFontFamilyLyrics(String value) async {
+    final newState = _clone(state)..customFontFamilyLyrics = value;
+    await _save(newState);
+    _updateActiveFont(newState);
+    state = newState;
+  }
+
+  Future<void> updateCustomFontWeightLyrics(String value) async {
+    final newState = _clone(state)..customFontWeightLyrics = value;
+    await _save(newState);
+    _updateActiveFont(newState);
+    state = newState;
+  }
+
+  Future<void> updateCustomFontWeightLyricsDelta(int value) async {
+    final newState = _clone(state)..customFontWeightLyricsDelta = value;
+    await _save(newState);
+    _updateActiveFont(newState);
+    state = newState;
+  }
+
+  Future<void> updateActiveLyricsFontWeightDelta(int value) async {
+    final newState = _clone(state)..activeLyricsFontWeightDelta = value;
+    await _save(newState);
+    _updateActiveFont(newState);
+    state = newState;
+  }
+
+  Future<void> updateEqualizerEnabled(bool value) async {
+    final newState = _clone(state)..equalizerEnabled = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateGlobalEqualizerGains(List<double> value) async {
+    final newState = _clone(state)..globalEqualizerGains = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateEnableAudioCache(bool value) async {
+    final newState = _clone(state)..enableAudioCache = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateAudioCacheSizeMB(int value) async {
+    final newState = _clone(state)..audioCacheSizeMB = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateAudioCacheSecs(int value) async {
+    final newState = _clone(state)..audioCacheSecs = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateAudioBackCacheSizeMB(int value) async {
+    final newState = _clone(state)..audioBackCacheSizeMB = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateExclusiveHardwareMode(bool value) async {
+    final newState = _clone(state)..exclusiveHardwareMode = value;
+    await _save(newState);
+    state = newState;
   }
 
   Future<void> _save(AppSettings settings) async {

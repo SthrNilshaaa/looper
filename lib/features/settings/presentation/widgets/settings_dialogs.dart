@@ -8,6 +8,7 @@ import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 
 void showCustomColorPicker(
   BuildContext context,
@@ -18,15 +19,12 @@ void showCustomColorPicker(
     context: context,
     useRootNavigator: true,
     isScrollControlled: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    backgroundColor: Colors.transparent,
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setModalState) {
           final currentAccent = ref.watch(settingsProvider).accentColor;
-          return Container(
+          return AppBottomSheetContainer(
             height: 650,
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
             child: Column(
@@ -35,13 +33,12 @@ void showCustomColorPicker(
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                     Text(
                       'Custom Accent Color',
-                      style: TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        fontFamily: AppFonts.jost,
                       ),
                     ),
                     Container(
@@ -81,7 +78,7 @@ void showCustomColorPicker(
                       },
                       child: Text(
                         'Done',
-                        style: TextStyle(
+                        style: AppFonts.jostStyle(
                           color: Color(currentAccent),
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -107,10 +104,7 @@ void showReorderBottomSheet(
   showModalBottomSheet(
     context: context,
     useRootNavigator: true,
-    backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    backgroundColor: Colors.transparent,
     builder: (context) {
       final l10n = AppLocalizations.of(context)!;
       return StatefulBuilder(
@@ -150,36 +144,24 @@ void showReorderBottomSheet(
             },
           };
 
-          return Container(
+          return AppBottomSheetContainer(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.white24,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
                 Text(
                   l10n.reorderDashboardSections,
-                  style: const TextStyle(
+                  style: AppFonts.jostStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    fontFamily: AppFonts.jost,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   l10n.reorderDashboardSectionsDesc,
-                  style: const TextStyle(color: Colors.white54, fontSize: 13),
+                  style: AppFonts.jostStyle(color: Colors.white54, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
                 Flexible(
@@ -246,7 +228,7 @@ void showReorderBottomSheet(
                           ),
                           title: Text(
                             title,
-                            style: const TextStyle(
+                            style: AppFonts.jostStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
@@ -254,7 +236,7 @@ void showReorderBottomSheet(
                           ),
                           subtitle: Text(
                             desc,
-                            style: const TextStyle(
+                            style: AppFonts.jostStyle(
                               color: Colors.white38,
                               fontSize: 12,
                             ),
@@ -287,9 +269,9 @@ void showReorderBottomSheet(
                       HapticFeedback.mediumImpact();
                       Navigator.pop(context);
                     },
-                    child: const Text(
+                    child: Text(
                       'Done',
-                      style: TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 15,
@@ -314,16 +296,16 @@ void showClearDialog(BuildContext context, AppLocalizations l10n) {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       title: Text(
         l10n.resetLibrary,
-        style: const TextStyle(color: Colors.white),
+        style: AppFonts.jostStyle(color: Colors.white),
       ),
-      content: const Text(
+      content: Text(
         'This will remove all songs from your library. Your music files will not be deleted.',
-        style: TextStyle(color: Colors.white70),
+        style: AppFonts.jostStyle(color: Colors.white70),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.white38)),
+          child: Text('Cancel', style: AppFonts.jostStyle(color: Colors.white38)),
         ),
         TextButton(
           onPressed: () async {
@@ -336,7 +318,7 @@ void showClearDialog(BuildContext context, AppLocalizations l10n) {
               Navigator.pop(context);
             }
           },
-          child: const Text('Clear', style: TextStyle(color: Colors.redAccent)),
+          child: Text('Clear', style: AppFonts.jostStyle(color: Colors.redAccent)),
         ),
       ],
     ),

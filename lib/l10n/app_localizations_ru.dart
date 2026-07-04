@@ -430,6 +430,35 @@ class AppLocalizationsRu extends AppLocalizations {
       'Управляйте языковыми настройками и состоянием фокуса звонящего';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => 'Длительность ручного кроссфейда';
 
   @override
@@ -648,6 +677,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get resumeOnStartTitle => 'Возобновлять при запуске';
 
   @override
+  String get persistQueueTitle => 'Сохранять последнюю очередь';
+
+  @override
+  String get persistQueueDesc =>
+      'Сохранять последнюю песню и очередь при перезапуске приложения';
+
+  @override
   String get right => 'Справа';
 
   @override
@@ -842,6 +878,21 @@ class AppLocalizationsRu extends AppLocalizations {
   String get toggleFavorite => 'Переключить избранное';
 
   @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+
+  @override
   String get topResult => 'Лучший результат';
 
   @override
@@ -940,4 +991,99 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get year => 'Год';
+
+  @override
+  String get supportUs => 'Поддержать нас';
+
+  @override
+  String get supportUsDesc =>
+      'Помогите сохранить Looper Player живым и открытым';
+
+  @override
+  String get supportDevelopment => 'Поддержать разработку';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player на 100% бесплатен и имеет открытый исходный код. Если вам нравится им пользоваться, пожалуйста, поддержите создателя пожертвованием. Каждая поддержка помогает поддерживать проект активным!';
+
+  @override
+  String get useCustomFont => 'Использовать свой шрифт';
+
+  @override
+  String get useCustomFontDesc =>
+      'Использовать Jost или другие шрифты. Иначе используется DM Sans.';
+
+  @override
+  String get selectFontFamily => 'Выбрать семейство шрифтов';
+
+  @override
+  String activeFont(String fontName) {
+    return 'Активный шрифт: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'Регулировка толщины шрифта';
+
+  @override
+  String get currentWeight => 'Текущая толщина';
+
+  @override
+  String get useCustomFontLyrics => 'Свой шрифт для текста песен';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'Использовать свой шрифт и толщину для синхронизированных слов';
+
+  @override
+  String get lyricsFontFamily => 'Семейство шрифтов текста';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'Активный шрифт текста: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'Регулировка толщины текста';
+
+  @override
+  String get giveStarOnGithub => 'Поставить звезду на GitHub';
+
+  @override
+  String get supportProjectLove => 'Поддержите проект и проявите симпатию!';
+
+  @override
+  String get sortAlphabeticalAZ => 'По алфавиту (А-Я)';
+
+  @override
+  String get sortAlphabeticalZA => 'По алфавиту (Я-А)';
+
+  @override
+  String get sortRecentlyAdded => 'Недавно добавленные';
+
+  @override
+  String get sortOldestAdded => 'Сначала старые';
+
+  @override
+  String get sortYearNewest => 'Год (Новые)';
+
+  @override
+  String get sortYearOldest => 'Год (Старые)';
+
+  @override
+  String get sortMostSongs => 'Больше всего песен';
+
+  @override
+  String get sortLeastSongs => 'Меньше всего песен';
+
+  @override
+  String get sortDefault => 'По умолчанию';
+
+  @override
+  String get sortArtistAsc => 'Исполнитель (А-Я)';
+
+  @override
+  String get sortAlbumAsc => 'Альбом (А-Я)';
+
+  @override
+  String get sortDuration => 'Длительность';
 }

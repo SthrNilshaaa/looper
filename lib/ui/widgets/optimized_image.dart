@@ -42,15 +42,19 @@ class OptimizedImage extends StatelessWidget {
       ),
     );
 
+    final String? resolvedImageUrl = imageUrl ??
+        ((imagePath != null && (imagePath!.startsWith('http://') || imagePath!.startsWith('https://'))) ? imagePath : null);
+    final String? resolvedImagePath = (resolvedImageUrl == null) ? imagePath : null;
+
     Widget imageWidget;
 
     final double dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
     final int computedCacheWidth = cacheWidth ?? (width != null ? (width! * dpr).toInt() : 400);
-    final int? computedCacheHeight = cacheHeight ?? (height != null ? (height! * dpr).toInt() : null);
+    final int? computedCacheHeight = cacheHeight;
 
-    if (imagePath != null && File(imagePath!).existsSync()) {
+    if (resolvedImagePath != null && File(resolvedImagePath).existsSync()) {
       imageWidget = Image.file(
-        File(imagePath!),
+        File(resolvedImagePath),
         width: width,
         height: height,
         fit: fit,
@@ -59,9 +63,9 @@ class OptimizedImage extends StatelessWidget {
         cacheHeight: computedCacheHeight,
         errorBuilder: (context, error, stackTrace) => fallback,
       );
-    } else if (imageUrl != null && imageUrl!.isNotEmpty) {
+    } else if (resolvedImageUrl != null && resolvedImageUrl.isNotEmpty) {
       imageWidget = CachedNetworkImage(
-        imageUrl: imageUrl!,
+        imageUrl: resolvedImageUrl,
         width: width,
         height: height,
         fit: fit,

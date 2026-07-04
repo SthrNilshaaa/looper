@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'settings_widgets.dart';
@@ -16,11 +17,11 @@ class FadePlayPauseStopTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.music, color: Colors.white70),
       title: Text(
         l10n.fadePlayPauseStop,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.fadePlayPauseStopDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.fadePlayPauseStop,
@@ -56,157 +57,6 @@ class FadeDurationSlider extends ConsumerWidget {
   }
 }
 
-class FadeOnSeekTile extends ConsumerWidget {
-  const FadeOnSeekTile({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final l10n = AppLocalizations.of(context)!;
-    return SwitchListTile(
-      secondary: const Icon(LucideIcons.sliders, color: Colors.white70),
-      title: Text(
-        l10n.fadeOnSeek,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-      ),
-      subtitle: Text(
-        l10n.fadeOnSeekDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
-      ),
-      activeColor: Color(settings.accentColor),
-      value: settings.fadeOnSeek,
-      onChanged: (value) {
-        ref.read(settingsProvider.notifier).updateFadeOnSeek(value);
-      },
-    );
-  }
-}
-
-class SeekFadeDurationSlider extends ConsumerWidget {
-  const SeekFadeDurationSlider({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final l10n = AppLocalizations.of(context)!;
-    return SettingsSliderTile(
-      icon: LucideIcons.sliders,
-      title: l10n.seekFadeDuration,
-      subtitle: l10n.seekFadeDurationDesc,
-      value: settings.seekFadeLength.toDouble(),
-      min: 10,
-      max: 500,
-      divisions: 49,
-      suffix: 'ms',
-      onChanged: (value) {
-        ref
-            .read(settingsProvider.notifier)
-            .updateSeekFadeLength(value.round());
-      },
-    );
-  }
-}
-
-class AudioCrossfadeTile extends ConsumerWidget {
-  const AudioCrossfadeTile({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final l10n = AppLocalizations.of(context)!;
-    return SwitchListTile(
-      secondary: const Icon(LucideIcons.gitCompare, color: Colors.white70),
-      title: Text(
-        l10n.audioCrossfade,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
-      ),
-      subtitle: Text(
-        l10n.audioCrossfadeDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
-      ),
-      activeColor: Color(settings.accentColor),
-      value: settings.enableCrossfade,
-      onChanged: (value) {
-        ref.read(settingsProvider.notifier).updateEnableCrossfade(value);
-      },
-    );
-  }
-}
-
-class AutoCrossfadeDurationSlider extends ConsumerWidget {
-  const AutoCrossfadeDurationSlider({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final l10n = AppLocalizations.of(context)!;
-    return SettingsSliderTile(
-      icon: LucideIcons.sliders,
-      title: l10n.autoCrossfadeDuration,
-      subtitle: l10n.autoCrossfadeDurationDesc,
-      value: settings.crossfadeLength.toDouble(),
-      min: 100,
-      max: 15000,
-      divisions: 149,
-      suffix: 'ms',
-      onChanged: (value) {
-        ref
-            .read(settingsProvider.notifier)
-            .updateCrossfadeLength(value.round());
-      },
-    );
-  }
-}
-
-class ManualCrossfadeDurationSlider extends ConsumerWidget {
-  const ManualCrossfadeDurationSlider({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final l10n = AppLocalizations.of(context)!;
-    return SettingsSliderTile(
-      icon: LucideIcons.sliders,
-      title: l10n.manualCrossfadeDuration,
-      subtitle: l10n.manualCrossfadeDurationDesc,
-      value: settings.shortManualCrossfadeLength.toDouble(),
-      min: 10,
-      max: 1000,
-      divisions: 99,
-      suffix: 'ms',
-      onChanged: (value) {
-        ref
-            .read(settingsProvider.notifier)
-            .updateShortManualCrossfadeLength(value.round());
-      },
-    );
-  }
-}
-
-class SilenceBetweenTracksSlider extends ConsumerWidget {
-  const SilenceBetweenTracksSlider({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    final l10n = AppLocalizations.of(context)!;
-    return SettingsSliderTile(
-      icon: LucideIcons.clock,
-      title: l10n.silenceBetweenTracksTitle,
-      subtitle: l10n.silenceBetweenTracksDesc,
-      value: settings.silenceBetweenTracks.toDouble(),
-      min: 0,
-      max: 5000,
-      divisions: 50,
-      suffix: 'ms',
-      onChanged: (value) {
-        ref
-            .read(settingsProvider.notifier)
-            .updateSilenceBetweenTracks(value.round());
-      },
-    );
-  }
-}
 
 class ManageAudioFocusTile extends ConsumerWidget {
   const ManageAudioFocusTile({super.key});
@@ -219,11 +69,11 @@ class ManageAudioFocusTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.phoneCall, color: Colors.white70),
       title: Text(
         l10n.manageAudioFocusTitle,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.manageAudioFocusDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.audioFocus,
@@ -245,14 +95,11 @@ class ResumeAfterCallTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.phoneCall, color: Colors.white70),
       title: Text(
         l10n.resumeAfterCallTitle,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.resumeAfterCallDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.resumeAfterCall,
@@ -274,19 +121,42 @@ class ResumeOnStartTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.power, color: Colors.white70),
       title: Text(
         l10n.resumeOnStartTitle,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.resumeOnStartDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.resumeOnStart,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateResumeOnStart(value);
+      },
+    );
+  }
+}
+
+class PersistQueueTile extends ConsumerWidget {
+  const PersistQueueTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.save, color: Colors.white70),
+      title: Text(
+        l10n.persistQueueTitle,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.persistQueueDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeColor: Color(settings.accentColor),
+      value: settings.persistQueue,
+      onChanged: (value) {
+        ref.read(settingsProvider.notifier).updatePersistQueue(value);
       },
     );
   }
@@ -303,14 +173,11 @@ class PermanentAudioFocusChangeTile extends ConsumerWidget {
       secondary: const Icon(LucideIcons.alertCircle, color: Colors.white70),
       title: Text(
         l10n.permanentFocusChangePause,
-        style: const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
+        style: _tileTitleStyle(),
       ),
       subtitle: Text(
         l10n.permanentFocusChangePauseDesc,
-        style: const TextStyle(color: Colors.white54, fontSize: 12),
+        style: _tileSubtitleStyle(),
       ),
       activeColor: Color(settings.accentColor),
       value: settings.permanentAudioFocusChange,
@@ -322,3 +189,168 @@ class PermanentAudioFocusChangeTile extends ConsumerWidget {
     );
   }
 }
+
+class AudioFocusRequestOnPlayTile extends ConsumerWidget {
+  const AudioFocusRequestOnPlayTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.playCircle, color: Colors.white70),
+      title: Text(
+        l10n.audioFocusGetFocus,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.audioFocusGetFocusDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeColor: Color(settings.accentColor),
+      value: settings.audioFocusRequestOnPlay,
+      onChanged: (value) {
+        ref
+            .read(settingsProvider.notifier)
+            .updateAudioFocusRequestOnPlay(value);
+      },
+    );
+  }
+}
+
+class AudioFocusReleaseOnPauseTile extends ConsumerWidget {
+  const AudioFocusReleaseOnPauseTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.pauseCircle, color: Colors.white70),
+      title: Text(
+        l10n.audioFocusReleaseFocus,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.audioFocusReleaseFocusDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeColor: Color(settings.accentColor),
+      value: settings.audioFocusReleaseOnPause,
+      onChanged: (value) {
+        ref
+            .read(settingsProvider.notifier)
+            .updateAudioFocusReleaseOnPause(value);
+      },
+    );
+  }
+}
+
+class AudioFocusStopOnOtherSessionTile extends ConsumerWidget {
+  const AudioFocusStopOnOtherSessionTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.stopCircle, color: Colors.white70),
+      title: Text(
+        l10n.audioFocusStopOnOtherSession,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.audioFocusStopOnOtherSessionDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeColor: Color(settings.accentColor),
+      value: settings.audioFocusStopOnOtherSession,
+      onChanged: (value) {
+        ref
+            .read(settingsProvider.notifier)
+            .updateAudioFocusStopOnOtherSession(value);
+      },
+    );
+  }
+}
+
+class AudioFocusRestartOnGainTile extends ConsumerWidget {
+  const AudioFocusRestartOnGainTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.refreshCw, color: Colors.white70),
+      title: Text(
+        l10n.audioFocusRestartOnGain,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.audioFocusRestartOnGainDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeColor: Color(settings.accentColor),
+      value: settings.audioFocusRestartOnGain,
+      onChanged: (value) {
+        ref
+            .read(settingsProvider.notifier)
+            .updateAudioFocusRestartOnGain(value);
+      },
+    );
+  }
+}
+
+class ShuffleTile extends ConsumerWidget {
+  const ShuffleTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          secondary: const Icon(LucideIcons.shuffle, color: Colors.white70),
+          title: Text(
+            l10n.shuffleTitle,
+            style: _tileTitleStyle(),
+          ),
+          subtitle: Text(
+            settings.shuffle ? l10n.shuffleEnabledDesc : l10n.shuffleDisabledDesc,
+            style: _tileSubtitleStyle(),
+          ),
+          activeColor: Color(settings.accentColor),
+          value: settings.shuffle,
+          onChanged: (value) {
+            ref.read(settingsProvider.notifier).updateShuffle(value);
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 72, right: 16, bottom: 12),
+          child: Text(
+            l10n.shuffleSwitchingDesc,
+            style: AppFonts.jostStyle(
+              color: Colors.white30,
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+TextStyle _tileTitleStyle() => AppFonts.jostStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w500,
+    );
+
+TextStyle _tileSubtitleStyle() => AppFonts.jostStyle(
+      color: Colors.white54,
+      fontSize: 12,
+    );
+

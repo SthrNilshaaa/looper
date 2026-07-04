@@ -11,6 +11,7 @@ import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 
 class AndroidLibraryTab extends ConsumerWidget {
@@ -52,7 +53,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                       ),
                   Text(
                     l10n.library,
-                    style: const TextStyle(
+                    style: AppFonts.jostStyle(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -119,7 +120,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                     //useBlur: true,
                     child: Text(
                       l10n.recentPlayed,
-                      style: const TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -153,7 +154,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                     useExpanded: false,
                     child: Text(
                       l10n.categories,
-                      style: const TextStyle(
+                      style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -178,7 +179,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                     _buildCategoryRow(
                       context: context,
                       ref: ref,
-                      icon: LucideIcons.heart,
+                      icon: LucideIcons.star,
                       title: 'Favorites',
                       onTap: () {
                         HapticFeedback.lightImpact();
@@ -305,7 +306,7 @@ class AndroidLibraryTab extends ConsumerWidget {
         child: Center(
           child: Text(
             'No recently played tracks',
-            style: TextStyle(
+            style: AppFonts.jostStyle(
               color: Colors.white.withValues(alpha: 0.3),
               fontSize: 13,
             ),
@@ -393,7 +394,7 @@ class AndroidLibraryTab extends ConsumerWidget {
             const SizedBox(width: 6),
             Text(
               song.title,
-              style: const TextStyle(
+              style: AppFonts.jostStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
@@ -462,7 +463,7 @@ class AndroidLibraryTab extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     translatedTitle,
-                    style: const TextStyle(
+                    style: AppFonts.jostStyle(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.w500,

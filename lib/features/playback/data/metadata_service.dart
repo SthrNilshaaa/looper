@@ -29,7 +29,7 @@ class MetadataService {
         return _extractLyricsFromJson(data);
       }
     } catch (e) {
-      debugPrint('Error reading embedded lyrics with ffprobe: $e');
+
     }
     return null;
   }
@@ -45,7 +45,7 @@ class MetadataService {
         return _extractLyricsFromMap(Map<String, dynamic>.from(tags));
       }
     } catch (e) {
-      debugPrint('Error reading embedded lyrics with FFprobeKit: $e');
+
     }
     return null;
   }

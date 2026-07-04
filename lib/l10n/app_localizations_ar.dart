@@ -426,6 +426,35 @@ class AppLocalizationsAr extends AppLocalizations {
   String get manageLanguageAndFocus => 'إدارة تفضيلات اللغة وحالة تركيز المتصل';
 
   @override
+  String get audioFocusGetFocus => 'Get Focus';
+
+  @override
+  String get audioFocusGetFocusDesc =>
+      'Request audio focus when playback begins.';
+
+  @override
+  String get audioFocusReleaseFocus => 'Release Focus';
+
+  @override
+  String get audioFocusReleaseFocusDesc =>
+      'Release audio focus when playback pauses or stops.';
+
+  @override
+  String get audioFocusStopOnOtherSession =>
+      'Stop Music on Other Music Session';
+
+  @override
+  String get audioFocusStopOnOtherSessionDesc =>
+      'Pause playback when another app starts playing audio.';
+
+  @override
+  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+
+  @override
+  String get audioFocusRestartOnGainDesc =>
+      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+
+  @override
   String get manualCrossfadeDuration => 'مدة التداخل اليدوي';
 
   @override
@@ -639,6 +668,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get resumeOnStartTitle => 'استئناف التشغيل عند البدء';
 
   @override
+  String get persistQueueTitle => 'حفظ آخر قائمة تشغيل';
+
+  @override
+  String get persistQueueDesc =>
+      'حفظ آخر أغنية وقائمة تشغيل عند إعادة تشغيل التطبيق';
+
+  @override
   String get right => 'يمين';
 
   @override
@@ -828,6 +864,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get toggleFavorite => 'تبديل المفضلة';
 
   @override
+  String get shuffleTitle => 'Shuffle';
+
+  @override
+  String get shuffleDisabledDesc =>
+      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+
+  @override
+  String get shuffleEnabledDesc =>
+      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+
+  @override
+  String get shuffleSwitchingDesc =>
+      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+
+  @override
   String get topResult => 'أعلى النتائج';
 
   @override
@@ -924,4 +975,99 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get year => 'السنة';
+
+  @override
+  String get supportUs => 'ادعمنا';
+
+  @override
+  String get supportUsDesc =>
+      'ساعد في إبقاء تطبيق Looper Player حيًا ومفتوح المصدر';
+
+  @override
+  String get supportDevelopment => 'دعم التطوير';
+
+  @override
+  String get supportDevelopmentDesc =>
+      'Looper Player مجاني ومفتوح المصدر بنسبة 100٪. إذا كنت تستمتع باستخدامه، يرجى التفكير في دعم المطور بتبرع. كل مساهمة تساعد في إبقاء المشروع نشطًا!';
+
+  @override
+  String get useCustomFont => 'استخدام خط مخصص';
+
+  @override
+  String get useCustomFontDesc =>
+      'استخدم خط Jost أو خطوط مخصصة أخرى. خلاف ذلك، سيتم استخدام DM Sans.';
+
+  @override
+  String get selectFontFamily => 'اختر عائلة الخط';
+
+  @override
+  String activeFont(String fontName) {
+    return 'الخط النشط: $fontName';
+  }
+
+  @override
+  String get fontWeightAdjustment => 'تعديل سمك الخط';
+
+  @override
+  String get currentWeight => 'السمك الحالي';
+
+  @override
+  String get useCustomFontLyrics => 'خط مخصص للكلمات';
+
+  @override
+  String get useCustomFontLyricsDesc =>
+      'استخدم خطًا وسمكًا مخصصين لعرض الكلمات المتزامنة';
+
+  @override
+  String get lyricsFontFamily => 'عائلة خطوط الكلمات';
+
+  @override
+  String activeLyricsFont(String fontName) {
+    return 'خط الكلمات النشط: $fontName';
+  }
+
+  @override
+  String get lyricsFontWeightAdjustment => 'تعديل سمك خط الكلمات';
+
+  @override
+  String get giveStarOnGithub => 'اعطِ نجمة على GitHub';
+
+  @override
+  String get supportProjectLove => 'ادعم المشروع وعبر عن حبك له!';
+
+  @override
+  String get sortAlphabeticalAZ => 'أبجديًا (أ-ي)';
+
+  @override
+  String get sortAlphabeticalZA => 'أبجديًا (ي-أ)';
+
+  @override
+  String get sortRecentlyAdded => 'المضافة حديثًا';
+
+  @override
+  String get sortOldestAdded => 'الأقدم إضافة';
+
+  @override
+  String get sortYearNewest => 'السنة (الأحدث)';
+
+  @override
+  String get sortYearOldest => 'السنة (الأقدم)';
+
+  @override
+  String get sortMostSongs => 'أكثر الأغاني';
+
+  @override
+  String get sortLeastSongs => 'أقل الأغاني';
+
+  @override
+  String get sortDefault => 'الافتراضي';
+
+  @override
+  String get sortArtistAsc => 'الفنان (أ-ي)';
+
+  @override
+  String get sortAlbumAsc => 'الألبوم (أ-ي)';
+
+  @override
+  String get sortDuration => 'المدة';
 }
