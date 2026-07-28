@@ -26,3 +26,10 @@
 -keep class **.R$* {
     <fields>;
 }
+
+# Keep Looper Player application, activity and service classes
+-keep class com.looper.player.** { *; }
+
+# Keep all Android media classes
+-keep class android.support.v4.media.** { *; }
+-keep class androidx.media.** { *; }

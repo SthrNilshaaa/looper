@@ -195,7 +195,7 @@ if [[ -d "$APPDIR/usr/bin/lib" ]]; then
 fi
 
 # Locate appimagetool
-APPIMAGE_TOOL="/home/nilshaaa/Projects/one_player/.local/bin/appimagetool"
+APPIMAGE_TOOL="/home/nilshaaa/projects/one_player/.local/bin/appimagetool"
 if [[ ! -x "$APPIMAGE_TOOL" ]]; then
     APPIMAGE_TOOL=$(which appimagetool || true)
 fi
