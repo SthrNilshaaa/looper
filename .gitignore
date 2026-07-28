@@ -15,7 +15,6 @@ build/
 one-player.spec/
 .local/
 dist/
-assets/
 
 # IntelliJ related
 *.iml
