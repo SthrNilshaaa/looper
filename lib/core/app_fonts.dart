@@ -443,13 +443,9 @@ class AppFonts {
     }
 
     FontWeight weight;
-    if (isActive) {
-      final delta = useNewFontLyrics ? activeWeightDelta : 0;
-      weight = getAdjustedWeight(FontWeight.w700, delta);
-    } else {
-      final delta = useNewFontLyrics ? weightDelta : 0;
-      weight = getAdjustedWeight(FontWeight.w300, delta);
-    }
+    // Use a uniform weight (w600/SemiBold) to completely eliminate text wrapping jumps and layout transition glitches
+    final delta = useNewFontLyrics ? activeWeightDelta : 0;
+    weight = getAdjustedWeight(FontWeight.w600, delta);
 
     return style.copyWith(
       fontSize: fontSize,

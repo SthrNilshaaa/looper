@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
@@ -91,18 +90,19 @@ class LyricsFetcher {
     if (settings != null && !settings.enableInternet) {
       return lrc;
     }
-
     try {
+      final provider = settings?.lyricsProvider ?? 'LRCLIB';
       final response = await _service.getLyrics(
         trackName: title,
         artistName: artist,
         albumName: (song.album ?? '').trim(),
         durationSeconds: (song.duration ?? 0) ~/ 1000,
+        provider: provider,
       );
       final raw = response?.syncedLyrics ?? response?.plainLyrics;
 
       if (raw != null && raw.isNotEmpty) {
-        lrc = '[source:lrclib]\n$raw';
+        lrc = '[source:${provider.toLowerCase()}]\n$raw';
         // Save to cache and DB
         await LyricsCache.save(artist, title, lrc);
         await DbService.isar.writeTxn(() async {

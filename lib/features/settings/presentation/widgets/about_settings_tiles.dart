@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 
 class LooperVersionTile extends StatelessWidget {
   const LooperVersionTile({super.key});
@@ -34,12 +36,32 @@ class LooperVersionTile extends StatelessWidget {
   }
 }
 
-class LyricsProviderTile extends StatelessWidget {
+class LyricsProviderTile extends ConsumerWidget {
   const LyricsProviderTile({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
     final l10n = AppLocalizations.of(context)!;
+    
+    final availableProviders = [
+      'LRCLIB',
+      'Genius',
+      'Musixmatch',
+      'AZLyrics',
+      'LyricsMINT',
+    ];
+
+    final providerUrls = {
+      'LRCLIB': 'https://lrclib.net',
+      'Genius': 'https://genius.com',
+      'Musixmatch': 'https://www.musixmatch.com',
+      'AZLyrics': 'https://www.azlyrics.com',
+      'LyricsMINT': 'https://www.lyricsmint.com',
+    };
+
+    final currentProvider = settings.lyricsProvider;
+
     return ListTile(
       leading: const Icon(LucideIcons.music, color: Colors.white70),
       title: Text(
@@ -50,22 +72,30 @@ class LyricsProviderTile extends StatelessWidget {
         ),
       ),
       subtitle: Text(
-        'lrclib.net',
+        providerUrls[currentProvider] ?? 'lrclib.net',
         style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
       ),
-      trailing: const Icon(
-        LucideIcons.externalLink,
-        color: Colors.white30,
-        size: 16,
+      trailing: DropdownButton<String>(
+        value: availableProviders.contains(currentProvider)
+            ? currentProvider
+            : 'LRCLIB',
+        dropdownColor: const Color(0xFF1A1A1A),
+        underline: const SizedBox(),
+        items: availableProviders.map((prov) {
+          return DropdownMenuItem<String>(
+            value: prov,
+            child: Text(
+              prov,
+              style: AppFonts.jostStyle(color: Colors.white),
+            ),
+          );
+        }).toList(),
+        onChanged: (value) {
+          if (value != null) {
+            ref.read(settingsProvider.notifier).updateLyricsProvider(value);
+          }
+        },
       ),
-      onTap: () async {
-        final Uri uri = Uri.parse('https://lrclib.net');
-        try {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } catch (e) {
-
-        }
-      },
     );
   }
 }

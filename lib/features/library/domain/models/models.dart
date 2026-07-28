@@ -34,6 +34,13 @@ class Song {
   bool hasCustomEqualizer = false;
   List<double>? equalizerGains;
 
+  // SpatialFlow Online Streaming fields
+  bool isOnlineStream = false;
+  String? streamUrl;
+  String? youtubeId;
+  String? onlineArtUrl;
+  int? streamQuality; // 0: low, 1: high
+
   // Metadata for search
   @Index(type: IndexType.value, caseSensitive: false)
   List<String> get searchTerms => [
@@ -137,6 +144,8 @@ class AppSettings {
   bool fadePlayPauseStop = true;
   int playPauseStopFadeLength = 150; // ms (10ms-1000ms)
   bool resumeAfterCall = true;
+  bool pauseOnDuck = false;
+  bool resumeOnBluetoothConnect = false;
   bool resumeOnStart = false;
   bool permanentAudioFocusChange = false;
   bool dynamicColorActiveLyrics = true;
@@ -144,6 +153,10 @@ class AppSettings {
   bool dynamicAccentColor = true;
   int sortStrategyIndex = 0;
   bool sortAscending = true;
+  int albumSortOptionIndex = 0;
+  int artistSortOptionIndex = 0;
+  int genreSortOptionIndex = 0;
+  int collectionSortOptionIndex = 0;
 
   double homeDarkness = 0.62;
   double songsDarkness = 0.62;
@@ -162,9 +175,23 @@ class AppSettings {
   int activeLyricsFontWeightDelta = 0;
   bool equalizerEnabled = false;
   List<double> globalEqualizerGains = [];
+  bool equalizerGlobalMode = true;
+  bool firstTimeEqualizer = true;
   bool enableAudioCache = true;
   int audioCacheSizeMB = 200;
   int audioCacheSecs = 120;
   int audioBackCacheSizeMB = 100;
   bool exclusiveHardwareMode = false;
+  String lyricsProvider = 'LRCLIB';
+
+  // SpatialFlow Operational Mode & Network Streaming
+  int playbackModeIndex = 0; // 0: hybrid, 1: localOnly, 2: onlineOnly
+  int streamingQuality = 1; // 0: Low (128k), 1: High (256k)
+  bool cacheOnlineStreams = true;
+}
+
+enum PlaybackMode {
+  hybrid,
+  localOnly,
+  onlineOnly,
 }

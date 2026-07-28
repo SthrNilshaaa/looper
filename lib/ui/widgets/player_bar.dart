@@ -8,7 +8,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import '../../features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
@@ -226,7 +225,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
           tooltip: 'Previous',
         ),
         const SizedBox(width: 4),
-        GestureDetector(
+        _BouncyTap(
           onTap: () => ref.read(playbackProvider.notifier).togglePlay(),
           child: Container(
             width: (isVeryNarrow ? 28 : 36).s,
@@ -447,6 +446,59 @@ class EqualHeightTrackShape extends RoundedRectSliderTrackShape {
       isDiscrete: isDiscrete,
       isEnabled: isEnabled,
       additionalActiveTrackHeight: 0,
+    );
+  }
+}
+
+class _BouncyTap extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _BouncyTap({
+    required this.child,
+    required this.onTap,
+  });
+
+  @override
+  State<_BouncyTap> createState() => _BouncyTapState();
+}
+
+class _BouncyTapState extends State<_BouncyTap> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 90),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.92).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      behavior: HitTestBehavior.opaque,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: widget.child,
+      ),
     );
   }
 }

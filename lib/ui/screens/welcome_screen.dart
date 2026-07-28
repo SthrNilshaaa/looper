@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,16 +10,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as p;
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/core/providers.dart';
 import '../../features/library/presentation/library_notifier.dart';
 import '../../features/settings/presentation/settings_notifier.dart';
 
 enum WelcomeState { initial, scanning, noSongs }
 
-// Provider to track if the user has manually pressed "GO START" to bypass the welcome screen.
-// We only check the initial song list state to avoid automatically closing the screen while scanning!
 final welcomeBypassedProvider = StateProvider<bool>((ref) {
-  final initialSongsEmpty = ref.read(libraryProvider).songs.isEmpty;
-  return !initialSongsEmpty;
+  final forceWelcome = ref.watch(forceWelcomeProvider);
+  if (forceWelcome) return false;
+
+  final songs = ref.watch(libraryProvider).songs;
+  final settings = ref.watch(settingsProvider);
+
+  if (songs.isEmpty) {
+    return settings.libraryFolders.isNotEmpty;
+  }
+
+  try {
+    final checkCount = songs.length < 5 ? songs.length : 5;
+    for (int i = 0; i < checkCount; i++) {
+      if (File(songs[i].path).existsSync()) {
+        return true;
+      }
+    }
+    return false;
+  } catch (_) {
+    return false;
+  }
 });
 
 class WelcomeScreen extends ConsumerStatefulWidget {
@@ -383,17 +400,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
             _PremiumButton(
               onPressed: _permissionGranted
                   ? () async {
-                      if (ref.read(libraryProvider).songs.isNotEmpty) {
-                        // Enter dashboard!
-                        ref.read(welcomeBypassedProvider.notifier).state = true;
-                      } else {
-                        // Automatically scan first if database is empty
-                        await _startStorageScanFlow();
-                        if (ref.read(libraryProvider).songs.isNotEmpty) {
-                          ref.read(welcomeBypassedProvider.notifier).state =
-                              true;
-                        }
-                      }
+                      await _startStorageScanFlow();
                     }
                   : null,
               label: l10n.goStart,
@@ -782,6 +789,12 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     _autoScanTriggered = true;
     setState(() {
       _currentState = WelcomeState.scanning;
+      _scanStatusMessage = "Clearing old data...";
+    });
+
+    await ref.read(libraryProvider.notifier).clearAllData();
+
+    setState(() {
       _scanStatusMessage = "Checking system permissions...";
     });
 
@@ -833,7 +846,19 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
         '/storage/emulated/0/Pictures',
         '/storage/emulated/0/Movies',
       ];
-      if (await Permission.manageExternalStorage.isGranted) {
+      int sdkInt = 0;
+      try {
+        final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+        if (sdkMatch != null) {
+          sdkInt = int.parse(sdkMatch.group(1)!);
+        }
+      } catch (_) {}
+
+      final isAllFilesGranted = await Permission.manageExternalStorage.isGranted;
+      final isLegacyStorageGranted = sdkInt < 30 && await Permission.storage.isGranted;
+      final canScanRoot = isAllFilesGranted || isLegacyStorageGranted;
+
+      if (canScanRoot) {
         scanRoots.add('/storage/emulated/0');
       } else {
         scanRoots.addAll(commonPaths);
@@ -851,7 +876,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                 name != 'self' &&
                 name != 'knox-emulated' &&
                 !name.contains('-')) {
-              if (await Permission.manageExternalStorage.isGranted) {
+              if (canScanRoot) {
                 scanRoots.add(entity.path);
               } else {
                 scanRoots.add('${entity.path}/Music');
@@ -883,6 +908,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
         _currentState = WelcomeState.noSongs;
       });
     } else {
+      ref.read(forceWelcomeProvider.notifier).state = false;
       ref.read(welcomeBypassedProvider.notifier).state = true;
     }
   }
@@ -894,6 +920,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 
     final String? path = await FilePicker.platform.getDirectoryPath();
     if (path != null) {
+      await ref.read(libraryProvider.notifier).clearAllData();
+
       setState(() {
         _currentState = WelcomeState.scanning;
         _scanStatusMessage = "Scanning selected path: $path...";
@@ -905,6 +933,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
           _currentState = WelcomeState.noSongs;
         });
       } else {
+        ref.read(forceWelcomeProvider.notifier).state = false;
         ref.read(welcomeBypassedProvider.notifier).state = true;
       }
     }

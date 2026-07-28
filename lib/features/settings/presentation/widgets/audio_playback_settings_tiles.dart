@@ -23,7 +23,7 @@ class FadePlayPauseStopTile extends ConsumerWidget {
         l10n.fadePlayPauseStopDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.fadePlayPauseStop,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateFadePlayPauseStop(value);
@@ -75,7 +75,7 @@ class ManageAudioFocusTile extends ConsumerWidget {
         l10n.manageAudioFocusDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.audioFocus,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateAudioFocus(value);
@@ -101,7 +101,7 @@ class ResumeAfterCallTile extends ConsumerWidget {
         l10n.resumeAfterCallDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.resumeAfterCall,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateResumeAfterCall(value);
@@ -127,7 +127,7 @@ class ResumeOnStartTile extends ConsumerWidget {
         l10n.resumeOnStartDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.resumeOnStart,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateResumeOnStart(value);
@@ -153,7 +153,7 @@ class PersistQueueTile extends ConsumerWidget {
         l10n.persistQueueDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.persistQueue,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updatePersistQueue(value);
@@ -179,7 +179,7 @@ class PermanentAudioFocusChangeTile extends ConsumerWidget {
         l10n.permanentFocusChangePauseDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.permanentAudioFocusChange,
       onChanged: (value) {
         ref
@@ -207,7 +207,7 @@ class AudioFocusRequestOnPlayTile extends ConsumerWidget {
         l10n.audioFocusGetFocusDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.audioFocusRequestOnPlay,
       onChanged: (value) {
         ref
@@ -235,7 +235,7 @@ class AudioFocusReleaseOnPauseTile extends ConsumerWidget {
         l10n.audioFocusReleaseFocusDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.audioFocusReleaseOnPause,
       onChanged: (value) {
         ref
@@ -263,7 +263,7 @@ class AudioFocusStopOnOtherSessionTile extends ConsumerWidget {
         l10n.audioFocusStopOnOtherSessionDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.audioFocusStopOnOtherSession,
       onChanged: (value) {
         ref
@@ -291,7 +291,7 @@ class AudioFocusRestartOnGainTile extends ConsumerWidget {
         l10n.audioFocusRestartOnGainDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.audioFocusRestartOnGain,
       onChanged: (value) {
         ref
@@ -322,7 +322,7 @@ class ShuffleTile extends ConsumerWidget {
             settings.shuffle ? l10n.shuffleEnabledDesc : l10n.shuffleDisabledDesc,
             style: _tileSubtitleStyle(),
           ),
-          activeColor: Color(settings.accentColor),
+          activeThumbColor: Color(settings.accentColor),
           value: settings.shuffle,
           onChanged: (value) {
             ref.read(settingsProvider.notifier).updateShuffle(value);
@@ -340,6 +340,58 @@ class ShuffleTile extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class PauseOnDuckTile extends ConsumerWidget {
+  const PauseOnDuckTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.volumeX, color: Colors.white70),
+      title: Text(
+        l10n.pauseOnDuckTitle,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.pauseOnDuckDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeThumbColor: Color(settings.accentColor),
+      value: settings.pauseOnDuck,
+      onChanged: (value) {
+        ref.read(settingsProvider.notifier).updatePauseOnDuck(value);
+      },
+    );
+  }
+}
+
+class ResumeOnBluetoothConnectTile extends ConsumerWidget {
+  const ResumeOnBluetoothConnectTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.bluetooth, color: Colors.white70),
+      title: Text(
+        l10n.resumeOnBluetoothConnectTitle,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.resumeOnBluetoothConnectDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeThumbColor: Color(settings.accentColor),
+      value: settings.resumeOnBluetoothConnect,
+      onChanged: (value) {
+        ref.read(settingsProvider.notifier).updateResumeOnBluetoothConnect(value);
+      },
     );
   }
 }

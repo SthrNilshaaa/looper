@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,9 +20,68 @@ enum AlbumSortOption { nameAsc, nameDesc, dateAddedNewest, dateAddedOldest, year
 enum ArtistSortOption { nameAsc, nameDesc }
 enum GenreSortOption { nameAsc, nameDesc, songCountDesc, songCountAsc }
 
-final albumSortProvider = StateProvider<AlbumSortOption>((ref) => AlbumSortOption.nameAsc);
-final artistSortProvider = StateProvider<ArtistSortOption>((ref) => ArtistSortOption.nameAsc);
-final genreSortProvider = StateProvider<GenreSortOption>((ref) => GenreSortOption.nameAsc);
+final sortedArtistsCategoryProvider = Provider.autoDispose<List<Artist>>((ref) {
+  final library = ref.watch(libraryProvider);
+  final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.artistSortOptionIndex));
+  final sortOption = ArtistSortOption.values[sortOptionIndex.clamp(0, ArtistSortOption.values.length - 1)];
+  final sorted = List<Artist>.from(library.artists);
+  if (sortOption == ArtistSortOption.nameAsc) {
+    sorted.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+  } else {
+    sorted.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+  }
+  return sorted;
+});
+
+class CategoryGenresData {
+  final List<String> sortedGenres;
+  final Map<String, List<Song>> genresMap;
+  CategoryGenresData({required this.sortedGenres, required this.genresMap});
+}
+
+final categoryGenresDataProvider = Provider.autoDispose<CategoryGenresData>((ref) {
+  final songs = ref.watch(libraryProvider.select((l) => l.songs));
+  final genresMap = <String, List<Song>>{};
+  for (var song in songs) {
+    final genre = song.genre ?? 'Unknown';
+    genresMap.putIfAbsent(genre, () => []).add(song);
+  }
+  final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.genreSortOptionIndex));
+  final sortOption = GenreSortOption.values[sortOptionIndex.clamp(0, GenreSortOption.values.length - 1)];
+  final genres = genresMap.keys.toList();
+  switch (sortOption) {
+    case GenreSortOption.nameAsc:
+      genres.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+      break;
+    case GenreSortOption.nameDesc:
+      genres.sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
+      break;
+    case GenreSortOption.songCountDesc:
+      genres.sort((a, b) => genresMap[b]!.length.compareTo(genresMap[a]!.length));
+      break;
+    case GenreSortOption.songCountAsc:
+      genres.sort((a, b) => genresMap[a]!.length.compareTo(genresMap[b]!.length));
+      break;
+  }
+  return CategoryGenresData(sortedGenres: genres, genresMap: genresMap);
+});
+
+class FoldersCategoryData {
+  final List<String> sortedFolders;
+  final Map<String, List<Song>> foldersMap;
+  FoldersCategoryData({required this.sortedFolders, required this.foldersMap});
+}
+
+final categoryFoldersDataProvider = Provider.autoDispose<FoldersCategoryData>((ref) {
+  final songs = ref.watch(libraryProvider.select((l) => l.songs));
+  final foldersMap = <String, List<Song>>{};
+  for (var song in songs) {
+    final folder = Directory(song.path).parent.path;
+    foldersMap.putIfAbsent(folder, () => []).add(song);
+  }
+  final folders = foldersMap.keys.toList()..sort();
+  return FoldersCategoryData(sortedFolders: folders, foldersMap: foldersMap);
+});
 
 class CategoryDetailWrapper extends ConsumerWidget {
   final String title;
@@ -50,22 +108,41 @@ class CategoryDetailWrapper extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              if (title == 'Albums') ...[
-                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, AlbumSortOption.nameAsc, albumSortProvider),
-                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, AlbumSortOption.nameDesc, albumSortProvider),
-                _buildSortItem(context, ref, l10n.sortRecentlyAdded, AlbumSortOption.dateAddedNewest, albumSortProvider),
-                _buildSortItem(context, ref, l10n.sortOldestAdded, AlbumSortOption.dateAddedOldest, albumSortProvider),
-                _buildSortItem(context, ref, l10n.sortYearNewest, AlbumSortOption.yearNewest, albumSortProvider),
-                _buildSortItem(context, ref, l10n.sortYearOldest, AlbumSortOption.yearOldest, albumSortProvider),
-              ] else if (title == 'Artists') ...[
-                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, ArtistSortOption.nameAsc, artistSortProvider),
-                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, ArtistSortOption.nameDesc, artistSortProvider),
-              ] else if (title == 'Genres') ...[
-                _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, GenreSortOption.nameAsc, genreSortProvider),
-                _buildSortItem(context, ref, l10n.sortAlphabeticalZA, GenreSortOption.nameDesc, genreSortProvider),
-                _buildSortItem(context, ref, l10n.sortMostSongs, GenreSortOption.songCountDesc, genreSortProvider),
-                _buildSortItem(context, ref, l10n.sortLeastSongs, GenreSortOption.songCountAsc, genreSortProvider),
-              ],
+              PremiumSection(
+                borderRadius: BorderRadius.circular(20),
+                padding: EdgeInsets.zero,
+                useExpanded: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (title == 'Albums') ...[
+                      _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, AlbumSortOption.nameAsc.index, 'album'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortAlphabeticalZA, AlbumSortOption.nameDesc.index, 'album'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortRecentlyAdded, AlbumSortOption.dateAddedNewest.index, 'album'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortOldestAdded, AlbumSortOption.dateAddedOldest.index, 'album'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortYearNewest, AlbumSortOption.yearNewest.index, 'album'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortYearOldest, AlbumSortOption.yearOldest.index, 'album'),
+                    ] else if (title == 'Artists') ...[
+                      _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, ArtistSortOption.nameAsc.index, 'artist'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortAlphabeticalZA, ArtistSortOption.nameDesc.index, 'artist'),
+                    ] else if (title == 'Genres') ...[
+                      _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, GenreSortOption.nameAsc.index, 'genre'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortAlphabeticalZA, GenreSortOption.nameDesc.index, 'genre'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortMostSongs, GenreSortOption.songCountDesc.index, 'genre'),
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortLeastSongs, GenreSortOption.songCountAsc.index, 'genre'),
+                    ],
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -73,25 +150,40 @@ class CategoryDetailWrapper extends ConsumerWidget {
     );
   }
 
-  Widget _buildSortItem<T>(
+  Widget _buildSortItem(
     BuildContext context,
     WidgetRef ref,
     String label,
-    T value,
-    StateProvider<T> provider,
+    int valueIndex,
+    String categoryType,
   ) {
-    final current = ref.watch(provider);
-    final isSelected = current == value;
-    final accentColor = Color(ref.read(settingsProvider).accentColor);
+    final settings = ref.watch(settingsProvider);
+    final int currentVal;
+    if (categoryType == 'album') {
+      currentVal = settings.albumSortOptionIndex;
+    } else if (categoryType == 'artist') {
+      currentVal = settings.artistSortOptionIndex;
+    } else {
+      currentVal = settings.genreSortOptionIndex;
+    }
+    final isSelected = currentVal == valueIndex;
+    final accentColor = Color(settings.accentColor);
 
     return InkWell(
       onTap: () {
         HapticFeedback.lightImpact();
-        ref.read(provider.notifier).state = value;
+        if (categoryType == 'album') {
+          ref.read(settingsProvider.notifier).updateAlbumSortOptionIndex(valueIndex);
+        } else if (categoryType == 'artist') {
+          ref.read(settingsProvider.notifier).updateArtistSortOptionIndex(valueIndex);
+        } else {
+          ref.read(settingsProvider.notifier).updateGenreSortOptionIndex(valueIndex);
+        }
         Navigator.pop(context);
       },
+      borderRadius: BorderRadius.circular(20),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -205,7 +297,8 @@ class AlbumsGridView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final sortOption = ref.watch(albumSortProvider);
+    final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.albumSortOptionIndex));
+    final sortOption = AlbumSortOption.values[sortOptionIndex.clamp(0, AlbumSortOption.values.length - 1)];
     final Stream<List<Album>> albumStream;
     switch (sortOption) {
       case AlbumSortOption.nameAsc:
@@ -286,19 +379,10 @@ class ArtistsGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final library = ref.watch(libraryProvider);
-    final artists = library.artists;
+    final sortedArtists = ref.watch(sortedArtistsCategoryProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    if (artists.isEmpty) return Center(child: Text(l10n.noArtistsFound));
-
-    final sortOption = ref.watch(artistSortProvider);
-    final sortedArtists = List<Artist>.from(artists);
-    if (sortOption == ArtistSortOption.nameAsc) {
-      sortedArtists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-    } else {
-      sortedArtists.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
-    }
+    if (sortedArtists.isEmpty) return Center(child: Text(l10n.noArtistsFound));
 
     return GridView.builder(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
@@ -362,32 +446,10 @@ class GenresGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Isar doesn't have a distinct query easily for genres if they are just strings in Songs.
-    // We'll fetch all songs and group them. For larger libraries, we should cache this.
-    final songs = ref.watch(libraryProvider).songs;
+    final genresData = ref.watch(categoryGenresDataProvider);
     final l10n = AppLocalizations.of(context)!;
-    final genresMap = <String, List<Song>>{};
-    for (var song in songs) {
-      final genre = song.genre ?? l10n.unknown;
-      genresMap.putIfAbsent(genre, () => []).add(song);
-    }
-
-    final sortOption = ref.watch(genreSortProvider);
-    final genres = genresMap.keys.toList();
-    switch (sortOption) {
-      case GenreSortOption.nameAsc:
-        genres.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-        break;
-      case GenreSortOption.nameDesc:
-        genres.sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
-        break;
-      case GenreSortOption.songCountDesc:
-        genres.sort((a, b) => genresMap[b]!.length.compareTo(genresMap[a]!.length));
-        break;
-      case GenreSortOption.songCountAsc:
-        genres.sort((a, b) => genresMap[a]!.length.compareTo(genresMap[b]!.length));
-        break;
-    }
+    final genres = genresData.sortedGenres;
+    final genresMap = genresData.genresMap;
 
     return GridView.builder(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
@@ -547,14 +609,10 @@ class FoldersListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final songs = ref.watch(libraryProvider).songs;
+    final foldersData = ref.watch(categoryFoldersDataProvider);
     final l10n = AppLocalizations.of(context)!;
-    final foldersMap = <String, List<Song>>{};
-    for (var song in songs) {
-      final folder = Directory(song.path).parent.path;
-      foldersMap.putIfAbsent(folder, () => []).add(song);
-    }
-    final folders = foldersMap.keys.toList()..sort();
+    final folders = foldersData.sortedFolders;
+    final foldersMap = foldersData.foldersMap;
 
     return ListView.builder(
       padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 200),

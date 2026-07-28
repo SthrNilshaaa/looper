@@ -128,7 +128,7 @@ class ThemeNotifier extends StateNotifier<ThemeState> {
         if (_settings.saveDynamicColor || _settings.dynamicAccentColor) {
           await _ref
               .read(settingsProvider.notifier)
-              .updateAccentColor(vibrantColor.value);
+              .updateAccentColor(vibrantColor.toARGB32());
         }
       }
     } catch (e) {

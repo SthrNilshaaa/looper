@@ -109,11 +109,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
     }
   }
 
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes.toString().padLeft(2, '0');
-    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
+
 
   void _onUserScrolled() {
     if (!mounted) return;

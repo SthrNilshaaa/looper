@@ -14,7 +14,6 @@ import 'package:isar/isar.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_search_provider.dart';
-import 'package:looper_player/core/ui_utils.dart';
 
 final searchQueryProvider = StateProvider<String>((ref) => '');
 
@@ -32,8 +31,9 @@ class SearchResults {
 
 final searchResultsProvider = StreamProvider<SearchResults>((ref) {
   final query = ref.watch(searchQueryProvider);
-  if (query.isEmpty)
+  if (query.isEmpty) {
     return Stream.value(SearchResults(songs: [], albums: [], artists: []));
+  }
 
   return DbService.isar.songs
       .filter()

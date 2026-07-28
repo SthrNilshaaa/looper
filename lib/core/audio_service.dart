@@ -5,12 +5,20 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'dart:math' as math;
+import 'logger_helper.dart';
 
 class AudioService {
   late final Player player;
   List<double>? _lastEqualizerGains;
   bool _equalizerEnabled = false;
   String? _customFilterString;
+  String? _lastArtPath;
+  MediaSessionArtwork _lastArtwork = MediaSessionArtwork.embedded;
+  InterruptionPolicy _interruptionPolicy = InterruptionPolicy.pauseAndResume;
+  bool _requestFocusOnPlay = true;
+  bool _releaseFocusOnPause = true;
+  bool _stopOnOtherSession = true;
+  bool _restartOnFocusGain = true;
 
   Timer? _liveEqThrottleTimer;
   List<double>? _throttledGains;
@@ -38,6 +46,18 @@ class AudioService {
     }
   }
 
+  Future<void> restartApp() async {
+    if (Platform.isAndroid) {
+      try {
+        await _broadcastChannel.invokeMethod('restartApp');
+      } catch (_) {
+        exit(0);
+      }
+    } else {
+      exit(0);
+    }
+  }
+
   Future<void> setStopOnTaskRemoved(bool value) async {
     if (!Platform.isAndroid) return;
     try {
@@ -57,6 +77,7 @@ class AudioService {
   void Function()? onPlayPause;
 
   AudioService() {
+    LoggerHelper.write('AudioService: Constructing Player...');
     player = Player();
     _initPlayer();
 
@@ -86,76 +107,69 @@ class AudioService {
   }
 
   Future<void> _initPlayer() async {
-    // ── Precision position updates for lyrics sync (15ms tick) ──────────────
+    LoggerHelper.write('AudioService: Initializing player properties...');
+    // ponytail: Let native mpv engine negotiate audio format, buffer sizes, and readahead limits.
+    // Overriding these manually (e.g. forcing float32 or 4s buffers) breaks playback and overflows
+    // demuxer packet queues on budget devices.
+
+    /*
     try {
       await player.setRawProperty('playback-time-update-interval', '0.015');
-    } catch (e) {}
+      LoggerHelper.write('AudioService: Set update interval to 15ms.');
+    } catch (e) {
+      LoggerHelper.write('AudioService: Failed to set raw property update interval.', e);
+    }
 
-    // ── Audio format: 32-bit float through typed API ─────────────────────────
-    // All internal processing (EQ, DSP, mixing) happens in float32 precision.
-    // This is the maximum internal bit depth mpv supports and avoids any
-    // integer quantisation until the final AO hand-off.
     try {
       await player.setAudioFormat(Format.float32);
     } catch (e) {
-      // Fallback to raw property if typed API fails (device incompatibility)
       try {
         await player.setRawProperty('audio-format', 'float');
       } catch (_) {}
     }
+    */
 
-    // ── Volume ceiling: 150% for full ReplayGain/preamp headroom ────────────
-    // Default 100% = 0 dBFS headroom. Raising to 150% gives ~3.5 dB of
-    // headroom so ReplayGain preamp values (+6 dB) don't get soft-clipped
-    // internally before reaching the AO.
     try {
       await player.setRawProperty('volume-max', '150');
     } catch (e) {}
 
-    // ── Audio buffer: 2 seconds — glitch-free under CPU pressure ────────────
+    /*
     try {
       await player.setRawProperty('audio-buffer', '4.0');
     } catch (e) {}
 
-    // ── Readahead: 10 seconds — essential for large lossless files ──────────
-    // FLAC/WAV at 24-bit/192kHz can have very large frames; short readahead
-    // causes micro-stutters on storage-bound devices.
     try {
       await player.setRawProperty('demuxer-readahead-secs', '20');
     } catch (e) {}
 
-    // ── Keep audio device open with silence (no click on play/pause) ─────────
     try {
       await player.setRawProperty('audio-stream-silence', 'yes');
     } catch (e) {}
 
-    // ── Gapless: true gapless at the engine level ────────────────────────────
     try {
       await player.setRawProperty('gapless-audio', 'yes');
     } catch (e) {}
 
-    // ── Downmix normalisation: prevents clipping on multi-channel sources ────
     try {
       await player.setRawProperty('audio-normalize-downmix', 'yes');
     } catch (e) {}
 
-    // ── ReplayGain anti-clip ─────────────────────────────────────────────────
     try {
       await player.setRawProperty('replaygain-clip', 'yes');
     } catch (e) {}
+    */
 
-    // ── Disable mpv's built-in scaletempo pitch-correction ──────────────────
-    // When `setRate(1.0)`, mpv still inserts scaletempo as a no-op by default.
-    // We manage pitch/tempo explicitly via AudioEffects → rubberband/scaletempo,
-    // so this internal tap only wastes CPU and introduces a resampling stage.
     try {
       await player.setRawProperty('audio-pitch-correction', 'no');
     } catch (e) {}
 
-    // ── Force software decode (preserves full 32-bit float path) ────────────
-    // Android AAudio/OpenSL hardware decode paths may reduce internal bit depth
-    // or bypass the AF filter chain. SW decode guarantees our float32 pipeline
-    // reaches the AO untouched.
+    // SpatialFlow Audio Stream Buffering & Readahead Calculations
+    try {
+      await player.setRawProperty('demuxer-max-bytes', '262144000'); // 250MB
+      await player.setRawProperty('demuxer-readahead-secs', '60'); // 60s forward readahead
+      await player.setRawProperty('demuxer-max-back-bytes', '104857600'); // 100MB back-cache
+    } catch (e) {}
+
     try {
       await player.setRawProperty('hwdec', 'no');
     } catch (e) {}
@@ -170,6 +184,12 @@ class AudioService {
     bool stopOnOtherSession = true,
     bool restartOnFocusGain = true,
   }) {
+    _interruptionPolicy = interruptionPolicy;
+    _requestFocusOnPlay = requestFocusOnPlay;
+    _releaseFocusOnPause = releaseFocusOnPause;
+    _stopOnOtherSession = stopOnOtherSession;
+    _restartOnFocusGain = restartOnFocusGain;
+
     player.setMediaSession(
       MediaSession(
         appName: 'Looper Player',
@@ -187,11 +207,11 @@ class AudioService {
           MediaAction.setShuffle,
           MediaAction.setRepeatMode,
         },
-        interruptionPolicy: interruptionPolicy,
-        requestFocusOnPlay: requestFocusOnPlay,
-        releaseFocusOnPause: releaseFocusOnPause,
-        stopOnOtherSession: stopOnOtherSession,
-        restartOnFocusGain: restartOnFocusGain,
+        interruptionPolicy: _interruptionPolicy,
+        requestFocusOnPlay: _requestFocusOnPlay,
+        releaseFocusOnPause: _releaseFocusOnPause,
+        stopOnOtherSession: _stopOnOtherSession,
+        restartOnFocusGain: _restartOnFocusGain,
       ),
     );
   }
@@ -324,7 +344,10 @@ class AudioService {
   Future<List<Map<String, String>>> getAudioDevices() async {
     try {
       return player.state.audioDevices
-          .map((d) => {'name': d.name, 'description': d.description})
+          .map<Map<String, String>>((d) => {
+                'name': (d.name as String?) ?? '',
+                'description': (d.description as String?) ?? ''
+              })
           .toList();
     } catch (e) {
       return [];
@@ -349,70 +372,56 @@ class AudioService {
 
   // --- Playback Controls ---
 
-  Future<void> play(
-    String path, {
-    Map<String, dynamic>? metadata,
-    bool play = true,
-    List<double>? equalizerGains,
-    bool? equalizerEnabled,
-    String? customFilter,
-    InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume,
-    bool requestFocusOnPlay = true,
-    bool releaseFocusOnPause = true,
-    bool stopOnOtherSession = true,
-    bool restartOnFocusGain = true,
+  Future<void> updateMediaSessionMetadata({
+    required String title,
+    required String artist,
+    required String album,
+    String? artPath,
+    Duration? duration,
+    bool isFavorite = false,
   }) async {
-    if (equalizerGains != null) {
-      _lastEqualizerGains = equalizerGains;
-    }
-    if (equalizerEnabled != null) {
-      _equalizerEnabled = equalizerEnabled;
-    }
-    if (customFilter != null) {
-      _customFilterString = customFilter;
-    }
-
-    // Signal that we want EQ applied once FILE_LOADED fires.
-    // This replaces the post-open() immediate call that always raced
-    // against an empty playlist.
-    _pendingEqApply = _lastEqualizerGains != null;
-    _filtersInitialized = false; // Reset so deferred apply does a full rewrite
-
-    final artPath = metadata?['artPath']?.toString();
-    final policy = interruptionPolicy;
-
-    MediaSessionArtwork artwork = MediaSessionArtwork.embedded;
-    if (artPath != null) {
-      if (artPath.startsWith('http://') || artPath.startsWith('https://')) {
-        artwork = MediaSessionArtwork.uri(Uri.parse(artPath));
-      } else {
-        try {
-          final file = File(artPath);
-          if (await file.exists()) {
-            final bytes = await file.readAsBytes();
-            final ext = artPath.split('.').last.toLowerCase();
-            final mimeType = switch (ext) {
-              'png' => 'image/png',
-              'webp' => 'image/webp',
-              'gif' => 'image/gif',
-              'bmp' => 'image/bmp',
-              _ => 'image/jpeg',
-            };
-            artwork = MediaSessionArtwork.custom(
-              CoverArt(bytes: bytes, mimeType: mimeType),
-            );
+    final policy = _interruptionPolicy;
+    if (artPath != _lastArtPath) {
+      _lastArtPath = artPath;
+      if (artPath != null) {
+        if (artPath.startsWith('http://') || artPath.startsWith('https://')) {
+          _lastArtwork = MediaSessionArtwork.uri(Uri.parse(artPath));
+        } else {
+          try {
+            final file = File(artPath);
+            if (await file.exists()) {
+              final bytes = await file.readAsBytes();
+              final ext = artPath.split('.').last.toLowerCase();
+              final mimeType = switch (ext) {
+                'png' => 'image/png',
+                'webp' => 'image/webp',
+                'gif' => 'image/gif',
+                'bmp' => 'image/bmp',
+                _ => 'image/jpeg',
+              };
+              _lastArtwork = MediaSessionArtwork.custom(
+                CoverArt(bytes: bytes, mimeType: mimeType),
+              );
+            } else {
+              _lastArtwork = MediaSessionArtwork.embedded;
+            }
+          } catch (e) {
+            _lastArtwork = MediaSessionArtwork.embedded;
           }
-        } catch (e) {}
+        }
+      } else {
+        _lastArtwork = MediaSessionArtwork.embedded;
       }
     }
 
-    // Update local MediaSession options dynamically
-    player.setMediaSession(
+    await player.setMediaSession(
       MediaSession(
-        title: metadata?['title']?.toString(),
-        artist: metadata?['artist']?.toString(),
-        album: metadata?['album']?.toString(),
-        artwork: artwork,
+        title: title,
+        artist: artist,
+        album: album,
+        artwork: _lastArtwork,
+        duration: duration,
+        isFavorite: isFavorite,
         appName: 'Looper Player',
         desktopEntry: 'looper_player',
         autoApplyPlaylistNavigation: false,
@@ -428,19 +437,72 @@ class AudioService {
           MediaAction.setRepeatMode,
         },
         interruptionPolicy: policy,
-        requestFocusOnPlay: requestFocusOnPlay,
-        releaseFocusOnPause: releaseFocusOnPause,
-        stopOnOtherSession: stopOnOtherSession,
-        restartOnFocusGain: restartOnFocusGain,
+        requestFocusOnPlay: _requestFocusOnPlay,
+        releaseFocusOnPause: _releaseFocusOnPause,
+        stopOnOtherSession: _stopOnOtherSession,
+        restartOnFocusGain: _restartOnFocusGain,
       ),
+    );
+  }
+
+  Future<void> play(
+    String path, {
+    Map<String, dynamic>? metadata,
+    bool play = true,
+    List<double>? equalizerGains,
+    bool? equalizerEnabled,
+    String? customFilter,
+    InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume,
+    bool requestFocusOnPlay = true,
+    bool releaseFocusOnPause = true,
+    bool stopOnOtherSession = true,
+    bool restartOnFocusGain = true,
+  }) async {
+    LoggerHelper.write('AudioService: play() requested for path: $path, title: ${metadata?['title']}, play: $play');
+    if (equalizerGains != null) {
+      _lastEqualizerGains = equalizerGains;
+    }
+    if (equalizerEnabled != null) {
+      _equalizerEnabled = equalizerEnabled;
+    }
+    if (customFilter != null) {
+      _customFilterString = customFilter;
+    }
+
+    _interruptionPolicy = interruptionPolicy;
+    _requestFocusOnPlay = requestFocusOnPlay;
+    _releaseFocusOnPause = releaseFocusOnPause;
+    _stopOnOtherSession = stopOnOtherSession;
+    _restartOnFocusGain = restartOnFocusGain;
+
+    // Signal that we want EQ applied once FILE_LOADED fires.
+    // This replaces the post-open() immediate call that always raced
+    // against an empty playlist.
+    _pendingEqApply = _lastEqualizerGains != null;
+    _filtersInitialized = false; // Reset so deferred apply does a full rewrite
+
+    final artPath = metadata?['artPath']?.toString();
+    final String title = metadata?['title']?.toString() ?? 'Unknown Title';
+    final String artist = metadata?['artist']?.toString() ?? 'Unknown Artist';
+    final String album = metadata?['album']?.toString() ?? 'Unknown Album';
+    final Duration? duration = metadata?['duration'] != null
+        ? Duration(milliseconds: int.tryParse(metadata?['duration']?.toString() ?? '0') ?? 0)
+        : null;
+
+    await updateMediaSessionMetadata(
+      title: title,
+      artist: artist,
+      album: album,
+      artPath: artPath,
+      duration: duration,
     );
 
     final media = Media(
       path,
       extras: {
-        'title': metadata?['title']?.toString() ?? 'Unknown Title',
-        'artist': metadata?['artist']?.toString() ?? 'Unknown Artist',
-        'album': metadata?['album']?.toString() ?? 'Unknown Album',
+        'title': title,
+        'artist': artist,
+        'album': album,
         'artPath': artPath,
         'duration': metadata?['duration']?.toString(),
       },
@@ -453,18 +515,26 @@ class AudioService {
   }
 
   Future<void> pause() async {
+    LoggerHelper.write('AudioService: pause() requested');
     await player.pause();
   }
 
   Future<void> resume() async {
+    LoggerHelper.write('AudioService: resume() requested');
     await player.play();
+    final session = player.state.mediaSession;
+    if (session != null) {
+      await player.setMediaSession(session);
+    }
   }
 
   Future<void> seek(Duration duration) async {
+    LoggerHelper.write('AudioService: seek() requested to position: $duration');
     await player.seek(duration);
   }
 
   Future<void> stop() async {
+    LoggerHelper.write('AudioService: stop() requested');
     await player.stop();
   }
 

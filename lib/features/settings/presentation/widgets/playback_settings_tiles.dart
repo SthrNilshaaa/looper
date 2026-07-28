@@ -117,7 +117,7 @@ class VerticalMotionEffectTile extends ConsumerWidget {
         l10n.verticalMotionEffectPlayerDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.enableSlideGesture,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateEnableSlideGesture(value);
@@ -143,7 +143,7 @@ class StopServiceTile extends ConsumerWidget {
         l10n.stopServiceOnAppDismissalDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.stopOnTaskRemoved,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateStopOnTaskRemoved(value);
@@ -169,7 +169,7 @@ class InternetModeTile extends ConsumerWidget {
         l10n.enableNetworkLyricsArt,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.enableInternet,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateEnableInternet(value);
@@ -195,7 +195,7 @@ class DownloadMissingArtworkTile extends ConsumerWidget {
         l10n.downloadMissingArtworkDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.downloadArtwork,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateDownloadArtwork(value);

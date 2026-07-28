@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/core/app_fonts.dart';
 import '../../domain/lyric_models.dart';
 import '../lyrics_view.dart';
 import '../lyrics_search_provider.dart';
@@ -154,24 +156,24 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
         if (key?.currentContext != null) {
           Scrollable.ensureVisible(
             key!.currentContext!,
-            duration: const Duration(milliseconds: 600),
-            curve: Curves.fastOutSlowIn,
-            alignment: isSearch ? 0.5 : 0.2, // Center more for search matches
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOutCubic,
+            alignment: isSearch ? 0.5 : 0.15, // Center more for search matches
           );
         } else if (_scrollController.hasClients) {
           _scrollController
               .animateTo(
-                (index * 80.0),
-                duration: const Duration(milliseconds: 600),
+                ((index - 1) * 80.0).clamp(0.0, double.infinity),
+                duration: const Duration(milliseconds: 500),
                 curve: Curves.easeInOutCubic,
               )
               .then((_) {
                 if (mounted && _lineKeys[index]?.currentContext != null) {
                   Scrollable.ensureVisible(
                     _lineKeys[index]!.currentContext!,
-                    duration: const Duration(milliseconds: 600),
-                    curve: Curves.fastOutSlowIn,
-                    alignment: isSearch ? 0.5 : 0.2,
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOutCubic,
+                    alignment: isSearch ? 0.5 : 0.15,
                   );
                 }
               });
@@ -190,11 +192,11 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
               currentKey!.currentContext!,
               duration: const Duration(milliseconds: 1000),
               curve: Curves.easeOutCubic,
-              alignment: isSearch ? 0.5 : 0.2,
+              alignment: isSearch ? 0.5 : 0.15,
             );
           } else if (_scrollController.hasClients) {
             _scrollController.animateTo(
-              (index * 80.0),
+              ((index - 1) * 80.0).clamp(0.0, double.infinity),
               duration: const Duration(milliseconds: 1000),
               curve: Curves.easeOutCubic,
             );
@@ -241,7 +243,7 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
       child: ListView.builder(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
-        itemCount: widget.lines.length,
+        itemCount: widget.lines.length + 1,
         padding: EdgeInsets.only(
           top: 60.s,
           bottom: (Platform.isAndroid || Platform.isIOS) ? 120.s : 400.s,
@@ -249,6 +251,37 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
           right: 24.s,
         ),
         itemBuilder: (context, index) {
+          if (index == widget.lines.length) {
+            final source = ref.watch(lyricsProvider.select((s) => s.source));
+            if (source == null || source.isEmpty) return const SizedBox.shrink();
+
+            String displaySource = source.toUpperCase();
+            if (source == 'local') displaySource = 'Local File';
+            if (source == 'embedded') displaySource = 'Embedded Metadata';
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 24.0, bottom: 48.0),
+              child: Opacity(
+                opacity: 0.35,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(LucideIcons.scroll, size: 10.s, color: Colors.white),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Lyrics provided by $displaySource',
+                      style: AppFonts.jostStyle(
+                        fontSize: 10.ts,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
           final line = widget.lines[index];
           final isActive = index == _currentLineIndex;
 

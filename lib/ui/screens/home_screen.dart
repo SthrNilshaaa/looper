@@ -92,8 +92,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     // Ensure lyrics pre-fetching is active
     ref.watch(lyricsProvider);
 
-    final isSetupComplete = ref.watch(welcomeBypassedProvider) ||
-                            settings.libraryFolders.isNotEmpty;
+    final isSetupComplete = ref.watch(welcomeBypassedProvider);
     final bool showWelcome = !isSetupComplete && !library.isScanning;
     final bool isNarrow = MediaQuery.of(context).size.width < 800;
 
@@ -113,7 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       drawer: isNarrow
           ? Drawer(
               child: Container(
-                color: Theme.of(context).colorScheme.background,
+                color: Theme.of(context).colorScheme.surface,
                 child: Sidebar(l10n: l10n),
               ),
             )
@@ -193,7 +192,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     decoration: BoxDecoration(
                                       color: Theme.of(context)
                                           .colorScheme
-                                          .surfaceVariant
+                                          .surfaceContainerHighest
                                           .withValues(alpha: 0.01),
                                       border: Border(
                                         right: BorderSide(
@@ -371,6 +370,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case NavItem.favorites:
         return const FavoritesView(key: ValueKey('favorites'));
       case NavItem.recentlyPlayed:
+      case NavItem.history:
         return const RecentlyPlayedView(key: ValueKey('recentlyPlayed'));
       case NavItem.lyrics:
         return const LyricsView(key: ValueKey('lyrics'));

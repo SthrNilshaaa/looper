@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'dart:io';
 import 'package:flutter/material.dart' hide RepeatMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,8 +8,6 @@ import 'package:looper_player/core/navigation_provider.dart';
 import 'package:squiggly_slider/slider.dart';
 import '../../features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/core/app_fonts.dart';
 
 import 'package:looper_player/ui/screens/android/player/android_expanded_player.dart';

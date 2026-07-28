@@ -17,6 +17,23 @@ import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 
+class DashboardGenresData {
+  final List<String> sortedGenres;
+  final Map<String, List<Song>> genresMap;
+  DashboardGenresData({required this.sortedGenres, required this.genresMap});
+}
+
+final dashboardGenresDataProvider = Provider.autoDispose<DashboardGenresData>((ref) {
+  final songs = ref.watch(libraryProvider.select((l) => l.songs));
+  final genresMap = <String, List<Song>>{};
+  for (var song in songs) {
+    final genre = song.genre ?? 'Unknown';
+    genresMap.putIfAbsent(genre, () => []).add(song);
+  }
+  final genres = genresMap.keys.toList()..sort();
+  return DashboardGenresData(sortedGenres: genres, genresMap: genresMap);
+});
+
 class HomeDashboard extends ConsumerWidget {
   const HomeDashboard({super.key});
 
@@ -27,12 +44,9 @@ class HomeDashboard extends ConsumerWidget {
     final library = ref.watch(libraryProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    final genresMap = <String, List<Song>>{};
-    for (var song in library.songs) {
-      final genre = song.genre ?? l10n.unknown;
-      genresMap.putIfAbsent(genre, () => []).add(song);
-    }
-    final genres = genresMap.keys.toList()..sort();
+    final genresData = ref.watch(dashboardGenresDataProvider);
+    final genres = genresData.sortedGenres;
+    final genresMap = genresData.genresMap;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -426,7 +440,7 @@ class HomeDashboard extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
@@ -469,7 +483,7 @@ class HomeDashboard extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
@@ -590,7 +604,7 @@ class HomeDashboard extends ConsumerWidget {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 

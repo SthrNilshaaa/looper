@@ -27,6 +27,7 @@ class PremiumSection extends ConsumerWidget {
   final bool animate;
 
   final bool useCenter;
+  final bool forceTransparent;
 
   const PremiumSection({
     super.key,
@@ -51,6 +52,7 @@ class PremiumSection extends ConsumerWidget {
     this.keepSurfaceOnDisableBlur = false,
     this.animate = false,
     this.useCenter = true,
+    this.forceTransparent = false,
   });
 
   @override
@@ -76,34 +78,36 @@ class PremiumSection extends ConsumerWidget {
       width: 1.2,
     );
 
-    final decoration = BoxDecoration(
-      color: backgroundColor ?? (isBlurActive 
-          ? Colors.white.withValues(alpha: 0.05) 
-          : ((useBlur || forceBlur)
-              ? (isTransitioning 
-                  ? Colors.black.withValues(alpha: 0.12)
-                  : (disableBlur && !keepSurfaceOnDisableBlur 
-                      ? Colors.white.withValues(alpha: 0.05)
-                      : Theme.of(context).colorScheme.surfaceContainer))
-              : Theme.of(context).colorScheme.surfaceContainer)),
-      borderRadius: borderRadius,
-      border: Border(
-        top: borderSide,
-        bottom: borderSide,
-        left: showLeftBorder ? borderSide : BorderSide.none,
-        right: showRightBorder ? borderSide : BorderSide.none,
-      ),
-      boxShadow: showShadow
-          ? [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.4),
-                blurRadius: 15,
-                spreadRadius: 2,
-                offset: const Offset(0, 4),
-              ),
-            ]
-          : null,
-    );
+    final decoration = forceTransparent
+        ? const BoxDecoration(color: Colors.transparent)
+        : BoxDecoration(
+            color: backgroundColor ?? (isBlurActive 
+                ? Colors.white.withValues(alpha: 0.05) 
+                : ((useBlur || forceBlur)
+                    ? (isTransitioning 
+                        ? Colors.black.withValues(alpha: 0.12)
+                        : (disableBlur && !keepSurfaceOnDisableBlur 
+                            ? Colors.white.withValues(alpha: 0.05)
+                            : Theme.of(context).colorScheme.surfaceContainer))
+                    : Theme.of(context).colorScheme.surfaceContainer)),
+            borderRadius: borderRadius,
+            border: Border(
+              top: borderSide,
+              bottom: borderSide,
+              left: showLeftBorder ? borderSide : BorderSide.none,
+              right: showRightBorder ? borderSide : BorderSide.none,
+            ),
+            boxShadow: showShadow
+                ? [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.4),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                : null,
+          );
 
     Widget containerBody = animate
         ? AnimatedContainer(
@@ -123,7 +127,7 @@ class PremiumSection extends ConsumerWidget {
             child: useCenter ? Center(child: child) : child,
           );
 
-    final bool enableBlur = isBlurActive && !forceNoBlur;
+    final bool enableBlur = isBlurActive && !forceNoBlur && !forceTransparent;
 
     if (enableBlur) {
       containerBody = RepaintBoundary(
@@ -142,9 +146,8 @@ class PremiumSection extends ConsumerWidget {
 
     Widget content;
     if (onTap != null) {
-      content = GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
+      content = _PremiumBouncyTap(
+        onTap: onTap!,
         child: containerBody,
       );
     } else {
@@ -168,6 +171,59 @@ class PremiumSection extends ConsumerWidget {
       );
     }
     return content;
+  }
+}
+
+class _PremiumBouncyTap extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _PremiumBouncyTap({
+    required this.child,
+    required this.onTap,
+  });
+
+  @override
+  State<_PremiumBouncyTap> createState() => _PremiumBouncyTapState();
+}
+
+class _PremiumBouncyTapState extends State<_PremiumBouncyTap> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 90),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      behavior: HitTestBehavior.opaque,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: widget.child,
+      ),
+    );
   }
 }
 

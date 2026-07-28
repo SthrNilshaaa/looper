@@ -16,7 +16,7 @@ import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/app_fonts.dart';
 
-final collectionSortProvider = StateProvider.autoDispose<CollectionSortOption>((ref) => CollectionSortOption.defaultOrder);
+// Persistent collection sorting is stored in settings.collectionSortOptionIndex
 
 enum CollectionSortOption {
   defaultOrder,
@@ -67,7 +67,8 @@ class CollectionDetailView extends ConsumerWidget {
         ? (playlistSongsAsync.value ?? <Song>[])
         : songs;
 
-    final sortOption = ref.watch(collectionSortProvider);
+    final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.collectionSortOptionIndex));
+    final sortOption = CollectionSortOption.values[sortOptionIndex.clamp(0, CollectionSortOption.values.length - 1)];
     final sortedSongs = List<Song>.from(songsToRender);
     switch (sortOption) {
       case CollectionSortOption.defaultOrder:
@@ -302,6 +303,9 @@ class CollectionDetailView extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (context) {
         final l10n = AppLocalizations.of(context)!;
+        final bool isArtistCollection = (subtitle != null && (subtitle!.toLowerCase() == 'artist' || subtitle == l10n.artist)) ||
+            (songs.isNotEmpty && songs.every((s) => s.artist?.toLowerCase() == title.toLowerCase()));
+
         return AppBottomSheetContainer(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -315,14 +319,33 @@ class CollectionDetailView extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              _buildSortItem(context, ref, l10n.sortDefault, CollectionSortOption.defaultOrder),
-              _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, CollectionSortOption.titleAsc),
-              _buildSortItem(context, ref, l10n.sortAlphabeticalZA, CollectionSortOption.titleDesc),
-              _buildSortItem(context, ref, l10n.sortArtistAsc, CollectionSortOption.artistAsc),
-              _buildSortItem(context, ref, l10n.sortAlbumAsc, CollectionSortOption.albumAsc),
-              _buildSortItem(context, ref, l10n.sortDuration, CollectionSortOption.duration),
-              _buildSortItem(context, ref, l10n.sortYearNewest, CollectionSortOption.yearNewest),
-              _buildSortItem(context, ref, l10n.sortYearOldest, CollectionSortOption.yearOldest),
+              PremiumSection(
+                borderRadius: BorderRadius.circular(20),
+                padding: EdgeInsets.zero,
+                useExpanded: false,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _buildSortItem(context, ref, l10n.sortDefault, CollectionSortOption.defaultOrder),
+                    const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                    _buildSortItem(context, ref, l10n.sortAlphabeticalAZ, CollectionSortOption.titleAsc),
+                    const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                    _buildSortItem(context, ref, l10n.sortAlphabeticalZA, CollectionSortOption.titleDesc),
+                    if (!isArtistCollection) ...[
+                      const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                      _buildSortItem(context, ref, l10n.sortArtistAsc, CollectionSortOption.artistAsc),
+                    ],
+                    const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                    _buildSortItem(context, ref, l10n.sortAlbumAsc, CollectionSortOption.albumAsc),
+                    const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                    _buildSortItem(context, ref, l10n.sortDuration, CollectionSortOption.duration),
+                    const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                    _buildSortItem(context, ref, l10n.sortYearNewest, CollectionSortOption.yearNewest),
+                    const Divider(color: Colors.white10, height: 1, indent: 20, endIndent: 20),
+                    _buildSortItem(context, ref, l10n.sortYearOldest, CollectionSortOption.yearOldest),
+                  ],
+                ),
+              ),
             ],
           ),
         );
@@ -336,18 +359,19 @@ class CollectionDetailView extends ConsumerWidget {
     String label,
     CollectionSortOption value,
   ) {
-    final current = ref.watch(collectionSortProvider);
-    final isSelected = current == value;
-    final accentColor = Color(ref.read(settingsProvider).accentColor);
+    final settings = ref.watch(settingsProvider);
+    final isSelected = settings.collectionSortOptionIndex == value.index;
+    final accentColor = Color(settings.accentColor);
 
     return InkWell(
       onTap: () {
         HapticFeedback.lightImpact();
-        ref.read(collectionSortProvider.notifier).state = value;
+        ref.read(settingsProvider.notifier).updateCollectionSortOptionIndex(value.index);
         Navigator.pop(context);
       },
+      borderRadius: BorderRadius.circular(20),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [

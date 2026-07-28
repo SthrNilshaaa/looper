@@ -459,6 +459,20 @@ class AppLocalizationsIt extends AppLocalizations {
       'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
 
   @override
+  String get pauseOnDuckTitle => 'Pause on Duck';
+
+  @override
+  String get pauseOnDuckDesc =>
+      'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).';
+
+  @override
+  String get resumeOnBluetoothConnectTitle => 'Resume on Bluetooth Connect';
+
+  @override
+  String get resumeOnBluetoothConnectDesc =>
+      'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.';
+
+  @override
   String get manualCrossfadeDuration => 'Durata dissolvenza incrociata manuale';
 
   @override

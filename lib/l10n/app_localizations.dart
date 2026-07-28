@@ -938,6 +938,30 @@ abstract class AppLocalizations {
   /// **'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.'**
   String get audioFocusRestartOnGainDesc;
 
+  /// No description provided for @pauseOnDuckTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause on Duck'**
+  String get pauseOnDuckTitle;
+
+  /// No description provided for @pauseOnDuckDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).'**
+  String get pauseOnDuckDesc;
+
+  /// No description provided for @resumeOnBluetoothConnectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume on Bluetooth Connect'**
+  String get resumeOnBluetoothConnectTitle;
+
+  /// No description provided for @resumeOnBluetoothConnectDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.'**
+  String get resumeOnBluetoothConnectDesc;
+
   /// No description provided for @manualCrossfadeDuration.
   ///
   /// In en, this message translates to:

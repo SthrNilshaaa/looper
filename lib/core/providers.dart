@@ -26,3 +26,5 @@ final searchFocusNodeProvider = Provider<FocusNode>((ref) {
 });
 
 final overlayModeProvider = StateProvider<bool>((ref) => false);
+
+final forceWelcomeProvider = StateProvider<bool>((ref) => false);

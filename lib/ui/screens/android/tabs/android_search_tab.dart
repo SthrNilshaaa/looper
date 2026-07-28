@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:looper_player/features/search/presentation/search_view.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/widgets/global_search_bar.dart';
-import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_fonts.dart';
 
 class AndroidSearchTab extends StatelessWidget {
@@ -27,7 +26,7 @@ class AndroidSearchTab extends StatelessWidget {
             ),
           ),
           const Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
             child: GlobalSearchBar(autofocus: true),
           ),
            Expanded(

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:isar/isar.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
@@ -156,33 +155,37 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
   void onSongChanged(Song? song) {
     _flushPendingSaveSync();
     final settings = ref.read(settingsProvider);
-    state = state.copyWith(
-      currentSongGains: _ensureLength(settings.globalEqualizerGains, 48),
-      globalGains: _ensureLength(settings.globalEqualizerGains, 48),
-      currentSongHasCustom: false,
-    );
-    // Comment out song specific settings loading
-    /*
-    if (song == null) {
+    final isGlobal = settings.equalizerGlobalMode;
+
+    if (isGlobal) {
       state = state.copyWith(
-        currentSongGains: List<double>.from(state.globalGains),
+        currentSongGains: _ensureLength(settings.globalEqualizerGains, 48),
+        globalGains: _ensureLength(settings.globalEqualizerGains, 48),
         currentSongHasCustom: false,
       );
-      return;
+      _pendingSaveSong = null;
+    } else {
+      if (song == null) {
+        state = state.copyWith(
+          currentSongGains: _getDefaultGains(),
+          currentSongHasCustom: false,
+        );
+        _pendingSaveSong = null;
+        return;
+      }
+
+      final hasCustom = song.hasCustomEqualizer;
+      final songGains = (hasCustom && song.equalizerGains != null)
+          ? _ensureLength(song.equalizerGains!, 48)
+          : _getDefaultGains();
+
+      state = state.copyWith(
+        currentSongGains: songGains,
+        globalGains: _ensureLength(settings.globalEqualizerGains, 48),
+        currentSongHasCustom: hasCustom,
+      );
+      _pendingSaveSong = song;
     }
-
-    final hasCustom = song.hasCustomEqualizer;
-    final songGains = (hasCustom && song.equalizerGains != null)
-        ? _ensureLength(song.equalizerGains!, 48)
-        : _ensureLength(settings.globalEqualizerGains, 48);
-
-    state = state.copyWith(
-      currentSongGains: songGains,
-      globalGains: _ensureLength(settings.globalEqualizerGains, 48),
-      currentSongHasCustom: hasCustom,
-    );
-    _pendingSaveSong = song;
-    */
   }
 
   List<double> _getDefaultGains() {
@@ -305,29 +308,43 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       return val;
     }
 
-    final newGlobalGains = List<double>.from(state.globalGains);
+    final settings = ref.read(settingsProvider);
+    final isGlobal = settings.equalizerGlobalMode;
+
+    final newGains = List<double>.from(state.currentSongGains);
     bandValues.forEach((bandIndex, val) {
-      newGlobalGains[bandIndex] = clampBand(bandIndex, val);
+      newGains[bandIndex] = clampBand(bandIndex, val);
     });
 
-    state = state.copyWith(
-      currentSongGains: newGlobalGains,
-      globalGains: newGlobalGains,
-      currentSongHasCustom: false,
-    );
+    if (isGlobal) {
+      state = state.copyWith(
+        currentSongGains: newGains,
+        globalGains: newGains,
+        currentSongHasCustom: false,
+      );
+    } else {
+      state = state.copyWith(
+        currentSongGains: newGains,
+        currentSongHasCustom: true,
+      );
+    }
 
     if (applyInstant) {
       applyEqualizerInstant();
     } else {
       final audioSvc = ref.read(audioServiceProvider);
       audioSvc.setEqualizerGains(
-        newGlobalGains,
+        newGains,
         state.enabled,
         customFilter: state.customFilterString,
       );
     }
 
-    _persistGainsDebounced(songGains: null, globalGains: newGlobalGains);
+    if (isGlobal) {
+      _persistGainsDebounced(songGains: null, globalGains: newGains);
+    } else {
+      _persistGainsDebounced(songGains: newGains, globalGains: null);
+    }
   }
 
   // Support for new 45-gain layout setters with auto-restore on disable
@@ -497,14 +514,10 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
 
     applyShelving(newSongGains);
 
-    if (currentSong != null) {
-      state = state.copyWith(
-        currentSongGains: newSongGains,
-        currentSongHasCustom: true,
-      );
-      applyEqualizerInstant();
-      _persistGainsDebounced(songGains: newSongGains, globalGains: null);
-    } else {
+    final settings = ref.read(settingsProvider);
+    final isGlobal = settings.equalizerGlobalMode;
+
+    if (isGlobal) {
       final newGlobalGains = List<double>.from(newSongGains);
       state = state.copyWith(
         currentSongGains: newSongGains,
@@ -513,6 +526,13 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       );
       applyEqualizerInstant();
       _persistGainsDebounced(songGains: null, globalGains: newGlobalGains);
+    } else {
+      state = state.copyWith(
+        currentSongGains: newSongGains,
+        currentSongHasCustom: true,
+      );
+      applyEqualizerInstant();
+      _persistGainsDebounced(songGains: newSongGains, globalGains: null);
     }
   }
 
@@ -556,15 +576,25 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       clampedGain = gain.clamp(3000.0, 6000.0);
     }
 
-    // Update active gains in memory immediately (always global)
-    final newGlobalGains = List<double>.from(state.globalGains);
-    newGlobalGains[bandIndex] = clampedGain;
+    final settings = ref.read(settingsProvider);
+    final isGlobal = settings.equalizerGlobalMode;
 
-    state = state.copyWith(
-      currentSongGains: newGlobalGains,
-      globalGains: newGlobalGains,
-      currentSongHasCustom: false,
-    );
+    // Update active gains in memory immediately
+    final newGains = List<double>.from(state.currentSongGains);
+    newGains[bandIndex] = clampedGain;
+
+    if (isGlobal) {
+      state = state.copyWith(
+        currentSongGains: newGains,
+        globalGains: newGains,
+        currentSongHasCustom: false,
+      );
+    } else {
+      state = state.copyWith(
+        currentSongGains: newGains,
+        currentSongHasCustom: true,
+      );
+    }
 
     if (applyInstant) {
       applyEqualizerInstant();
@@ -576,13 +606,13 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         audioSvc.setLivePreamp(clampedGain);
       } else if (bandIndex == 19 || bandIndex == 20) {
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
       } else if (bandIndex == 21) {
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
@@ -590,7 +620,7 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         audioSvc.setLiveCrossfeed(clampedGain);
       } else if (bandIndex == 23) {
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
@@ -604,13 +634,13 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         audioSvc.setLiveCompressor(release: clampedGain);
       } else if (bandIndex == 28 || bandIndex == 29) {
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
       } else if (bandIndex == 30) {
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
@@ -627,14 +657,14 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
       } else if (bandIndex == 36 || bandIndex == 37) {
         final mode = bandIndex == 36
             ? clampedGain.toInt()
-            : (newGlobalGains.length > 36 ? newGlobalGains[36].toInt() : 0);
+            : (newGains.length > 36 ? newGains[36].toInt() : 0);
         final preamp = bandIndex == 37
             ? clampedGain
-            : (newGlobalGains.length > 37 ? newGlobalGains[37] : 0.0);
+            : (newGains.length > 37 ? newGains[37] : 0.0);
         audioSvc.configureReplayGain(mode: mode, preamp: preamp);
       } else if (bandIndex == 38) {
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
@@ -644,20 +674,24 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
         audioSvc.setLiveLowpass(clampedGain);
       } else if (bandIndex >= 41 && bandIndex <= 45) {
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
       } else {
         audioSvc.setEqualizerGains(
-          newGlobalGains,
+          newGains,
           state.enabled,
           customFilter: state.customFilterString,
         );
       }
     }
 
-    _persistGainsDebounced(songGains: null, globalGains: newGlobalGains);
+    if (isGlobal) {
+      _persistGainsDebounced(songGains: null, globalGains: newGains);
+    } else {
+      _persistGainsDebounced(songGains: newGains, globalGains: null);
+    }
   }
 
   Future<void> resetCurrentSongToDefault() async {
@@ -747,8 +781,6 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
           .updateGlobalEqualizerGains(globalGains);
     }
 
-    // Comment out song specific equalizer database saving
-    /*
     if (saveSong != null && songGains != null) {
       final currentSong = ref.read(playbackProvider).currentSong;
       if (currentSong?.id == saveSong.id) {
@@ -773,7 +805,6 @@ class EqualizerNotifier extends StateNotifier<EqualizerState> {
           })
           .catchError((e) {});
     }
-    */
   }
 
   void _persistGainsDebounced({

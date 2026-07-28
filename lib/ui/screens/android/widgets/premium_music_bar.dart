@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/ui/screens/android/player/android_expanded_player.dart';
@@ -9,10 +8,13 @@ import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/core/app_fonts.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
+import 'package:looper_player/core/player_expand_provider.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'dart:ui';
 
 import 'premium_section.dart';
+import 'package:looper_player/core/ui_calculations.dart';
 
 // Keeping the provider for future use but it won't be used by navbar now
 final navbarBounceProvider = StateProvider<Offset>((ref) => Offset.zero);
@@ -28,14 +30,17 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
   late AnimationController _dragController;
   Offset _dragOffset = Offset.zero;
   bool _isDragging = false;
+  bool _isPushing = false;
 
   @override
   void initState() {
     super.initState();
     _dragController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
+      duration: const Duration(milliseconds: 380),
+    )..addListener(() {
+        ref.read(playerExpandProgressProvider.notifier).state = _dragController.value;
+      });
   }
 
   @override
@@ -48,65 +53,222 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
     HapticFeedback.lightImpact();
   }
 
+  void _pushExpandedPlayer(BuildContext context, dynamic settings) async {
+    if (settings.enableSlideGesture) {
+      _dragController.forward();
+    } else {
+      if (_isPushing) return;
+      _isPushing = true;
+      _triggerHaptic();
+      await Navigator.of(context).push(
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const AndroidExpandedPlayer(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+        ),
+      );
+      _isPushing = false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final song = ref.watch(playbackProvider.select((s) => s.currentSong));
     final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
     final settings = ref.watch(settingsProvider);
     final useBlur = settings.enableDynamicTheming;
+    final expandProgress = settings.enableSlideGesture
+        ? ref.watch(playerExpandProgressProvider)
+        : 0.0;
+
+    ref.listen<double>(playerExpandProgressProvider, (prev, next) {
+      if (next == 0.0) {
+        ref.read(playerArtworkTopProvider.notifier).state = null;
+      }
+      if (settings.enableSlideGesture) {
+        if (next == 0.0 && _dragController.value > 0.0 && !_isDragging) {
+          _dragController.animateTo(0.0, curve: Curves.easeOutCubic);
+        } else if (next == 1.0 && _dragController.value < 1.0 && !_isDragging) {
+          _dragController.animateTo(1.0, curve: Curves.easeOutCubic);
+        }
+      }
+    });
+
+    ref.listen<int>(playerCollapseTriggerProvider, (prev, next) {
+      if (settings.enableSlideGesture && _dragController.value > 0.0) {
+        _dragController.animateTo(0.0, curve: Curves.easeOutCubic);
+      }
+    });
 
     if (song == null) return const SizedBox.shrink();
 
+    if (!settings.enableSlideGesture) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: GestureDetector(
+          onPanStart: (details) {
+            setState(() {
+              _isDragging = true;
+            });
+          },
+          onPanUpdate: (details) {
+            setState(() {
+              _dragOffset += details.delta;
+            });
+          },
+          onPanEnd: (details) {
+            _isDragging = false;
+             final action = UiCalculations.getMiniPlayerAction(_dragOffset);
+             switch (action) {
+               case MiniPlayerGestureAction.clearQueue:
+                 HapticFeedback.heavyImpact();
+                 ref.read(playbackProvider.notifier).clearQueue();
+                 break;
+               case MiniPlayerGestureAction.expand:
+                 _pushExpandedPlayer(context, settings);
+                 break;
+               case MiniPlayerGestureAction.skipPrevious:
+                 _triggerHaptic();
+                 ref.read(playbackProvider.notifier).skipPrevious();
+                 break;
+               case MiniPlayerGestureAction.skipNext:
+                 _triggerHaptic();
+                 ref.read(playbackProvider.notifier).skipNext();
+                 break;
+               case MiniPlayerGestureAction.none:
+                 break;
+             }
+
+            setState(() {
+              _dragOffset = Offset.zero;
+            });
+          },
+          onTapUp: (details) {
+            if (_isDragging) return;
+            
+            final RenderBox box = context.findRenderObject() as RenderBox;
+            final localX = details.localPosition.dx;
+            final width = box.size.width;
+
+            if (localX > width * 0.75) {
+              HapticFeedback.lightImpact();
+              ref.read(playbackProvider.notifier).togglePlay();
+            } else {
+              _pushExpandedPlayer(context, settings);
+            }
+          },
+          child: TweenAnimationBuilder<Offset>(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            tween: Tween(begin: Offset.zero, end: _dragOffset),
+            builder: (context, offset, child) {
+              final matrix = UiCalculations.getMiniPlayerTiltMatrix(offset);
+              
+              return Transform(
+                transform: matrix,
+                alignment: Alignment.center,
+                child: child,
+              );
+            },
+            child: SizedBox(
+              height: 72,
+              child: _buildMiniPlayerContent(song, isPlaying, useBlur, null, 3.0, settings),
+            ),
+          ),
+        ),
+      );
+    }
+
+    final Color? cardBgColor = settings.enableSlideGesture ? Colors.transparent : null;
+    final double cardBlurAmount = settings.enableSlideGesture ? 0.0 : 3.0;
+
+    final bool disableBlur = settings.disableBlur;
+    final bool isBlurActive = useBlur && !disableBlur;
+    final Color minimizedBgColor = isBlurActive
+        ? Colors.white.withValues(alpha: 0.05)
+        : Theme.of(context).colorScheme.surfaceContainer;
+    final Color currentBorderColor = Colors.white.withValues(alpha: 0.05 * (1.0 - expandProgress));
+
+    Widget buildHero({required String tag, required Widget child}) {
+      if (settings.enableSlideGesture) return child;
+      return Hero(tag: tag, child: child);
+    }
+
+    final double marginHorizontal = UiCalculations.getMiniPlayerMargin(expandProgress, settings.enableSlideGesture);
+    final double borderRadiusVal = UiCalculations.getMiniPlayerBorderRadius(settings.enableSlideGesture);
+    final double topPadding = MediaQuery.of(context).padding.top;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: settings.enableSlideGesture ? 0.0 : 16.0),
       child: GestureDetector(
         onPanStart: (details) {
-          setState(() {
+          if (settings.enableSlideGesture) {
             _isDragging = true;
-          });
+            _dragController.value = expandProgress;
+          } else {
+            setState(() {
+              _isDragging = true;
+            });
+          }
         },
         onPanUpdate: (details) {
-          setState(() {
-            _dragOffset += details.delta;
-          });
+          if (settings.enableSlideGesture) {
+            _dragController.value -= details.delta.dy / (screenHeight > 0 ? screenHeight : 1.0);
+          } else {
+            setState(() {
+              _dragOffset += details.delta;
+            });
+          }
         },
         onPanEnd: (details) {
-          final dx = _dragOffset.dx;
-          final dy = _dragOffset.dy;
+          _isDragging = false;
+          if (settings.enableSlideGesture) {
+            if (_dragController.value > 0.01) {
+              final velocity = details.velocity.pixelsPerSecond.dy;
+              if (velocity < -200) {
+                _dragController.fling(velocity: 1.0);
+              } else if (velocity > 200) {
+                _dragController.fling(velocity: -1.0);
+              } else if (_dragController.value > 0.4) {
+                _dragController.forward();
+              } else {
+                _dragController.reverse();
+              }
+              return;
+            }
+          }
 
-          // Prioritize the direction with the largest displacement
-          if (dy > 70 && dy.abs() > dx.abs()) {
-            // Swipe down to clear/close
-            HapticFeedback.heavyImpact();
-            ref.read(playbackProvider.notifier).clearQueue();
-          } else if (dy < -70 && dy.abs() > dx.abs()) {
-            // Swipe up to expand
-            _triggerHaptic();
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const AndroidExpandedPlayer(),
-                transitionDuration: const Duration(milliseconds: 400),
-                reverseTransitionDuration: const Duration(milliseconds: 400),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-              ),
-            );
-          } else if (dx.abs() > dy.abs()) {
-            // Horizontal swipe for next/prev
-            if (dx > 70) {
+          final action = UiCalculations.getMiniPlayerAction(_dragOffset);
+          switch (action) {
+            case MiniPlayerGestureAction.clearQueue:
+              HapticFeedback.heavyImpact();
+              ref.read(playbackProvider.notifier).clearQueue();
+              break;
+            case MiniPlayerGestureAction.expand:
+              if (!settings.enableSlideGesture) {
+                _pushExpandedPlayer(context, settings);
+              }
+              break;
+            case MiniPlayerGestureAction.skipPrevious:
               _triggerHaptic();
               ref.read(playbackProvider.notifier).skipPrevious();
-            } else if (dx < -70) {
+              break;
+            case MiniPlayerGestureAction.skipNext:
               _triggerHaptic();
               ref.read(playbackProvider.notifier).skipNext();
-            }
+              break;
+            case MiniPlayerGestureAction.none:
+              break;
           }
 
           setState(() {
             _dragOffset = Offset.zero;
-            _isDragging = false;
           });
         },
         onTapUp: (details) {
@@ -116,24 +278,11 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
           final localX = details.localPosition.dx;
           final width = box.size.width;
 
-          // If tapped on the right 20% of the bar (where play button is), toggle play
           if (localX > width * 0.75) {
             HapticFeedback.lightImpact();
             ref.read(playbackProvider.notifier).togglePlay();
           } else {
-            // Otherwise open expanded player
-            HapticFeedback.lightImpact();
-            Navigator.of(context).push(
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const AndroidExpandedPlayer(),
-                transitionDuration: const Duration(milliseconds: 400),
-                reverseTransitionDuration: const Duration(milliseconds: 400),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-              ),
-            );
+            _pushExpandedPlayer(context, settings);
           }
         },
         child: TweenAnimationBuilder<Offset>(
@@ -145,7 +294,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
             final double tiltY = (offset.dy / 100).clamp(-0.1, 0.1);
             
             final matrix = Matrix4.identity();
-            if (tiltX != 0 || tiltY != 0) {
+            if ((tiltX != 0 || tiltY != 0) && !settings.enableSlideGesture) {
               matrix.setEntry(3, 2, 0.001); // perspective
               matrix.rotateX(-tiltY);
               matrix.rotateY(tiltX);
@@ -158,157 +307,347 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
               child: child,
             );
           },
-          child: 
-         // Hero(
-            //tag: 'music_bar_container',
-           // child:
-             SizedBox(
-              height: 72,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Container(
+            margin: EdgeInsets.symmetric(horizontal: marginHorizontal),
+            decoration: BoxDecoration(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(borderRadiusVal),
+              border: expandProgress < 0.99
+                  ? Border.all(
+                      color: currentBorderColor,
+                      width: 1.2 * (1.0 - expandProgress),
+                    )
+                  : null,
+              boxShadow: expandProgress < 0.95
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      )
+                    ]
+                  : null,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(borderRadiusVal),
+              child: Stack(
                 children: [
-                  // Left Section: Song Info
-                  PremiumSection(
-                    flex: 8,
-                    useBlur: useBlur,
-                    keepSurfaceOnDisableBlur: true,
-                    //forceBlur true,
-                    useExpanded: true,
-                    onTap: null, // Handled by parent GestureDetector
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(36),
-                      bottomLeft: Radius.circular(36),
-                      topRight: Radius.circular(12),
-                      bottomRight: Radius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: SizedBox(
-                            width: 50,
-                            height: 50,
-                            child: Hero(
-                              tag: 'album_art',
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(32),
-                                child: Stack(
-                                  fit: StackFit.expand,
-                                  children: [
-                                    OptimizedImage(
-                                      imagePath: song.artPath != null && !song.artPath!.startsWith('http') ? song.artPath : null,
-                                      imageUrl: song.artPath != null && song.artPath!.startsWith('http') ? song.artPath : null,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    Positioned.fill(
-                                      child: AnimatedOpacity(
-                                        duration: const Duration(milliseconds: 300),
-                                        opacity: isPlaying ? 1.0 : 0.0,
-                                        child: Container(
-                                          color: Colors.black.withValues(alpha: 0.4),
-                                          child: Center(
-                                            child: Image.asset(
-                                              'assets/android_icons/Playing.gif',
-                                              width: 24,
-                                              height: 24,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
+                  // 1. Dynamic background stack (cross-fading minimized translucent/blur and expanded player backgrounds)
+                  if (settings.enableSlideGesture) ...[
+                    // Minimized background (translucent surface container / white glass + backdrop filter blur behind it)
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: (1.0 - expandProgress).clamp(0.0, 1.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(borderRadiusVal),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(
+                              sigmaX: isBlurActive ? 3.0 : 0.0,
+                              sigmaY: isBlurActive ? 3.0 : 0.0,
+                            ),
+                            child: Container(
+                              color: minimizedBgColor,
                             ),
                           ),
                         ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Hero(
-                                tag: 'song_title',
-                                child: ScrollingText(
-                                  text: song.title,
-                                  style: AppFonts.jostStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 18.ts,
-                                    letterSpacing: 0.3,
+                      ),
+                    ),
+
+                    // Expanded background (blurred album art or radial gradient or solid surface)
+                    Positioned.fill(
+                      child: Opacity(
+                        opacity: expandProgress,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(borderRadiusVal),
+                          child: () {
+                            if (useBlur && song.artPath != null) {
+                              return Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  BlurredBackgroundArt(song: song),
+                                  Container(
+                                    color: Colors.black.withValues(
+                                      alpha: settings.musicDarkness.isNaN ? 0.62 : settings.musicDarkness,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            } else if (settings.enablePlayerGradient) {
+                              return Container(
+                                decoration: BoxDecoration(
+                                  gradient: RadialGradient(
+                                    center: Alignment.topRight,
+                                    radius: 1.5,
+                                    colors: [
+                                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
+                                      Theme.of(context).colorScheme.surface,
+                                    ],
+                                    stops: const [0.0, 1.0],
                                   ),
                                 ),
+                              );
+                            } else {
+                              return Container(
+                                color: Theme.of(context).colorScheme.surface,
+                              );
+                            }
+                          }(),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  // 2. Mini player layout (visible when minimized)
+                  if (expandProgress < 0.99)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 72,
+                      child: Opacity(
+                        opacity: (1.0 - expandProgress * 3.0).clamp(0.0, 1.0),
+                        child: _buildMiniPlayerContent(song, isPlaying, useBlur, cardBgColor, cardBlurAmount, settings),
+                      ),
+                    ),
+
+                  // 3. Expanded player layout (visible when expanded)
+                  if (expandProgress > 0.01)
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: screenHeight,
+                      child: Opacity(
+                        opacity: ((expandProgress - 0.25) / 0.75).clamp(0.0, 1.0),
+                        child: const AndroidExpandedPlayer(),
+                      ),
+                    ),
+
+                  // 4. Morphing Album Art image (flying/scaling between layouts)
+                  if (settings.enableSlideGesture && song.artPath != null) ...[
+                    () {
+                      final double dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
+                      final double expandedArtSize = screenWidth - 60.0;
+                      final measuredArtTop = ref.watch(playerArtworkTopProvider);
+                      final double expandedArtTop = measuredArtTop ?? (topPadding + 56.0 + 
+                          ((screenHeight - topPadding - 56.0 - 380.0) - expandedArtSize).clamp(0.0, double.infinity) / 2);
+
+                      final double artSize = 50.0 + (expandedArtSize - 50.0) * expandProgress;
+                      final double artLeft = 12.0 + (30.0 - 12.0) * expandProgress;
+                      final double artTop = 11.0 + (expandedArtTop - 11.0) * expandProgress;
+                      final double artRadius = 32.0 * (1.0 - expandProgress) + 24.0 * expandProgress;
+
+                      return Positioned(
+                        left: artLeft,
+                        top: artTop,
+                        width: artSize,
+                        height: artSize,
+                        child: IgnorePointer(
+                          ignoring: expandProgress > 0.99,
+                          child: Opacity(
+                            opacity: expandProgress > 0.99 ? 0.0 : 1.0,
+                            child: ClipRRect(
+                          borderRadius: BorderRadius.circular(artRadius),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              OptimizedImage(
+                                imagePath: !song.artPath!.startsWith('http') ? song.artPath : null,
+                                imageUrl: song.artPath!.startsWith('http') ? song.artPath : null,
+                                fit: BoxFit.cover,
+                                cacheWidth: (screenWidth * dpr).toInt(),
                               ),
-                              //const SizedBox(height: 4,),
-                              Hero(
-                                tag: 'song_artist',
-                                child: ScrollingText(
-                                  text: song.artist ?? 'Unknown Artist',
-                                  style: AppFonts.jostStyle(
-                                    color: Colors.white.withValues(alpha: 0.5),
-                                    fontSize: 16.ts,
-                                    letterSpacing: 0.2,
+                              Positioned.fill(
+                                child: AnimatedOpacity(
+                                  duration: const Duration(milliseconds: 300),
+                                  opacity: isPlaying ? (1.0 - expandProgress).clamp(0.0, 1.0) : 0.0,
+                                  child: Container(
+                                    color: Colors.black.withValues(alpha: 0.4),
+                                    child: Center(
+                                      child: Image.asset(
+                                        'assets/android_icons/Playing.gif',
+                                        width: 24,
+                                        height: 24,
+                                        color: Colors.white,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  // Right Section: Play/Pause Button
-                  PremiumSection(
-                    flex: 2, 
-                    useBlur: useBlur,
-                    keepSurfaceOnDisableBlur: true,
-
-                    heroTag: 'player_play_pause_btn',
-                    //forceBlur true,
-                    useExpanded: true,
-                    onTap: null, // Handled by parent GestureDetector
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      bottomLeft: Radius.circular(12),
-                      topRight: Radius.circular(36),
-                      bottomRight: Radius.circular(36),
-                    ),
-                    child: Center(
-                      child: 
-                      //Hero(
-                     //  tag: 'play_pause_icon',
-                       // child:
-                         Padding(
-                          padding: const EdgeInsets.only(right: 2.0),
-                          child: AnimatedScale(
-                            scale:  1.0,
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeOutBack,
-                            child: TweenAnimationBuilder<double>(
-                              tween: Tween<double>(end: isPlaying ? 1.0 : 0.0),
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOutCubic,
-                              builder: (context, value, child) {
-                                return AnimatedIcon(
-                                  icon: AnimatedIcons.play_pause,
-                                  progress: AlwaysStoppedAnimation(value),
-                                  color: Colors.white,
-                                  size: AppIcons.expandedPlayerPlayPauseIcon.s,
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                     // ),  
-                    ),
-                  ),
+                       ),
+                      ),
+                      );
+                    }(),
+                  ],
                 ],
               ),
             ),
-         // ),
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMiniPlayerContent(
+    Song song,
+    bool isPlaying,
+    bool useBlur,
+    Color? cardBgColor,
+    double cardBlurAmount,
+    dynamic settings,
+  ) {
+    Widget buildHero({required String tag, required Widget child}) {
+      if (settings.enableSlideGesture) return child;
+      return Hero(tag: tag, child: child);
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        vertical: settings.enableSlideGesture ? 1.2 : 0.0,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Left Section: Song Info
+          PremiumSection(
+            flex: 8,
+            useBlur: useBlur,
+            forceTransparent: settings.enableSlideGesture,
+            keepSurfaceOnDisableBlur: true,
+            backgroundColor: cardBgColor,
+            blurAmount: cardBlurAmount,
+            useExpanded: true,
+            onTap: null, // Handled by parent GestureDetector
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(36),
+              bottomLeft: Radius.circular(36),
+              topRight: Radius.circular(12),
+              bottomRight: Radius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: !settings.enableSlideGesture
+                        ? Hero(
+                            tag: 'album_art',
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(32),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  OptimizedImage(
+                                    imagePath: song.artPath != null && !song.artPath!.startsWith('http') ? song.artPath : null,
+                                    imageUrl: song.artPath != null && song.artPath!.startsWith('http') ? song.artPath : null,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  Positioned.fill(
+                                    child: AnimatedOpacity(
+                                      duration: const Duration(milliseconds: 300),
+                                      opacity: isPlaying ? 1.0 : 0.0,
+                                      child: Container(
+                                        color: Colors.black.withValues(alpha: 0.4),
+                                        child: Center(
+                                          child: Image.asset(
+                                            'assets/android_icons/Playing.gif',
+                                            width: 24,
+                                            height: 24,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : const SizedBox(),
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      buildHero(
+                        tag: 'song_title',
+                        child: ScrollingText(
+                          text: song.title,
+                          style: AppFonts.jostStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18.ts,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                      buildHero(
+                        tag: 'song_artist',
+                        child: ScrollingText(
+                          text: song.artist ?? 'Unknown Artist',
+                          style: AppFonts.jostStyle(
+                            color: Colors.white.withValues(alpha: 0.5),
+                            fontSize: 16.ts,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 6),
+          // Right Section: Play/Pause Button
+          PremiumSection(
+            flex: 2, 
+            useBlur: useBlur,
+            forceTransparent: settings.enableSlideGesture,
+            keepSurfaceOnDisableBlur: true,
+            backgroundColor: cardBgColor,
+            blurAmount: cardBlurAmount,
+            heroTag: settings.enableSlideGesture ? null : 'player_play_pause_btn',
+            useExpanded: true,
+            onTap: null, // Handled by parent GestureDetector
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              bottomLeft: Radius.circular(12),
+              topRight: Radius.circular(36),
+              bottomRight: Radius.circular(36),
+            ),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 2.0),
+                child: AnimatedScale(
+                  scale:  1.0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutBack,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween<double>(end: isPlaying ? 1.0 : 0.0),
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOutCubic,
+                    builder: (context, value, child) {
+                      return AnimatedIcon(
+                        icon: AnimatedIcons.play_pause,
+                        progress: AlwaysStoppedAnimation(value),
+                        color: Colors.white,
+                        size: AppIcons.expandedPlayerPlayPauseIcon.s,
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

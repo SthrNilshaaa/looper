@@ -3,8 +3,6 @@ import 'package:ffmpeg_kit_flutter_new_full/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_new_full/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_new_full/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_new_full/level.dart';
-import 'package:ffmpeg_kit_flutter_new_full/return_code.dart';
-import 'package:flutter/foundation.dart';
 
 class AudioAnalysis {
   final String codec;
@@ -147,8 +145,6 @@ class AudioAnalyzer {
           'truePeak': truePeak ?? 0.0,
         };
       }
-    } catch (e) {
-
     } finally {
       await FFmpegKitConfig.setLogLevel(Level.avLogError);
     }

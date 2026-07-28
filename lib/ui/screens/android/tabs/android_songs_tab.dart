@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
-import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import '../widgets/premium_section.dart';
 import '../widgets/empty_library_view.dart';
 import '../widgets/premium_loading_view.dart';
+import 'package:looper_player/ui/widgets/settings_options_bottom_sheet.dart';
 
 class AndroidSongsTab extends ConsumerStatefulWidget {
   const AndroidSongsTab({super.key});
@@ -71,7 +69,6 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
   Widget build(BuildContext context) {
     final library = ref.watch(libraryProvider);
     final settings = ref.watch(settingsProvider);
-    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
     final l10n = AppLocalizations.of(context)!;
     
     if (!library.isInitialized || (library.isScanning && library.songs.isEmpty)) {
@@ -82,12 +79,13 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
         ? EmptyLibraryView(
             title: l10n.noSongsFound,
           )
-        : Container(
-            color: (settings.enableDynamicTheming || settings.keepBackgroundGradient)
-                ? Colors.transparent
-                : Theme.of(context).colorScheme.surface,
-            child: Stack(
-              children: [
+        : RepaintBoundary(
+            child: Container(
+              color: (settings.enableDynamicTheming || settings.keepBackgroundGradient)
+                  ? Colors.transparent
+                  : Theme.of(context).colorScheme.surface,
+              child: Stack(
+                children: [
                 SafeArea(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,7 +138,10 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                                   forceNoBlur: true,
                                   onTap: () {
                                     HapticFeedback.lightImpact();
-                                    ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
+                                    showSettingsOptionsBottomSheet(
+                                      context: context,
+                                      ref: ref,
+                                    );
                                   },
                                   child: const Icon(
                                     LucideIcons.settings,
@@ -177,10 +178,16 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 300),
                       opacity: _isButtonVisible ? 1.0 : 0.0,
-                      child: AnimatedPadding(
-                        duration: const Duration(milliseconds: 250),
-                        curve: Curves.easeInOut,
-                        padding: EdgeInsets.only(bottom: song != null ? 200 : 120, right: 40),
+                      child: Consumer(
+                        builder: (context, ref, child) {
+                          final song = ref.watch(playbackProvider.select((s) => s.currentSong));
+                          return AnimatedPadding(
+                            duration: const Duration(milliseconds: 250),
+                            curve: Curves.easeInOut,
+                            padding: EdgeInsets.only(bottom: song != null ? 200 : 120, right: 40),
+                            child: child!,
+                          );
+                        },
                         child: PremiumSection(
                           width: 48,
                           height: 48,
@@ -191,8 +198,9 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                           //   bottomRight: Radius.circular(10),
                           // ),
                           borderRadius: BorderRadius.circular(48),
-                          useBlur: false,
+                          useBlur: true,
                           useExpanded: false,
+                          forceNoBlur: true,
                           onTap: () {
                             HapticFeedback.mediumImpact();
                             final songs = library.songs;
@@ -201,7 +209,7 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                               ref.read(playbackProvider.notifier).setPlaylist(randomSongList, initialIndex: 0);
                             }
                           },
-                          child:Icon(LucideIcons.shuffle, color: Colors.white, size: 18),
+                          child: const Icon(LucideIcons.shuffle, color: Colors.white, size: 18),
                         ),
                       ),
                     ),
@@ -209,6 +217,7 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                 ),
               ],
             ),
-          );
+          ),
+        );
   }
 }

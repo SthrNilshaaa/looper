@@ -1,16 +1,9 @@
-import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
-import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:looper_player/ui/widgets/fluid_background.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'widgets/advanced_lyric_renderer.dart';
 import 'package:looper_player/core/app_fonts.dart';
-import 'overlay_service.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 

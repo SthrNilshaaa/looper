@@ -1,9 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
@@ -12,20 +9,14 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
-import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
 import 'package:looper_player/ui/widgets/app_refresh_indicator.dart';
 import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 
 import 'package:looper_player/core/navigation_provider.dart';
-import 'package:looper_player/features/playlists/presentation/playlist_view.dart';
-import 'package:looper_player/features/playlists/data/playlist_service.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
-import 'package:looper_player/ui/screens/android/song/song_info_screen.dart';
-import 'package:looper_player/ui/screens/android/widgets/song_details_bottom_sheet.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/song_options_bottom_sheet.dart';
 
@@ -243,7 +234,7 @@ class SongTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     
     final isCurrent = ref.watch(playbackProvider.select((s) => s.currentSong?.path == song.path));
-    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
+    final isPlaying = ref.watch(playbackProvider.select((s) => s.currentSong?.path == song.path && s.isPlaying));
 
     String? lyricSnippet;
     if (searchQuery != null && searchQuery!.isNotEmpty && song.lyrics != null) {
@@ -252,175 +243,7 @@ class SongTile extends ConsumerWidget {
 
     return Material(
       color: Colors.transparent,
-      child: ListTile(
-        contentPadding: const EdgeInsets.only(left: 16, right: 4, top: 0, bottom: 0),
-        leading: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: isCurrent
-              ? Stack(
-                  children: [
-                    OptimizedImage(
-                      imagePath: song.artPath,
-                      width: 52,
-                      height: 52,
-                      fit: BoxFit.cover,
-                    ),
-                    Positioned.fill(
-                      child: AnimatedOpacity(
-                        duration: const Duration(milliseconds: 300),
-                        opacity: isPlaying ? 1.0 : 0.0,
-                        child: Container(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          child: Center(
-                            child: Image.asset(
-                              'assets/android_icons/Playing.gif',
-                              width: 24,
-                              height: 24,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : OptimizedImage(
-                  imagePath: song.artPath,
-                  width: 52,
-                  height: 52,
-                  fit: BoxFit.cover,
-                ),
-        ),
-        title: Text(
-          song.title,
-          style: AppFonts.jostStyle(
-            color: isCurrent
-                ? Theme.of(context).colorScheme.primary
-                : Colors.white,
-            fontWeight: FontWeight.w500,
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: lyricSnippet != null
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  InkWell(
-                    onTap: () async {
-                      if (song.artist != null) {
-                        final artistSongs = await DbService.isar.songs
-                            .filter()
-                            .artistEqualTo(song.artist!)
-                            .findAll();
-                        final artist = await DbService.isar.artists
-                            .filter()
-                            .nameEqualTo(song.artist!)
-                            .findFirst();
-                        ref
-                            .read(appNavigationProvider.notifier)
-                            .showCollection(
-                              title: song.artist!,
-                              subtitle: l10n.artists,
-                              art: artist?.artPath ?? song.artPath,
-                              imageUrl: artist?.artistImageUrl,
-                              songs: artistSongs,
-                            );
-                      }
-                    },
-                    child: Text(
-                      song.artist ?? l10n.unknownArtist,
-                      style: AppFonts.jostStyle(
-                        color: Colors.white.withValues(alpha: 0.5),
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
-                        width: 0.8,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          LucideIcons.quote,
-                          size: 9,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: _buildHighlightedText(
-                            context: context,
-                            text: lyricSnippet,
-                            query: searchQuery ?? '',
-                            baseStyle: AppFonts.jostStyle(
-                              color: Colors.white.withValues(alpha: 0.75),
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                            ),
-                            highlightStyle: AppFonts.jostStyle(
-                              color: Theme.of(context).colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              )
-            : InkWell(
-                onTap: () async {
-                  if (song.artist != null) {
-                    final artistSongs = await DbService.isar.songs
-                        .filter()
-                        .artistEqualTo(song.artist!)
-                        .findAll();
-                    final artist = await DbService.isar.artists
-                        .filter()
-                        .nameEqualTo(song.artist!)
-                        .findFirst();
-                    ref
-                        .read(appNavigationProvider.notifier)
-                        .showCollection(
-                          title: song.artist!,
-                          subtitle: l10n.artists,
-                          art: artist?.artPath ?? song.artPath,
-                          imageUrl: artist?.artistImageUrl,
-                          songs: artistSongs,
-                        );
-                  }
-                },
-                child: Text(
-                  song.artist ?? l10n.unknownArtist,
-                  style: AppFonts.jostStyle(
-                    color: Colors.white.withValues(alpha: 0.5),
-                    fontSize: 13,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-        trailing: IconButton(
-          icon: const Icon(Icons.more_vert, color: Colors.grey),
-          onPressed: () => showSongOptionsBottomSheet(
-            context: context,
-            ref: ref,
-            song: song,
-            playlist: playlist,
-          ),
-        ),
+      child: _SongTileBouncyTap(
         onTap: () {
           final index = songs.indexWhere((s) => s.path == song.path);
           if (index != -1) {
@@ -431,6 +254,176 @@ class SongTile extends ConsumerWidget {
             ref.read(playbackProvider.notifier).play(song);
           }
         },
+        child: ListTile(
+          contentPadding: const EdgeInsets.only(left: 16, right: 4, top: 0, bottom: 0),
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: isCurrent
+                ? Stack(
+                    children: [
+                      OptimizedImage(
+                        imagePath: song.artPath,
+                        width: 52,
+                        height: 52,
+                        fit: BoxFit.cover,
+                      ),
+                      Positioned.fill(
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 300),
+                          opacity: isPlaying ? 1.0 : 0.0,
+                          child: Container(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            child: Center(
+                              child: Image.asset(
+                                'assets/android_icons/Playing.gif',
+                                width: 24,
+                                height: 24,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : OptimizedImage(
+                    imagePath: song.artPath,
+                    width: 52,
+                    height: 52,
+                    fit: BoxFit.cover,
+                  ),
+          ),
+          title: Text(
+            song.title,
+            style: AppFonts.jostStyle(
+              color: isCurrent
+                  ? Theme.of(context).colorScheme.primary
+                  : Colors.white,
+              fontWeight: FontWeight.w500,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          subtitle: lyricSnippet != null
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InkWell(
+                      onTap: () async {
+                        if (song.artist != null) {
+                          final artistSongs = await DbService.isar.songs
+                              .filter()
+                              .artistEqualTo(song.artist!)
+                              .findAll();
+                          final artist = await DbService.isar.artists
+                              .filter()
+                              .nameEqualTo(song.artist!)
+                              .findFirst();
+                          ref
+                              .read(appNavigationProvider.notifier)
+                              .showCollection(
+                                title: song.artist!,
+                                subtitle: l10n.artists,
+                                art: artist?.artPath ?? song.artPath,
+                                imageUrl: artist?.artistImageUrl,
+                                songs: artistSongs,
+                              );
+                        }
+                      },
+                      child: Text(
+                        song.artist ?? l10n.unknownArtist,
+                        style: AppFonts.jostStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 13,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            LucideIcons.quote,
+                            size: 9,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: _buildHighlightedText(
+                              context: context,
+                              text: lyricSnippet,
+                              query: searchQuery ?? '',
+                              baseStyle: AppFonts.jostStyle(
+                                color: Colors.white.withValues(alpha: 0.75),
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              highlightStyle: AppFonts.jostStyle(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : InkWell(
+                  onTap: () async {
+                    if (song.artist != null) {
+                      final artistSongs = await DbService.isar.songs
+                          .filter()
+                          .artistEqualTo(song.artist!)
+                          .findAll();
+                      final artist = await DbService.isar.artists
+                          .filter()
+                          .nameEqualTo(song.artist!)
+                          .findFirst();
+                      ref
+                          .read(appNavigationProvider.notifier)
+                          .showCollection(
+                            title: song.artist!,
+                            subtitle: l10n.artists,
+                            art: artist?.artPath ?? song.artPath,
+                            imageUrl: artist?.artistImageUrl,
+                            songs: artistSongs,
+                          );
+                    }
+                  },
+                  child: Text(
+                    song.artist ?? l10n.unknownArtist,
+                    style: AppFonts.jostStyle(
+                      color: Colors.white.withValues(alpha: 0.5),
+                      fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+          trailing: IconButton(
+            icon: const Icon(Icons.more_vert, color: Colors.grey),
+            onPressed: () => showSongOptionsBottomSheet(
+              context: context,
+              ref: ref,
+              song: song,
+              playlist: playlist,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -468,12 +461,7 @@ class SongTile extends ConsumerWidget {
   }
 }
 
-String _formatDuration(Duration duration) {
-  String twoDigits(int n) => n.toString().padLeft(2, "0");
-  String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
-  String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
-  return "$twoDigitMinutes:$twoDigitSeconds";
-}
+
 
 void _showSortBottomSheet(
   BuildContext context,
@@ -743,6 +731,59 @@ class _SortOption extends StatelessWidget {
             endIndent: 20,
           ),
       ],
+    );
+  }
+}
+
+class _SongTileBouncyTap extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+
+  const _SongTileBouncyTap({
+    required this.child,
+    required this.onTap,
+  });
+
+  @override
+  State<_SongTileBouncyTap> createState() => _SongTileBouncyTapState();
+}
+
+class _SongTileBouncyTapState extends State<_SongTileBouncyTap> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 90),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.97).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onTap();
+      },
+      onTapCancel: () => _controller.reverse(),
+      behavior: HitTestBehavior.opaque,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: widget.child,
+      ),
     );
   }
 }

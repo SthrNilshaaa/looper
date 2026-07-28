@@ -60,7 +60,7 @@ void showCustomColorPicker(
                       onChanged: (color) {
                         ref
                             .read(settingsProvider.notifier)
-                            .updateAccentColor(color.value);
+                            .updateAccentColor(color.toARGB32());
                         setModalState(() {});
                       },
                       initialPicker: Picker.paletteHue,

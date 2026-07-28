@@ -23,7 +23,7 @@ class ShowArtistsRowTile extends ConsumerWidget {
         l10n.showArtistsRowDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.showHomeArtists,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateShowHomeArtists(value);
@@ -49,7 +49,7 @@ class ShowAlbumsRowTile extends ConsumerWidget {
         l10n.showAlbumsRowDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.showHomeAlbums,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateShowHomeAlbums(value);
@@ -75,7 +75,7 @@ class ShowGenresRowTile extends ConsumerWidget {
         l10n.showGenresRowDesc,
         style: _tileSubtitleStyle(),
       ),
-      activeColor: Color(settings.accentColor),
+      activeThumbColor: Color(settings.accentColor),
       value: settings.showHomeGenres,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateShowHomeGenres(value);

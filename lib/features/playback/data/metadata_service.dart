@@ -1,9 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:ffmpeg_kit_flutter_new_full/ffprobe_kit.dart';
-import 'package:ffmpeg_kit_flutter_new_full/session.dart';
-import 'package:ffmpeg_kit_flutter_new_full/session_state.dart';
 
 class MetadataService {
   static Future<String?> getEmbeddedLyrics(String path) async {

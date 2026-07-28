@@ -4,15 +4,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
-import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'premium_section.dart';
+import 'package:looper_player/core/ui_calculations.dart';
 
 class PremiumNavbar extends ConsumerWidget {
   final int currentIndex;
   final Function(int) onTap;
+
+  static final GlobalKey _homeKey = GlobalKey(debugLabel: 'nav_home');
+  static final GlobalKey _songsKey = GlobalKey(debugLabel: 'nav_songs');
+  static final GlobalKey _libraryKey = GlobalKey(debugLabel: 'nav_library');
 
   const PremiumNavbar({
     super.key,
@@ -30,15 +34,17 @@ class PremiumNavbar extends ConsumerWidget {
    
     
 
-    return Container(
-      padding: EdgeInsets.fromLTRB(16, 2, 16, 16 + bottomPadding),
-      child: SizedBox(
-        height: 72,
+    return RepaintBoundary(
+      child: Container(
+        padding: UiCalculations.getNavbarPadding(bottomPadding),
+        child: SizedBox(
+          height: 72,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final double gapSize = 6.s;
 
             final home = _NavItem(
+              key: _homeKey,
               iconPath: AppIcons.home,
               label: l10n.home,
               isSelected: currentIndex == 0,
@@ -46,6 +52,7 @@ class PremiumNavbar extends ConsumerWidget {
             );
 
             final songs = _NavItem(
+              key: _songsKey,
               iconPath: AppIcons.songs,
               label: l10n.songs,
               isSelected: currentIndex == 1,
@@ -53,6 +60,7 @@ class PremiumNavbar extends ConsumerWidget {
             );
 
             final library = _NavItem(
+              key: _libraryKey,
               iconPath: AppIcons.library,
               label: l10n.library,
               isSelected: currentIndex == 2,
@@ -283,8 +291,9 @@ class PremiumNavbar extends ConsumerWidget {
           },
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 class _NavItem extends StatelessWidget {
@@ -294,6 +303,7 @@ class _NavItem extends StatelessWidget {
   final Color accentColor;
 
   const _NavItem({
+    super.key,
     required this.iconPath,
     required this.label,
     required this.isSelected,
@@ -302,31 +312,42 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final inactiveColor = Colors.white.withOpacity(0.4);
+    final targetColor = isSelected ? accentColor : inactiveColor;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        AnimatedContainer(
+        AnimatedScale(
+          scale: isSelected ? 1.15 : 1.0,
           duration: const Duration(milliseconds: 300),
-          transform: Matrix4.identity()..scale(isSelected ? 1.1 : 1.0),
-          transformAlignment: Alignment.center,
-          child: SvgPicture.asset(
-            iconPath,
-            colorFilter: ColorFilter.mode(
-              isSelected ? accentColor : Colors.white.withValues(alpha: 0.4),
-              BlendMode.srcIn,
-            ),
-            width: AppIcons.navbarIcon.s,
-            height: AppIcons.navbarIcon.s,
+          curve: Curves.easeOutCubic,
+          child: TweenAnimationBuilder<Color?>(
+            tween: ColorTween(end: targetColor),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            builder: (context, color, child) {
+              return SvgPicture.asset(
+                iconPath,
+                colorFilter: ColorFilter.mode(
+                  color ?? inactiveColor,
+                  BlendMode.srcIn,
+                ),
+                width: AppIcons.navbarIcon.s,
+                height: AppIcons.navbarIcon.s,
+              );
+            },
           ),
         ),
         const SizedBox(width: 8),
         Flexible(
           child: AnimatedDefaultTextStyle(
-            duration:  Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
             style: AppFonts.jostStyle(
               textStyle: const TextStyle(inherit: false),
-              color: isSelected ? accentColor : Colors.white.withValues(alpha: 0.4),
-              fontSize: 13.ts,
+              color: targetColor,
+              fontSize: 18.ts,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: 0.2,
             ),

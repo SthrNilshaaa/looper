@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/app_fonts.dart';
@@ -22,6 +23,7 @@ class GlobalSearchBar extends ConsumerStatefulWidget {
 
 class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
   late TextEditingController _controller;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -37,10 +39,12 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
   @override
   void dispose() {
     _controller.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
   void _clearSearch() {
+    _debounceTimer?.cancel();
     _controller.clear();
     ref.read(searchQueryProvider.notifier).state = '';
     // Unfocus the search bar to return to music control mode
@@ -105,8 +109,10 @@ class _GlobalSearchBarState extends ConsumerState<GlobalSearchBar> {
                 focusNode: ref.watch(searchFocusNodeProvider),
                 controller: _controller,
                 onChanged: (val) {
-                  // Update provider silently without triggering rebuild of this widget
-                  ref.read(searchQueryProvider.notifier).state = val;
+                  _debounceTimer?.cancel();
+                  _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+                    ref.read(searchQueryProvider.notifier).state = val;
+                  });
                   if (val.isNotEmpty && nav.activeItem != NavItem.search) {
                     ref
                         .read(appNavigationProvider.notifier)

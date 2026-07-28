@@ -21,7 +21,10 @@ import 'tabs/android_home_tab.dart';
 import 'tabs/android_search_tab.dart';
 import 'tabs/android_library_tab.dart';
 import 'tabs/android_songs_tab.dart';
+import 'tabs/online_explore_tab.dart';
+import 'package:looper_player/features/streaming/presentation/streaming_notifier.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
+import 'package:looper_player/core/player_expand_provider.dart';
 import 'widgets/premium_navbar.dart';
 import 'widgets/premium_section.dart';
 import 'package:looper_player/features/library/presentation/smart_views.dart';
@@ -41,8 +44,9 @@ class AndroidMainScreen extends ConsumerStatefulWidget {
   ConsumerState<AndroidMainScreen> createState() => _AndroidMainScreenState();
 }
 
-class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
+class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with WidgetsBindingObserver {
   DateTime? _lastBackPressTime;
+  bool _permissionsGranted = true;
 
   final List<Widget> _tabs = [
     const AndroidHomeTab(),
@@ -53,12 +57,52 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _requestNotificationPermissionIfNeeded();
+    _checkAndroidPermissions();
     
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ref.read(settingsProvider.notifier).initialization;
       ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkAndroidPermissions();
+    }
+  }
+
+  Future<void> _checkAndroidPermissions() async {
+    if (Platform.isAndroid) {
+      int sdkInt = 0;
+      try {
+        final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+        if (sdkMatch != null) {
+          sdkInt = int.parse(sdkMatch.group(1)!);
+        }
+      } catch (_) {}
+
+      final hasAudio = await Permission.audio.isGranted;
+      final hasManage = await Permission.manageExternalStorage.isGranted;
+      final hasStorage = sdkInt < 33 && await Permission.storage.isGranted;
+      final isGranted = hasAudio || hasStorage || hasManage;
+      if (mounted && _permissionsGranted != isGranted) {
+        setState(() {
+          _permissionsGranted = isGranted;
+        });
+        if (isGranted) {
+          ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: true);
+        }
+      }
+    }
   }
 
   Future<void> _requestNotificationPermissionIfNeeded() async {
@@ -102,6 +146,8 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
         navigatorKey.currentState?.popUntil((route) => route.isFirst);
       } else if (next.activeItem == NavItem.songs) {
         navigatorKey.currentState?.popUntil((route) => route.isFirst);
+      } else if (next.activeItem == NavItem.library) {
+        navigatorKey.currentState?.popUntil((route) => route.isFirst);
       } else if (isForward && next.activeItem == NavItem.playlists) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
@@ -131,6 +177,12 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
       } else if (isForward && next.activeItem == NavItem.settings) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(const SettingsView()),
+        );
+      } else if (isForward && next.activeItem == NavItem.search) {
+        navigatorKey.currentState?.push(
+          _createPremiumRoute(
+            const OnlineExploreTab(),
+          ),
         );
       } else if (isForward && next.activeItem == NavItem.favorites) {
         navigatorKey.currentState?.push(
@@ -182,11 +234,11 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
           _createPremiumRoute(
             const CategoryDetailWrapper(
               title: 'Queue',
-              child: const QueueView(),
+              child: QueueView(),
             ),
           ),
         );
-      } else if (isForward && next.activeItem == NavItem.history) {
+      } else if (isForward && (next.activeItem == NavItem.history || next.activeItem == NavItem.recentlyPlayed)) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
             const CategoryDetailWrapper(
@@ -205,6 +257,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
     final settings = ref.watch(settingsProvider);
     final isWelcomeBypassed = ref.watch(welcomeBypassedProvider);
     final showSupportUsSheet = ref.watch(supportUsSheetVisibleProvider);
+    final double navbarHeight = 72.0 + 18.0 + MediaQuery.of(context).padding.bottom;
 
     final activeDarkness = () {
       final val = rootItem == NavItem.home
@@ -217,8 +270,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
       return val.isNaN ? 0.72 : val;
     }();
 
-    final isSetupComplete = isWelcomeBypassed ||
-                            settings.libraryFolders.isNotEmpty;
+    final isSetupComplete = isWelcomeBypassed;
 
     if (!isSetupComplete) {
       return const WelcomeScreen();
@@ -226,43 +278,36 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
 
-        // 1. If player is expanded, collapse it
-        if (nav.isPlayerExpanded) {
+        // 1. If sliding player is open/expanded (vertical motion), collapse it
+        final double slideProgress = ref.read(playerExpandProgressProvider);
+        if (settings.enableSlideGesture && slideProgress > 0.0) {
+          ref.read(playerCollapseTriggerProvider.notifier).update((state) => state + 1);
+          return;
+        }
+
+        // 2. If non-sliding player is expanded, collapse it
+        if (!settings.enableSlideGesture && nav.isPlayerExpanded) {
           ref.read(appNavigationProvider.notifier).setPlayerExpansion(false);
           return;
         }
 
-        // 2. If we are on a settings sub-page, pop it locally without modifying app navigation state
-        Route? currentRoute;
-        navigatorKey.currentState?.popUntil((route) {
-          currentRoute = route;
-          return true;
-        });
-        if (currentRoute?.settings.name == 'settings_subpage') {
-          navigatorKey.currentState?.pop();
-          return;
-        }
-
-        // 3. If we have navigation history or are in a sub-view (search/settings/playlists)
-        if (nav.history.isNotEmpty ||
-            nav.activeItem == NavItem.search ||
-            nav.activeItem == NavItem.settings ||
-            nav.activeItem == NavItem.playlists ||
-            nav.activeItem == NavItem.collectionDetail) {
+        // 3. If local navigator has sub-pages (favorites, playlists, settings, categories, details), pop it
+        final bool canPopNavigator = navigatorKey.currentState?.canPop() ?? false;
+        if (canPopNavigator) {
           ref.read(appNavigationProvider.notifier).goBack();
           return;
         }
 
-        // 3. If we are on Songs or Library tab, go to Home tab
-        if (nav.activeItem != NavItem.home) {
-          ref.read(appNavigationProvider.notifier).setItem(NavItem.home);
+        // 4. If we have tab history, navigate back through the tabs
+        if (nav.history.isNotEmpty) {
+          ref.read(appNavigationProvider.notifier).goBack();
           return;
         }
 
-        // 4. Double press to exit
+        // 5. Double press to exit
         final now = DateTime.now();
         if (_lastBackPressTime == null ||
             now.difference(_lastBackPressTime!) > const Duration(seconds: 2)) {
@@ -395,8 +440,14 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
                                   );
                                 },
                             child: KeyedSubtree(
-                              key: ValueKey(index),
-                              child: _tabs[index],
+                              key: ValueKey('$index-${ref.watch(settingsProvider).playbackModeIndex}'),
+                              child: () {
+                                final mode = ref.watch(streamingProvider.notifier).currentMode;
+                                if (mode == PlaybackMode.onlineOnly && index == 0) {
+                                  return const OnlineExploreTab();
+                                }
+                                return _tabs[index];
+                              }(),
                             ),
                           );
                         },
@@ -437,68 +488,145 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> {
               ),
            
 
-            // Mini Player & Navbar with Gradient
-            Positioned(
-              bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? -150 : 0,
-              left: 0,
-              right: 0,
-              child: AnimatedOpacity(
-                opacity: MediaQuery.of(context).viewInsets.bottom > 0 ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  transform: Matrix4.translationValues(
-                    0,
-                    MediaQuery.of(context).viewInsets.bottom > 0 ? 150 : 0,
-                    0,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        transitionBuilder: (child, animation) {
-                          return FadeTransition(opacity: animation, child: child);
-                        },
-                        child: (song != null && !showSupportUsSheet)
-                            ? const PremiumMusicBar(key: ValueKey('music_bar'))
-                            : const SizedBox(key: ValueKey('no_music')),
-                      ),
-                      if (nav.activeItem != NavItem.settings) ...[
-                        const SizedBox(height: 4),
-                        PremiumNavbar(
-                          currentIndex: rootItem == NavItem.home
-                              ? 0
-                              : (rootItem == NavItem.songs ? 1 : 2),
-                          onTap: (index) {
-                            NavItem target;
-                            switch (index) {
-                              case 1:
-                                target = NavItem.songs;
-                                break;
-                              case 2:
-                                target = NavItem.library;
-                                break;
-                              case 0:
-                              default:
-                                target = NavItem.home;
-                                break;
-                            }
-                            ref
-                                .read(appNavigationProvider.notifier)
-                                .setItem(target);
-                          },
-                        ),
-                      ] else if (song != null) ...[
-                        SizedBox(height: 16 + MediaQuery.of(context).padding.bottom),
+            if (settings.enableSlideGesture)
+              Positioned.fill(
+                child: Consumer(
+                  builder: (context, ref, child) {
+                    final progress = ref.watch(playerExpandProgressProvider);
+                    return Stack(
+                      children: [
+                        // Opaque navbar positioning (independent of player panel)
+                        if (nav.activeItem != NavItem.settings)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? -150 : 0,
+                            child: AnimatedOpacity(
+                              opacity: MediaQuery.of(context).viewInsets.bottom > 0 ? 0.0 : (1.0 - progress * 3.0).clamp(0.0, 1.0),
+                              duration: const Duration(milliseconds: 150),
+                              child: Transform.translate(
+                                offset: Offset(0.0, progress * 110.0),
+                                child: PremiumNavbar(
+                                  currentIndex: rootItem == NavItem.home
+                                      ? 0
+                                      : (rootItem == NavItem.songs ? 1 : 2),
+                                  onTap: (index) {
+                                    NavItem target;
+                                    switch (index) {
+                                      case 1:
+                                        target = NavItem.songs;
+                                        break;
+                                      case 2:
+                                        target = NavItem.library;
+                                        break;
+                                      case 0:
+                                      default:
+                                        target = NavItem.home;
+                                        break;
+                                    }
+                                    ref
+                                        .read(appNavigationProvider.notifier)
+                                        .setItem(target);
+                                  },
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (song != null)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: AnimatedOpacity(
+                              opacity: MediaQuery.of(context).viewInsets.bottom > 0 ? 0.0 : (1.0 - progress * 3.0).clamp(0.0, 1.0),
+                              duration: const Duration(milliseconds: 150),
+                              child: SizedBox(height: 16 + MediaQuery.of(context).padding.bottom),
+                            ),
+                          ),
+
+                        // The slide-up/morphing music panel
+                        if (song != null && !showSupportUsSheet)
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                                ? -150
+                                : (nav.activeItem != NavItem.settings
+                                    ? (navbarHeight + 4.0) * (1.0 - progress)
+                                    : (16.0 + MediaQuery.of(context).padding.bottom) * (1.0 - progress)),
+                            height: 72.0 + (MediaQuery.of(context).size.height - 72.0) * progress,
+                            child: const PremiumMusicBar(key: ValueKey('music_bar')),
+                          ),
                       ],
-                    ],
+                    );
+                  },
+                ),
+              ) else ...[
+              // Standard Column layout (original layout)
+              Positioned(
+                bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? -150 : 0,
+                left: 0,
+                right: 0,
+                child: AnimatedOpacity(
+                  opacity: MediaQuery.of(context).viewInsets.bottom > 0 ? 0.0 : 1.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    transform: Matrix4.translationValues(
+                      0,
+                      MediaQuery.of(context).viewInsets.bottom > 0 ? 150 : 0,
+                      0,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(opacity: animation, child: child);
+                          },
+                          child: (song != null && !showSupportUsSheet)
+                              ? const PremiumMusicBar(key: ValueKey('music_bar'))
+                              : const SizedBox(key: ValueKey('no_music')),
+                        ),
+                        if (nav.activeItem != NavItem.settings) ...[
+                          const SizedBox(height: 4),
+                          Transform.translate(
+                            offset: const Offset(0.0, 0.0),
+                            child: PremiumNavbar(
+                              currentIndex: rootItem == NavItem.home
+                                  ? 0
+                                  : (rootItem == NavItem.songs ? 1 : 2),
+                              onTap: (index) {
+                                NavItem target;
+                                switch (index) {
+                                  case 1:
+                                    target = NavItem.songs;
+                                    break;
+                                  case 2:
+                                    target = NavItem.library;
+                                    break;
+                                  case 0:
+                                  default:
+                                    target = NavItem.home;
+                                    break;
+                                }
+                                ref
+                                    .read(appNavigationProvider.notifier)
+                                    .setItem(target);
+                              },
+                            ),
+                          ),
+                        ] else if (song != null) ...[
+                          SizedBox(height: 16 + MediaQuery.of(context).padding.bottom),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-             
+            ],
           ],
         ),
       ),
@@ -534,8 +662,8 @@ class BlurredBackgroundArt extends StatelessWidget {
     return RepaintBoundary(
       child: ImageFiltered(
         imageFilter: ImageFilter.blur(
-          sigmaX: 18,
-          sigmaY: 18,
+          sigmaX: 5.0,
+          sigmaY: 5.0,
         ),
         child: Image.file(
           File(path),
@@ -543,10 +671,10 @@ class BlurredBackgroundArt extends StatelessWidget {
           width: double.infinity,
           height: double.infinity,
           filterQuality: FilterQuality.low,
-          cacheWidth: 80,
-          cacheHeight: 80,
+          cacheWidth: 32,
+          cacheHeight: 32,
           gaplessPlayback: true,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          errorBuilder: (_, _, _) => const SizedBox.shrink(),
         ),
       ),
     );

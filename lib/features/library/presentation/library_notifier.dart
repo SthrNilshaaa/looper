@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/core/logger_helper.dart';
 import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:looper_player/features/library/data/scanner.dart';
@@ -70,6 +71,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   final Ref _ref;
   StreamSubscription<List<Song>>? _songsSubscription;
   bool _isFetchingArtistImages = false;
+  bool _isScanRunning = false;
 
   LibraryNotifier(this._ref) : super(LibraryState()) {
     // Automatically clean up database and refresh songs whenever active library folders change!
@@ -245,8 +247,6 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         // and to fully comply with Deezer API rate limits.
         await Future.delayed(const Duration(milliseconds: 2000));
       }
-    } catch (e) {
-
     } finally {
       _isFetchingArtistImages = false;
     }
@@ -277,11 +277,21 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
   Future<bool> _requestPermissions() async {
     if (!Platform.isAndroid) return true;
 
+    int sdkInt = 0;
+    try {
+      final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+      if (sdkMatch != null) {
+        sdkInt = int.parse(sdkMatch.group(1)!);
+      }
+    } catch (_) {}
+
     // Check if standard or manage external storage permissions are already granted
     // to bypass all slow OS request dialogues entirely.
-    if (await Permission.audio.isGranted || 
-        await Permission.storage.isGranted || 
-        await Permission.manageExternalStorage.isGranted) {
+    final bool hasAudio = await Permission.audio.isGranted;
+    final bool hasManage = await Permission.manageExternalStorage.isGranted;
+    final bool hasStorage = sdkInt < 33 && await Permission.storage.isGranted;
+
+    if (hasAudio || hasManage || hasStorage) {
       return true;
     }
 
@@ -294,122 +304,140 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       return true;
     }
 
-    int sdkInt = 0;
-    try {
-      final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
-      if (sdkMatch != null) {
-        sdkInt = int.parse(sdkMatch.group(1)!);
-      }
-    } catch (_) {}
-
-
     bool isGranted = false;
     if (sdkInt >= 33) {
       isGranted = await Permission.audio.request().isGranted;
-
     } else {
       isGranted = await Permission.storage.request().isGranted;
-
     }
 
     // If still not granted, try requesting manageExternalStorage explicitly
     if (!isGranted) {
-
       isGranted = await Permission.manageExternalStorage.request().isGranted;
-
     }
 
     return isGranted;
   }
 
   Future<void> scanSavedFolders({bool showVisualIndicator = true}) async {
-    if (!await _requestPermissions()) {
-
+    if (_isScanRunning || state.isScanning) {
+      LoggerHelper.write('LibraryNotifier.scanSavedFolders: Scan already in progress, ignoring.');
       return;
     }
-    final folders = _ref.read(settingsProvider).libraryFolders;
-    
-    if (folders.isEmpty) {
-      // If no folders saved, try to discover music in common locations
-      List<String> scanRoots = [];
+    _isScanRunning = true;
+    try {
+      if (!await _requestPermissions()) {
+        return;
+      }
+      final folders = _ref.read(settingsProvider).libraryFolders;
       
-      if (Platform.isLinux) {
-        String defaultPath = '${Platform.environment['HOME']}/Music';
-        try {
-          final result = await Process.run('xdg-user-dir', ['MUSIC']);
-          if (result.exitCode == 0 &&
-              result.stdout.toString().trim().isNotEmpty) {
-            defaultPath = result.stdout.toString().trim();
+      if (folders.isEmpty) {
+        // If no folders saved, try to discover music in common locations
+        List<String> scanRoots = [];
+        
+        if (Platform.isLinux) {
+          String defaultPath = '${Platform.environment['HOME']}/Music';
+          try {
+            final result = await Process.run('xdg-user-dir', ['MUSIC']);
+            if (result.exitCode == 0 &&
+                result.stdout.toString().trim().isNotEmpty) {
+              defaultPath = result.stdout.toString().trim();
+            }
+          } catch (_) {}
+          scanRoots.add(defaultPath);
+        } else if (Platform.isAndroid) {
+          // Start with common folders
+          final List<String> commonPaths = [
+            '/storage/emulated/0/Music',
+            '/storage/emulated/0/Download',
+            '/storage/emulated/0/Documents',
+            '/storage/emulated/0/Audiobooks',
+            '/storage/emulated/0/Podcasts',
+          ];
+
+          int sdkInt = 0;
+          try {
+            final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+            if (sdkMatch != null) {
+              sdkInt = int.parse(sdkMatch.group(1)!);
+            }
+          } catch (_) {}
+
+          final isAllFilesGranted = await Permission.manageExternalStorage.isGranted;
+          final isLegacyStorageGranted = sdkInt < 30 && await Permission.storage.isGranted;
+          final canScanRoot = isAllFilesGranted || isLegacyStorageGranted;
+
+          // If we have "All Files Access" or legacy storage access, we can just scan the root /storage/emulated/0
+          // to find music in non-standard folders (Telegram, WhatsApp, etc.)
+          if (canScanRoot) {
+            scanRoots.add('/storage/emulated/0');
+          } else {
+            scanRoots.addAll(commonPaths);
           }
-        } catch (_) {}
-        scanRoots.add(defaultPath);
-      } else if (Platform.isAndroid) {
-        // Start with common folders
-        final List<String> commonPaths = [
-          '/storage/emulated/0/Music',
-          '/storage/emulated/0/Download',
-          '/storage/emulated/0/Documents',
-          '/storage/emulated/0/Audiobooks',
-          '/storage/emulated/0/Podcasts',
-        ];
 
-        // If we have "All Files Access", we can just scan the root /storage/emulated/0
-        // to find music in non-standard folders (Telegram, WhatsApp, etc.)
-        if (await Permission.manageExternalStorage.isGranted) {
-          scanRoots.add('/storage/emulated/0');
-        } else {
-          scanRoots.addAll(commonPaths);
-        }
-
-        // Try to find SD cards
-        try {
-          final storageDir = Directory('/storage');
-          if (await storageDir.exists()) {
-            final List<FileSystemEntity> entities = await storageDir.list().toList();
-            for (final entity in entities) {
-              final name = p.context.basename(entity.path);
-              // Avoid emulated and system internal paths
-              if (name != 'emulated' && name != 'self' && name != 'knox-emulated' && !name.contains('-')) {
-                // This is likely an SD card mount point
-                if (await Permission.manageExternalStorage.isGranted) {
-                  scanRoots.add(entity.path);
-                } else {
-                  scanRoots.add('${entity.path}/Music');
-                  scanRoots.add('${entity.path}/Download');
+          // Try to find SD cards
+          try {
+            final storageDir = Directory('/storage');
+            if (await storageDir.exists()) {
+              final List<FileSystemEntity> entities = await storageDir.list().toList();
+              for (final entity in entities) {
+                final name = p.context.basename(entity.path);
+                // Avoid emulated and system internal paths
+                if (name != 'emulated' && name != 'self' && name != 'knox-emulated' && !name.contains('-')) {
+                  // This is likely an SD card mount point
+                  if (canScanRoot) {
+                    scanRoots.add(entity.path);
+                  } else {
+                    scanRoots.add('${entity.path}/Music');
+                    scanRoots.add('${entity.path}/Download');
+                  }
                 }
               }
             }
-          }
-        } catch (e) {
+          } catch (e) {
 
+          }
         }
+
+        if (showVisualIndicator) {
+          state = state.copyWith(isScanning: true);
+        }
+        for (final path in scanRoots) {
+          if (Directory(path).existsSync()) {
+            await scanLibrary(path, updateIsScanning: showVisualIndicator);
+          }
+        }
+        if (showVisualIndicator) {
+          state = state.copyWith(isScanning: false);
+        }
+        return;
       }
 
       if (showVisualIndicator) {
         state = state.copyWith(isScanning: true);
       }
-      for (final path in scanRoots) {
-        if (Directory(path).existsSync()) {
-          await scanLibrary(path, updateIsScanning: showVisualIndicator);
+      for (final folder in folders) {
+        if (Directory(folder).existsSync()) {
+          await LibraryScanner().scanDirectory(folder);
         }
       }
       if (showVisualIndicator) {
         state = state.copyWith(isScanning: false);
       }
-      return;
+    } finally {
+      _isScanRunning = false;
     }
+  }
 
-    if (showVisualIndicator) {
-      state = state.copyWith(isScanning: true);
-    }
-    for (final folder in folders) {
-      if (Directory(folder).existsSync()) {
-        await LibraryScanner().scanDirectory(folder);
-      }
-    }
-    if (showVisualIndicator) {
-      state = state.copyWith(isScanning: false);
-    }
+  Future<void> clearAllData() async {
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.songs.clear();
+      await DbService.isar.albums.clear();
+      await DbService.isar.artists.clear();
+      await DbService.isar.playlists.clear();
+    });
+    await _ref.read(settingsProvider.notifier).updateLibraryFolders([]);
+    await _ref.read(settingsProvider.notifier).updateLastPlayedSong(null);
   }
 
   Future<void> resetAndRescan() async {

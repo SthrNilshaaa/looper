@@ -1,8 +1,9 @@
 import 'dart:io';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'squiggly_slider/slider.dart';
+import 'package:looper_player/core/ui_utils.dart';
+import 'package:looper_player/core/ui_calculations.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
@@ -36,12 +37,7 @@ class ExpressiveSlider extends ConsumerStatefulWidget {
 class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
   double? _dragValue;
 
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
-  }
+
 
   Widget _buildAnimatedDuration(String durationStr, bool isRightAligned) {
     final settings = ref.watch(settingsProvider);
@@ -99,9 +95,7 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final double progress = widget.duration.inMilliseconds > 0
-        ? (widget.position.inMilliseconds / widget.duration.inMilliseconds).clamp(0.0, 1.0)
-        : 0.0;
+    final double progress = UiCalculations.getProgressFraction(widget.position, widget.duration);
 
     final displayValue = _dragValue ?? progress;
     final bool enableWave = widget.isPlaying && displayValue > 0.12;
@@ -162,13 +156,13 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (widget.showTimestamps) ...[
-            _buildAnimatedDuration(_formatDuration(displayPosition), false),
+            _buildAnimatedDuration(UiUtils.formatDuration(displayPosition), false),
             const SizedBox(width: 12),
           ],
           Expanded(child: sliderWidget),
           if (widget.showTimestamps) ...[
             const SizedBox(width: 12),
-            _buildAnimatedDuration(_formatDuration(widget.duration), true),
+            _buildAnimatedDuration(UiUtils.formatDuration(widget.duration), true),
           ],
         ],
       );
@@ -185,8 +179,8 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildAnimatedDuration(_formatDuration(displayPosition), false),
-                _buildAnimatedDuration(_formatDuration(widget.duration), true),
+                _buildAnimatedDuration(UiUtils.formatDuration(displayPosition), false),
+                _buildAnimatedDuration(UiUtils.formatDuration(widget.duration), true),
               ],
             ),
           ),

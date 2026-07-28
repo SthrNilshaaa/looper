@@ -2,19 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:intl/intl.dart';
 import 'package:looper_player/core/app_fonts.dart';
+import 'package:looper_player/core/ui_utils.dart';
 
 class SongDetailsBottomSheet extends StatelessWidget {
   final Song song;
 
   const SongDetailsBottomSheet({super.key, required this.song});
-
-  String _formatDuration(int? ms) {
-    if (ms == null) return 'Unknown';
-    final d = Duration(milliseconds: ms);
-    final minutes = d.inMinutes;
-    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +33,7 @@ class SongDetailsBottomSheet extends StatelessWidget {
           _detailItem('Title', song.title),
           _detailItem('Artist', song.artist ?? 'Unknown'),
           _detailItem('Album', song.album ?? 'Unknown'),
-          _detailItem('Duration', _formatDuration(song.duration)),
+          _detailItem('Duration', song.duration != null ? UiUtils.formatDurationMs(song.duration) : 'Unknown'),
           _detailItem('Play Count', '${song.playCount} times'),
           if (song.lastPlayed != null)
             _detailItem(

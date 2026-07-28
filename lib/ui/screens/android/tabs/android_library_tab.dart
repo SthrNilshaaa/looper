@@ -1,18 +1,16 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
-import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
-import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/ui/widgets/settings_options_bottom_sheet.dart';
 
 class AndroidLibraryTab extends ConsumerWidget {
   const AndroidLibraryTab({super.key});
@@ -21,10 +19,11 @@ class AndroidLibraryTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
 
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return RepaintBoundary(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
@@ -73,7 +72,10 @@ class AndroidLibraryTab extends ConsumerWidget {
                         useBlur: true,
                         onTap: () {
                           HapticFeedback.lightImpact();
-                          ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
+                          showSettingsOptionsBottomSheet(
+                            context: context,
+                            ref: ref,
+                          );
                         },
                         child: const Icon(
                           LucideIcons.settings,
@@ -134,7 +136,11 @@ class AndroidLibraryTab extends ConsumerWidget {
 
           // Recent Played Horizontal Cards
           SliverToBoxAdapter(
-            child: _buildRecentlyAccessed(context, ref),
+            child: Consumer(
+              builder: (context, ref, child) {
+                return _buildRecentlyAccessed(context, ref);
+              },
+            ),
           ),
 
           // Categories Pill
@@ -288,15 +294,17 @@ class AndroidLibraryTab extends ConsumerWidget {
             ),
           ),
 
+
           // Bottom padding to clear Mini Player and let UI breathe
           const SliverToBoxAdapter(child: SizedBox(height: 200)),
         ],
       ),
     ),
   ],
-),
-);
-  }
+        ),
+      ),
+    );
+}
 
   Widget _buildRecentlyAccessed(BuildContext context, WidgetRef ref) {
     final recentSongs = ref.watch(recentlyPlayedProvider).value ?? [];
@@ -491,3 +499,5 @@ class AndroidLibraryTab extends ConsumerWidget {
     );
   }
 }
+
+

@@ -264,6 +264,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..fadePlayPauseStop = s.fadePlayPauseStop
       ..playPauseStopFadeLength = s.playPauseStopFadeLength
       ..resumeAfterCall = s.resumeAfterCall
+      ..pauseOnDuck = s.pauseOnDuck
+      ..resumeOnBluetoothConnect = s.resumeOnBluetoothConnect
       ..resumeOnStart = s.resumeOnStart
       ..permanentAudioFocusChange = s.permanentAudioFocusChange
       ..dynamicColorActiveLyrics = s.dynamicColorActiveLyrics
@@ -271,6 +273,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..dynamicAccentColor = s.dynamicAccentColor
       ..sortStrategyIndex = s.sortStrategyIndex
       ..sortAscending = s.sortAscending
+      ..albumSortOptionIndex = s.albumSortOptionIndex
+      ..artistSortOptionIndex = s.artistSortOptionIndex
+      ..genreSortOptionIndex = s.genreSortOptionIndex
+      ..collectionSortOptionIndex = s.collectionSortOptionIndex
       ..homeDarkness = s.homeDarkness
       ..songsDarkness = s.songsDarkness
       ..libraryDarkness = s.libraryDarkness
@@ -296,7 +302,18 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..audioCacheSizeMB = s.audioCacheSizeMB
       ..audioCacheSecs = s.audioCacheSecs
       ..audioBackCacheSizeMB = s.audioBackCacheSizeMB
-      ..exclusiveHardwareMode = s.exclusiveHardwareMode;
+      ..exclusiveHardwareMode = s.exclusiveHardwareMode
+      ..lyricsProvider = s.lyricsProvider
+      ..equalizerGlobalMode = s.equalizerGlobalMode
+      ..firstTimeEqualizer = s.firstTimeEqualizer;
+  }
+
+  Future<void> updateLyricsProvider(String value) async {
+    final newState = _clone(state)..lyricsProvider = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
   }
 
   Future<void> updateBlurredArtworkForLyrics(bool value) async {
@@ -367,6 +384,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   }
   Future<void> updateResumeAfterCall(bool value) async {
     final newState = _clone(state)..resumeAfterCall = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updatePauseOnDuck(bool value) async {
+    final newState = _clone(state)..pauseOnDuck = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateResumeOnBluetoothConnect(bool value) async {
+    final newState = _clone(state)..resumeOnBluetoothConnect = value;
     await DbService.isar.writeTxn(() async {
       await DbService.isar.appSettings.put(newState);
     });
@@ -639,6 +672,30 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = newState;
   }
 
+  Future<void> updateAlbumSortOptionIndex(int index) async {
+    final newState = _clone(state)..albumSortOptionIndex = index;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateArtistSortOptionIndex(int index) async {
+    final newState = _clone(state)..artistSortOptionIndex = index;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateGenreSortOptionIndex(int index) async {
+    final newState = _clone(state)..genreSortOptionIndex = index;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateCollectionSortOptionIndex(int index) async {
+    final newState = _clone(state)..collectionSortOptionIndex = index;
+    await _save(newState);
+    state = newState;
+  }
+
   Future<void> updateHomeDarkness(double value) async {
     final newState = _clone(state)..homeDarkness = value;
     await _save(newState);
@@ -770,6 +827,30 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> updateExclusiveHardwareMode(bool value) async {
     final newState = _clone(state)..exclusiveHardwareMode = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateEqualizerGlobalMode(bool value) async {
+    final newState = _clone(state)..equalizerGlobalMode = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateFirstTimeEqualizer(bool value) async {
+    final newState = _clone(state)..firstTimeEqualizer = value;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updatePlaybackMode(int mode) async {
+    final newState = _clone(state)..playbackModeIndex = mode;
+    await _save(newState);
+    state = newState;
+  }
+
+  Future<void> updateStreamingQuality(int quality) async {
+    final newState = _clone(state)..streamingQuality = quality;
     await _save(newState);
     state = newState;
   }

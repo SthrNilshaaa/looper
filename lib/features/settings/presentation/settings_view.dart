@@ -1,5 +1,5 @@
-import 'dart:ui';
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -15,17 +15,16 @@ import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 
 import 'widgets/settings_widgets.dart';
-import 'widgets/settings_dialogs.dart';
 import 'widgets/theme_settings_tiles.dart';
 import 'widgets/dashboard_settings_tiles.dart';
 import 'widgets/playback_settings_tiles.dart';
 import 'widgets/audio_playback_settings_tiles.dart';
 import 'widgets/library_settings_tiles.dart';
 import 'widgets/about_settings_tiles.dart';
+import 'widgets/streaming_settings_tiles.dart';
 
 final supportUsSheetVisibleProvider = StateProvider<bool>((ref) => false);
 
@@ -151,9 +150,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final settings = ref.watch(settingsProvider);
     final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
 
-    return Material(
-      color: Colors.transparent,
-      child: Scaffold(
+    return RepaintBoundary(
+      child: Material(
+        color: Colors.transparent,
+        child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SafeArea(
           child: Column(
@@ -377,6 +377,18 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                             settings: settings,
                           ),
 
+                          // SpatialFlow Network Streaming Mode
+                          _buildCategoryGroup(
+                            context: context,
+                            id: 'streaming',
+                            title: 'Network Streaming & Mode',
+                            subtitle: 'Hybrid, Local-only, or Online Streaming mode',
+                            icon: LucideIcons.globe,
+                            colorScheme: Theme.of(context).colorScheme,
+                            useBlur: useBlur,
+                            settings: settings,
+                          ),
+
                           // 5. Music Library
                           _buildCategoryGroup(
                             context: context,
@@ -389,7 +401,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                             settings: settings,
                           ),
 
-                          // 6. About & Creators
+                          // 7. About & Creators
                           _buildCategoryGroup(
                             context: context,
                             id: 'about',
@@ -423,7 +435,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildCategoryGroup({
@@ -772,16 +785,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           widget: const LyricsFontFamilySelectionTile(),
         ),
         SettingsSearchItem(
-          title: 'Inactive Lyrics Font Weight',
-          subtitle: 'Inactive lyrics weight offset: ${settings.customFontWeightLyricsDelta}',
+          title: 'Lyrics Font Weight',
+          subtitle: 'Lyrics font weight: ${700 + settings.activeLyricsFontWeightDelta * 100}',
           category: l10n.theme,
           widget: const LyricsFontWeightSelectionTile(),
-        ),
-        SettingsSearchItem(
-          title: 'Active Lyrics Font Weight',
-          subtitle: 'Active lyrics weight offset: ${settings.activeLyricsFontWeightDelta}',
-          category: l10n.theme,
-          widget: const ActiveLyricsFontWeightSelectionTile(),
         ),
       ],
 
@@ -824,13 +831,14 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         category: l10n.playbackAudio,
         widget: const VerticalMotionEffectTile(),
       ),
-      SettingsSearchItem(
-        title: 'Stop Service on App Dismissal',
-        subtitle:
-            'Stop playback and close the app when swiped away from recent panel',
-        category: l10n.playbackAudio,
-        widget: const StopServiceTile(),
-      ),
+      if (Platform.isAndroid)
+        SettingsSearchItem(
+          title: 'Stop Service on App Dismissal',
+          subtitle:
+              'Stop playback and close the app when swiped away from recent panel',
+          category: l10n.playbackAudio,
+          widget: const StopServiceTile(),
+        ),
       SettingsSearchItem(
         title: l10n.internetMode,
         subtitle: l10n.enableNetworkLyricsArt,
@@ -859,44 +867,58 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           widget: const FadeDurationSlider(),
         ),
 
-      SettingsSearchItem(
-        title: l10n.manageAudioFocusTitle,
-        subtitle: l10n.manageAudioFocusDesc,
-        category: l10n.audioPlayback,
-        widget: const ManageAudioFocusTile(),
-      ),
-      if (settings.audioFocus) ...[
+      if (Platform.isAndroid) ...[
         SettingsSearchItem(
-          title: l10n.audioFocusGetFocus,
-          subtitle: l10n.audioFocusGetFocusDesc,
+          title: l10n.manageAudioFocusTitle,
+          subtitle: l10n.manageAudioFocusDesc,
           category: l10n.audioPlayback,
-          widget: const AudioFocusRequestOnPlayTile(),
+          widget: const ManageAudioFocusTile(),
         ),
-        SettingsSearchItem(
-          title: l10n.audioFocusReleaseFocus,
-          subtitle: l10n.audioFocusReleaseFocusDesc,
-          category: l10n.audioPlayback,
-          widget: const AudioFocusReleaseOnPauseTile(),
-        ),
-        SettingsSearchItem(
-          title: l10n.audioFocusStopOnOtherSession,
-          subtitle: l10n.audioFocusStopOnOtherSessionDesc,
-          category: l10n.audioPlayback,
-          widget: const AudioFocusStopOnOtherSessionTile(),
-        ),
-        SettingsSearchItem(
-          title: l10n.audioFocusRestartOnGain,
-          subtitle: l10n.audioFocusRestartOnGainDesc,
-          category: l10n.audioPlayback,
-          widget: const AudioFocusRestartOnGainTile(),
-        ),
-        SettingsSearchItem(
-          title: l10n.resumeOnStartTitle,
-          subtitle: l10n.resumeOnStartDesc,
-          category: l10n.audioPlayback,
-          widget: const ResumeOnStartTile(),
-        ),
+        if (settings.audioFocus) ...[
+          SettingsSearchItem(
+            title: l10n.audioFocusGetFocus,
+            subtitle: l10n.audioFocusGetFocusDesc,
+            category: l10n.audioPlayback,
+            widget: const AudioFocusRequestOnPlayTile(),
+          ),
+          SettingsSearchItem(
+            title: l10n.audioFocusReleaseFocus,
+            subtitle: l10n.audioFocusReleaseFocusDesc,
+            category: l10n.audioPlayback,
+            widget: const AudioFocusReleaseOnPauseTile(),
+          ),
+          SettingsSearchItem(
+            title: l10n.audioFocusStopOnOtherSession,
+            subtitle: l10n.audioFocusStopOnOtherSessionDesc,
+            category: l10n.audioPlayback,
+            widget: const AudioFocusStopOnOtherSessionTile(),
+          ),
+          SettingsSearchItem(
+            title: l10n.audioFocusRestartOnGain,
+            subtitle: l10n.audioFocusRestartOnGainDesc,
+            category: l10n.audioPlayback,
+            widget: const AudioFocusRestartOnGainTile(),
+          ),
+          SettingsSearchItem(
+            title: l10n.pauseOnDuckTitle,
+            subtitle: l10n.pauseOnDuckDesc,
+            category: l10n.audioPlayback,
+            widget: const PauseOnDuckTile(),
+          ),
+          SettingsSearchItem(
+            title: l10n.resumeOnBluetoothConnectTitle,
+            subtitle: l10n.resumeOnBluetoothConnectDesc,
+            category: l10n.audioPlayback,
+            widget: const ResumeOnBluetoothConnectTile(),
+          ),
+        ],
       ],
+      SettingsSearchItem(
+        title: l10n.resumeOnStartTitle,
+        subtitle: l10n.resumeOnStartDesc,
+        category: l10n.audioPlayback,
+        widget: const ResumeOnStartTile(),
+      ),
       SettingsSearchItem(
         title: l10n.shuffleTitle,
         subtitle: l10n.shuffleSwitchingDesc,
@@ -945,8 +967,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       ),
       SettingsSearchItem(
         title: l10n.lyricsProvider,
-        subtitle: 'lrclib.net',
-        category: l10n.aboutAndMaintainers,
+        subtitle: settings.lyricsProvider,
+        category: l10n.theme,
         widget: const LyricsProviderTile(),
       ),
     ];
@@ -1002,6 +1024,8 @@ class SettingsCategoryScreen extends ConsumerWidget {
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const LyricsAlignmentTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
+        const LyricsProviderTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
         const FlatProgressBarTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const PlainTimestampsTile(),
@@ -1028,8 +1052,6 @@ class SettingsCategoryScreen extends ConsumerWidget {
           const LyricsFontFamilySelectionTile(),
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const LyricsFontWeightSelectionTile(),
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const ActiveLyricsFontWeightSelectionTile(),
         ],
         // Darkness sliders
         if (settings.enableDynamicTheming) ...[
@@ -1049,7 +1071,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const LyricsDarknessSlider(),
         ],
-        //const PerformanceOptimizerTile(),
+        const PerformanceOptimizerTile(),
       ];
     } else if (categoryId == 'dashboard') {
       children = [
@@ -1066,8 +1088,10 @@ class SettingsCategoryScreen extends ConsumerWidget {
         const LanguageTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const VerticalMotionEffectTile(),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        const StopServiceTile(),
+        if (Platform.isAndroid) ...[
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const StopServiceTile(),
+        ],
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const InternetModeTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
@@ -1085,20 +1109,36 @@ class SettingsCategoryScreen extends ConsumerWidget {
         const ShuffleTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const PersistQueueTile(),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        const ManageAudioFocusTile(),
-        if (settings.audioFocus) ...[
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const AudioFocusRequestOnPlayTile(),
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const AudioFocusReleaseOnPauseTile(),
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const AudioFocusStopOnOtherSessionTile(),
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const AudioFocusRestartOnGainTile(),
+        if (!Platform.isAndroid) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const ResumeOnStartTile(),
         ],
+        if (Platform.isAndroid) ...[
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const ManageAudioFocusTile(),
+          if (settings.audioFocus) ...[
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const AudioFocusRequestOnPlayTile(),
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const AudioFocusReleaseOnPauseTile(),
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const AudioFocusStopOnOtherSessionTile(),
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const AudioFocusRestartOnGainTile(),
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const PauseOnDuckTile(),
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const ResumeOnBluetoothConnectTile(),
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const ResumeOnStartTile(),
+          ],
+        ],
+      ];
+    } else if (categoryId == 'streaming') {
+      children = [
+        const StreamingModeTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        const StreamingQualityTile(),
       ];
     } else if (categoryId == 'library') {
       children = [
@@ -1112,6 +1152,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const ResetLibraryTile(),
       ];
+
     } else if (categoryId == 'about') {
       children = [
         const LooperVersionTile(), //1
@@ -1389,6 +1430,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
     );
   }
 }
+
 
 class _PulsingHeart extends StatefulWidget {
   const _PulsingHeart();

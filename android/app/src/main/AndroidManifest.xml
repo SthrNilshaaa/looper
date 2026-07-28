@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="Looper Player"
-        android:name="${applicationName}"
+        android:name="com.looper.player.LooperApplication"
         android:icon="@mipmap/ic_launcher"
         android:extractNativeLibs="true"
         android:enableOnBackInvokedCallback="true"
@@ -101,17 +101,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <service
-            android:name="com.alesdrnz.mpv_audio_kit.media_session.MpvMediaSessionService"
-            android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="mediaPlayback"
-            tools:node="merge">
-            <intent-filter>
-                <action android:name="androidx.media3.session.MediaSessionService" />
-                <action android:name="android.intent.action.MEDIA_BUTTON" />
-            </intent-filter>
-        </service>
 
         <service
             android:name="com.looper.player.LooperTaskService"

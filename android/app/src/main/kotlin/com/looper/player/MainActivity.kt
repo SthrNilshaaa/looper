@@ -18,7 +18,9 @@ class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.looper.player/broadcast"
     private val WIDGET_CHANNEL = "com.looper.player/widget"
     private val WAKELOCK_CHANNEL = "com.looper.player/wakelock"
+    private val AUDIO_FOCUS_CHANNEL = "com.looper.player/audio_focus"
     private var wakeLock: PowerManager.WakeLock? = null
+    private var audioFocusManager: AudioFocusManager? = null
 
 
     companion object {
@@ -50,6 +52,36 @@ class MainActivity : FlutterActivity() {
             Log.e("LooperTaskService", "Failed to start LooperTaskService", e)
         }
 
+        val afm = AudioFocusManager(this, MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AUDIO_FOCUS_CHANNEL))
+        audioFocusManager = afm
+
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AUDIO_FOCUS_CHANNEL).setMethodCallHandler { call, result ->
+            when (call.method) {
+                "requestAudioFocus" -> {
+                    val granted = afm.requestAudioFocus()
+                    result.success(granted)
+                }
+                "abandonAudioFocus" -> {
+                    afm.abandonAudioFocus()
+                    result.success(null)
+                }
+                "setPlaybackInterrupted" -> {
+                    val interrupted = call.argument<Boolean>("interrupted") ?: false
+                    afm.setPlaybackInterrupted(interrupted)
+                    result.success(null)
+                }
+                "syncSettings" -> {
+                    afm.isEnabled = call.argument<Boolean>("enabled") ?: true
+                    afm.pauseOnDuck = call.argument<Boolean>("pauseOnDuck") ?: false
+                    afm.resumeOnBluetoothConnect = call.argument<Boolean>("resumeOnBluetoothConnect") ?: false
+                    result.success(null)
+                }
+                else -> {
+                    result.notImplemented()
+                }
+            }
+        }
+
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "broadcastMetadata") {
                 val title = call.argument<String>("title")
@@ -71,6 +103,13 @@ class MainActivity : FlutterActivity() {
                                 mode == AudioManager.MODE_IN_COMMUNICATION || 
                                 mode == AudioManager.MODE_RINGTONE)
                 result.success(isOnCall)
+            } else if (call.method == "restartApp") {
+                val intent = packageManager.getLaunchIntentForPackage(packageName)
+                if (intent != null) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    startActivity(intent)
+                    Runtime.getRuntime().exit(0)
+                }
             } else {
                 result.notImplemented()
             }
@@ -195,6 +234,7 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         releaseWakeLock()
+        audioFocusManager?.unregisterReceivers()
         activeEngine = null
         if (stopOnTaskRemoved) {
             io.flutter.embedding.engine.FlutterEngineCache.getInstance().remove("looper_cached_engine")

@@ -6,7 +6,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/app_fonts.dart';
-import 'package:looper_player/core/ui_utils.dart';
 
 class ColorCircle extends StatelessWidget {
   final Color color;

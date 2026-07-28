@@ -74,10 +74,10 @@ class AdvancedLyricLine extends ConsumerWidget {
     // Calculate absolute distance for opacity and duration
     final absIndex = relativeIndex.abs();
     
-    // Calculate dynamic opacity based on distance from active line
+    // Calculate dynamic opacity based on distance from active line for a smoother transition
     double lineOpacity = 1.0;
     if (!isActive) {
-      lineOpacity = (0.6 / (absIndex * 0.3)).clamp(0.3, 0.5);
+      lineOpacity = 0.35; // ponytail: make inactive lyrics lines all have uniform opacity
     }
 
     final settings = ref.watch(settingsProvider);
@@ -136,11 +136,9 @@ class AdvancedLyricLine extends ConsumerWidget {
       letterSpacing: isHindiText ? 0.95 : 0,
     );
 
-    // Staggered animation durations based on absolute distance
-    final animDuration = Duration(milliseconds: 600 + (absIndex * 20).clamp(0, 200));
-    
-    // Smooth curve for all transitions
-    final curve = Curves.fastOutSlowIn;
+    // Unified animation duration and easeInOutCubic curve for a buttery-smooth transition
+    final animDuration = const Duration(milliseconds: 400);
+    final curve = Curves.easeInOutCubic;
 
     // Watch the search query for highlighting
     final searchQuery = ref.watch(lyricsSearchQueryProvider).toLowerCase();
@@ -160,7 +158,7 @@ class AdvancedLyricLine extends ConsumerWidget {
     // Optimization: If the line is far from the active line (distance > 1),
     // skip expensive animation/mouse widgets and render a static layout.
     // This reduces widget tree depth by 75% and resolves slow frames.
-    if (absIndex > 1) {
+    if (absIndex > 2) {
       return GestureDetector(
         onTap: onTap,
         child: Padding(

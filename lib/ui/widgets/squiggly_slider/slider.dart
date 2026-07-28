@@ -1,4 +1,4 @@
-library slider;
+library;
 
 import 'package:flutter/material.dart';
 import 'line_thumb_shape.dart';

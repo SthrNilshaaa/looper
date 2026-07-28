@@ -31,8 +31,21 @@ class UpdateService {
   }
 
   static bool _isUpdateAvailable(String current, String latest) {
-    String cleanCurrent = current.replaceAll(RegExp(r'[^0-9.]'), '');
-    String cleanLatest = latest.replaceAll(RegExp(r'[^0-9.]'), '');
+    // Extract version prefix starting with a number (e.g. 'v1.2.3-rc.1' -> '1.2.3-rc.1', 'release-2.0.0' -> '2.0.0')
+    final startVersionRegex = RegExp(r'^\D*(\d+\..*)');
+    final currentMatch = startVersionRegex.firstMatch(current);
+    final latestMatch = startVersionRegex.firstMatch(latest);
+
+    String cleanCurrent = currentMatch != null ? currentMatch.group(1)! : current;
+    String cleanLatest = latestMatch != null ? latestMatch.group(1)! : latest;
+
+    // Discard build metadata and pre-release identifiers
+    cleanCurrent = cleanCurrent.split('+')[0].split('-')[0];
+    cleanLatest = cleanLatest.split('+')[0].split('-')[0];
+
+    // Remove any remaining non-digit, non-dot characters
+    cleanCurrent = cleanCurrent.replaceAll(RegExp(r'[^0-9.]'), '');
+    cleanLatest = cleanLatest.replaceAll(RegExp(r'[^0-9.]'), '');
 
     List<int> currentParts = cleanCurrent.split('.').map((e) => int.tryParse(e) ?? 0).toList();
     List<int> latestParts = cleanLatest.split('.').map((e) => int.tryParse(e) ?? 0).toList();
