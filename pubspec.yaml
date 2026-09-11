@@ -98,7 +98,7 @@ flutter:
     - assets/about/
     - assets/android_icons/
   shaders:
-    - shaders/ambient_noise.frag
+    - media/shaders/ambient_noise.frag
   fonts:
     - family: Jost
       fonts:

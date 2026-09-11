@@ -305,7 +305,7 @@ class _NoiseBlurFieldState extends State<_NoiseBlurField> {
   void initState() {
     super.initState();
     _programFuture ??= ui.FragmentProgram.fromAsset(
-      'shaders/ambient_noise.frag',
+      'media/shaders/ambient_noise.frag',
     );
     _programFuture!.then((program) {
       if (!mounted) return;

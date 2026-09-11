@@ -66,11 +66,11 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 ### 📱 Android
 
 <p align="center">
-  <img src="assets/android_ss/screenshot_01.jpg" width="19%" />
-  <img src="assets/android_ss/screensho_02.jpg" width="19%" />
-  <img src="assets/android_ss/screenshot_03.jpg" width="19%" />
-  <img src="assets/android_ss/screenshot_04.jpg" width="19%" />
-  <img src="assets/android_ss/screenshot_05.jpg" width="19%" />
+  <img src="media/screenshots/player_screen.jpg" width="19%" />
+  <img src="media/screenshots/home_screen.jpg" width="19%" />
+  <img src="media/screenshots/welcome_screen.jpg" width="19%" />
+  <img src="media/screenshots/screenshot_04.jpg" width="19%" />
+  <img src="media/screenshots/screenshot_05.jpg" width="19%" />
 </p>
 
 ### 💻 Linux
@@ -80,23 +80,23 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 <br/>
 
 <p align="center">
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-31-38.png" width="49%" alt="Main Dashboard" />
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-40-26.png" width="49%" alt="Player View" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-31-38.png" width="49%" alt="Main Dashboard" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-40-26.png" width="49%" alt="Player View" />
 </p>
 <p align="center">
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-31-46.png" width="32%" />
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-32-19.png" width="32%" />
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-32-45.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-31-46.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-32-19.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-32-45.png" width="32%" />
 </p>
 <p align="center">
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-33-14.png" width="32%" />
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-33-28.png" width="32%" />
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-34-16.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-33-14.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-33-28.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-34-16.png" width="32%" />
 </p>
 <p align="center">
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-35-40.png" width="32%" />
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-36-46.png" width="32%" />
-  <img src="assets/SS_looper/Screenshot From 2026-05-09 11-37-16.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-35-40.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-36-46.png" width="32%" />
+  <img src="media/gallery/Screenshot From 2026-05-09 11-37-16.png" width="32%" />
 </p>
 
 </details>
