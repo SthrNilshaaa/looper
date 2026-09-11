@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/main_logo.svg" width="240" height="96" />
+  <img src="assets/logo_appbar.png" width="140" height="100" />
 </p>
 
 <p align="center">
@@ -17,6 +17,22 @@
   <img src="https://img.shields.io/badge/License-GPL--3.0-green?style=for-the-badge" />
 </p>
 
+<p align="center">
+  <a href="https://play.google.com/store/apps/details?id = com.looper.player">
+    <img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="80">
+  </a>
+</p>
+
+<p align="center">
+  <a href="#key-features">Features</a> •
+  <a href="#gallery">Gallery</a> •
+  <a href="#brand-update">New Look</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#contributors">Contributors</a> •
+  <a href="#contact">Contact</a>
+</p>
+
 ---
 
 ## 🔮 Experience Music in Cyber-Glass Aesthetics
@@ -29,23 +45,15 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 
 ## 🚀 Key Features
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        LOOPER PLAYER FEATURES                          │
-│├───────────────────────────────────────┬────────────────────────────────┤
-│🔮 GLASSMORPHIC CYBER-UI              │ ⚡ ULTRA-PERFORMANT ENGINE     │
-│  Full real-time blur and glowing     │   Sub-millisecond local scans, │
-│  gradients that match album art.     │   indexing libraries of 50k+.  │
-│├───────────────────────────────────────┼────────────────────────────────┤
-│🎤 SYNCHRONIZED LRC LYRICS            │ 📱 CROSS-PLATFORM PARITY       │
-│  Real-time fluid line animations     │   Seamlessly engineered for    │
-│  and interactive lyrics search.      │   both Linux and Android.      │
-│├───────────────────────────────────────┼────────────────────────────────┤
-│🔒 100% PRIVATE & OFFLINE             │ 🎵 CUSTOMIZABLE AUDIO CONTROL  │
-│  Zero trackers. Zero telemetry.      │   Gapless playback and advanced│
-│  All data stays local.               │   audio focus management.      │
-└───────────────────────────────────────┴────────────────────────────────┘
-```
+| 🔮 Glassmorphic Cyber-UI | ⚡ Ultra-Performant Engine |
+| :--- | :--- |
+| Dynamic real-time blur and responsive glowing accents that adapt instantly to album palette. | Sub-millisecond audio scans built to effortlessly index 50,000+ local tracks with zero lag. |
+
+| 🎤 Synchronized LRC Lyrics | 📱 Cross-Platform Parity |
+| :--- | :--- |
+| Fluid line-by-line scroll tracking, time-synced rendering, and instant interactive lyric lookups. | Tailored native feel across both Linux and Android with unified core architecture. |
+
+
 
 - **Dynamic Theme & Neo-Blur Aesthetics**: The entire interface—buttons, borders, text accents, and ambient background blurs—morphs dynamically to blend beautifully with the album art of the active song, featuring smooth crossfade transitions.
 - **Advanced Lyrics Engine**: Synchronized scrolling LRC lyrics with dynamic, tactile line-by-line animations, interactive tap-to-seek playback integration, font scaling, and display keep-awake modes. Supports dynamic fluid or blurred album art background layouts on both Linux and Android.
@@ -98,6 +106,21 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 </p>
 
 </details>
+
+---
+## 🎨 We’ve Updated Our Look!
+
+We refreshed our identity to better match the evolution of the project. If you are referencing our branding assets or linking to old badges, please update to the new mark.
+
+| Old Look | New Look |
+| :---: | :---: |
+| <img src="assets/main_logo.svg" width="240" alt="Old Icon" /> | <img src="assets/launcher_logo.png" width="120" alt="New Icon" /> |
+| *Legacy Design (v1.x)* | *Current Design (v2.5+)* |
+
+### What changed?
+* **Modernized Grid:** Rebuilt from the ground up for crisp rendering across high-DPI displays.
+* **Refined Aesthetics:** Cleaner curves, consistent optical weighting, and improved silhouette recognition at micro sizes (16px/24px).
+* **Asset Paths:** Legacy assets located under `/assets/legacy/` are deprecated and will be removed in upcoming releases.
 
 ---
 
