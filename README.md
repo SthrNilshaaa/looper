@@ -102,6 +102,7 @@ Designed with an **offline-first, private-by-default** philosophy, Looper Player
 </details>
 
 ---
+<a id="brand-update"></a>
 ## 🎨 We’ve Updated Our Look!
 
 We refreshed our identity to better match the evolution of the project. If you are referencing our branding assets or linking to old badges, please update to the new mark.
@@ -118,6 +119,7 @@ We refreshed our identity to better match the evolution of the project. If you a
 
 ---
 
+<a id="tech-stack"></a>
 ## 🛠️ The Tech Stack
 
 ```
@@ -138,6 +140,7 @@ We refreshed our identity to better match the evolution of the project. If you a
 
 ---
 
+<a id="installation"></a>
 ## 📦 Installation & Setup
 
 Download the signed production build for your specific platform from our [Releases](https://github.com/SthrNilshaaa/looper/releases) page.
@@ -183,6 +186,7 @@ cd universal
 
 ---
 
+<a id="contributors"></a>
 ## 👥 Contributors & Open Source
 
 A massive thank you to the brilliant creators behind Looper Player and the open-source libraries that make it possible:
@@ -199,6 +203,7 @@ This project is licensed under the GPL-3.0 License.
 
 ---
 
+<a id="contact"></a>
 ## 📬 Contact & Channels
 
 Connect with the developers for feature requests, bug reports, or discussion:
