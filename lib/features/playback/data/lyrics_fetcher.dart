@@ -9,6 +9,15 @@ import 'lyrics_service.dart';
 class LyricsFetcher {
   static final LyricsService _service = LyricsService();
 
+  static final List<String> allProviders = [
+    'LRCLIB',
+    'GENIUS',
+    'MUSIXMATCH',
+    'AZLYRICS',
+    'LYRICSMINT',
+    'LYRICFIND',
+  ];
+
   static Future<String?> fetchLyrics(Song song) async {
     String? lrc;
     final artist = (song.artist ?? 'Unknown Artist').trim();
@@ -16,12 +25,14 @@ class LyricsFetcher {
 
     // 1. Try Song Database (Previously cached) - INSTANT, ZERO DELAY
     if (song.lyrics != null && song.lyrics!.isNotEmpty) {
+      if (song.lyrics == '[source:not_found]') return null;
       return song.lyrics;
     }
 
     // 2. Try Local Cache
     lrc = await LyricsCache.get(artist, title);
     if (lrc != null && lrc.isNotEmpty) {
+      if (lrc == '[source:not_found]') return null;
       // Save to database for faster next-time loading
       await DbService.isar.writeTxn(() async {
         final dbSong = await DbService.isar.songs.get(song.id);
@@ -85,36 +96,58 @@ class LyricsFetcher {
       return lrc;
     }
 
-    // 5. Online service search (LRCLIB) - LAST FALLBACK
+    // 5. Online service search - LAST FALLBACK
     final settings = await DbService.isar.appSettings.get(0);
     if (settings != null && !settings.enableInternet) {
       return lrc;
     }
+
     try {
-      final provider = settings?.lyricsProvider ?? 'LRCLIB';
-      final response = await _service.getLyrics(
-        trackName: title,
-        artistName: artist,
-        albumName: (song.album ?? '').trim(),
-        durationSeconds: (song.duration ?? 0) ~/ 1000,
-        provider: provider,
-      );
-      final raw = response?.syncedLyrics ?? response?.plainLyrics;
+      final primaryProvider = settings?.lyricsProvider ?? 'LRCLIB';
+      final autoFallback = settings?.autoLyricsFallback ?? true;
 
-      if (raw != null && raw.isNotEmpty) {
-        lrc = '[source:${provider.toLowerCase()}]\n$raw';
-        // Save to cache and DB
-        await LyricsCache.save(artist, title, lrc);
-        await DbService.isar.writeTxn(() async {
-          final dbSong = await DbService.isar.songs.get(song.id);
-          if (dbSong != null) {
-            dbSong.lyrics = lrc;
-            await DbService.isar.songs.put(dbSong);
+      final providersToTry = <String>[primaryProvider];
+      if (autoFallback) {
+        for (final p in allProviders) {
+          if (!providersToTry.contains(p)) {
+            providersToTry.add(p);
           }
-        });
+        }
       }
-    } catch (e) {
 
+      for (final provider in providersToTry) {
+        final response = await _service.getLyrics(
+          trackName: title,
+          artistName: artist,
+          albumName: (song.album ?? '').trim(),
+          durationSeconds: (song.duration ?? 0) ~/ 1000,
+          provider: provider,
+        );
+        final raw = response?.syncedLyrics ?? response?.plainLyrics;
+
+        if (raw != null && raw.isNotEmpty) {
+          lrc = '[source:${provider.toLowerCase()}]\n$raw';
+          break;
+        }
+      }
+
+      if (lrc == null || lrc.isEmpty) {
+        lrc = '[source:not_found]';
+      }
+
+      // Save to cache and DB
+      await LyricsCache.save(artist, title, lrc);
+      await DbService.isar.writeTxn(() async {
+        final dbSong = await DbService.isar.songs.get(song.id);
+        if (dbSong != null) {
+          dbSong.lyrics = lrc;
+          await DbService.isar.songs.put(dbSong);
+        }
+      });
+
+      if (lrc == '[source:not_found]') return null;
+    } catch (_) {
+      // Ignore online error silently
     }
 
     return lrc;

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:isar/isar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db_service.dart';
 import '../../library/domain/models/models.dart';
@@ -43,25 +44,59 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
   Future<void> _loadSettings() async {
     final settings = await DbService.isar.appSettings.get(0);
     if (settings != null) {
-      // Migrate old settings record safely
       bool needsSave = false;
-      if (settings.bgBrightness == 0.0) {
-        settings.bgBrightness = 0.5;
-        needsSave = true;
+      // Recover folder settings from an existing library after older scans
+      // cleared or failed to persist the folder list.
+      if (settings.libraryFolders.isEmpty) {
+        final indexedSongs = await DbService.isar.songs.where().findAll();
+        final recoveredFolders =
+            indexedSongs
+                .map((song) => File(song.path).parent.path)
+                .where((path) => Directory(path).existsSync())
+                .toSet()
+                .toList()
+              ..sort();
+        if (recoveredFolders.isNotEmpty) {
+          settings.libraryFolders = recoveredFolders;
+          needsSave = true;
+        }
       }
-      if (settings.bgOpacity == 0.0) {
-        settings.bgOpacity = 0.3;
-        needsSave = true;
-      }
-      // Since uninitialized booleans in old DB records default to false:
-      // if keepBackgroundGradient is false, that is fine.
-      // showHomeArtists defaults to true, but showHomeAlbums and showHomeGenres should default to false (off)!
-      if (!settings.showHomeArtists &&
-          !settings.showHomeAlbums &&
-          !settings.showHomeGenres) {
-        settings.showHomeArtists = true;
-        settings.showHomeAlbums = false;
-        settings.showHomeGenres = false;
+      // Only run legacy defaults migration ONCE if settingsV3 is not yet set
+      if (!settings.settingsV3) {
+        if (settings.bgBrightness == 0.0) {
+          settings.bgBrightness = 0.5;
+        }
+        if (settings.bgOpacity == 0.0) {
+          settings.bgOpacity = 0.3;
+        }
+        if (!settings.showHomeArtists &&
+            !settings.showHomeAlbums &&
+            !settings.showHomeGenres) {
+          settings.showHomeArtists = true;
+          settings.showHomeAlbums = false;
+          settings.showHomeGenres = true;
+        }
+        if (settings.homeDarkness.isNaN || settings.homeDarkness == 0.0) {
+          settings.homeDarkness = 0.72;
+        }
+        if (settings.songsDarkness.isNaN || settings.songsDarkness == 0.0) {
+          settings.songsDarkness = 0.72;
+        }
+        if (settings.libraryDarkness.isNaN || settings.libraryDarkness == 0.0) {
+          settings.libraryDarkness = 0.72;
+        }
+        if (settings.musicDarkness.isNaN || settings.musicDarkness == 0.0) {
+          settings.musicDarkness = 0.62;
+        }
+        if (settings.lyricsDarkness.isNaN || settings.lyricsDarkness == 0.0) {
+          settings.lyricsDarkness = 0.55;
+        }
+        settings.showQualityBadge = true;
+        settings.enablePlayerGradient = true;
+        settings.settingsV2 = true;
+        settings.dynamicLyrics = false;
+        settings.blurredArtworkForLyrics = true;
+        settings.settingsV3 = true;
         needsSave = true;
       }
       if (settings.homeSectionOrder.isEmpty) {
@@ -71,39 +106,13 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
           'albums',
           'artists',
           'genres',
+          'recent',
         ];
         needsSave = true;
-      }
-      if (settings.homeDarkness.isNaN || (settings.homeDarkness == 0.0 && !settings.settingsV3)) {
-        settings.homeDarkness = 0.72;
-        needsSave = true;
-      }
-      if (settings.songsDarkness.isNaN || (settings.songsDarkness == 0.0 && !settings.settingsV3)) {
-        settings.songsDarkness = 0.72;
-        needsSave = true;
-      }
-      if (settings.libraryDarkness.isNaN || (settings.libraryDarkness == 0.0 && !settings.settingsV3)) {
-        settings.libraryDarkness = 0.72;
-        needsSave = true;
-      }
-      if (settings.musicDarkness.isNaN || (settings.musicDarkness == 0.0 && !settings.settingsV3)) {
-        settings.musicDarkness = 0.62;
-        needsSave = true;
-      }
-      if (settings.lyricsDarkness.isNaN || (settings.lyricsDarkness == 0.0 && !settings.settingsV3)) {
-        settings.lyricsDarkness = 0.55;
-        needsSave = true;
-      }
-      if (!settings.settingsV2) {
-        settings.showQualityBadge = true;
-        settings.enablePlayerGradient = true;
-        settings.settingsV2 = true;
-        needsSave = true;
-      }
-      if (!settings.settingsV3) {
-        settings.dynamicLyrics = false;
-        settings.blurredArtworkForLyrics = true;
-        settings.settingsV3 = true;
+      } else if (!settings.homeSectionOrder.contains('recent')) {
+        // Migration: append the newly added Recent section to existing
+        // custom orderings instead of resetting the user's preference.
+        settings.homeSectionOrder = [...settings.homeSectionOrder, 'recent'];
         needsSave = true;
       }
       if (settings.globalEqualizerGains.length < 48) {
@@ -125,13 +134,15 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         ..bgOpacity = 0.3
         ..showHomeArtists = true
         ..showHomeAlbums = false
-        ..showHomeGenres = false
+        ..showHomeGenres = true
+        ..showHomeRecent = true
         ..homeSectionOrder = [
           'quick_picks',
           'songs',
           'albums',
           'artists',
           'genres',
+          'recent',
         ]
         ..homeDarkness = 0.72
         ..songsDarkness = 0.72
@@ -150,7 +161,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
         ..audioCacheSizeMB = 200
         ..audioCacheSecs = 120
         ..audioBackCacheSizeMB = 100
-        ..persistQueue = true
+        ..persistQueue = false
         ..globalEqualizerGains = _createDefaultGains();
       await DbService.isar.writeTxn(() async {
         await DbService.isar.appSettings.put(defaultSettings);
@@ -239,8 +250,10 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..disableSquiggle = s.disableSquiggle
       ..disableAnimatedDuration = s.disableAnimatedDuration
       ..disableBlur = s.disableBlur
+      ..alwaysBlurSheets = s.alwaysBlurSheets
       ..enableInternet = s.enableInternet
       ..downloadArtwork = s.downloadArtwork
+      ..includeSystemAndMessagingAudio = s.includeSystemAndMessagingAudio
       ..keepBackgroundGradient = s.keepBackgroundGradient
       ..showQualityBadge = s.showQualityBadge
       ..enablePlayerGradient = s.enablePlayerGradient
@@ -253,14 +266,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..showHomeArtists = s.showHomeArtists
       ..showHomeAlbums = s.showHomeAlbums
       ..showHomeGenres = s.showHomeGenres
+      ..showHomeRecent = s.showHomeRecent
       ..homeSectionOrder = List.from(
         s.homeSectionOrder.isEmpty
-            ? ['quick_picks', 'songs', 'albums', 'artists', 'genres']
+            ? ['quick_picks', 'songs', 'albums', 'artists', 'genres', 'recent']
             : s.homeSectionOrder,
       )
       ..enableSlideGesture = s.enableSlideGesture
       ..stopOnTaskRemoved = s.stopOnTaskRemoved
       ..persistQueue = s.persistQueue
+      ..keepSongProgress = s.keepSongProgress
       ..fadePlayPauseStop = s.fadePlayPauseStop
       ..playPauseStopFadeLength = s.playPauseStopFadeLength
       ..resumeAfterCall = s.resumeAfterCall
@@ -269,6 +284,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..resumeOnStart = s.resumeOnStart
       ..permanentAudioFocusChange = s.permanentAudioFocusChange
       ..dynamicColorActiveLyrics = s.dynamicColorActiveLyrics
+      ..ambientColorBackground = s.ambientColorBackground
       ..lyricsAlignment = s.lyricsAlignment
       ..dynamicAccentColor = s.dynamicAccentColor
       ..sortStrategyIndex = s.sortStrategyIndex
@@ -304,8 +320,16 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
       ..audioBackCacheSizeMB = s.audioBackCacheSizeMB
       ..exclusiveHardwareMode = s.exclusiveHardwareMode
       ..lyricsProvider = s.lyricsProvider
+      ..autoLyricsFallback = s.autoLyricsFallback
       ..equalizerGlobalMode = s.equalizerGlobalMode
-      ..firstTimeEqualizer = s.firstTimeEqualizer;
+      ..firstTimeEqualizer = s.firstTimeEqualizer
+      ..lyricsGestureTutorialSeen = s.lyricsGestureTutorialSeen;
+  }
+
+  Future<void> updateIncludeSystemAndMessagingAudio(bool value) async {
+    final newState = _clone(state)..includeSystemAndMessagingAudio = value;
+    await _save(newState);
+    state = newState;
   }
 
   Future<void> updateLyricsProvider(String value) async {
@@ -316,8 +340,24 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = newState;
   }
 
+  Future<void> updateAutoLyricsFallback(bool value) async {
+    final newState = _clone(state)..autoLyricsFallback = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
   Future<void> updateBlurredArtworkForLyrics(bool value) async {
     final newState = _clone(state)..blurredArtworkForLyrics = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAmbientColorBackground(bool value) async {
+    final newState = _clone(state)..ambientColorBackground = value;
     await DbService.isar.writeTxn(() async {
       await DbService.isar.appSettings.put(newState);
     });
@@ -367,6 +407,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     });
     state = newState;
   }
+
   Future<void> updateFadePlayPauseStop(bool value) async {
     final newState = _clone(state)..fadePlayPauseStop = value;
     await DbService.isar.writeTxn(() async {
@@ -382,6 +423,7 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     });
     state = newState;
   }
+
   Future<void> updateResumeAfterCall(bool value) async {
     final newState = _clone(state)..resumeAfterCall = value;
     await DbService.isar.writeTxn(() async {
@@ -416,6 +458,12 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> updatePersistQueue(bool value) async {
     final newState = _clone(state)..persistQueue = value;
+    if (!value) {
+      newState.lastQueueSongIds = [];
+      newState.lastQueueIndex = -1;
+      newState.lastPlayedSongId = null;
+      newState.lastPositionMs = 0;
+    }
     await DbService.isar.writeTxn(() async {
       await DbService.isar.appSettings.put(newState);
     });
@@ -485,6 +533,12 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = newState;
   }
 
+  Future<void> updateShowHomeRecent(bool value) async {
+    final newState = _clone(state)..showHomeRecent = value;
+    await _save(newState);
+    state = newState;
+  }
+
   Future<void> updateDisableSquiggle(bool disabled) async {
     final newState = _clone(state)..disableSquiggle = disabled;
     await DbService.isar.writeTxn(() async {
@@ -503,6 +557,22 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> updateDisableBlur(bool disabled) async {
     final newState = _clone(state)..disableBlur = disabled;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateKeepSongProgress(bool value) async {
+    final newState = _clone(state)..keepSongProgress = value;
+    await DbService.isar.writeTxn(() async {
+      await DbService.isar.appSettings.put(newState);
+    });
+    state = newState;
+  }
+
+  Future<void> updateAlwaysBlurSheets(bool value) async {
+    final newState = _clone(state)..alwaysBlurSheets = value;
     await DbService.isar.writeTxn(() async {
       await DbService.isar.appSettings.put(newState);
     });
@@ -843,14 +913,8 @@ class SettingsNotifier extends StateNotifier<AppSettings> {
     state = newState;
   }
 
-  Future<void> updatePlaybackMode(int mode) async {
-    final newState = _clone(state)..playbackModeIndex = mode;
-    await _save(newState);
-    state = newState;
-  }
-
-  Future<void> updateStreamingQuality(int quality) async {
-    final newState = _clone(state)..streamingQuality = quality;
+  Future<void> updateLyricsGestureTutorialSeen(bool value) async {
+    final newState = _clone(state)..lyricsGestureTutorialSeen = value;
     await _save(newState);
     state = newState;
   }

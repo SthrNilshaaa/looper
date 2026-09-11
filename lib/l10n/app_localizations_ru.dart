@@ -430,47 +430,49 @@ class AppLocalizationsRu extends AppLocalizations {
       'Управляйте языковыми настройками и состоянием фокуса звонящего';
 
   @override
-  String get audioFocusGetFocus => 'Get Focus';
+  String get audioFocusGetFocus => 'Получить фокус';
 
   @override
   String get audioFocusGetFocusDesc =>
-      'Request audio focus when playback begins.';
+      'Запрашивать аудиофокус в начале воспроизведения.';
 
   @override
-  String get audioFocusReleaseFocus => 'Release Focus';
+  String get audioFocusReleaseFocus => 'Освободить фокус';
 
   @override
   String get audioFocusReleaseFocusDesc =>
-      'Release audio focus when playback pauses or stops.';
+      'Освобождать аудиофокус при паузе или остановке воспроизведения.';
 
   @override
   String get audioFocusStopOnOtherSession =>
-      'Stop Music on Other Music Session';
+      'Останавливать музыку при другом музыкальном сеансе';
 
   @override
   String get audioFocusStopOnOtherSessionDesc =>
-      'Pause playback when another app starts playing audio.';
+      'Приостанавливать воспроизведение, когда другое приложение начинает воспроизводить звук.';
 
   @override
-  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+  String get audioFocusRestartOnGain =>
+      'Возобновлять музыку при получении фокуса';
 
   @override
   String get audioFocusRestartOnGainDesc =>
-      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+      'Автоматически возобновлять воспроизведение при возврате аудиофокуса, только если воспроизведение было прервано из-за потери фокуса.';
 
   @override
-  String get pauseOnDuckTitle => 'Pause on Duck';
+  String get pauseOnDuckTitle => 'Пауза при приглушении';
 
   @override
   String get pauseOnDuckDesc =>
-      'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).';
+      'Ставить воспроизведение на паузу вместо снижения громкости, когда другое приложение воспроизводит кратковременный звук (например, уведомления, голосовую навигацию).';
 
   @override
-  String get resumeOnBluetoothConnectTitle => 'Resume on Bluetooth Connect';
+  String get resumeOnBluetoothConnectTitle =>
+      'Возобновлять при подключении Bluetooth';
 
   @override
   String get resumeOnBluetoothConnectDesc =>
-      'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.';
+      'Автоматически возобновлять воспроизведение при повторном подключении Bluetooth-устройства (наушников, автомобильной гарнитуры).';
 
   @override
   String get manualCrossfadeDuration => 'Длительность ручного кроссфейда';
@@ -510,6 +512,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get newTitle => 'Новое название';
+
+  @override
+  String get nextUp => 'Далее';
 
   @override
   String get noAlbumsFound => 'Альбомы не найдены';
@@ -624,6 +629,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get recentPlayed => 'Последние сыгранные';
 
   @override
+  String get recentRowDesc =>
+      'Горизонтальная полка недавно воспроизведённых треков';
+
+  @override
   String get removedFromPlaylist => 'Удалено из плейлиста';
 
   @override
@@ -651,6 +660,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get reorderDashboardSectionsDesc =>
       'Перетащите, чтобы установить предпочтительный порядок панели мониторинга.';
+
+  @override
+  String get includeOtherDeviceAudioTitle => 'Включить другое аудио устройства';
+
+  @override
+  String get includeOtherDeviceAudioDesc =>
+      'Сканировать рингтоны, уведомления, будильники и аудио WhatsApp и Telegram';
 
   @override
   String get rescanLibrary => 'Повторное сканирование библиотеки';
@@ -696,6 +712,13 @@ class AppLocalizationsRu extends AppLocalizations {
   @override
   String get persistQueueDesc =>
       'Сохранять последнюю песню и очередь при перезапуске приложения';
+
+  @override
+  String get keepSongProgressTitle => 'Сохранять прогресс песни';
+
+  @override
+  String get keepSongProgressDesc =>
+      'Запоминает позицию воспроизведения каждой песни отдельно. Переключитесь на другую песню на середине и вернитесь позже — даже после прослушивания других песен между этим — и воспроизведение продолжится с того места, где вы остановились, а не с начала.';
 
   @override
   String get right => 'Справа';
@@ -803,6 +826,13 @@ class AppLocalizationsRu extends AppLocalizations {
       'Отображение значка с информацией о качестве звука на экране воспроизведения';
 
   @override
+  String get showRecentRow => 'Показать строку недавно воспроизведённых';
+
+  @override
+  String get showRecentRowDesc =>
+      'Отображение горизонтального списка недавно воспроизведённых треков на главном экране.';
+
+  @override
   String get silenceBetweenTracksDesc =>
       'Добавить паузу тишины между треками (0 мс для беспрерывного воспроизведения)';
 
@@ -892,19 +922,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get toggleFavorite => 'Переключить избранное';
 
   @override
-  String get shuffleTitle => 'Shuffle';
+  String get shuffleTitle => 'Перемешивание';
 
   @override
   String get shuffleDisabledDesc =>
-      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+      'Воспроизводить песни в исходном порядке очереди. При отключении перемешивания текущая песня продолжает играть, а оставшаяся очередь восстанавливается в исходном порядке без влияния на воспроизведение или его историю.';
 
   @override
   String get shuffleEnabledDesc =>
-      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+      'Перемешивать оставшиеся песни, не затрагивая текущую. Сформированный порядок перемешивания остаётся неизменным, пока очередь не изменится или не будет запрошено новое перемешивание, что предотвращает повторение или пропуск треков.';
 
   @override
   String get shuffleSwitchingDesc =>
-      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+      'Включение или выключение перемешивания никогда не перезапускает текущую песню. Меняется только порядок предстоящих треков — случайный при включении и восстановленный к исходному порядку очереди при выключении.';
 
   @override
   String get topResult => 'Лучший результат';
@@ -1100,4 +1130,443 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get sortDuration => 'Длительность';
+
+  @override
+  String get myAlbums => 'Мои альбомы';
+
+  @override
+  String get featuredArtists => 'Рекомендуемые исполнители';
+
+  @override
+  String get noSongPlaying => 'Ничего не воспроизводится';
+
+  @override
+  String get nextLabel => 'Далее';
+
+  @override
+  String get previousLabel => 'Назад';
+
+  @override
+  String get resync => 'Пересинхронизировать';
+
+  @override
+  String get equalizer => 'Эквалайзер';
+
+  @override
+  String get presets => 'ПРЕСЕТЫ';
+
+  @override
+  String get preAmpGain => 'Усиление предусилителя';
+
+  @override
+  String get outputVolume => 'Выходная громкость';
+
+  @override
+  String get customFilterHint =>
+      'Введите произвольные параметры аудиофильтра libavfilter напрямую (например, volume=3dB, aecho=0.8:0.88:60:0.4):';
+
+  @override
+  String get flowGlobalActions => 'Порядок работы и глобальные действия';
+
+  @override
+  String get equalizerModeLabel => 'Режим эквалайзера:';
+
+  @override
+  String get currentGainsAppliedGlobal =>
+      'Текущие значения применены как глобальные настройки по умолчанию.';
+
+  @override
+  String get applyToGlobal => 'Применить глобально';
+
+  @override
+  String get songSpecificResetGlobal =>
+      'Настройки для этой песни сброшены до глобальных значений по умолчанию.';
+
+  @override
+  String get resetToGlobal => 'Сбросить до глобальных';
+
+  @override
+  String get resetAllSongsEq => 'Сбросить EQ для всех песен';
+
+  @override
+  String get resetAllSongsEqConfirm =>
+      'Вы уверены, что хотите удалить пользовательские настройки эквалайзера для всех песен в вашей библиотеке?';
+
+  @override
+  String get allSongsEqDataReset =>
+      'Все данные эквалайзера для отдельных песен сброшены.';
+
+  @override
+  String get resetAllSongsEqData => 'Сбросить данные EQ для всех песен';
+
+  @override
+  String get equalizerTargetMode => 'Режим применения эквалайзера';
+
+  @override
+  String get equalizerTargetModeDesc =>
+      'Выберите, как настройки эквалайзера применяются ко всей вашей музыкальной библиотеке.';
+
+  @override
+  String get globalMode => 'Глобальный режим';
+
+  @override
+  String get globalModeDesc =>
+      'Применяет эффекты одинаково ко всем песням. Настройки эквалайзера остаются прежними при смене песни.';
+
+  @override
+  String get songSpecificMode => 'Режим для отдельной песни';
+
+  @override
+  String get songSpecificModeDesc =>
+      'Сохраняет пользовательские настройки только для текущей песни. Следующая песня по умолчанию использует ровный/отключённый эквалайзер, если у неё нет собственного профиля.';
+
+  @override
+  String get viewDeviceAudioCapabilities =>
+      'Просмотреть аудиовозможности устройства';
+
+  @override
+  String get deviceAudioCapabilities => 'Аудиовозможности устройства';
+
+  @override
+  String get noPlaybackActiveCapabilities =>
+      'Воспроизведение не активно, либо информация о возможностях недоступна.';
+
+  @override
+  String get changeLyricsProvider => 'Изменить источник текстов песен';
+
+  @override
+  String get autoFallbackProviders => 'Автоматические резервные источники';
+
+  @override
+  String get autoFallbackProvidersDesc =>
+      'Автоматически пробовать другие источники, если у основного нет текста песни';
+
+  @override
+  String get ambientColorBackground => 'Фон с окружающим цветом';
+
+  @override
+  String get ambientColorBackgroundDesc =>
+      'Плавные, ненавязчивые градиенты, созданные на основе обложки песни';
+
+  @override
+  String get exportLyricsLrc => 'Экспортировать текст песни (файл .lrc)';
+
+  @override
+  String get saveLyricsToDevice =>
+      'Сохранить текущий текст песни в память устройства';
+
+  @override
+  String get noLyricsToExport => 'Нет текста песни для экспорта';
+
+  @override
+  String get useCustomLyricsLrc =>
+      'Использовать собственный текст песни (файл LRC)';
+
+  @override
+  String get selectLocalLrcFile =>
+      'Выберите локальный файл .lrc или .txt для этой песни';
+
+  @override
+  String get customLyricsAppliedSuccess =>
+      'Пользовательский текст песни успешно применён!';
+
+  @override
+  String get noRecentlyPlayedTracks => 'Нет недавно воспроизведённых треков';
+
+  @override
+  String get close => 'Закрыть';
+
+  @override
+  String get audioQualityAnalysis => 'Анализ качества звука';
+
+  @override
+  String get audioQualityAnalysisDesc =>
+      'Выполнить углублённый спектральный анализ и анализ аудиоформата';
+
+  @override
+  String get audioStreamDetails => 'Сведения об аудиопотоке';
+
+  @override
+  String get perChannelMetrics => 'Показатели по каналам';
+
+  @override
+  String get sleepTimer => 'Таймер сна';
+
+  @override
+  String get stopByTime => 'ОСТАНОВКА ПО ВРЕМЕНИ';
+
+  @override
+  String get start => 'Запустить';
+
+  @override
+  String get stopBySongCount => 'ОСТАНОВКА ПО КОЛИЧЕСТВУ ПЕСЕН';
+
+  @override
+  String get cancelSleepTimer => 'Отменить таймер сна';
+
+  @override
+  String get nowPlayingAllCaps => 'СЕЙЧАС ИГРАЕТ';
+
+  @override
+  String get settingsAndBackups => 'Настройки и резервные копии';
+
+  @override
+  String get managePreferencesLibraryData =>
+      'Управление настройками и данными библиотеки';
+
+  @override
+  String get logsClearedSuccess => 'Журналы успешно очищены';
+
+  @override
+  String get editSongInfo => 'Изменить информацию о песне';
+
+  @override
+  String get editAlbumInfo => 'Изменить информацию об альбоме';
+
+  @override
+  String get tapFieldToEdit => 'Нажмите на поле, чтобы изменить его';
+
+  @override
+  String get alwaysBlurSheets => 'Всегда размывать листы';
+
+  @override
+  String get alwaysBlurSheetsDesc =>
+      'Размывать всплывающие листы, даже если динамическое оформление выключено';
+
+  @override
+  String get removeArtwork => 'Удалить обложку';
+
+  @override
+  String get resetArtworkToDefault => 'Сбросить к стандартным';
+
+  @override
+  String get artworkResetToDefault => 'Обложка сброшена к стандартной';
+
+  @override
+  String get noEmbeddedArtworkFound =>
+      'Встроенная обложка для этого альбома не найдена';
+
+  @override
+  String get saveChangesBtn => 'Сохранить изменения';
+
+  @override
+  String get enterFolderPathManually => 'Ввести путь к папке вручную';
+
+  @override
+  String get folderPickerManualHint =>
+      'Если системный выбор каталога не открывается, введите или вставьте полный путь к каталогу ниже:';
+
+  @override
+  String get noSupportedSongsFoundFolder =>
+      'В выбранной папке не найдено поддерживаемых песен';
+
+  @override
+  String get add => 'Добавить';
+
+  @override
+  String get folderPickerClosed => 'Выбор папки закрыт';
+
+  @override
+  String get buyMeCoffee => 'Угостить меня кофе';
+
+  @override
+  String get typeToSearchSettings => 'Введите текст для поиска в настройках…';
+
+  @override
+  String get maintainersLabel => 'Мейнтейнеры';
+
+  @override
+  String get personBehindLooperPlayer => 'Человек, стоящий за LooperPlayer';
+
+  @override
+  String get blurredArtworkForLyrics => 'Размытая обложка для текста песни';
+
+  @override
+  String get blurredArtworkForLyricsDesc =>
+      'Показывать размытую обложку альбома как фон вместо динамического/статического градиента';
+
+  @override
+  String get lyricsFontWeight => 'Насыщенность шрифта текста песни';
+
+  @override
+  String get openSourceLicenses => 'Лицензии открытого исходного кода';
+
+  @override
+  String get openSourceLicensesDesc =>
+      'Сторонние библиотеки, используемые в этом приложении';
+
+  @override
+  String get done => 'Готово';
+
+  @override
+  String get lyricsNotAvailable => 'Текст песни недоступен.';
+
+  @override
+  String get lyricsNotAvailableHint =>
+      'Импортируйте файл .lrc или .txt, чтобы добавить текст к этой песне';
+
+  @override
+  String get importLyricsFile => 'Импортировать файл текста песни';
+
+  @override
+  String get approximatedSyncNoWordTimings =>
+      'Приблизительная синхронизация (без покадровой синхронизации слов)';
+
+  @override
+  String get lyricsSyncHelp => 'Справка по синхронизации текста песни';
+
+  @override
+  String get simpleModeLabel => 'Простой режим';
+
+  @override
+  String get advancedModeLabel => 'Расширенный режим';
+
+  @override
+  String get tips => 'Советы';
+
+  @override
+  String get gotIt => 'Понятно';
+
+  @override
+  String get lyricsSyncStudio => 'Студия синхронизации текста песни';
+
+  @override
+  String get lyricsTextLabel => 'Текст песни';
+
+  @override
+  String get lyricsTextHelperDesc =>
+      'По одной строке на строку текста песни. Инструменты синхронизации ниже привязывают к этим строкам временные метки.';
+
+  @override
+  String get quickSync => 'Быстрая синхронизация';
+
+  @override
+  String get autoAdvanceAfterStamping =>
+      'Автоматически переходить дальше после проставления метки';
+
+  @override
+  String get advancedSync => 'Расширенная синхронизация';
+
+  @override
+  String get useCurrentTime => 'Использовать текущее время';
+
+  @override
+  String get playbackAssist => 'Помощник воспроизведения';
+
+  @override
+  String get timeShift => 'Сдвиг по времени';
+
+  @override
+  String get timeShiftDesc =>
+      'Сдвигает все проставленные метки текста песни вместе вперёд или назад.';
+
+  @override
+  String get lyricsSaveLrcExplain =>
+      'При сохранении, если возможно, создаётся сопутствующий файл «.lrc» рядом с аудиофайлом песни, а также сохраняется в локальной базе данных плеера. Строки без временных меток будут интерполированы автоматически.';
+
+  @override
+  String get back => 'Назад';
+
+  @override
+  String get appSettingsLabel => 'Настройки приложения';
+
+  @override
+  String get backupsAndLogs => 'Резервные копии и журналы';
+
+  @override
+  String get backupsAndLogsDesc =>
+      'Экспорт, импорт и управление данными приложения';
+
+  @override
+  String get exportBackupJson => 'Экспортировать резервную копию (JSON)';
+
+  @override
+  String get exportBackupJsonDesc =>
+      'Сохраняет ваши любимые песни и плейлисты в файл JSON, который можно сохранить или отправить. Больше ничего не включается.';
+
+  @override
+  String get importBackupJson => 'Импортировать резервную копию (JSON)';
+
+  @override
+  String get importBackupJsonDesc =>
+      'Объединяет любимые песни и плейлисты из файла резервной копии с вашей библиотекой. Существующие данные никогда не перезаписываются и не удаляются.';
+
+  @override
+  String get exportDiagnosticsLogs => 'Экспортировать диагностические журналы';
+
+  @override
+  String get exportDiagnosticsLogsDesc =>
+      'Отправляет файл диагностического журнала приложения для проверки при устранении неполадок.';
+
+  @override
+  String get clearDiagnosticsLogs => 'Очистить диагностические журналы';
+
+  @override
+  String get clearDiagnosticsLogsDesc =>
+      'Полностью удаляет файл диагностического журнала, хранящийся на этом устройстве. Это действие необратимо.';
+
+  @override
+  String get lyricsPlainTextOrLrc => 'Текст песни (обычный текст или LRC)';
+
+  @override
+  String get syncModeLine => 'СТРОКА';
+
+  @override
+  String get syncModeWord => 'СЛОВО';
+
+  @override
+  String get syncModeChar => 'СИМВОЛ';
+
+  @override
+  String get enterManually => 'Ввести вручную';
+
+  @override
+  String get rawFilterParametersHint => 'Необработанные параметры фильтра...';
+
+  @override
+  String get searchSettingsHint => 'Поиск по настройкам...';
+
+  @override
+  String get repeatTooltip => 'Повтор';
+
+  @override
+  String get favoriteTooltip => 'Избранное';
+
+  @override
+  String get instructionsTooltip => 'Инструкция';
+
+  @override
+  String get pasteLyricsHint => 'Вставьте или введите текст песни здесь';
+
+  @override
+  String get timestampMmSsHint => 'Временная метка (mm:ss.xx)';
+
+  @override
+  String get nowLabel => 'Сейчас';
+
+  @override
+  String get playlistNameHint => 'Название плейлиста';
+
+  @override
+  String get songInfoUpdated => 'Информация о песне обновлена!';
+
+  @override
+  String get albumInfoUpdated => 'Информация об альбоме обновлена!';
+
+  @override
+  String get failedToSaveChanges => 'Не удалось сохранить изменения.';
+
+  @override
+  String sleepTimerStoppingIn(String time) {
+    return 'Активно: остановка через $time';
+  }
+
+  @override
+  String sleepTimerStoppingAfter(String time) {
+    return 'Активно: остановка после $time';
+  }
+
+  @override
+  String get selectWhenToPause =>
+      'Выберите, когда приостановить воспроизведение музыки';
 }

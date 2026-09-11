@@ -1,3 +1,8 @@
+# AdMob/Firebase backup - holds real credentials (see docs/ADS_ANALYTICS_SETUP.md
+# for how to restore from it). Never commit this folder.
+ad_firebase/
+graphify-out/
+
 # Miscellaneous
 *.class
 *.log
@@ -61,4 +66,18 @@ scratch/
 log.txt
 *.zip
 test_svg.png
+
+# Analytics secrets - never commit these. Populate from scratch using
+# docs/ADS_ANALYTICS_SETUP.md; committed *.example templates document the
+# expected shape without real values.
+env.json
+assets/adi-registration.properties
+
+# Code-analysis tool cache output - not part of the project source.
+graphify-out/
+
+# Internal agent config/notes - not for the public repo.
+.agents/
+AGENTS.md
+docs/ADS_ANALYTICS_SETUP.md
 

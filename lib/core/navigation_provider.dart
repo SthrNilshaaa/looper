@@ -21,6 +21,8 @@ enum NavItem {
   downloads,
   smartCollections,
   library,
+  analyze,
+  settingsCategory,
 }
 
 class NavigationState {
@@ -31,6 +33,9 @@ class NavigationState {
   final String? collectionImageUrl;
   final List<Song> collectionSongs;
   final Playlist? activePlaylist;
+  final Album? activeAlbum;
+  final String? settingsCategoryId;
+  final String? settingsCategoryTitle;
   final List<NavigationState> history;
   final bool isPlayerExpanded;
 
@@ -42,6 +47,9 @@ class NavigationState {
     this.collectionImageUrl,
     this.collectionSongs = const [],
     this.activePlaylist,
+    this.activeAlbum,
+    this.settingsCategoryId,
+    this.settingsCategoryTitle,
     this.history = const [],
     this.isPlayerExpanded = false,
   });
@@ -54,6 +62,9 @@ class NavigationState {
     String? collectionImageUrl,
     List<Song>? collectionSongs,
     Playlist? activePlaylist,
+    Album? activeAlbum,
+    String? settingsCategoryId,
+    String? settingsCategoryTitle,
     List<NavigationState>? history,
     bool? isPlayerExpanded,
   }) {
@@ -65,6 +76,9 @@ class NavigationState {
       collectionImageUrl: collectionImageUrl ?? this.collectionImageUrl,
       collectionSongs: collectionSongs ?? this.collectionSongs,
       activePlaylist: activePlaylist ?? this.activePlaylist,
+      activeAlbum: activeAlbum ?? this.activeAlbum,
+      settingsCategoryId: settingsCategoryId ?? this.settingsCategoryId,
+      settingsCategoryTitle: settingsCategoryTitle ?? this.settingsCategoryTitle,
       history: history ?? this.history,
       isPlayerExpanded: isPlayerExpanded ?? this.isPlayerExpanded,
     );
@@ -108,6 +122,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     String? imageUrl,
     required List<Song> songs,
     Playlist? playlist,
+    Album? album,
   }) {
     if (state.activeItem == NavItem.collectionDetail &&
         state.collectionTitle == title) {
@@ -126,6 +141,26 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       collectionImageUrl: imageUrl,
       collectionSongs: songs,
       activePlaylist: playlist,
+      activeAlbum: album,
+      history: newHistory,
+      isPlayerExpanded: state.isPlayerExpanded,
+    );
+  }
+
+  void showSettingsCategory({required String id, required String title}) {
+    if (state.activeItem == NavItem.settingsCategory &&
+        state.settingsCategoryId == id) {
+      return;
+    }
+
+    // Push current state to history
+    final newHistory = List<NavigationState>.from(state.history)
+      ..add(_captureCurrentState());
+
+    state = NavigationState(
+      activeItem: NavItem.settingsCategory,
+      settingsCategoryId: id,
+      settingsCategoryTitle: title,
       history: newHistory,
       isPlayerExpanded: state.isPlayerExpanded,
     );
@@ -152,6 +187,9 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       collectionImageUrl: state.collectionImageUrl,
       collectionSongs: state.collectionSongs,
       activePlaylist: state.activePlaylist,
+      activeAlbum: state.activeAlbum,
+      settingsCategoryId: state.settingsCategoryId,
+      settingsCategoryTitle: state.settingsCategoryTitle,
       isPlayerExpanded: state.isPlayerExpanded,
     );
   }

@@ -26,6 +26,16 @@ final artistsProvider = StreamProvider<List<Artist>>((ref) {
   );
 });
 
+/// Reactively watches every song tagged with [albumName], so a
+/// CollectionDetailView opened for an album updates live when that album
+/// (or one of its songs) is edited, instead of showing a stale snapshot.
+final songsForAlbumProvider = StreamProvider.family<List<Song>, String>((ref, albumName) {
+  return DbService.isar.songs
+      .filter()
+      .albumEqualTo(albumName)
+      .watch(fireImmediately: true);
+});
+
 class AlbumsGrid extends ConsumerWidget {
   const AlbumsGrid({super.key});
 
@@ -59,8 +69,12 @@ class _AlbumCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDynamic = ref.watch(settingsProvider).enableDynamicTheming;
-    final isCurrentAlbum = ref.watch(playbackProvider.select((s) => s.currentSong?.album == album.name));
-    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
+    // Combined into one select so this card only rebuilds when ITS OWN
+    // playing state flips, instead of every album card rebuilding on any
+    // play/pause toggle.
+    final isPlayingThisAlbum = ref.watch(
+      playbackProvider.select((s) => s.isPlaying && s.currentSong?.album == album.name),
+    );
     final nav = ref.watch(appNavigationProvider);
     final isSelected =
         nav.activeItem == NavItem.collectionDetail &&
@@ -79,6 +93,7 @@ class _AlbumCard extends ConsumerWidget {
               subtitle: album.artist,
               art: album.artPath,
               songs: songs,
+              album: album,
             );
       },
       borderRadius: BorderRadius.circular(24),
@@ -116,7 +131,7 @@ class _AlbumCard extends ConsumerWidget {
                   color: Colors.white.withValues(alpha: 0.05),
                 ),
                 child: PlayingOverlay(
-                  isPlaying: isCurrentAlbum && isPlaying,
+                  isPlaying: isPlayingThisAlbum,
                   borderRadius: 16,
                   child: album.artPath != null
                       ? ClipRRect(

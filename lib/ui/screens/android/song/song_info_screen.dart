@@ -29,37 +29,12 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
   late Future<AudioAnalysis?> _analysisFuture;
   late Future<String?> _lyricsFuture;
   bool _lyricsExpanded = false;
-  String? _fileSize;
 
   @override
   void initState() {
     super.initState();
     _analysisFuture = AudioAnalyzer.analyze(widget.song.path);
     _lyricsFuture = LyricsFetcher.fetchLyrics(widget.song);
-    _loadFileSizeAsync();
-  }
-
-  Future<void> _loadFileSizeAsync() async {
-    try {
-      final file = File(widget.song.path);
-      if (await file.exists()) {
-        final bytes = await file.length();
-        if (bytes <= 0) {
-          _fileSize = "0 B";
-        } else {
-          const suffixes = ["B", "KB", "MB", "GB", "TB"];
-          var i = (math.log(bytes) / math.log(1024)).floor();
-          _fileSize = '${(bytes / math.pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
-        }
-      } else {
-        _fileSize = "N/A";
-      }
-    } catch (_) {
-      _fileSize = "N/A";
-    }
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   String _cleanLyrics(String rawLrc) {
@@ -113,6 +88,8 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                         height: double.infinity,
                         cacheWidth: 100,
                         cacheHeight: 100,
+                        gaplessPlayback: true,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
                       ),
                     ),
                     Container(
@@ -183,7 +160,7 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
                                   items: [
                                     _InfoItem('File Name', widget.song.path.split(Platform.pathSeparator).last),
                                     _InfoItem('File Format', format),
-                                    _InfoItem('File Size', _fileSize ?? 'Loading...'),
+                                    _InfoItem('File Size', _formatFileSize(widget.song.path)),
                                     _InfoItem('Date Added', DateFormat('MMM dd, yyyy, hh:mm a').format(widget.song.dateAdded)),
                                     _InfoItem('Absolute Path', widget.song.path, isLong: true),
                                   ],
@@ -530,7 +507,18 @@ class _SongInfoScreenState extends ConsumerState<SongInfoScreen> {
   );
   }
 
-
+  String _formatFileSize(String path) {
+    try {
+      final file = File(path);
+      final bytes = file.lengthSync();
+      if (bytes <= 0) return "0 B";
+      const suffixes = ["B", "KB", "MB", "GB", "TB"];
+      var i = (math.log(bytes) / math.log(1024)).floor();
+      return '${(bytes / math.pow(1024, i)).toStringAsFixed(1)} ${suffixes[i]}';
+    } catch (_) {
+      return "N/A";
+    }
+  }
 }
 
 class _InfoItem {

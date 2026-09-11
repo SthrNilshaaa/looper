@@ -11,6 +11,7 @@ import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/ui/widgets/color_maper.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import '../screens/android/player/android_equalizer_screen.dart';
 import 'premium_progress_bar.dart';
 
 class PlayerBar extends ConsumerWidget {
@@ -30,6 +31,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final colorScheme = Theme.of(context).colorScheme;
     final song = ref.watch(playbackProvider.select((s) => s.currentSong));
     if (song == null) return const SizedBox.shrink();
@@ -211,6 +213,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
     RepeatMode repeatMode,
     bool isVeryNarrow,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -222,7 +225,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
             height: 12,
             colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
-          tooltip: 'Previous',
+          tooltip: l10n.previousLabel,
         ),
         const SizedBox(width: 4),
         _BouncyTap(
@@ -256,7 +259,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
             height: 12,
             colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
           ),
-          tooltip: 'Next',
+          tooltip: l10n.nextLabel,
         ),
         if (!isVeryNarrow)
           Container(
@@ -279,7 +282,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
                 BlendMode.srcIn,
               ),
             ),
-            tooltip: 'Shuffle',
+            tooltip: l10n.shuffleTitle,
           ),
         ],
         if (!isVeryNarrow)
@@ -303,7 +306,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
                   ? AccentColorMapper(colorScheme.primary)
                   : null,
             ),
-            tooltip: 'Repeat',
+            tooltip: l10n.repeatTooltip,
           ),
       ],
     );
@@ -370,6 +373,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
     bool isQueueActive,
     bool isVeryNarrow,
   ) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         if (!isVeryNarrow)
@@ -386,7 +390,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
               ),
             ),
             onPressed: () => ref.read(playbackProvider.notifier).toggleFavorite(),
-            tooltip: 'Favorite',
+            tooltip: l10n.favoriteTooltip,
           ),
         const SizedBox(width: 4),
         IconButton(
@@ -400,7 +404,7 @@ class _PremiumPlayerBar extends ConsumerWidget {
             ),
           ),
           onPressed: () => ref.read(appNavigationProvider.notifier).toggleItem(NavItem.lyrics),
-          tooltip: 'Lyrics',
+          tooltip: l10n.lyrics,
         ),
         const SizedBox(width: 4),
         IconButton(
@@ -410,7 +414,27 @@ class _PremiumPlayerBar extends ConsumerWidget {
             color: isQueueActive ? colorScheme.primary : Colors.white54,
           ),
           onPressed: () => ref.read(appNavigationProvider.notifier).toggleItem(NavItem.queue),
-          tooltip: 'Queue',
+          tooltip: l10n.queue,
+        ),
+        const SizedBox(width: 4),
+        IconButton(
+          icon: Icon(
+            LucideIcons.sliders,
+            size: 16,
+            color: ref.watch(settingsProvider.select((s) => s.equalizerEnabled))
+                ? colorScheme.primary
+                : Colors.white54,
+          ),
+          onPressed: () {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              useSafeArea: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => const AndroidEqualizerScreen(),
+            );
+          },
+          tooltip: l10n.equalizer,
         ),
       ],
     );

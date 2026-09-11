@@ -3,12 +3,13 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:looper_player/core/app_links.dart';
 import '../../../core/db_service.dart';
 import '../domain/models/models.dart';
 import 'package:isar/isar.dart';
 
 class ArtworkDownloaderService {
-  static const String iTunesSearchUrl = 'https://itunes.apple.com/search';
+  static const String iTunesSearchUrl = AppLinks.iTunesSearchUrl;
 
   /// Standard User-Agent header to prevent CDNs from blocking requests
   static const Map<String, String> _headers = {
@@ -121,7 +122,7 @@ class ArtworkDownloaderService {
               await DbService.isar.songs.put(freshSong);
             }
 
-            // Also update associated album
+            // Also update associated album & artist
             if (song.album != null) {
               final album = await DbService.isar.albums
                   .filter()
@@ -130,6 +131,16 @@ class ArtworkDownloaderService {
               if (album != null && (album.artPath == null || album.artPath!.isEmpty)) {
                 album.artPath = artPath;
                 await DbService.isar.albums.put(album);
+              }
+            }
+            if (song.artist != null) {
+              final artist = await DbService.isar.artists
+                  .filter()
+                  .nameEqualTo(song.artist!)
+                  .findFirst();
+              if (artist != null && (artist.artPath == null || artist.artPath!.isEmpty)) {
+                artist.artPath = artPath;
+                await DbService.isar.artists.put(artist);
               }
             }
           });

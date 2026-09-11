@@ -21,14 +21,13 @@ import 'tabs/android_home_tab.dart';
 import 'tabs/android_search_tab.dart';
 import 'tabs/android_library_tab.dart';
 import 'tabs/android_songs_tab.dart';
-import 'tabs/online_explore_tab.dart';
-import 'package:looper_player/features/streaming/presentation/streaming_notifier.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/player_expand_provider.dart';
 import 'widgets/premium_navbar.dart';
 import 'widgets/premium_section.dart';
 import 'package:looper_player/features/library/presentation/smart_views.dart';
 import 'package:looper_player/features/library/presentation/queue_view.dart';
+import 'package:looper_player/features/analyze/presentation/looper_analyze_view.dart';
 
 
 import 'package:animations/animations.dart';
@@ -63,7 +62,6 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
     
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ref.read(settingsProvider.notifier).initialization;
-      ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
     });
   }
 
@@ -98,9 +96,6 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
         setState(() {
           _permissionsGranted = isGranted;
         });
-        if (isGranted) {
-          ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: true);
-        }
       }
     }
   }
@@ -167,6 +162,7 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
               imageUrl: next.collectionImageUrl,
               songs: next.collectionSongs,
               playlist: next.activePlaylist,
+              album: next.activeAlbum,
             ),
           ),
         );
@@ -178,10 +174,13 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
         navigatorKey.currentState?.push(
           _createPremiumRoute(const SettingsView()),
         );
-      } else if (isForward && next.activeItem == NavItem.search) {
+      } else if (isForward && next.activeItem == NavItem.settingsCategory) {
         navigatorKey.currentState?.push(
           _createPremiumRoute(
-            const OnlineExploreTab(),
+            SettingsCategoryScreen(
+              categoryId: next.settingsCategoryId ?? '',
+              title: next.settingsCategoryTitle ?? '',
+            ),
           ),
         );
       } else if (isForward && next.activeItem == NavItem.favorites) {
@@ -247,6 +246,10 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
             ),
           ),
         );
+      } else if (isForward && next.activeItem == NavItem.analyze) {
+        navigatorKey.currentState?.push(
+          _createPremiumRoute(const LooperAnalyzeView()),
+        );
       } else if (!isForward) {
         if (navigatorKey.currentState?.canPop() ?? false) {
           navigatorKey.currentState?.pop();
@@ -283,18 +286,23 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
 
         // 1. If sliding player is open/expanded (vertical motion), collapse it
         final double slideProgress = ref.read(playerExpandProgressProvider);
-        if (settings.enableSlideGesture && slideProgress > 0.0) {
+        if (settings.enableSlideGesture && slideProgress > 0.01) {
+          _lastBackPressTime = null;
           ref.read(playerCollapseTriggerProvider.notifier).update((state) => state + 1);
           return;
         }
 
         // 2. If non-sliding player is expanded, collapse it
         if (!settings.enableSlideGesture && nav.isPlayerExpanded) {
+          _lastBackPressTime = null;
           ref.read(appNavigationProvider.notifier).setPlayerExpansion(false);
           return;
         }
 
-        // 3. If local navigator has sub-pages (favorites, playlists, settings, categories, details), pop it
+        // 3. If local navigator has sub-pages (favorites, playlists, settings, categories, details), go back
+        // through appNavigationProvider (not navigatorKey directly) so its state stays in sync with the
+        // visible route -- popping the raw Navigator here left the provider stuck on the old screen and
+        // made re-opening the same item (e.g. the same album) silently do nothing.
         final bool canPopNavigator = navigatorKey.currentState?.canPop() ?? false;
         if (canPopNavigator) {
           ref.read(appNavigationProvider.notifier).goBack();
@@ -440,14 +448,8 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
                                   );
                                 },
                             child: KeyedSubtree(
-                              key: ValueKey('$index-${ref.watch(settingsProvider).playbackModeIndex}'),
-                              child: () {
-                                final mode = ref.watch(streamingProvider.notifier).currentMode;
-                                if (mode == PlaybackMode.onlineOnly && index == 0) {
-                                  return const OnlineExploreTab();
-                                }
-                                return _tabs[index];
-                              }(),
+                              key: ValueKey(index),
+                              child: _tabs[index],
                             ),
                           );
                         },
@@ -662,8 +664,8 @@ class BlurredBackgroundArt extends StatelessWidget {
     return RepaintBoundary(
       child: ImageFiltered(
         imageFilter: ImageFilter.blur(
-          sigmaX: 5.0,
-          sigmaY: 5.0,
+          sigmaX: 18,
+          sigmaY: 18,
         ),
         child: Image.file(
           File(path),
@@ -671,8 +673,8 @@ class BlurredBackgroundArt extends StatelessWidget {
           width: double.infinity,
           height: double.infinity,
           filterQuality: FilterQuality.low,
-          cacheWidth: 32,
-          cacheHeight: 32,
+          cacheWidth: 80,
+          cacheHeight: 80,
           gaplessPlayback: true,
           errorBuilder: (_, _, _) => const SizedBox.shrink(),
         ),

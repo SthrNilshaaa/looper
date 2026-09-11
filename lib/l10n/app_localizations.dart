@@ -1034,6 +1034,12 @@ abstract class AppLocalizations {
   /// **'New Title'**
   String get newTitle;
 
+  /// No description provided for @nextUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Next Up'**
+  String get nextUp;
+
   /// No description provided for @noAlbumsFound.
   ///
   /// In en, this message translates to:
@@ -1250,6 +1256,12 @@ abstract class AppLocalizations {
   /// **'Recent Played'**
   String get recentPlayed;
 
+  /// No description provided for @recentRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Horizontal shelf of recently played tracks'**
+  String get recentRowDesc;
+
   /// No description provided for @removedFromPlaylist.
   ///
   /// In en, this message translates to:
@@ -1303,6 +1315,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Drag and drop to set preferred dashboard order'**
   String get reorderDashboardSectionsDesc;
+
+  /// No description provided for @includeOtherDeviceAudioTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Include other device audio'**
+  String get includeOtherDeviceAudioTitle;
+
+  /// No description provided for @includeOtherDeviceAudioDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan ringtones, notifications, alarms, WhatsApp and Telegram audio'**
+  String get includeOtherDeviceAudioDesc;
 
   /// No description provided for @rescanLibrary.
   ///
@@ -1381,6 +1405,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Saves the last played song, queue order, and playback position so the app can restore the same session after restart. In real use, this means when the app is reopened, the user can continue from the same song list instead of starting over.'**
   String get persistQueueDesc;
+
+  /// No description provided for @keepSongProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Song Progress'**
+  String get keepSongProgressTitle;
+
+  /// No description provided for @keepSongProgressDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Remembers each song\'s own playback position separately. Switch to another song partway through and come back later — even after playing other songs in between — and it resumes right where you left off instead of starting over.'**
+  String get keepSongProgressDesc;
 
   /// No description provided for @right.
   ///
@@ -1573,6 +1609,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Display audio quality information badge on the now playing screen'**
   String get showQualityBadgeDesc;
+
+  /// No description provided for @showRecentRow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Recent Row'**
+  String get showRecentRow;
+
+  /// No description provided for @showRecentRowDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Display a horizontal list of recently played tracks on your Home screen'**
+  String get showRecentRowDesc;
 
   /// No description provided for @silenceBetweenTracksDesc.
   ///
@@ -2101,6 +2149,804 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Duration'**
   String get sortDuration;
+
+  /// No description provided for @myAlbums.
+  ///
+  /// In en, this message translates to:
+  /// **'My Albums'**
+  String get myAlbums;
+
+  /// No description provided for @featuredArtists.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured Artists'**
+  String get featuredArtists;
+
+  /// No description provided for @noSongPlaying.
+  ///
+  /// In en, this message translates to:
+  /// **'No song playing'**
+  String get noSongPlaying;
+
+  /// No description provided for @nextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get nextLabel;
+
+  /// No description provided for @previousLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous'**
+  String get previousLabel;
+
+  /// No description provided for @resync.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-sync'**
+  String get resync;
+
+  /// No description provided for @equalizer.
+  ///
+  /// In en, this message translates to:
+  /// **'Equalizer'**
+  String get equalizer;
+
+  /// No description provided for @presets.
+  ///
+  /// In en, this message translates to:
+  /// **'PRESETS'**
+  String get presets;
+
+  /// No description provided for @preAmpGain.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-amp Gain'**
+  String get preAmpGain;
+
+  /// No description provided for @outputVolume.
+  ///
+  /// In en, this message translates to:
+  /// **'Output Volume'**
+  String get outputVolume;
+
+  /// No description provided for @customFilterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Type custom libavfilter audio filter parameters directly (e.g. volume=3dB, aecho=0.8:0.88:60:0.4):'**
+  String get customFilterHint;
+
+  /// No description provided for @flowGlobalActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Flow & Global Actions'**
+  String get flowGlobalActions;
+
+  /// No description provided for @equalizerModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Equalizer Mode:'**
+  String get equalizerModeLabel;
+
+  /// No description provided for @currentGainsAppliedGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Current gains applied as global default settings.'**
+  String get currentGainsAppliedGlobal;
+
+  /// No description provided for @applyToGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply to Global'**
+  String get applyToGlobal;
+
+  /// No description provided for @songSpecificResetGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Song-specific settings reset to global default.'**
+  String get songSpecificResetGlobal;
+
+  /// No description provided for @resetToGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Global'**
+  String get resetToGlobal;
+
+  /// No description provided for @resetAllSongsEq.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset All Songs EQ'**
+  String get resetAllSongsEq;
+
+  /// No description provided for @resetAllSongsEqConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to clear custom equalizer settings for all songs in your library?'**
+  String get resetAllSongsEqConfirm;
+
+  /// No description provided for @allSongsEqDataReset.
+  ///
+  /// In en, this message translates to:
+  /// **'All song-specific equalizer data has been reset.'**
+  String get allSongsEqDataReset;
+
+  /// No description provided for @resetAllSongsEqData.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset All Songs EQ Data'**
+  String get resetAllSongsEqData;
+
+  /// No description provided for @equalizerTargetMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Equalizer Target Mode'**
+  String get equalizerTargetMode;
+
+  /// No description provided for @equalizerTargetModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Select how equalizer settings are applied across your music library.'**
+  String get equalizerTargetModeDesc;
+
+  /// No description provided for @globalMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Global Mode'**
+  String get globalMode;
+
+  /// No description provided for @globalModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Applies effects to all songs universally. Equalizer settings remain the same when the song changes.'**
+  String get globalModeDesc;
+
+  /// No description provided for @songSpecificMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Song-Specific Mode'**
+  String get songSpecificMode;
+
+  /// No description provided for @songSpecificModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves custom settings for the current song only. Next song defaults to no/flat equalizer unless it has its own profile.'**
+  String get songSpecificModeDesc;
+
+  /// No description provided for @viewDeviceAudioCapabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'View Device Audio Capabilities'**
+  String get viewDeviceAudioCapabilities;
+
+  /// No description provided for @deviceAudioCapabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'Device Audio Capabilities'**
+  String get deviceAudioCapabilities;
+
+  /// No description provided for @noPlaybackActiveCapabilities.
+  ///
+  /// In en, this message translates to:
+  /// **'No playback active or capabilities information unavailable.'**
+  String get noPlaybackActiveCapabilities;
+
+  /// No description provided for @changeLyricsProvider.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Lyrics Provider'**
+  String get changeLyricsProvider;
+
+  /// No description provided for @autoFallbackProviders.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Fallback Providers'**
+  String get autoFallbackProviders;
+
+  /// No description provided for @autoFallbackProvidersDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Try remaining providers automatically if primary has no lyrics'**
+  String get autoFallbackProvidersDesc;
+
+  /// No description provided for @ambientColorBackground.
+  ///
+  /// In en, this message translates to:
+  /// **'Ambient Color Background'**
+  String get ambientColorBackground;
+
+  /// No description provided for @ambientColorBackgroundDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Smooth, subtle ambient gradients derived from song artwork'**
+  String get ambientColorBackgroundDesc;
+
+  /// No description provided for @exportLyricsLrc.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Lyrics (.lrc file)'**
+  String get exportLyricsLrc;
+
+  /// No description provided for @saveLyricsToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Save current lyrics to device storage'**
+  String get saveLyricsToDevice;
+
+  /// No description provided for @noLyricsToExport.
+  ///
+  /// In en, this message translates to:
+  /// **'No lyrics available to export'**
+  String get noLyricsToExport;
+
+  /// No description provided for @useCustomLyricsLrc.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Custom Lyrics (LRC File)'**
+  String get useCustomLyricsLrc;
+
+  /// No description provided for @selectLocalLrcFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Select local .lrc or .txt file for this song'**
+  String get selectLocalLrcFile;
+
+  /// No description provided for @customLyricsAppliedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom lyrics applied successfully!'**
+  String get customLyricsAppliedSuccess;
+
+  /// No description provided for @noRecentlyPlayedTracks.
+  ///
+  /// In en, this message translates to:
+  /// **'No recently played tracks'**
+  String get noRecentlyPlayedTracks;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @audioQualityAnalysis.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio Quality Analysis'**
+  String get audioQualityAnalysis;
+
+  /// No description provided for @audioQualityAnalysisDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Perform deep spectral and audio format analysis'**
+  String get audioQualityAnalysisDesc;
+
+  /// No description provided for @audioStreamDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Audio Stream Details'**
+  String get audioStreamDetails;
+
+  /// No description provided for @perChannelMetrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-Channel Metrics'**
+  String get perChannelMetrics;
+
+  /// No description provided for @sleepTimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Timer'**
+  String get sleepTimer;
+
+  /// No description provided for @stopByTime.
+  ///
+  /// In en, this message translates to:
+  /// **'STOP BY TIME'**
+  String get stopByTime;
+
+  /// No description provided for @start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
+
+  /// No description provided for @stopBySongCount.
+  ///
+  /// In en, this message translates to:
+  /// **'STOP BY SONG COUNT'**
+  String get stopBySongCount;
+
+  /// No description provided for @cancelSleepTimer.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Sleep Timer'**
+  String get cancelSleepTimer;
+
+  /// No description provided for @nowPlayingAllCaps.
+  ///
+  /// In en, this message translates to:
+  /// **'NOW PLAYING'**
+  String get nowPlayingAllCaps;
+
+  /// No description provided for @settingsAndBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings & Backups'**
+  String get settingsAndBackups;
+
+  /// No description provided for @managePreferencesLibraryData.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage preferences and library data'**
+  String get managePreferencesLibraryData;
+
+  /// No description provided for @logsClearedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Logs cleared successfully'**
+  String get logsClearedSuccess;
+
+  /// No description provided for @editSongInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Song Info'**
+  String get editSongInfo;
+
+  /// No description provided for @editAlbumInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Album Info'**
+  String get editAlbumInfo;
+
+  /// No description provided for @tapFieldToEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a field to edit'**
+  String get tapFieldToEdit;
+
+  /// No description provided for @alwaysBlurSheets.
+  ///
+  /// In en, this message translates to:
+  /// **'Always Blur Sheets'**
+  String get alwaysBlurSheets;
+
+  /// No description provided for @alwaysBlurSheetsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Blur popup sheets even when Dynamic Theming is off'**
+  String get alwaysBlurSheetsDesc;
+
+  /// No description provided for @removeArtwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove artwork'**
+  String get removeArtwork;
+
+  /// No description provided for @resetArtworkToDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to default'**
+  String get resetArtworkToDefault;
+
+  /// No description provided for @artworkResetToDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Artwork reset to default'**
+  String get artworkResetToDefault;
+
+  /// No description provided for @noEmbeddedArtworkFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No embedded artwork found for this album'**
+  String get noEmbeddedArtworkFound;
+
+  /// No description provided for @saveChangesBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChangesBtn;
+
+  /// No description provided for @enterFolderPathManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Folder Path Manually'**
+  String get enterFolderPathManually;
+
+  /// No description provided for @folderPickerManualHint.
+  ///
+  /// In en, this message translates to:
+  /// **'If the system directory picker is not opening, type or paste the full directory path below:'**
+  String get folderPickerManualHint;
+
+  /// No description provided for @noSupportedSongsFoundFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'No supported songs found in the selected folder'**
+  String get noSupportedSongsFoundFolder;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @folderPickerClosed.
+  ///
+  /// In en, this message translates to:
+  /// **'Folder picker closed'**
+  String get folderPickerClosed;
+
+  /// No description provided for @buyMeCoffee.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy Me a Coffee'**
+  String get buyMeCoffee;
+
+  /// No description provided for @typeToSearchSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Type to search settings...'**
+  String get typeToSearchSettings;
+
+  /// No description provided for @maintainersLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintainers'**
+  String get maintainersLabel;
+
+  /// No description provided for @personBehindLooperPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'Person behind LooperPlayer'**
+  String get personBehindLooperPlayer;
+
+  /// No description provided for @blurredArtworkForLyrics.
+  ///
+  /// In en, this message translates to:
+  /// **'Blurred Artwork for Lyrics'**
+  String get blurredArtworkForLyrics;
+
+  /// No description provided for @blurredArtworkForLyricsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Show blurred album art as background instead of dynamic/static gradient'**
+  String get blurredArtworkForLyricsDesc;
+
+  /// No description provided for @lyricsFontWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Font Weight'**
+  String get lyricsFontWeight;
+
+  /// No description provided for @openSourceLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Source Licenses'**
+  String get openSourceLicenses;
+
+  /// No description provided for @openSourceLicensesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party libraries used in this app'**
+  String get openSourceLicensesDesc;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @lyricsNotAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics not available.'**
+  String get lyricsNotAvailable;
+
+  /// No description provided for @lyricsNotAvailableHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Import a .lrc or .txt file to add lyrics for this song'**
+  String get lyricsNotAvailableHint;
+
+  /// No description provided for @importLyricsFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Lyrics File'**
+  String get importLyricsFile;
+
+  /// No description provided for @approximatedSyncNoWordTimings.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximated Sync (No Word Timings)'**
+  String get approximatedSyncNoWordTimings;
+
+  /// No description provided for @lyricsSyncHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Sync Help'**
+  String get lyricsSyncHelp;
+
+  /// No description provided for @simpleModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple Mode'**
+  String get simpleModeLabel;
+
+  /// No description provided for @advancedModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Mode'**
+  String get advancedModeLabel;
+
+  /// No description provided for @tips.
+  ///
+  /// In en, this message translates to:
+  /// **'Tips'**
+  String get tips;
+
+  /// No description provided for @gotIt.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it'**
+  String get gotIt;
+
+  /// No description provided for @lyricsSyncStudio.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Sync Studio'**
+  String get lyricsSyncStudio;
+
+  /// No description provided for @lyricsTextLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics Text'**
+  String get lyricsTextLabel;
+
+  /// No description provided for @lyricsTextHelperDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'One line per lyric row. The sync tools below attach timestamps to these lines.'**
+  String get lyricsTextHelperDesc;
+
+  /// No description provided for @quickSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Sync'**
+  String get quickSync;
+
+  /// No description provided for @autoAdvanceAfterStamping.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto-advance after stamping'**
+  String get autoAdvanceAfterStamping;
+
+  /// No description provided for @advancedSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced Sync'**
+  String get advancedSync;
+
+  /// No description provided for @useCurrentTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Current Time'**
+  String get useCurrentTime;
+
+  /// No description provided for @playbackAssist.
+  ///
+  /// In en, this message translates to:
+  /// **'Playback Assist'**
+  String get playbackAssist;
+
+  /// No description provided for @timeShift.
+  ///
+  /// In en, this message translates to:
+  /// **'Time Shift'**
+  String get timeShift;
+
+  /// No description provided for @timeShiftDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Move every stamped lyric forward or backward together.'**
+  String get timeShiftDesc;
+
+  /// No description provided for @lyricsSaveLrcExplain.
+  ///
+  /// In en, this message translates to:
+  /// **'Save writes an `.lrc` sidecar file beside the song audio if possible, and saves it in the local player database. Unstamped lines will be interpolated automatically.'**
+  String get lyricsSaveLrcExplain;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @appSettingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'App Settings'**
+  String get appSettingsLabel;
+
+  /// No description provided for @backupsAndLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Backups & Logs'**
+  String get backupsAndLogs;
+
+  /// No description provided for @backupsAndLogsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Export, import & manage app data'**
+  String get backupsAndLogsDesc;
+
+  /// No description provided for @exportBackupJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Backup (JSON)'**
+  String get exportBackupJson;
+
+  /// No description provided for @exportBackupJsonDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves your liked songs and playlists to a JSON file you can keep or share. Nothing else is included.'**
+  String get exportBackupJsonDesc;
+
+  /// No description provided for @importBackupJson.
+  ///
+  /// In en, this message translates to:
+  /// **'Import Backup (JSON)'**
+  String get importBackupJson;
+
+  /// No description provided for @importBackupJsonDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Merges liked songs and playlists from a backup file into your library. Existing data is never overwritten or removed.'**
+  String get importBackupJsonDesc;
+
+  /// No description provided for @exportDiagnosticsLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Diagnostics Logs'**
+  String get exportDiagnosticsLogs;
+
+  /// No description provided for @exportDiagnosticsLogsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares the app\'s diagnostic log file so it can be reviewed for troubleshooting.'**
+  String get exportDiagnosticsLogsDesc;
+
+  /// No description provided for @clearDiagnosticsLogs.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Diagnostics Logs'**
+  String get clearDiagnosticsLogs;
+
+  /// No description provided for @clearDiagnosticsLogsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently erases the diagnostic log file stored on this device. This cannot be undone.'**
+  String get clearDiagnosticsLogsDesc;
+
+  /// No description provided for @lyricsPlainTextOrLrc.
+  ///
+  /// In en, this message translates to:
+  /// **'Lyrics (Plain text or LRC)'**
+  String get lyricsPlainTextOrLrc;
+
+  /// No description provided for @syncModeLine.
+  ///
+  /// In en, this message translates to:
+  /// **'LINE'**
+  String get syncModeLine;
+
+  /// No description provided for @syncModeWord.
+  ///
+  /// In en, this message translates to:
+  /// **'WORD'**
+  String get syncModeWord;
+
+  /// No description provided for @syncModeChar.
+  ///
+  /// In en, this message translates to:
+  /// **'CHAR'**
+  String get syncModeChar;
+
+  /// No description provided for @enterManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Manually'**
+  String get enterManually;
+
+  /// No description provided for @rawFilterParametersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Raw filter parameters...'**
+  String get rawFilterParametersHint;
+
+  /// No description provided for @searchSettingsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search settings...'**
+  String get searchSettingsHint;
+
+  /// No description provided for @repeatTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Repeat'**
+  String get repeatTooltip;
+
+  /// No description provided for @favoriteTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite'**
+  String get favoriteTooltip;
+
+  /// No description provided for @instructionsTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions'**
+  String get instructionsTooltip;
+
+  /// No description provided for @pasteLyricsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste or type the song lyrics here'**
+  String get pasteLyricsHint;
+
+  /// No description provided for @timestampMmSsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Timestamp (mm:ss.xx)'**
+  String get timestampMmSsHint;
+
+  /// No description provided for @nowLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get nowLabel;
+
+  /// No description provided for @playlistNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Playlist name'**
+  String get playlistNameHint;
+
+  /// No description provided for @songInfoUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Song info updated!'**
+  String get songInfoUpdated;
+
+  /// No description provided for @albumInfoUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Album info updated!'**
+  String get albumInfoUpdated;
+
+  /// No description provided for @failedToSaveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save changes.'**
+  String get failedToSaveChanges;
+
+  /// No description provided for @sleepTimerStoppingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Active: Stopping in {time}'**
+  String sleepTimerStoppingIn(String time);
+
+  /// No description provided for @sleepTimerStoppingAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Active: Stopping after {time}'**
+  String sleepTimerStoppingAfter(String time);
+
+  /// No description provided for @selectWhenToPause.
+  ///
+  /// In en, this message translates to:
+  /// **'Select when to pause music playback'**
+  String get selectWhenToPause;
 }
 
 class _AppLocalizationsDelegate

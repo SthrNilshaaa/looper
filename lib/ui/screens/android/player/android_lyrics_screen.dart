@@ -14,20 +14,23 @@ import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/core/app_icons.dart';
+import 'package:looper_player/ui/widgets/animated_play_pause_icon.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:looper_player/ui/widgets/fluid_background.dart';
-
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
 import 'package:looper_player/ui/widgets/premium_progress_bar.dart';
+import 'package:looper_player/ui/screens/android/player/widgets/android_lyrics_menu_sheet.dart';
+import 'package:looper_player/ui/screens/android/player/widgets/lyrics_selection_toolbar.dart';
+import 'package:looper_player/ui/screens/android/player/widgets/lyrics_gestures_tutorial_sheet.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 class AndroidLyricsScreen extends ConsumerStatefulWidget {
   const AndroidLyricsScreen({super.key});
 
   @override
-  ConsumerState<AndroidLyricsScreen> createState() =>
-      _AndroidLyricsScreenState();
+  ConsumerState<AndroidLyricsScreen> createState() => _AndroidLyricsScreenState();
 }
 
 class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
@@ -38,6 +41,11 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
   // Manual scroll & bottom controller states
   bool _showController = true;
   Timer? _hideTimer;
+
+  // Independent tap pulses for the prev/next transport icons so tapping one
+  // never replays the other's "pop" animation (each button owns its own key).
+  final ValueNotifier<int> _prevTapPulse = ValueNotifier<int>(0);
+  final ValueNotifier<int> _nextTapPulse = ValueNotifier<int>(0);
 
   @override
   void initState() {
@@ -54,6 +62,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
         setState(() {
           _delayCompleted = true;
         });
+        _maybeShowGesturesTutorial();
       }
     });
 
@@ -90,26 +99,34 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
     _hideTimer?.cancel();
     _routeAnimation?.removeStatusListener(_onRouteAnimationStatusChanged);
     _disableWakelock();
+    _prevTapPulse.dispose();
+    _nextTapPulse.dispose();
     super.dispose();
   }
 
   Future<void> _enableWakelock() async {
     try {
       await WakelockPlus.enable();
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   Future<void> _disableWakelock() async {
     try {
       await WakelockPlus.disable();
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
+  void _maybeShowGesturesTutorial() {
+    if (!mounted) return;
+    if (ref.read(settingsProvider).lyricsGestureTutorialSeen) return;
+    showLyricsGesturesTutorial(context, ref);
+  }
 
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.toString().padLeft(2, '0');
+    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 
   void _onUserScrolled() {
     if (!mounted) return;
@@ -198,6 +215,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     ref.listen<PlaybackState>(playbackProvider, (previous, next) {
       if (next.isPlaying != previous?.isPlaying) {
         if (next.isPlaying) {
@@ -284,62 +302,58 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                       ],
                     ),
                   ),
-                  // Padding(
-                  //   padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                  //   child: SizedBox(
-                  //     height: 36,
-                  //     child: VerticalDivider(
-                  //       width: 1,
-                  //       thickness: 0.5,
-                  //       color: Colors.white.withValues(alpha: 0.15),
-                  //     ),
-                  //   ),
-                  // ),
-                  // // Play/Pause with Hero
-                  // PremiumSection(
-                  //   borderRadius: BorderRadius.circular(32),
-                  //   width: 48.s,
-                  //   height: 48.s,
-                  //   useExpanded: false,
-                  //   forceNoBlur: true,
-                  //   useBlur:
-                  //       settings.enableDynamicTheming ||
-                  //       settings.dynamicLyrics,
-                  //   onTap: () {
-                  //     HapticFeedback.mediumImpact();
-                  //     ref.read(playbackProvider.notifier).togglePlay();
-                  //   },
-                  //   child:  SvgPicture.asset(
-                  //       isPlaying ? AppIcons.pause : AppIcons.play,
-                  //       colorFilter: const ColorFilter.mode(
-                  //         Colors.white,
-                  //         BlendMode.srcIn,
-                  //       ),
-                  //       width: AppIcons.sizeSmall.s,
-                  //       height: AppIcons.sizeSmall.s,
-                  //     ),
-                    
-                  // ),
-                  // const SizedBox(width: 8),
-                  // Down Arrow
+
+                  // Menu Button
                   PremiumSection(
-                    borderRadius: BorderRadius.circular(32),
+                    //  borderRadius: BorderRadius.circular(32),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      bottomLeft: Radius.circular(32),
+                      topRight: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
                     width: 48.s,
                     height: 48.s,
                     useExpanded: false,
                     forceNoBlur: true,
+                    backgroundColor: Colors.white.withOpacity(0.04),
+                    showBorder: false,
                     useBlur:
+                        settings.ambientColorBackground ||
                         settings.enableDynamicTheming ||
-                        settings.dynamicLyrics || settings.blurredArtworkForLyrics,
+                        settings.dynamicLyrics ||
+                        settings.blurredArtworkForLyrics,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      showLyricsMenuBottomSheet(context, ref, song);
+                    },
+                    child: const Icon(LucideIcons.ellipsisVertical, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 2),
+                  // Down Arrow
+                  PremiumSection(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      bottomLeft: Radius.circular(10),
+                      topRight: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
+                    ),
+                    width: 48.s,
+                    height: 48.s,
+                    showBorder: false,
+                    useExpanded: false,
+                    forceNoBlur: true,
+                    backgroundColor: Colors.white.withOpacity(0.04),
+                    useBlur:
+                        settings.ambientColorBackground ||
+                        settings.enableDynamicTheming ||
+                        settings.dynamicLyrics ||
+                        settings.blurredArtworkForLyrics,
                     onTap: () {
                       HapticFeedback.lightImpact();
                       Navigator.pop(context);
                     },
-                    child: const Icon(
-                      LucideIcons.chevronDown,
-                      color: Colors.white,
-                      size: 20,
-                    ),
+                    child: const Icon(LucideIcons.chevronDown, color: Colors.white, size: 20),
                   ),
                 ],
               ),
@@ -362,27 +376,27 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
       ),
     );
 
-    final lyricsDarkness = settings.lyricsDarkness.isNaN
-        ? 0.55
-        : settings.lyricsDarkness;
+    final lyricsDarkness = settings.lyricsDarkness.isNaN ? 0.55 : settings.lyricsDarkness;
 
     final route = ModalRoute.of(context);
     final isExiting = route != null && route.animation?.status == AnimationStatus.reverse;
 
-    final showDynamicBg = !isExiting &&
+    final showDynamicBg =
+        !isExiting &&
         _delayCompleted &&
-        (settings.enableDynamicTheming || settings.dynamicLyrics) &&
-        !settings.blurredArtworkForLyrics &&
+        (settings.ambientColorBackground ||
+            ((settings.enableDynamicTheming || settings.dynamicLyrics) &&
+                !settings.blurredArtworkForLyrics)) &&
         song.artPath != null;
 
-    final showBlurredArtworkBg = !isExiting &&
+    final showBlurredArtworkBg =
+        !isExiting &&
         _delayCompleted &&
+        !settings.ambientColorBackground &&
         settings.blurredArtworkForLyrics &&
         song.artPath != null;
 
-    final transitionDuration = isExiting
-        ? Duration.zero
-        : const Duration(milliseconds: 1000);
+    final transitionDuration = isExiting ? Duration.zero : const Duration(milliseconds: 1000);
 
     return GestureDetector(
       onVerticalDragEnd: (details) {
@@ -424,87 +438,110 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                         },
                       )
                     : (showBlurredArtworkBg
-                        ? RepaintBoundary(
-                            key: ValueKey('blurred_art_bg_${song.path}'),
-                            child: Stack(
-                              children: [
-                                Positioned.fill(
-                                  child: ImageFiltered(
-                                    imageFilter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                                    child: Image.file(
-                                      File(song.artPath!),
-                                      fit: BoxFit.cover,
-                                      filterQuality: FilterQuality.low,
-                                      cacheWidth: 100,
-                                      cacheHeight: 100,
+                          ? RepaintBoundary(
+                              key: ValueKey('blurred_art_bg_${song.path}'),
+                              child: Stack(
+                                children: [
+                                  Positioned.fill(
+                                    child: ImageFiltered(
+                                      imageFilter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                                      child: Image.file(
+                                        File(song.artPath!),
+                                        fit: BoxFit.cover,
+                                        filterQuality: FilterQuality.low,
+                                        cacheWidth: 100,
+                                        cacheHeight: 100,
+                                        gaplessPlayback: true,
+                                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                                      ),
                                     ),
                                   ),
-                                ),
-                                Positioned.fill(
-                                  child: Container(
-                                    color: Colors.black.withValues(alpha: lyricsDarkness),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Stack(
-                            key: const ValueKey('static_bg'),
-                            children: [
-                              Positioned.fill(
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 600),
-                                  curve: Curves.easeInOut,
-                                  decoration: BoxDecoration(
-                                    gradient: RadialGradient(
-                                      center: Alignment.topRight,
-                                      radius: 1.5,
-                                      colors: [
-                                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
-                                        Theme.of(context).colorScheme.surface,
-                                      ],
-                                      stops: const [0.0, 1.0],
+                                  Positioned.fill(
+                                    child: Container(
+                                      color: Colors.black.withValues(alpha: lyricsDarkness),
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
-                              Positioned.fill(
-                                child: Container(
-                                  color: Colors.black.withValues(alpha: lyricsDarkness),
-                                ),
-                              ),
-                            ],
-                          )),
+                            )
+                          : (settings.enablePlayerGradient
+                                ? Stack(
+                                    key: const ValueKey('static_bg'),
+                                    children: [
+                                      Positioned.fill(
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 600),
+                                          curve: Curves.easeInOut,
+                                          decoration: BoxDecoration(
+                                            gradient: RadialGradient(
+                                              center: Alignment.topCenter,
+                                              radius: 1.8,
+                                              colors: [
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary.withValues(alpha: 0.20),
+                                                Theme.of(
+                                                  context,
+                                                ).colorScheme.primary.withValues(alpha: 0.08),
+                                              ],
+                                              stops: const [0.0, 1.0],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Container(
+                                    key: const ValueKey('static_bg'),
+                                    color: Theme.of(context).colorScheme.surface,
+                                  ))),
               ),
             ),
             // Foreground Content Layer: Kept outside of AnimatedSwitcher to prevent state/scroll resets
-            Positioned.fill(
-              child: mainContent,
+            Positioned.fill(child: mainContent),
+
+            // Share-selection toolbar: floats in once the user long-presses
+            // a lyric line to start picking lines for a share card.
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 100.s,
+              left: 0,
+              right: 0,
+              child: Center(child: LyricsSelectionToolbar(song: song)),
             ),
             // Re-sync Pill Button
-            
+
             // Bottom Controller Layer (Includes gradient dark shadow + controls)
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
-              child: AnimatedOpacity(
-                opacity: _showController ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                child: IgnorePointer(
-                  ignoring: !_showController,
-                  child:  Container(
+              child: AnimatedSlide(
+                offset: _showController ? Offset.zero : const Offset(0, 1),
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeInOutCubic,
+                child: AnimatedOpacity(
+                  opacity: _showController ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                  child: IgnorePointer(
+                    ignoring: !_showController,
+                    child: Container(
                       height: 350.s,
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.8),
-                            Colors.black.withValues(alpha: 0.95),
-                            Colors.black,
+                           // Colors.transparent,
+                            // Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+                            // Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                            // Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                            Colors.transparent.withValues(alpha: 0.010),
+                            //Colors.transparent.withValues(alpha: 0.10),
+                            Colors.transparent.withValues(alpha: 0.50),
+                            Colors.black.withValues(alpha: 0.90),
+                            Colors.black.withValues(alpha: 0.99),
+                           // Colors.black,Colors.transparent.withValues(alpha: 0.50),
                           ],
                           stops: const [0.0, 0.2, 0.75, 1.0],
                         ),
@@ -522,9 +559,15 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 4),
                             child: Consumer(
                               builder: (context, ref, child) {
-                                final currentPosition = ref.watch(playbackProvider.select((s) => s.position));
-                                final duration = ref.watch(playbackProvider.select((s) => s.duration));
-                                final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
+                                final currentPosition = ref.watch(
+                                  playbackProvider.select((s) => s.position),
+                                );
+                                final duration = ref.watch(
+                                  playbackProvider.select((s) => s.duration),
+                                );
+                                final isPlaying = ref.watch(
+                                  playbackProvider.select((s) => s.isPlaying),
+                                );
                                 return Hero(
                                   tag: 'player_seek_bar',
                                   child: Material(
@@ -545,7 +588,7 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                                         _resetHideTimer();
                                         ref.read(playbackProvider.notifier).stopScrubbing();
                                       },
-                                      color: Theme.of(context).colorScheme.primary,
+                                      color: Theme.of(context).colorScheme.onSecondary,
                                     ),
                                   ),
                                 );
@@ -553,14 +596,16 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                             ),
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 12),
 
                           // Playback Controls Row matching android_expanded_player.dart exactly
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 14),
                             child: Consumer(
                               builder: (context, ref, child) {
-                                final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
+                                final isPlaying = ref.watch(
+                                  playbackProvider.select((s) => s.isPlaying),
+                                );
                                 return Row(
                                   children: [
                                     // Previous
@@ -576,19 +621,24 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                                       showShadow: false,
                                       useBlur: settings.enableDynamicTheming,
                                       forceNoBlur: true,
+                                       backgroundColor: Colors.white.withOpacity(0.04),
+                                      showBorder: false,
                                       onTap: () {
                                         _resetHideTimer();
                                         HapticFeedback.lightImpact();
+                                        _prevTapPulse.value++;
                                         ref.read(playbackProvider.notifier).skipPrevious();
                                       },
-                                      child: SvgPicture.asset(
-                                        AppIcons.prev,
-                                        colorFilter: const ColorFilter.mode(
-                                          Colors.white,
-                                          BlendMode.srcIn,
-                                        ),
-                                        width: AppIcons.expandedPlayerMainControl.s,
-                                        height: AppIcons.expandedPlayerMainControl.s,
+                                      child: ValueListenableBuilder<int>(
+                                        valueListenable: _prevTapPulse,
+                                        builder: (context, tick, child) {
+                                          return AnimatedTransportIcon(
+                                            asset: AppIcons.prev,
+                                            color: Colors.white,
+                                            size: AppIcons.expandedPlayerMainControl.s,
+                                            triggerKey: tick,
+                                          );
+                                        },
                                       ),
                                     ),
                                     const SizedBox(width: 6),
@@ -597,12 +647,13 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                                       heroTag: 'player_play_pause_btn',
                                       borderRadius: BorderRadius.circular(12),
                                       height: 80,
+                                      showBorder: false,
                                       showShadow: false,
                                       useBlur: settings.enableDynamicTheming,
                                       forceNoBlur: true,
                                       backgroundColor: isPlaying
-                                          ? null
-                                          : Theme.of(context).colorScheme.primary,
+                                          ?  Colors.white.withOpacity(0.04)
+                                          : Theme.of(context).colorScheme.onSecondary,
                                       onTap: () {
                                         _resetHideTimer();
                                         HapticFeedback.mediumImpact();
@@ -612,24 +663,14 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                                         scale: 1.1,
                                         duration: const Duration(milliseconds: 300),
                                         curve: Curves.easeOutBack,
-                                        child: TweenAnimationBuilder<double>(
-                                          tween: Tween<double>(
-                                            end: isPlaying ? 1.0 : 0.0,
-                                          ),
-                                          duration: const Duration(milliseconds: 300),
-                                          curve: Curves.easeInOutCubic,
-                                          builder: (context, value, child) {
-                                            return AnimatedIcon(
-                                              icon: AnimatedIcons.play_pause,
-                                              progress: AlwaysStoppedAnimation(value),
-                                              color: isPlaying
-                                                  ? Colors.white
-                                                  : HSLColor.fromColor(Theme.of(context).colorScheme.primary)
-                                                      .withLightness(0.15)
-                                                      .toColor(),
-                                              size: AppIcons.expandedPlayerPlayPauseIcon.s,
-                                            );
-                                          },
+                                        child: AnimatedPlayPauseIcon(
+                                          isPlaying: isPlaying,
+                                          color: 
+                                               Colors.white,
+                                              // : HSLColor.fromColor(
+                                              //     Theme.of(context).colorScheme.primary,
+                                              //   ).withLightness(0.15).toColor(),
+                                          size: AppIcons.expandedPlayerPlayPauseIcon.s,
                                         ),
                                       ),
                                     ),
@@ -646,20 +687,25 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                                       height: 80,
                                       useBlur: settings.enableDynamicTheming,
                                       showShadow: false,
+                                       backgroundColor: Colors.white.withOpacity(0.04),
+                                      showBorder: false,
                                       forceNoBlur: true,
                                       onTap: () {
                                         _resetHideTimer();
                                         HapticFeedback.lightImpact();
+                                        _nextTapPulse.value++;
                                         ref.read(playbackProvider.notifier).skipNext();
                                       },
-                                      child: SvgPicture.asset(
-                                        AppIcons.next,
-                                        colorFilter: const ColorFilter.mode(
-                                          Colors.white,
-                                          BlendMode.srcIn,
-                                        ),
-                                        width: AppIcons.expandedPlayerMainControl.s,
-                                        height: AppIcons.expandedPlayerMainControl.s,
+                                      child: ValueListenableBuilder<int>(
+                                        valueListenable: _nextTapPulse,
+                                        builder: (context, tick, child) {
+                                          return AnimatedTransportIcon(
+                                            asset: AppIcons.next,
+                                            color: Colors.white,
+                                            size: AppIcons.expandedPlayerMainControl.s,
+                                            triggerKey: tick,
+                                          );
+                                        },
                                       ),
                                     ),
                                   ],
@@ -670,13 +716,13 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                         ],
                       ),
                     ),
-                  
+                  ),
                 ),
               ),
             ),
 
             AnimatedPositioned(
-              bottom: _showController ? 350.s : 50.s,
+              bottom: _showController ? 300.s : 50.s,
               left: 0,
               right: 0,
               duration: const Duration(milliseconds: 350),
@@ -698,12 +744,9 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                           ref.read(lyricsManualScrollProvider.notifier).state = false;
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary,
+                            color: Theme.of(context).colorScheme.onSecondary,
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
@@ -716,14 +759,10 @@ class _AndroidLyricsScreenState extends ConsumerState<AndroidLyricsScreen> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(
-                                LucideIcons.refreshCw,
-                                size: 14,
-                                color: Colors.white,
-                              ),
+                              Icon(LucideIcons.refreshCw, size: 14, color: Colors.white),
                               const SizedBox(width: 8),
                               Text(
-                                'Re-sync',
+                                l10n.resync,
                                 style: AppFonts.jostStyle(
                                   color: Colors.white,
                                   fontSize: 13,

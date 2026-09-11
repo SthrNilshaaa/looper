@@ -10,8 +10,7 @@ import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'painters/equalizer_curve_painter.dart';
-import 'painters/interactive_graph_painter.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 final equalizerViewModeProvider = StateProvider<bool>((ref) => false); // false = Sliders, true = Graph
 
@@ -52,6 +51,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final eqState = ref.watch(equalizerProvider);
     final eqNotifier = ref.read(equalizerProvider.notifier);
     final settings = ref.watch(settingsProvider);
@@ -111,7 +111,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'Equalizer',
+                      l10n.equalizer,
                       style: AppFonts.jostStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -180,7 +180,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                       // Preset Selector Row
                       if (eqState.enabled) ...[
                         Text(
-                          'PRESETS',
+                          l10n.presets,
                           style: AppFonts.jostStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
@@ -300,7 +300,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                   },
                                   icon: Icon(LucideIcons.undo2, color: accentColor, size: 14),
                                   label: Text(
-                                    'Reset',
+                                    l10n.reset,
                                     style: AppFonts.jostStyle(color: accentColor, fontSize: 12, fontWeight: FontWeight.bold),
                                   ),
                                 ),
@@ -468,7 +468,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                   Icon(LucideIcons.sliders, color: accentColor.withValues(alpha: 0.8), size: 18),
                                   const SizedBox(width: 12),
                                   Text(
-                                    'Pre-amp Gain',
+                                    l10n.preAmpGain,
                                     style: AppFonts.jostStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.bold,
@@ -529,7 +529,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Output Volume',
+                                  l10n.outputVolume,
                                   style: AppFonts.jostStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -875,7 +875,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                           icon: LucideIcons.terminal,
                           children: [
                             Text(
-                              'Type custom libavfilter audio filter parameters directly (e.g. volume=3dB, aecho=0.8:0.88:60:0.4):',
+                              l10n.customFilterHint,
                               style: AppFonts.jostStyle(fontSize: 12, color: Colors.white54),
                             ),
                             const SizedBox(height: 12),
@@ -911,7 +911,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Flow & Global Actions',
+                                  l10n.flowGlobalActions,
                                   style: AppFonts.jostStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.bold,
@@ -926,7 +926,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                             Row(
                               children: [
                                 Text(
-                                  'Equalizer Mode:',
+                                  l10n.equalizerModeLabel,
                                   style: AppFonts.jostStyle(
                                     fontSize: 13,
                                     color: Colors.white70,
@@ -977,7 +977,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
-                                                    'Current gains applied as global default settings.',
+                                                    l10n.currentGainsAppliedGlobal,
                                                     style: AppFonts.jostStyle(color: Colors.white),
                                                   ),
                                                   backgroundColor: accentColor,
@@ -988,7 +988,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                         : null,
                                     icon: Icon(LucideIcons.globe, size: 14, color: eqState.enabled ? accentColor : Colors.white24),
                                     label: Text(
-                                      'Apply to Global',
+                                      l10n.applyToGlobal,
                                       style: AppFonts.jostStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -1017,7 +1017,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                           ScaffoldMessenger.of(context).showSnackBar(
                                             SnackBar(
                                               content: Text(
-                                                'Song-specific settings reset to global default.',
+                                                l10n.songSpecificResetGlobal,
                                                 style: AppFonts.jostStyle(color: Colors.white),
                                               ),
                                               backgroundColor: accentColor,
@@ -1027,7 +1027,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                       },
                                       icon: Icon(LucideIcons.undo2, size: 14, color: accentColor),
                                       label: Text(
-                                        'Reset to Global',
+                                        l10n.resetToGlobal,
                                         style: AppFonts.jostStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -1061,25 +1061,25 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                   builder: (context) => AlertDialog(
                                     backgroundColor: isPureBlack ? Colors.black : const Color(0xFF1E1E1E),
                                     title: Text(
-                                      'Reset All Songs EQ',
+                                      l10n.resetAllSongsEq,
                                       style: AppFonts.jostStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                     ),
                                     content: Text(
-                                      'Are you sure you want to clear custom equalizer settings for all songs in your library?',
+                                      l10n.resetAllSongsEqConfirm,
                                       style: AppFonts.jostStyle(color: Colors.white70),
                                     ),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.of(context).pop(false),
                                         child: Text(
-                                          'Cancel',
+                                          l10n.cancel,
                                           style: AppFonts.jostStyle(color: Colors.white38),
                                         ),
                                       ),
                                       TextButton(
                                         onPressed: () => Navigator.of(context).pop(true),
                                         child: Text(
-                                          'Reset',
+                                          l10n.reset,
                                           style: AppFonts.jostStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
                                         ),
                                       ),
@@ -1092,7 +1092,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          'All song-specific equalizer data has been reset.',
+                                          l10n.allSongsEqDataReset,
                                           style: AppFonts.jostStyle(color: Colors.white),
                                         ),
                                         backgroundColor: Colors.redAccent,
@@ -1103,7 +1103,7 @@ class AndroidEqualizerScreen extends ConsumerWidget {
                               },
                               icon: const Icon(LucideIcons.trash2, size: 14, color: Colors.redAccent),
                               label: Text(
-                                'Reset All Songs EQ Data',
+                                l10n.resetAllSongsEqData,
                                 style: AppFonts.jostStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -1234,6 +1234,7 @@ void _showEqualizerModeDialog(BuildContext context, WidgetRef ref) {
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black54,
     builder: (context) {
+      final l10n = AppLocalizations.of(context)!;
       final settings = ref.watch(settingsProvider);
       final accentColor = Color(settings.accentColor);
       final isGlobal = settings.equalizerGlobalMode;
@@ -1248,7 +1249,7 @@ void _showEqualizerModeDialog(BuildContext context, WidgetRef ref) {
                 Icon(LucideIcons.sliders, color: accentColor, size: 22),
                 const SizedBox(width: 12),
                 Text(
-                  'Equalizer Target Mode',
+                  l10n.equalizerTargetMode,
                   style: AppFonts.jostStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -1259,7 +1260,7 @@ void _showEqualizerModeDialog(BuildContext context, WidgetRef ref) {
             ),
             const SizedBox(height: 12),
             Text(
-              'Select how equalizer settings are applied across your music library.',
+              l10n.equalizerTargetModeDesc,
               style: AppFonts.jostStyle(
                 fontSize: 14,
                 color: Colors.white70,
@@ -1318,7 +1319,7 @@ void _showEqualizerModeDialog(BuildContext context, WidgetRef ref) {
                           Row(
                             children: [
                               Text(
-                                'Global Mode',
+                                l10n.globalMode,
                                 style: AppFonts.jostStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -1333,7 +1334,7 @@ void _showEqualizerModeDialog(BuildContext context, WidgetRef ref) {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Applies effects to all songs universally. Equalizer settings remain the same when the song changes.',
+                            l10n.globalModeDesc,
                             style: AppFonts.jostStyle(
                               fontSize: 13,
                               color: Colors.white60,
@@ -1400,7 +1401,7 @@ void _showEqualizerModeDialog(BuildContext context, WidgetRef ref) {
                           Row(
                             children: [
                               Text(
-                                'Song-Specific Mode',
+                                l10n.songSpecificMode,
                                 style: AppFonts.jostStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -1415,7 +1416,7 @@ void _showEqualizerModeDialog(BuildContext context, WidgetRef ref) {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Saves custom settings for the current song only. Next song defaults to no/flat equalizer unless it has its own profile.',
+                            l10n.songSpecificModeDesc,
                             style: AppFonts.jostStyle(
                               fontSize: 13,
                               color: Colors.white60,
@@ -1439,7 +1440,7 @@ void _showEqualizerModeDialog(BuildContext context, WidgetRef ref) {
               },
               icon: Icon(LucideIcons.activity, color: accentColor.withValues(alpha: 0.7), size: 16),
               label: Text(
-                'View Device Audio Capabilities',
+                l10n.viewDeviceAudioCapabilities,
                 style: AppFonts.jostStyle(
                   fontSize: 13,
                   color: accentColor.withValues(alpha: 0.8),
@@ -1467,6 +1468,7 @@ void _showAudioCapabilitiesSheet(BuildContext context, WidgetRef ref) {
       return FutureBuilder<Map<String, String>>(
         future: ref.read(audioServiceProvider).getAudioOutputCapabilities(),
         builder: (context, snapshot) {
+          final l10n = AppLocalizations.of(context)!;
           final capabilities = snapshot.data ?? {};
           return AppBottomSheetContainer(
             child: Column(
@@ -1478,7 +1480,7 @@ void _showAudioCapabilitiesSheet(BuildContext context, WidgetRef ref) {
                     Icon(LucideIcons.activity, color: accentColor, size: 22),
                     const SizedBox(width: 12),
                     Text(
-                      'Device Audio Capabilities',
+                      l10n.deviceAudioCapabilities,
                       style: AppFonts.jostStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -1501,7 +1503,7 @@ void _showAudioCapabilitiesSheet(BuildContext context, WidgetRef ref) {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 30),
                     child: Text(
-                      'No playback active or capabilities information unavailable.',
+                      l10n.noPlaybackActiveCapabilities,
                       style: AppFonts.jostStyle(color: Colors.white38, fontSize: 13),
                       textAlign: TextAlign.center,
                     ),
@@ -1660,6 +1662,7 @@ class _CustomFilterInputState extends State<_CustomFilterInput> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Expanded(
@@ -1668,7 +1671,7 @@ class _CustomFilterInputState extends State<_CustomFilterInput> {
             style: AppFonts.jostStyle(fontSize: 13, color: Colors.white),
             decoration: InputDecoration(
               isDense: true,
-              hintText: 'Raw filter parameters...',
+              hintText: l10n.rawFilterParametersHint,
               hintStyle: AppFonts.jostStyle(fontSize: 13, color: Colors.white30),
               filled: true,
               fillColor: Colors.white.withValues(alpha: 0.04),
@@ -1822,7 +1825,93 @@ class EqualizerSliderTrack extends StatelessWidget {
   }
 }
 
+class EqualizerCurvePainter extends CustomPainter {
+  final List<double> gains;
+  final Color color;
 
+  EqualizerCurvePainter({required this.gains, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (gains.length < 2) return;
+
+    final paint = Paint()
+      ..color = color.withValues(alpha: 0.4)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round;
+
+    final fillPaint = Paint()..style = PaintingStyle.fill;
+
+    final path = Path();
+    final colWidth = size.width / gains.length;
+
+    final trackTop = 8.0;
+    final trackBottom = size.height - 8.0;
+    final trackHeight = trackBottom - trackTop;
+
+    double getMappedY(double gain) {
+      final percent = ((gain + 20) / 40).clamp(0.0, 1.0);
+      final thumbBottom = percent * trackHeight;
+      return trackBottom - thumbBottom;
+    }
+
+    double getMappedX(int index) {
+      return (index + 0.5) * colWidth;
+    }
+
+    path.moveTo(getMappedX(0), getMappedY(gains[0]));
+
+    for (int i = 0; i < gains.length - 1; i++) {
+      final x1 = getMappedX(i);
+      final y1 = getMappedY(gains[i]);
+      final x2 = getMappedX(i + 1);
+      final y2 = getMappedY(gains[i + 1]);
+
+      final stepX = x2 - x1;
+      final cx1 = x1 + stepX / 2;
+      final cy1 = y1;
+      final cx2 = x2 - stepX / 2;
+      final cy2 = y2;
+
+      path.cubicTo(cx1, cy1, cx2, cy2, x2, y2);
+    }
+
+    // Shadow glow
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color.withValues(alpha: 0.15)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+
+    canvas.drawPath(path, paint);
+
+    // Fill under path
+    final fillPath = Path.from(path)
+      ..lineTo(getMappedX(gains.length - 1), trackBottom)
+      ..lineTo(getMappedX(0), trackBottom)
+      ..close();
+
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        color.withValues(alpha: 0.12),
+        color.withValues(alpha: 0.0),
+      ],
+    );
+    fillPaint.shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    canvas.drawPath(fillPath, fillPaint);
+  }
+
+  @override
+  bool shouldRepaint(EqualizerCurvePainter oldDelegate) {
+    return oldDelegate.gains != gains || oldDelegate.color != color;
+  }
+}
 
 class InteractiveEqualizerGraph extends ConsumerStatefulWidget {
   final EqualizerState eqState;
@@ -1844,72 +1933,9 @@ class InteractiveEqualizerGraph extends ConsumerStatefulWidget {
 class _InteractiveEqualizerGraphState
     extends ConsumerState<InteractiveEqualizerGraph> {
   int? _activeDragIndex;
-  
-  final List<TextPainter> _dbTextPainters = [];
-  final List<TextPainter> _freqTextPainters = [];
-  bool _textPaintersInitialized = false;
-  Color? _lastFreqColor;
-
-  void _updateTextPainters(bool enabled) {
-    final freqColor = enabled ? Colors.white30 : Colors.white12;
-    if (_textPaintersInitialized && _lastFreqColor == freqColor) return;
-    
-    _lastFreqColor = freqColor;
-
-    if (!_textPaintersInitialized) {
-      const dbValues = [-20.0, -10.0, 0.0, 10.0, 20.0];
-      for (final db in dbValues) {
-        final painter = TextPainter(
-          text: TextSpan(
-            text: '${db > 0 ? "+" : ""}${db.round()} dB',
-            style: AppFonts.jostStyle(
-              fontSize: 9,
-              color: Colors.white24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        _dbTextPainters.add(painter);
-      }
-      
-      const List<String> bands = [
-        '65', '92', '131', '185', '262', '370', '523', '740', '1k', '1.4k',
-        '2k', '2.9k', '4.1k', '5.9k', '8.3k', '11.7k', '16.6k', '20k'
-      ];
-      for (int i = 0; i < 18; i++) {
-        final painter = TextPainter(
-          text: TextSpan(
-            text: bands[i],
-            style: AppFonts.jostStyle(
-              fontSize: 8,
-              color: freqColor,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          textDirection: TextDirection.ltr,
-        )..layout();
-        _freqTextPainters.add(painter);
-      }
-      _textPaintersInitialized = true;
-    } else {
-      for (int i = 0; i < 18; i++) {
-        _freqTextPainters[i].text = TextSpan(
-          text: _freqTextPainters[i].text!.toPlainText(),
-          style: AppFonts.jostStyle(
-            fontSize: 8,
-            color: freqColor,
-            fontWeight: FontWeight.bold,
-          ),
-        );
-        _freqTextPainters[i].layout();
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    _updateTextPainters(widget.eqState.enabled);
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = Size(constraints.maxWidth, 290.0);
@@ -1960,13 +1986,11 @@ class _InteractiveEqualizerGraphState
             ),
             child: CustomPaint(
               size: size,
-              painter: InteractiveGraphPainter(
+              painter: _InteractiveGraphPainter(
                 gains: widget.eqState.currentSongGains.sublist(0, 18),
                 accentColor: widget.accentColor,
                 enabled: widget.eqState.enabled,
                 activeDragIndex: _activeDragIndex,
-                dbTextPainters: _dbTextPainters,
-                freqTextPainters: _freqTextPainters,
               ),
             ),
           ),
@@ -1989,4 +2013,194 @@ class _InteractiveEqualizerGraphState
   }
 }
 
+class _InteractiveGraphPainter extends CustomPainter {
+  final List<double> gains;
+  final Color accentColor;
+  final bool enabled;
+  final int? activeDragIndex;
 
+  _InteractiveGraphPainter({
+    required this.gains,
+    required this.accentColor,
+    required this.enabled,
+    this.activeDragIndex,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final colWidth = size.width / 18;
+    final trackTop = 16.0;
+    final trackBottom = size.height - 24.0;
+    final trackHeight = trackBottom - trackTop;
+
+    double getMappedY(double gain) {
+      final percent = ((gain + 20) / 40).clamp(0.0, 1.0);
+      final thumbBottom = percent * trackHeight;
+      return trackBottom - thumbBottom;
+    }
+
+    double getMappedX(int index) {
+      return (index + 0.5) * colWidth;
+    }
+
+    // 1. Draw grid lines (dB)
+    final gridPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.05)
+      ..strokeWidth = 1.0;
+
+    final dashedPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.15)
+      ..strokeWidth = 1.2;
+
+    const dbValues = [-20.0, -10.0, 0.0, 10.0, 20.0];
+    for (final db in dbValues) {
+      final y = getMappedY(db);
+      if (db == 0.0) {
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), dashedPaint);
+      } else {
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+      }
+
+      // Draw dB Label text
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: '${db > 0 ? "+" : ""}${db.round()} dB',
+          style: AppFonts.jostStyle(
+            fontSize: 9,
+            color: Colors.white24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, Offset(8, y - textPainter.height - 2));
+    }
+
+    // 2. Draw vertical grid/frequencies lines
+    const List<String> bands = [
+      '65', '92', '131', '185', '262', '370', '523', '740', '1k', '1.4k',
+      '2k', '2.9k', '4.1k', '5.9k', '8.3k', '11.7k', '16.6k', '20k'
+    ];
+    for (int i = 0; i < 18; i++) {
+      final x = getMappedX(i);
+      // Freq vertical line (drawn extremely faintly)
+      canvas.drawLine(
+        Offset(x, trackTop),
+        Offset(x, trackBottom),
+        Paint()..color = Colors.white.withValues(alpha: 0.02)..strokeWidth = 1.0,
+      );
+
+      // Freq label at bottom
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: bands[i],
+          style: AppFonts.jostStyle(
+            fontSize: 8,
+            color: enabled ? Colors.white30 : Colors.white12,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      textPainter.paint(canvas, Offset(x - textPainter.width / 2, size.height - 18));
+    }
+
+    if (gains.length < 2) return;
+
+    // 3. Draw smooth curve path
+    final curveColor = enabled ? accentColor : Colors.grey;
+    final path = Path();
+    path.moveTo(getMappedX(0), getMappedY(gains[0]));
+
+    for (int i = 0; i < gains.length - 1; i++) {
+      final x1 = getMappedX(i);
+      final y1 = getMappedY(gains[i]);
+      final x2 = getMappedX(i + 1);
+      final y2 = getMappedY(gains[i + 1]);
+
+      final stepX = x2 - x1;
+      final cx1 = x1 + stepX / 2;
+      final cy1 = y1;
+      final cx2 = x2 - stepX / 2;
+      final cy2 = y2;
+
+      path.cubicTo(cx1, cy1, cx2, cy2, x2, y2);
+    }
+
+    // Shadow glow
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = curveColor.withValues(alpha: 0.15)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 6
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3),
+    );
+
+    // Stroke
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = curveColor.withValues(alpha: 0.8)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5
+        ..strokeCap = StrokeCap.round,
+    );
+
+    // Fill under path
+    final fillPath = Path.from(path)
+      ..lineTo(getMappedX(gains.length - 1), trackBottom)
+      ..lineTo(getMappedX(0), trackBottom)
+      ..close();
+
+    final gradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        curveColor.withValues(alpha: 0.12),
+        curveColor.withValues(alpha: 0.0),
+      ],
+    );
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = gradient.createShader(Rect.fromLTWH(0, 0, size.width, size.height));
+    canvas.drawPath(fillPath, fillPaint);
+
+    // 4. Draw interactive node handles
+    final handlePaint = Paint()
+      ..color = curveColor.withValues(alpha: enabled ? 1.0 : 0.4)
+      ..style = PaintingStyle.fill;
+
+    for (int i = 0; i < gains.length; i++) {
+      final x = getMappedX(i);
+      final y = getMappedY(gains[i]);
+      final isDragged = i == activeDragIndex;
+
+      if (isDragged && enabled) {
+        // Draw selection outer ring
+        canvas.drawCircle(
+          Offset(x, y),
+          12,
+          Paint()
+            ..color = curveColor.withValues(alpha: 0.3)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1.5,
+        );
+      }
+
+      // Draw dot handle
+      canvas.drawCircle(Offset(x, y), isDragged ? 6.0 : 4.5, handlePaint);
+
+      // Draw inner core
+      canvas.drawCircle(Offset(x, y), isDragged ? 2.5 : 1.8, Paint()..color = Colors.black..style = PaintingStyle.fill);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _InteractiveGraphPainter oldDelegate) {
+    return oldDelegate.gains != gains ||
+        oldDelegate.accentColor != accentColor ||
+        oldDelegate.enabled != enabled ||
+        oldDelegate.activeDragIndex != activeDragIndex;
+  }
+}

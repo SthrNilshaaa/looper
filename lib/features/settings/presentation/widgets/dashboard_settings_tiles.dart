@@ -84,6 +84,32 @@ class ShowGenresRowTile extends ConsumerWidget {
   }
 }
 
+class ShowRecentRowTile extends ConsumerWidget {
+  const ShowRecentRowTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.history, color: Colors.white70),
+      title: Text(
+        l10n.showRecentRow,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        l10n.showRecentRowDesc,
+        style: _tileSubtitleStyle(),
+      ),
+      activeThumbColor: Color(settings.accentColor),
+      value: settings.showHomeRecent,
+      onChanged: (value) {
+        ref.read(settingsProvider.notifier).updateShowHomeRecent(value);
+      },
+    );
+  }
+}
+
 class ReorderDashboardSectionsTile extends ConsumerWidget {
   const ReorderDashboardSectionsTile({super.key});
 

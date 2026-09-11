@@ -1,6 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../features/library/domain/models/models.dart';
+export '../features/library/domain/models/models.dart';
 import 'logger_helper.dart';
 
 class DbService {
@@ -24,6 +25,7 @@ class DbService {
         ArtistSchema,
         PlaylistSchema,
         AppSettingsSchema,
+        PlayEventSchema,
       ], directory: dir.path);
       LoggerHelper.write('DbService: Isar opened successfully.');
     } catch (e, stack) {

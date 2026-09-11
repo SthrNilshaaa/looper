@@ -32,6 +32,7 @@ void showSongOptionsBottomSheet({
   Playlist? playlist,
   bool showDeleteOption = true,
   bool showRenameOption = true,
+  bool showEqualizerAndTechnicalInfoOptions = true,
 }) {
   showModalBottomSheet(
     context: context,
@@ -44,6 +45,7 @@ void showSongOptionsBottomSheet({
       playlist: playlist,
       showDeleteOption: showDeleteOption,
       showRenameOption: showRenameOption,
+      showEqualizerAndTechnicalInfoOptions: showEqualizerAndTechnicalInfoOptions,
       parentContext: context,
     ),
   );
@@ -54,6 +56,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
   final Playlist? playlist;
   final bool showDeleteOption;
   final bool showRenameOption;
+  final bool showEqualizerAndTechnicalInfoOptions;
   final BuildContext parentContext;
 
   const _SongOptionsSheetContent({
@@ -61,6 +64,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
     this.playlist,
     required this.showDeleteOption,
     required this.showRenameOption,
+    required this.showEqualizerAndTechnicalInfoOptions,
     required this.parentContext,
   });
 
@@ -213,7 +217,8 @@ class _SongOptionsSheetContent extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
     final playbackState = ref.watch(playbackProvider);
-    final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
+    final useBlur = settings.alwaysBlurSheets ||
+        (!settings.disableBlur && settings.enableDynamicTheming);
     final isPureBlack = settings.darkTheme;
     final accentColor = Color(settings.accentColor);
 
@@ -380,7 +385,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                         ),
                       if (showRenameOption)
                         MenuOptionTile(
-                          label: 'Edit Song Info',
+                          label: l10n.editSongInfo,
                           icon: LucideIcons.edit3,
                           iconColor: accentColor,
                           onTap: () {
@@ -389,21 +394,22 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                             _showEditSongSheet(parentContext, ref);
                           },
                         ),
-                      MenuOptionTile(
-                        label: 'Equalizer',
-                        icon: LucideIcons.sliders,
-                        iconColor: accentColor,
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.pop(context);
-                          Navigator.push(
-                            parentContext,
-                            MaterialPageRoute(
-                              builder: (context) => const AndroidEqualizerScreen(),
-                            ),
-                          );
-                        },
-                      ),
+                      if (showEqualizerAndTechnicalInfoOptions)
+                        MenuOptionTile(
+                          label: l10n.equalizer,
+                          icon: LucideIcons.sliders,
+                          iconColor: accentColor,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pop(context);
+                            Navigator.push(
+                              parentContext,
+                              MaterialPageRoute(
+                                builder: (context) => const AndroidEqualizerScreen(),
+                              ),
+                            );
+                          },
+                        ),
                       MenuOptionTile(
                         label: l10n.songDetails,
                         icon: LucideIcons.info,
@@ -420,21 +426,22 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                           );
                         },
                       ),
-                      MenuOptionTile(
-                        label: l10n.technicalInfoFrequency,
-                        icon: LucideIcons.activity,
-                        iconColor: accentColor,
-                        onTap: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.pop(context);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SongInfoScreen(song: song),
-                            ),
-                          );
-                        },
-                      ),
+                      if (showEqualizerAndTechnicalInfoOptions)
+                        MenuOptionTile(
+                          label: l10n.technicalInfoFrequency,
+                          icon: LucideIcons.activity,
+                          iconColor: accentColor,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SongInfoScreen(song: song),
+                              ),
+                            );
+                          },
+                        ),
                       MenuOptionTile(
                         label: l10n.share,
                         icon: LucideIcons.share2,
@@ -462,6 +469,7 @@ class _SongOptionsSheetContent extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(20),
                       padding: EdgeInsets.zero,
                       useExpanded: false,
+                      backgroundColor: sheetBg,
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: List.generate(options.length * 2 - 1, (index) {

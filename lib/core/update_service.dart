@@ -2,13 +2,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
+import 'package:looper_player/core/app_links.dart';
 import 'package:looper_player/core/providers.dart';
 
 import 'package:package_info_plus/package_info_plus.dart';
 
 class UpdateService {
-  static const repoUrl = 'https://api.github.com/repos/SthrNilshaaa/looper/releases/latest';
-  static const fallbackHtmlUrl = 'https://github.com/SthrNilshaaa/looper/releases';
+  static const repoUrl = AppLinks.githubReleasesApi;
+  static const fallbackHtmlUrl = AppLinks.githubReleasesWeb;
 
   static Future<void> checkForUpdates() async {
     try {

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
+import 'package:looper_player/ui/widgets/app_refresh_indicator.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
@@ -19,69 +20,6 @@ import 'package:looper_player/core/app_fonts.dart';
 enum AlbumSortOption { nameAsc, nameDesc, dateAddedNewest, dateAddedOldest, yearNewest, yearOldest }
 enum ArtistSortOption { nameAsc, nameDesc }
 enum GenreSortOption { nameAsc, nameDesc, songCountDesc, songCountAsc }
-
-final sortedArtistsCategoryProvider = Provider.autoDispose<List<Artist>>((ref) {
-  final library = ref.watch(libraryProvider);
-  final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.artistSortOptionIndex));
-  final sortOption = ArtistSortOption.values[sortOptionIndex.clamp(0, ArtistSortOption.values.length - 1)];
-  final sorted = List<Artist>.from(library.artists);
-  if (sortOption == ArtistSortOption.nameAsc) {
-    sorted.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-  } else {
-    sorted.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
-  }
-  return sorted;
-});
-
-class CategoryGenresData {
-  final List<String> sortedGenres;
-  final Map<String, List<Song>> genresMap;
-  CategoryGenresData({required this.sortedGenres, required this.genresMap});
-}
-
-final categoryGenresDataProvider = Provider.autoDispose<CategoryGenresData>((ref) {
-  final songs = ref.watch(libraryProvider.select((l) => l.songs));
-  final genresMap = <String, List<Song>>{};
-  for (var song in songs) {
-    final genre = song.genre ?? 'Unknown';
-    genresMap.putIfAbsent(genre, () => []).add(song);
-  }
-  final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.genreSortOptionIndex));
-  final sortOption = GenreSortOption.values[sortOptionIndex.clamp(0, GenreSortOption.values.length - 1)];
-  final genres = genresMap.keys.toList();
-  switch (sortOption) {
-    case GenreSortOption.nameAsc:
-      genres.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-      break;
-    case GenreSortOption.nameDesc:
-      genres.sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
-      break;
-    case GenreSortOption.songCountDesc:
-      genres.sort((a, b) => genresMap[b]!.length.compareTo(genresMap[a]!.length));
-      break;
-    case GenreSortOption.songCountAsc:
-      genres.sort((a, b) => genresMap[a]!.length.compareTo(genresMap[b]!.length));
-      break;
-  }
-  return CategoryGenresData(sortedGenres: genres, genresMap: genresMap);
-});
-
-class FoldersCategoryData {
-  final List<String> sortedFolders;
-  final Map<String, List<Song>> foldersMap;
-  FoldersCategoryData({required this.sortedFolders, required this.foldersMap});
-}
-
-final categoryFoldersDataProvider = Provider.autoDispose<FoldersCategoryData>((ref) {
-  final songs = ref.watch(libraryProvider.select((l) => l.songs));
-  final foldersMap = <String, List<Song>>{};
-  for (var song in songs) {
-    final folder = Directory(song.path).parent.path;
-    foldersMap.putIfAbsent(folder, () => []).add(song);
-  }
-  final folders = foldersMap.keys.toList()..sort();
-  return FoldersCategoryData(sortedFolders: folders, foldersMap: foldersMap);
-});
 
 class CategoryDetailWrapper extends ConsumerWidget {
   final String title;
@@ -243,7 +181,7 @@ class CategoryDetailWrapper extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 8, 16, 0),
+              padding: const EdgeInsets.fromLTRB(8, 20, 16, 12),
               child: Row(
                 children: [
                   PremiumSection(
@@ -328,44 +266,63 @@ class AlbumsGridView extends ConsumerWidget {
         final albums = snapshot.data!;
         if (albums.isEmpty) return Center(child: Text(l10n.noAlbumsFound));
 
-        return GridView.builder(
-          padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 24,
-            crossAxisSpacing: 24,
-            childAspectRatio: 0.8,
-          ),
-          itemCount: albums.length,
-          itemBuilder: (context, index) {
-            final album = albums[index];
-            return InkWell(
-              onTap: () async {
-                final songs = await DbService.isar.songs.filter().albumEqualTo(album.name).findAll();
-                ref.read(appNavigationProvider.notifier).showCollection(
-                  title: album.name,
-                  subtitle: album.artist ?? l10n.unknownArtist,
-                  art: album.artPath,
-                  songs: songs,
+        // A plain `childAspectRatio` sizes the *whole* card (art + text) to a fixed
+        // ratio, so the art itself ends up a hair taller or shorter than it is wide
+        // depending on screen width -- that's what read as "not symmetric". Instead
+        // compute the column width ourselves, force the art to a true 1:1 square,
+        // and give every card the exact same fixed text-block height below it.
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            const crossAxisCount = 2;
+            const crossAxisSpacing = 24.0;
+            const horizontalPadding = 24.0;
+            const textBlockHeight = 54.0; // 12 gap + title line + subtitle line
+            final itemWidth =
+                (constraints.maxWidth - horizontalPadding * 2 - crossAxisSpacing * (crossAxisCount - 1)) /
+                    crossAxisCount;
+
+            return GridView.builder(
+              padding: const EdgeInsets.only(left: horizontalPadding, right: horizontalPadding, top: 24, bottom: 200),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 24,
+                crossAxisSpacing: crossAxisSpacing,
+                mainAxisExtent: itemWidth + textBlockHeight,
+              ),
+              itemCount: albums.length,
+              itemBuilder: (context, index) {
+                final album = albums[index];
+                return InkWell(
+                  onTap: () async {
+                    final songs = await DbService.isar.songs.filter().albumEqualTo(album.name).findAll();
+                    ref.read(appNavigationProvider.notifier).showCollection(
+                      title: album.name,
+                      subtitle: album.artist ?? l10n.unknownArtist,
+                      art: album.artPath,
+                      songs: songs,
+                      album: album,
+                    );
+                  },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      AspectRatio(
+                        aspectRatio: 1,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: OptimizedImage(
+                            imagePath: album.artPath,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(album.name, style: AppFonts.jostStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(album.artist ?? l10n.unknownArtist, style: AppFonts.jostStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
                 );
               },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: OptimizedImage(
-                        imagePath: album.artPath,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(album.name, style: AppFonts.jostStyle(fontWeight: FontWeight.bold, fontSize: 16), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  Text(album.artist ?? l10n.unknownArtist, style: AppFonts.jostStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 13), maxLines: 1, overflow: TextOverflow.ellipsis),
-                ],
-              ),
             );
           },
         );
@@ -379,10 +336,20 @@ class ArtistsGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sortedArtists = ref.watch(sortedArtistsCategoryProvider);
+    final library = ref.watch(libraryProvider);
+    final artists = library.artists;
     final l10n = AppLocalizations.of(context)!;
 
-    if (sortedArtists.isEmpty) return Center(child: Text(l10n.noArtistsFound));
+    if (artists.isEmpty) return Center(child: Text(l10n.noArtistsFound));
+
+    final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.artistSortOptionIndex));
+    final sortOption = ArtistSortOption.values[sortOptionIndex.clamp(0, ArtistSortOption.values.length - 1)];
+    final sortedArtists = List<Artist>.from(artists);
+    if (sortOption == ArtistSortOption.nameAsc) {
+      sortedArtists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    } else {
+      sortedArtists.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+    }
 
     return GridView.builder(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
@@ -446,10 +413,33 @@ class GenresGridView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final genresData = ref.watch(categoryGenresDataProvider);
+    // Isar doesn't have a distinct query easily for genres if they are just strings in Songs.
+    // We'll fetch all songs and group them. For larger libraries, we should cache this.
+    final songs = ref.watch(libraryProvider).songs;
     final l10n = AppLocalizations.of(context)!;
-    final genres = genresData.sortedGenres;
-    final genresMap = genresData.genresMap;
+    final genresMap = <String, List<Song>>{};
+    for (var song in songs) {
+      final genre = song.genre ?? l10n.unknown;
+      genresMap.putIfAbsent(genre, () => []).add(song);
+    }
+
+    final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.genreSortOptionIndex));
+    final sortOption = GenreSortOption.values[sortOptionIndex.clamp(0, GenreSortOption.values.length - 1)];
+    final genres = genresMap.keys.toList();
+    switch (sortOption) {
+      case GenreSortOption.nameAsc:
+        genres.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        break;
+      case GenreSortOption.nameDesc:
+        genres.sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
+        break;
+      case GenreSortOption.songCountDesc:
+        genres.sort((a, b) => genresMap[b]!.length.compareTo(genresMap[a]!.length));
+        break;
+      case GenreSortOption.songCountAsc:
+        genres.sort((a, b) => genresMap[a]!.length.compareTo(genresMap[b]!.length));
+        break;
+    }
 
     return GridView.builder(
       padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 200),
@@ -609,33 +599,41 @@ class FoldersListView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final foldersData = ref.watch(categoryFoldersDataProvider);
+    final songs = ref.watch(libraryProvider).songs;
     final l10n = AppLocalizations.of(context)!;
-    final folders = foldersData.sortedFolders;
-    final foldersMap = foldersData.foldersMap;
+    final foldersMap = <String, List<Song>>{};
+    for (var song in songs) {
+      final folder = Directory(song.path).parent.path;
+      foldersMap.putIfAbsent(folder, () => []).add(song);
+    }
+    final folders = foldersMap.keys.toList()..sort();
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 200),
-      itemCount: folders.length,
-      itemBuilder: (context, index) {
-        final folderPath = folders[index];
-        final folderName = folderPath.split(Platform.pathSeparator).last;
-        final folderSongs = foldersMap[folderPath]!;
-        return Material(
-          color: Colors.transparent,
-          child: ListTile(
-            leading: const Icon(LucideIcons.folder, color: Colors.amberAccent),
-            title: Text(folderName),
-            subtitle: Text(folderPath, style: AppFonts.jostStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
-            trailing: Text('${folderSongs.length} ${l10n.songs}'),
-            onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
-              title: folderName,
-              subtitle: folderPath,
-              songs: folderSongs,
+    return AppRefreshIndicator(
+      onRefresh: () => ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: true),
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 200),
+        itemCount: folders.length,
+        itemBuilder: (context, index) {
+          final folderPath = folders[index];
+          final folderName = folderPath.split(Platform.pathSeparator).last;
+          final folderSongs = foldersMap[folderPath]!;
+          return Material(
+            color: Colors.transparent,
+            child: ListTile(
+              leading: const Icon(LucideIcons.folder, color: Colors.amberAccent),
+              title: Text(folderName),
+              subtitle: Text(folderPath, style: AppFonts.jostStyle(fontSize: 11, color: Colors.grey), maxLines: 1, overflow: TextOverflow.ellipsis),
+              trailing: Text('${folderSongs.length} ${l10n.songs}'),
+              onTap: () => ref.read(appNavigationProvider.notifier).showCollection(
+                title: folderName,
+                subtitle: folderPath,
+                songs: folderSongs,
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

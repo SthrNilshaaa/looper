@@ -18,6 +18,7 @@ class PremiumSection extends ConsumerWidget {
   final String? heroTag;
   final bool showLeftBorder;
   final bool showRightBorder;
+  final bool showBorder;
   final bool showShadow;
   final double blurAmount;
   final bool useBlur;
@@ -44,6 +45,7 @@ class PremiumSection extends ConsumerWidget {
     this.heroTag,
     this.showLeftBorder = true,
     this.showRightBorder = true,
+    this.showBorder = true,
     this.showShadow = false,
     this.blurAmount = 3,
     this.useBlur = false,
@@ -62,12 +64,12 @@ class PremiumSection extends ConsumerWidget {
 
     // Detect if we are transitioning (route or tab transitions)
     final ModalRoute<dynamic>? parentRoute = ModalRoute.of(context);
-    final bool isRouteTransitioning = parentRoute != null && (
-      parentRoute.animation?.status == AnimationStatus.forward ||
-      parentRoute.animation?.status == AnimationStatus.reverse ||
-      parentRoute.secondaryAnimation?.status == AnimationStatus.forward ||
-      parentRoute.secondaryAnimation?.status == AnimationStatus.reverse
-    );
+    final bool isRouteTransitioning =
+        parentRoute != null &&
+        (parentRoute.animation?.status == AnimationStatus.forward ||
+            parentRoute.animation?.status == AnimationStatus.reverse ||
+            parentRoute.secondaryAnimation?.status == AnimationStatus.forward ||
+            parentRoute.secondaryAnimation?.status == AnimationStatus.reverse);
     final bool isTabTransitioning = TransitionStatusProvider.of(context);
     final bool isTransitioning = isRouteTransitioning || isTabTransitioning;
 
@@ -75,28 +77,32 @@ class PremiumSection extends ConsumerWidget {
 
     final borderSide = BorderSide(
       color: Colors.white.withValues(alpha: 0.05),
-      width: 1.2,
+      width: showBorder ? 0.8 : 0,
     );
 
     final decoration = forceTransparent
         ? const BoxDecoration(color: Colors.transparent)
         : BoxDecoration(
-            color: backgroundColor ?? (isBlurActive 
-                ? Colors.white.withValues(alpha: 0.05) 
-                : ((useBlur || forceBlur)
-                    ? (isTransitioning 
-                        ? Colors.black.withValues(alpha: 0.12)
-                        : (disableBlur && !keepSurfaceOnDisableBlur 
-                            ? Colors.white.withValues(alpha: 0.05)
-                            : Theme.of(context).colorScheme.surfaceContainer))
-                    : Theme.of(context).colorScheme.surfaceContainer)),
+            color:
+                backgroundColor ??
+                (isBlurActive
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : ((useBlur || forceBlur)
+                          ? (isTransitioning
+                                ? Colors.black.withValues(alpha: 0.12)
+                                : (disableBlur && !keepSurfaceOnDisableBlur
+                                      ? Colors.white.withValues(alpha: 0.05)
+                                      : Theme.of(context).colorScheme.surfaceContainer))
+                          : Theme.of(context).colorScheme.surfaceContainer)),
             borderRadius: borderRadius,
-            border: Border(
-              top: borderSide,
-              bottom: borderSide,
-              left: showLeftBorder ? borderSide : BorderSide.none,
-              right: showRightBorder ? borderSide : BorderSide.none,
-            ),
+            border: showBorder
+                ? Border(
+                    top: borderSide,
+                    bottom: borderSide,
+                    left: showLeftBorder ? borderSide : BorderSide.none,
+                    right: showRightBorder ? borderSide : BorderSide.none,
+                  )
+                : null,
             boxShadow: showShadow
                 ? [
                     BoxShadow(
@@ -146,10 +152,7 @@ class PremiumSection extends ConsumerWidget {
 
     Widget content;
     if (onTap != null) {
-      content = _PremiumBouncyTap(
-        onTap: onTap!,
-        child: containerBody,
-      );
+      content = _PremiumBouncyTap(onTap: onTap!, child: containerBody);
     } else {
       content = containerBody;
     }
@@ -157,18 +160,12 @@ class PremiumSection extends ConsumerWidget {
     if (heroTag != null) {
       content = Hero(
         tag: heroTag!,
-        child: Material(
-          type: MaterialType.transparency,
-          child: content,
-        ),
+        child: Material(type: MaterialType.transparency, child: content),
       );
     }
 
     if (useExpanded) {
-      return Expanded(
-        flex: flex,
-        child: content,
-      );
+      return Expanded(flex: flex, child: content);
     }
     return content;
   }
@@ -178,10 +175,7 @@ class _PremiumBouncyTap extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
 
-  const _PremiumBouncyTap({
-    required this.child,
-    required this.onTap,
-  });
+  const _PremiumBouncyTap({required this.child, required this.onTap});
 
   @override
   State<_PremiumBouncyTap> createState() => _PremiumBouncyTapState();
@@ -194,13 +188,11 @@ class _PremiumBouncyTapState extends State<_PremiumBouncyTap> with SingleTickerP
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 90),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 90));
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
   }
 
   @override
@@ -219,10 +211,7 @@ class _PremiumBouncyTapState extends State<_PremiumBouncyTap> with SingleTickerP
       },
       onTapCancel: () => _controller.reverse(),
       behavior: HitTestBehavior.opaque,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: widget.child,
-      ),
+      child: ScaleTransition(scale: _scaleAnimation, child: widget.child),
     );
   }
 }
@@ -230,11 +219,7 @@ class _PremiumBouncyTapState extends State<_PremiumBouncyTap> with SingleTickerP
 class TransitionStatusProvider extends InheritedWidget {
   final bool isTransitioning;
 
-  const TransitionStatusProvider({
-    super.key,
-    required this.isTransitioning,
-    required super.child,
-  });
+  const TransitionStatusProvider({super.key, required this.isTransitioning, required super.child});
 
   static bool of(BuildContext context) {
     final provider = context.dependOnInheritedWidgetOfExactType<TransitionStatusProvider>();
@@ -246,4 +231,3 @@ class TransitionStatusProvider extends InheritedWidget {
     return oldWidget.isTransitioning != isTransitioning;
   }
 }
-

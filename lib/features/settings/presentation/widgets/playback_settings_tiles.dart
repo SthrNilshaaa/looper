@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/screens/android/player/android_equalizer_screen.dart';
 
 class LanguageTile extends ConsumerWidget {
   const LanguageTile({super.key});
@@ -199,6 +200,37 @@ class DownloadMissingArtworkTile extends ConsumerWidget {
       value: settings.downloadArtwork,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateDownloadArtwork(value);
+      },
+    );
+  }
+}
+
+class EqualizerTile extends ConsumerWidget {
+  const EqualizerTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return ListTile(
+      leading: const Icon(LucideIcons.sliders, color: Colors.white70),
+      title: Text(
+        l10n.equalizer,
+        style: _tileTitleStyle(),
+      ),
+      subtitle: Text(
+        settings.equalizerEnabled ? 'Enabled (18-band MPV EQ)' : 'Disabled',
+        style: _tileSubtitleStyle(),
+      ),
+      trailing: const Icon(LucideIcons.chevronRight, color: Colors.white38),
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => const AndroidEqualizerScreen(),
+        );
       },
     );
   }

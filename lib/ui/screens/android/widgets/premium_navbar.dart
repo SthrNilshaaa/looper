@@ -8,7 +8,6 @@ import 'package:looper_player/features/settings/presentation/settings_notifier.d
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'premium_section.dart';
-import 'package:looper_player/core/ui_calculations.dart';
 
 class PremiumNavbar extends ConsumerWidget {
   final int currentIndex;
@@ -31,14 +30,13 @@ class PremiumNavbar extends ConsumerWidget {
     final bottomPadding = MediaQuery.of(context).padding.bottom;
     final useBlur = settings.enableDynamicTheming;
     final l10n = AppLocalizations.of(context)!;
-   
-    
 
-    return RepaintBoundary(
-      child: Container(
-        padding: UiCalculations.getNavbarPadding(bottomPadding),
-        child: SizedBox(
-          height: 72,
+
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 2, 16, 16 + bottomPadding),
+      child: SizedBox(
+        height: 72,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final double gapSize = 6.s;
@@ -215,7 +213,7 @@ class PremiumNavbar extends ConsumerWidget {
                   heroTag: 'nav_morph_1',
                  //useblur true,
                   isSelected: false,
-                 
+
                   showRightBorder: true,
                   showShadow: false,
                   useBlur: useBlur,
@@ -291,9 +289,8 @@ class PremiumNavbar extends ConsumerWidget {
           },
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
 
 class _NavItem extends StatelessWidget {
@@ -319,7 +316,7 @@ class _NavItem extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         AnimatedScale(
-          scale: isSelected ? 1.15 : 1.0,
+          scale: isSelected ? 1.05 : 1.0,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
           child: TweenAnimationBuilder<Color?>(
@@ -347,7 +344,7 @@ class _NavItem extends StatelessWidget {
             style: AppFonts.jostStyle(
               textStyle: const TextStyle(inherit: false),
               color: targetColor,
-              fontSize: 18.ts,
+              fontSize: 17.ts,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               letterSpacing: 0.2,
             ),

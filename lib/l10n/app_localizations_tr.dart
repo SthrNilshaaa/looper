@@ -431,47 +431,47 @@ class AppLocalizationsTr extends AppLocalizations {
       'Dil tercihlerini ve arayanın odaklanma durumunu yönetin';
 
   @override
-  String get audioFocusGetFocus => 'Get Focus';
+  String get audioFocusGetFocus => 'Odağı Al';
 
   @override
-  String get audioFocusGetFocusDesc =>
-      'Request audio focus when playback begins.';
+  String get audioFocusGetFocusDesc => 'Oynatma başladığında ses odağını iste.';
 
   @override
-  String get audioFocusReleaseFocus => 'Release Focus';
+  String get audioFocusReleaseFocus => 'Odağı Bırak';
 
   @override
   String get audioFocusReleaseFocusDesc =>
-      'Release audio focus when playback pauses or stops.';
+      'Oynatma duraklatıldığında veya durdurulduğunda ses odağını bırak.';
 
   @override
   String get audioFocusStopOnOtherSession =>
-      'Stop Music on Other Music Session';
+      'Başka Bir Müzik Oturumunda Müziği Durdur';
 
   @override
   String get audioFocusStopOnOtherSessionDesc =>
-      'Pause playback when another app starts playing audio.';
+      'Başka bir uygulama ses çalmaya başladığında oynatmayı duraklat.';
 
   @override
-  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+  String get audioFocusRestartOnGain =>
+      'Odak Kazanıldığında Müziği Yeniden Başlat';
 
   @override
   String get audioFocusRestartOnGainDesc =>
-      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+      'Ses odağı geri geldiğinde, yalnızca oynatma odak kaybı nedeniyle kesintiye uğramışsa oynatmayı otomatik olarak sürdür.';
 
   @override
-  String get pauseOnDuckTitle => 'Pause on Duck';
+  String get pauseOnDuckTitle => 'Sesi Kısarken Duraklat';
 
   @override
   String get pauseOnDuckDesc =>
-      'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).';
+      'Başka bir uygulama kısa süreli bir ses çaldığında (ör. bildirimler, navigasyon yönlendirmeleri) sesi kısmak yerine oynatmayı duraklat.';
 
   @override
-  String get resumeOnBluetoothConnectTitle => 'Resume on Bluetooth Connect';
+  String get resumeOnBluetoothConnectTitle => 'Bluetooth Bağlanınca Sürdür';
 
   @override
   String get resumeOnBluetoothConnectDesc =>
-      'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.';
+      'Bir Bluetooth ses cihazı (kulaklık, araç kiti) yeniden bağlandığında oynatmayı otomatik olarak sürdür.';
 
   @override
   String get manualCrossfadeDuration => 'Manuel Geçiş Süresi';
@@ -511,6 +511,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get newTitle => 'Yeni Başlık';
+
+  @override
+  String get nextUp => 'Sıradaki';
 
   @override
   String get noAlbumsFound => 'Hiçbir albüm bulunamadı';
@@ -624,6 +627,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recentPlayed => 'En Son Oynananlar';
 
   @override
+  String get recentRowDesc => 'Son çalınan şarkıların yatay rafı';
+
+  @override
   String get removedFromPlaylist => 'Çalma Listesinden Kaldırıldı';
 
   @override
@@ -651,6 +657,13 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get reorderDashboardSectionsDesc =>
       'Tercih edilen kontrol paneli sırasını ayarlamak için sürükleyip bırakın';
+
+  @override
+  String get includeOtherDeviceAudioTitle => 'Diğer cihaz seslerini dahil et';
+
+  @override
+  String get includeOtherDeviceAudioDesc =>
+      'Zil sesleri, bildirimler, alarmlar ve WhatsApp ile Telegram seslerini tara';
 
   @override
   String get rescanLibrary => 'Kütüphaneyi Yeniden Tara';
@@ -696,6 +709,13 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get persistQueueDesc =>
       'Uygulama yeniden başlatıldığında son oynatılan şarkıyı ve sırayı kaydet';
+
+  @override
+  String get keepSongProgressTitle => 'Şarkı İlerlemesini Koru';
+
+  @override
+  String get keepSongProgressDesc =>
+      'Her şarkının kendi çalma konumunu ayrı ayrı hatırlar. Bir şarkının ortasındayken başka bir şarkıya geçin ve daha sonra geri dönün — arada başka şarkılar çalmış olsanız bile — baştan başlamak yerine tam olarak kaldığınız yerden devam eder.';
 
   @override
   String get right => 'Sağa Hizala';
@@ -804,6 +824,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Şu anda oynatılan ekranda ses kalitesi bilgi rozetini görüntüle';
 
   @override
+  String get showRecentRow => 'Son Oynananlar Satırını Göster';
+
+  @override
+  String get showRecentRowDesc =>
+      'Ana ekranınızda son çalınan şarkıların yatay bir listesini görüntüleyin';
+
+  @override
   String get silenceBetweenTracksDesc =>
       'Parçalar arasına sessizlik boşluğu ekle (kesintisiz çalma için 0ms)';
 
@@ -892,19 +919,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get toggleFavorite => 'Favoriyi Değiştir';
 
   @override
-  String get shuffleTitle => 'Shuffle';
+  String get shuffleTitle => 'Karıştır';
 
   @override
   String get shuffleDisabledDesc =>
-      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+      'Şarkıları orijinal sıra düzeninde çal. Karıştırmayı kapatmak, mevcut şarkının çalmaya devam etmesini sağlar ve kalan sırayı, oynatmayı veya oynatma geçmişini etkilemeden orijinal sırasına geri getirir.';
 
   @override
   String get shuffleEnabledDesc =>
-      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+      'Mevcut şarkı değişmeden kalırken kalan şarkıları rastgele sıralar. Oluşturulan karıştırma sırası, sıra değişene veya yeni bir karıştırma istenene kadar aynı kalır, böylece tekrarlanan veya atlanan parçalar önlenir.';
 
   @override
   String get shuffleSwitchingDesc =>
-      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+      'Karıştırmayı açıp kapatmak mevcut şarkıyı asla yeniden başlatmaz. Yalnızca sıradaki parçaların sırasını değiştirir — açıkken rastgele, kapalıyken sıranın orijinal düzenine geri döner.';
 
   @override
   String get topResult => 'En İyi Sonuç';
@@ -1101,4 +1128,441 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get sortDuration => 'Süre';
+
+  @override
+  String get myAlbums => 'Albümlerim';
+
+  @override
+  String get featuredArtists => 'Öne Çıkan Sanatçılar';
+
+  @override
+  String get noSongPlaying => 'Çalan şarkı yok';
+
+  @override
+  String get nextLabel => 'Sonraki';
+
+  @override
+  String get previousLabel => 'Önceki';
+
+  @override
+  String get resync => 'Yeniden Senkronize Et';
+
+  @override
+  String get equalizer => 'Ekolayzer';
+
+  @override
+  String get presets => 'HAZIR AYARLAR';
+
+  @override
+  String get preAmpGain => 'Ön Amfi Kazancı';
+
+  @override
+  String get outputVolume => 'Çıkış Sesi';
+
+  @override
+  String get customFilterHint =>
+      'Özel libavfilter ses filtresi parametrelerini doğrudan girin (örn. volume=3dB, aecho=0.8:0.88:60:0.4):';
+
+  @override
+  String get flowGlobalActions => 'Akış ve Genel İşlemler';
+
+  @override
+  String get equalizerModeLabel => 'Ekolayzer Modu:';
+
+  @override
+  String get currentGainsAppliedGlobal =>
+      'Mevcut kazançlar genel varsayılan ayar olarak uygulandı.';
+
+  @override
+  String get applyToGlobal => 'Genele Uygula';
+
+  @override
+  String get songSpecificResetGlobal =>
+      'Şarkıya özel ayarlar genel varsayılana sıfırlandı.';
+
+  @override
+  String get resetToGlobal => 'Genele Sıfırla';
+
+  @override
+  String get resetAllSongsEq => 'Tüm Şarkıların EQ\'sunu Sıfırla';
+
+  @override
+  String get resetAllSongsEqConfirm =>
+      'Kitaplığınızdaki tüm şarkıların özel ekolayzer ayarlarını temizlemek istediğinizden emin misiniz?';
+
+  @override
+  String get allSongsEqDataReset =>
+      'Tüm şarkıya özel ekolayzer verileri sıfırlandı.';
+
+  @override
+  String get resetAllSongsEqData => 'Tüm Şarkıların EQ Verilerini Sıfırla';
+
+  @override
+  String get equalizerTargetMode => 'Ekolayzer Uygulama Modu';
+
+  @override
+  String get equalizerTargetModeDesc =>
+      'Ekolayzer ayarlarının müzik kitaplığınızda nasıl uygulanacağını seçin.';
+
+  @override
+  String get globalMode => 'Genel Mod';
+
+  @override
+  String get globalModeDesc =>
+      'Efektleri tüm şarkılara aynı şekilde uygular. Şarkı değiştiğinde ekolayzer ayarları aynı kalır.';
+
+  @override
+  String get songSpecificMode => 'Şarkıya Özel Mod';
+
+  @override
+  String get songSpecificModeDesc =>
+      'Özel ayarları yalnızca geçerli şarkı için kaydeder. Sonraki şarkı, kendi profili olmadıkça varsayılan olarak ekolayzersiz/düz çalar.';
+
+  @override
+  String get viewDeviceAudioCapabilities => 'Cihaz Ses Yeteneklerini Görüntüle';
+
+  @override
+  String get deviceAudioCapabilities => 'Cihaz Ses Yetenekleri';
+
+  @override
+  String get noPlaybackActiveCapabilities =>
+      'Etkin oynatma yok veya yetenek bilgisi mevcut değil.';
+
+  @override
+  String get changeLyricsProvider => 'Şarkı Sözü Sağlayıcısını Değiştir';
+
+  @override
+  String get autoFallbackProviders => 'Otomatik Yedek Sağlayıcılar';
+
+  @override
+  String get autoFallbackProvidersDesc =>
+      'Birincisinde şarkı sözü yoksa diğer sağlayıcıları otomatik olarak dene';
+
+  @override
+  String get ambientColorBackground => 'Ortam Renkli Arka Plan';
+
+  @override
+  String get ambientColorBackgroundDesc =>
+      'Şarkı kapağından türetilen yumuşak, ince ortam gradyanları';
+
+  @override
+  String get exportLyricsLrc => 'Şarkı Sözlerini Dışa Aktar (.lrc dosyası)';
+
+  @override
+  String get saveLyricsToDevice =>
+      'Geçerli şarkı sözlerini cihaz belleğine kaydet';
+
+  @override
+  String get noLyricsToExport => 'Dışa aktarılacak şarkı sözü yok';
+
+  @override
+  String get useCustomLyricsLrc => 'Özel Şarkı Sözü Kullan (LRC Dosyası)';
+
+  @override
+  String get selectLocalLrcFile =>
+      'Bu şarkı için yerel bir .lrc veya .txt dosyası seçin';
+
+  @override
+  String get customLyricsAppliedSuccess =>
+      'Özel şarkı sözleri başarıyla uygulandı!';
+
+  @override
+  String get noRecentlyPlayedTracks => 'Yakın zamanda çalınan parça yok';
+
+  @override
+  String get close => 'Kapat';
+
+  @override
+  String get audioQualityAnalysis => 'Ses Kalitesi Analizi';
+
+  @override
+  String get audioQualityAnalysisDesc =>
+      'Derinlemesine spektral ve ses formatı analizi gerçekleştir';
+
+  @override
+  String get audioStreamDetails => 'Ses Akışı Ayrıntıları';
+
+  @override
+  String get perChannelMetrics => 'Kanal Başına Ölçümler';
+
+  @override
+  String get sleepTimer => 'Uyku Zamanlayıcısı';
+
+  @override
+  String get stopByTime => 'SÜREYE GÖRE DURDUR';
+
+  @override
+  String get start => 'Başlat';
+
+  @override
+  String get stopBySongCount => 'ŞARKI SAYISINA GÖRE DURDUR';
+
+  @override
+  String get cancelSleepTimer => 'Uyku Zamanlayıcısını İptal Et';
+
+  @override
+  String get nowPlayingAllCaps => 'ŞİMDİ ÇALIYOR';
+
+  @override
+  String get settingsAndBackups => 'Ayarlar ve Yedeklemeler';
+
+  @override
+  String get managePreferencesLibraryData =>
+      'Tercihleri ve kitaplık verilerini yönet';
+
+  @override
+  String get logsClearedSuccess => 'Günlükler başarıyla temizlendi';
+
+  @override
+  String get editSongInfo => 'Şarkı Bilgisini Düzenle';
+
+  @override
+  String get editAlbumInfo => 'Albüm Bilgisini Düzenle';
+
+  @override
+  String get tapFieldToEdit => 'Düzenlemek için bir alana dokunun';
+
+  @override
+  String get alwaysBlurSheets => 'Sayfaları Her Zaman Bulanıklaştır';
+
+  @override
+  String get alwaysBlurSheetsDesc =>
+      'Dinamik Tema kapalıyken bile açılır sayfaları bulanıklaştırır';
+
+  @override
+  String get removeArtwork => 'Kapak Resmini Kaldır';
+
+  @override
+  String get resetArtworkToDefault => 'Varsayılana Sıfırla';
+
+  @override
+  String get artworkResetToDefault => 'Kapak resmi varsayılana sıfırlandı';
+
+  @override
+  String get noEmbeddedArtworkFound =>
+      'Bu albüm için yerleşik kapak resmi bulunamadı';
+
+  @override
+  String get saveChangesBtn => 'Değişiklikleri Kaydet';
+
+  @override
+  String get enterFolderPathManually => 'Klasör Yolunu Manuel Girin';
+
+  @override
+  String get folderPickerManualHint =>
+      'Sistem dizin seçici açılmıyorsa, aşağıya tam dizin yolunu yazın veya yapıştırın:';
+
+  @override
+  String get noSupportedSongsFoundFolder =>
+      'Seçilen klasörde desteklenen şarkı bulunamadı';
+
+  @override
+  String get add => 'Ekle';
+
+  @override
+  String get folderPickerClosed => 'Klasör seçici kapatıldı';
+
+  @override
+  String get buyMeCoffee => 'Bana Bir Kahve Ismarla';
+
+  @override
+  String get typeToSearchSettings => 'Ayarlarda aramak için yazın…';
+
+  @override
+  String get maintainersLabel => 'Sürdürücüler';
+
+  @override
+  String get personBehindLooperPlayer => 'LooperPlayer\'ın Arkasındaki Kişi';
+
+  @override
+  String get blurredArtworkForLyrics =>
+      'Şarkı Sözleri İçin Bulanık Kapak Resmi';
+
+  @override
+  String get blurredArtworkForLyricsDesc =>
+      'Dinamik/statik gradyan yerine bulanık albüm kapağını arka plan olarak göster';
+
+  @override
+  String get lyricsFontWeight => 'Şarkı Sözü Yazı Tipi Kalınlığı';
+
+  @override
+  String get openSourceLicenses => 'Açık Kaynak Lisansları';
+
+  @override
+  String get openSourceLicensesDesc =>
+      'Bu uygulamada kullanılan üçüncü taraf kitaplıklar';
+
+  @override
+  String get done => 'Bitti';
+
+  @override
+  String get lyricsNotAvailable => 'Şarkı sözü mevcut değil.';
+
+  @override
+  String get lyricsNotAvailableHint =>
+      'Bu şarkıya söz eklemek için bir .lrc veya .txt dosyası içe aktarın';
+
+  @override
+  String get importLyricsFile => 'Şarkı Sözü Dosyası İçe Aktar';
+
+  @override
+  String get approximatedSyncNoWordTimings =>
+      'Yaklaşık Senkronizasyon (Kelime Zamanlaması Olmadan)';
+
+  @override
+  String get lyricsSyncHelp => 'Şarkı Sözü Senkronizasyon Yardımı';
+
+  @override
+  String get simpleModeLabel => 'Basit Mod';
+
+  @override
+  String get advancedModeLabel => 'Gelişmiş Mod';
+
+  @override
+  String get tips => 'İpuçları';
+
+  @override
+  String get gotIt => 'Anladım';
+
+  @override
+  String get lyricsSyncStudio => 'Şarkı Sözü Senkronizasyon Stüdyosu';
+
+  @override
+  String get lyricsTextLabel => 'Şarkı Sözü Metni';
+
+  @override
+  String get lyricsTextHelperDesc =>
+      'Her şarkı sözü satırı için bir satır. Aşağıdaki senkronizasyon araçları bu satırlara zaman damgası ekler.';
+
+  @override
+  String get quickSync => 'Hızlı Senkronizasyon';
+
+  @override
+  String get autoAdvanceAfterStamping => 'Damgalamadan sonra otomatik ilerle';
+
+  @override
+  String get advancedSync => 'Gelişmiş Senkronizasyon';
+
+  @override
+  String get useCurrentTime => 'Geçerli Zamanı Kullan';
+
+  @override
+  String get playbackAssist => 'Oynatma Yardımcısı';
+
+  @override
+  String get timeShift => 'Zaman Kaydırma';
+
+  @override
+  String get timeShiftDesc =>
+      'Damgalanmış tüm şarkı sözlerini birlikte ileri veya geri kaydırır.';
+
+  @override
+  String get lyricsSaveLrcExplain =>
+      'Kaydetme, mümkünse şarkı sesinin yanına eşlik eden bir \".lrc\" dosyası yazar ve yerel oynatıcı veritabanına da kaydeder. Damgalanmamış satırlar otomatik olarak enterpolasyona tabi tutulur.';
+
+  @override
+  String get back => 'Geri';
+
+  @override
+  String get appSettingsLabel => 'Uygulama Ayarları';
+
+  @override
+  String get backupsAndLogs => 'Yedekler ve Günlükler';
+
+  @override
+  String get backupsAndLogsDesc =>
+      'Uygulama verilerini dışa aktar, içe aktar ve yönet';
+
+  @override
+  String get exportBackupJson => 'Yedeği Dışa Aktar (JSON)';
+
+  @override
+  String get exportBackupJsonDesc =>
+      'Beğendiğiniz şarkıları ve çalma listelerini saklayabileceğiniz veya paylaşabileceğiniz bir JSON dosyasına kaydeder. Başka hiçbir şey dahil edilmez.';
+
+  @override
+  String get importBackupJson => 'Yedeği İçe Aktar (JSON)';
+
+  @override
+  String get importBackupJsonDesc =>
+      'Yedek dosyasındaki beğenilen şarkıları ve çalma listelerini kitaplığınızla birleştirir. Mevcut veriler asla üzerine yazılmaz veya kaldırılmaz.';
+
+  @override
+  String get exportDiagnosticsLogs => 'Tanılama Günlüklerini Dışa Aktar';
+
+  @override
+  String get exportDiagnosticsLogsDesc =>
+      'Sorun giderme amacıyla incelenebilmesi için uygulamanın tanılama günlük dosyasını paylaşır.';
+
+  @override
+  String get clearDiagnosticsLogs => 'Tanılama Günlüklerini Temizle';
+
+  @override
+  String get clearDiagnosticsLogsDesc =>
+      'Bu cihazda saklanan tanılama günlük dosyasını kalıcı olarak siler. Bu işlem geri alınamaz.';
+
+  @override
+  String get lyricsPlainTextOrLrc => 'Şarkı Sözleri (Düz metin veya LRC)';
+
+  @override
+  String get syncModeLine => 'SATIR';
+
+  @override
+  String get syncModeWord => 'KELİME';
+
+  @override
+  String get syncModeChar => 'KARAKTER';
+
+  @override
+  String get enterManually => 'Manuel Girin';
+
+  @override
+  String get rawFilterParametersHint => 'Ham filtre parametreleri...';
+
+  @override
+  String get searchSettingsHint => 'Ayarlarda ara...';
+
+  @override
+  String get repeatTooltip => 'Tekrarla';
+
+  @override
+  String get favoriteTooltip => 'Favori';
+
+  @override
+  String get instructionsTooltip => 'Talimatlar';
+
+  @override
+  String get pasteLyricsHint => 'Şarkı sözlerini buraya yapıştırın veya yazın';
+
+  @override
+  String get timestampMmSsHint => 'Zaman Damgası (mm:ss.xx)';
+
+  @override
+  String get nowLabel => 'Şimdi';
+
+  @override
+  String get playlistNameHint => 'Çalma listesi adı';
+
+  @override
+  String get songInfoUpdated => 'Şarkı bilgisi güncellendi!';
+
+  @override
+  String get albumInfoUpdated => 'Albüm bilgisi güncellendi!';
+
+  @override
+  String get failedToSaveChanges => 'Değişiklikler kaydedilemedi.';
+
+  @override
+  String sleepTimerStoppingIn(String time) {
+    return 'Etkin: $time içinde duracak';
+  }
+
+  @override
+  String sleepTimerStoppingAfter(String time) {
+    return 'Etkin: $time sonra duracak';
+  }
+
+  @override
+  String get selectWhenToPause =>
+      'Müzik çalmanın ne zaman duraklatılacağını seçin';
 }

@@ -107,7 +107,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get audioFocusDenied =>
-      'Playback paused: Audio focus denied by system';
+      'Lecture mise en pause : focus audio refusé par le système';
 
   @override
   String get audioPlayback => 'Audio & lecture';
@@ -236,11 +236,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Fond dynamique uniquement pour les paroles';
 
   @override
-  String get dynamicColorActiveLyrics => 'Dynamic Color Active Line';
+  String get dynamicColorActiveLyrics => 'Couleur dynamique de la ligne active';
 
   @override
   String get dynamicColorActiveLyricsDesc =>
-      'Use extracted artwork colors for the currently playing lyrics line';
+      'Utiliser les couleurs extraites de la pochette pour la ligne de paroles en cours de lecture';
 
   @override
   String get dynamicLyricsBg => 'Fond de paroles dynamique';
@@ -254,18 +254,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get emptyLibraryDesc =>
-      'We couldn\'t find any supported music files in your library. Add folders or run a search scan.';
+      'Aucun fichier musical pris en charge n\'a été trouvé dans votre bibliothèque. Ajoutez des dossiers ou lancez une analyse.';
 
   @override
   String get enableNetworkLyricsArt =>
       'Activer l\'utilisation du réseau pour les paroles en ligne & l\'art de l\'artiste';
 
   @override
-  String get enablePlayerGradient => 'Music Screen Gradient';
+  String get enablePlayerGradient => 'Dégradé de l\'écran de lecture';
 
   @override
   String get enablePlayerGradientDesc =>
-      'Enable the radial accent gradient background on the now playing screen';
+      'Activer le fond en dégradé radial d\'accent sur l\'écran de lecture en cours';
 
   @override
   String get fadeDuration => 'Durée du fondu';
@@ -325,11 +325,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get home => 'Accueil';
 
   @override
-  String get homeDarkness => 'Home Screen Darkness';
+  String get homeDarkness => 'Assombrissement de l\'écran d\'accueil';
 
   @override
   String get homeDarknessDesc =>
-      'Adjust background overlay darkness for the Home screen';
+      'Ajuster l\'assombrissement du fond pour l\'écran d\'accueil';
 
   @override
   String get homeDashboardSettings => 'Paramètres du tableau de bord';
@@ -358,11 +358,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get library => 'Bibliothèque';
 
   @override
-  String get libraryDarkness => 'Library Screen Darkness';
+  String get libraryDarkness => 'Assombrissement de l\'écran de bibliothèque';
 
   @override
   String get libraryDarknessDesc =>
-      'Adjust background overlay darkness for the Library screen';
+      'Ajuster l\'assombrissement du fond pour l\'écran de bibliothèque';
 
   @override
   String get libraryFoldersSync =>
@@ -394,17 +394,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get lyrics => 'Paroles';
 
   @override
-  String get lyricsAlignment => 'Lyrics Alignment';
+  String get lyricsAlignment => 'Alignement des paroles';
 
   @override
-  String get lyricsAlignmentDesc => 'Align text positions for scrolling lyrics';
+  String get lyricsAlignmentDesc =>
+      'Aligner la position du texte pour les paroles défilantes';
 
   @override
-  String get lyricsDarkness => 'Lyrics Screen Darkness';
+  String get lyricsDarkness => 'Assombrissement de l\'écran des paroles';
 
   @override
   String get lyricsDarknessDesc =>
-      'Adjust background overlay darkness for the Lyrics screen';
+      'Ajuster l\'assombrissement du fond pour l\'écran des paroles';
 
   @override
   String get lyricsProvider => 'Fournisseur de paroles';
@@ -431,47 +432,49 @@ class AppLocalizationsFr extends AppLocalizations {
       'Gérer les préférences de langue et l\'état de focus des appels';
 
   @override
-  String get audioFocusGetFocus => 'Get Focus';
+  String get audioFocusGetFocus => 'Obtenir le focus';
 
   @override
   String get audioFocusGetFocusDesc =>
-      'Request audio focus when playback begins.';
+      'Demander le focus audio au début de la lecture.';
 
   @override
-  String get audioFocusReleaseFocus => 'Release Focus';
+  String get audioFocusReleaseFocus => 'Libérer le focus';
 
   @override
   String get audioFocusReleaseFocusDesc =>
-      'Release audio focus when playback pauses or stops.';
+      'Libérer le focus audio quand la lecture est mise en pause ou arrêtée.';
 
   @override
   String get audioFocusStopOnOtherSession =>
-      'Stop Music on Other Music Session';
+      'Arrêter la musique lors d\'une autre session musicale';
 
   @override
   String get audioFocusStopOnOtherSessionDesc =>
-      'Pause playback when another app starts playing audio.';
+      'Mettre la lecture en pause quand une autre application commence à jouer de l\'audio.';
 
   @override
-  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+  String get audioFocusRestartOnGain =>
+      'Reprendre la musique au regain du focus';
 
   @override
   String get audioFocusRestartOnGainDesc =>
-      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+      'Reprendre automatiquement la lecture quand le focus audio revient, uniquement si la lecture avait été interrompue par une perte de focus.';
 
   @override
-  String get pauseOnDuckTitle => 'Pause on Duck';
+  String get pauseOnDuckTitle => 'Pause en cas d\'atténuation';
 
   @override
   String get pauseOnDuckDesc =>
-      'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).';
+      'Mettre la lecture en pause au lieu de baisser le volume quand une autre application joue un son bref (ex. notifications, indications de navigation).';
 
   @override
-  String get resumeOnBluetoothConnectTitle => 'Resume on Bluetooth Connect';
+  String get resumeOnBluetoothConnectTitle =>
+      'Reprendre à la connexion Bluetooth';
 
   @override
   String get resumeOnBluetoothConnectDesc =>
-      'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.';
+      'Reprendre automatiquement la lecture quand un appareil audio Bluetooth (écouteurs, kit voiture) se reconnecte.';
 
   @override
   String get manualCrossfadeDuration => 'Durée du fondu enchaîné manuel';
@@ -493,11 +496,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get musicAudioAccess => 'ACCÈS MUSIQUE & AUDIO';
 
   @override
-  String get musicDarkness => 'Music Player Darkness';
+  String get musicDarkness => 'Assombrissement du lecteur de musique';
 
   @override
   String get musicDarknessDesc =>
-      'Adjust background overlay darkness for the Music Player screen';
+      'Ajuster l\'assombrissement du fond pour l\'écran du lecteur de musique';
 
   @override
   String get musicLibrary => 'Bibliothèque musicale';
@@ -511,6 +514,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get newTitle => 'Nouveau titre';
+
+  @override
+  String get nextUp => 'À suivre';
 
   @override
   String get noAlbumsFound => 'Aucun album trouvé';
@@ -627,6 +633,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get recentPlayed => 'Écoutés récemment';
 
   @override
+  String get recentRowDesc =>
+      'Étagère horizontale des titres écoutés récemment';
+
+  @override
   String get removedFromPlaylist => 'Retiré de la playlist';
 
   @override
@@ -654,6 +664,14 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get reorderDashboardSectionsDesc =>
       'Glisser-déposer pour définir l\'ordre préféré';
+
+  @override
+  String get includeOtherDeviceAudioTitle =>
+      'Inclure les autres audios de l\'appareil';
+
+  @override
+  String get includeOtherDeviceAudioDesc =>
+      'Analyser les sonneries, notifications, alarmes et l\'audio de WhatsApp et Telegram';
 
   @override
   String get rescanLibrary => 'Analyser à nouveau la bibliothèque';
@@ -699,6 +717,13 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get persistQueueDesc =>
       'Sauvegarder le dernier morceau et la file d\'attente lors du redémarrage';
+
+  @override
+  String get keepSongProgressTitle => 'Conserver la progression du morceau';
+
+  @override
+  String get keepSongProgressDesc =>
+      'Mémorise la position de lecture de chaque morceau séparément. Passez à un autre morceau en cours de route et revenez plus tard — même après avoir écouté d\'autres morceaux entre-temps — la lecture reprendra exactement là où vous l\'aviez laissée au lieu de recommencer depuis le début.';
 
   @override
   String get right => 'Droite';
@@ -799,11 +824,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get showMore => 'Afficher plus';
 
   @override
-  String get showQualityBadge => 'Show Quality Badge';
+  String get showQualityBadge => 'Afficher le badge de qualité';
 
   @override
   String get showQualityBadgeDesc =>
-      'Display audio quality information badge on the now playing screen';
+      'Afficher un badge d\'information sur la qualité audio sur l\'écran de lecture en cours';
+
+  @override
+  String get showRecentRow => 'Afficher la ligne Écoutés récemment';
+
+  @override
+  String get showRecentRowDesc =>
+      'Afficher une liste horizontale des titres écoutés récemment sur votre écran d\'accueil';
 
   @override
   String get silenceBetweenTracksDesc =>
@@ -842,11 +874,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get songs => 'Chansons';
 
   @override
-  String get songsDarkness => 'Songs Screen Darkness';
+  String get songsDarkness => 'Assombrissement de l\'écran des morceaux';
 
   @override
   String get songsDarknessDesc =>
-      'Adjust background overlay darkness for the Songs screen';
+      'Ajuster l\'assombrissement du fond pour l\'écran des morceaux';
 
   @override
   String get sortBy => 'Trier par';
@@ -894,19 +926,19 @@ class AppLocalizationsFr extends AppLocalizations {
   String get toggleFavorite => 'Ajouter/Retirer des favoris';
 
   @override
-  String get shuffleTitle => 'Shuffle';
+  String get shuffleTitle => 'Lecture aléatoire';
 
   @override
   String get shuffleDisabledDesc =>
-      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+      'Lire les morceaux dans leur ordre de file d\'attente original. Désactiver la lecture aléatoire laisse le morceau en cours continuer et restaure le reste de la file dans son ordre d\'origine, sans affecter la lecture ni son historique.';
 
   @override
   String get shuffleEnabledDesc =>
-      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+      'Mélanger les morceaux restants tout en laissant le morceau en cours inchangé. L\'ordre aléatoire généré reste le même jusqu\'à ce que la file change ou qu\'un nouveau mélange soit demandé, évitant les morceaux répétés ou sautés.';
 
   @override
   String get shuffleSwitchingDesc =>
-      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+      'Activer ou désactiver la lecture aléatoire ne redémarre jamais le morceau en cours. Cela change uniquement l\'ordre des morceaux à venir — aléatoire si activé, et restauré à l\'ordre d\'origine de la file si désactivé.';
 
   @override
   String get topResult => 'Meilleur résultat';
@@ -1104,4 +1136,446 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get sortDuration => 'Durée';
+
+  @override
+  String get myAlbums => 'Mes albums';
+
+  @override
+  String get featuredArtists => 'Artistes à la une';
+
+  @override
+  String get noSongPlaying => 'Aucun morceau en cours de lecture';
+
+  @override
+  String get nextLabel => 'Suivant';
+
+  @override
+  String get previousLabel => 'Précédent';
+
+  @override
+  String get resync => 'Resynchroniser';
+
+  @override
+  String get equalizer => 'Égaliseur';
+
+  @override
+  String get presets => 'PRÉRÉGLAGES';
+
+  @override
+  String get preAmpGain => 'Gain de préamplification';
+
+  @override
+  String get outputVolume => 'Volume de sortie';
+
+  @override
+  String get customFilterHint =>
+      'Saisissez directement des paramètres de filtre audio libavfilter personnalisés (ex. volume=3dB, aecho=0.8:0.88:60:0.4) :';
+
+  @override
+  String get flowGlobalActions => 'Flux et actions globales';
+
+  @override
+  String get equalizerModeLabel => 'Mode de l\'égaliseur :';
+
+  @override
+  String get currentGainsAppliedGlobal =>
+      'Réglages actuels appliqués comme paramètres globaux par défaut.';
+
+  @override
+  String get applyToGlobal => 'Appliquer au global';
+
+  @override
+  String get songSpecificResetGlobal =>
+      'Paramètres spécifiques au morceau réinitialisés aux valeurs globales par défaut.';
+
+  @override
+  String get resetToGlobal => 'Réinitialiser au global';
+
+  @override
+  String get resetAllSongsEq =>
+      'Réinitialiser l\'égaliseur de tous les morceaux';
+
+  @override
+  String get resetAllSongsEqConfirm =>
+      'Voulez-vous vraiment effacer les réglages d\'égaliseur personnalisés de tous les morceaux de votre bibliothèque ?';
+
+  @override
+  String get allSongsEqDataReset =>
+      'Toutes les données d\'égaliseur spécifiques aux morceaux ont été réinitialisées.';
+
+  @override
+  String get resetAllSongsEqData =>
+      'Réinitialiser les données d\'égaliseur de tous les morceaux';
+
+  @override
+  String get equalizerTargetMode => 'Mode cible de l\'égaliseur';
+
+  @override
+  String get equalizerTargetModeDesc =>
+      'Choisissez comment les réglages de l\'égaliseur s\'appliquent à votre bibliothèque musicale.';
+
+  @override
+  String get globalMode => 'Mode global';
+
+  @override
+  String get globalModeDesc =>
+      'Applique les effets à tous les morceaux de façon universelle. Les réglages de l\'égaliseur restent identiques lors du changement de morceau.';
+
+  @override
+  String get songSpecificMode => 'Mode par morceau';
+
+  @override
+  String get songSpecificModeDesc =>
+      'Enregistre des réglages personnalisés pour le morceau actuel uniquement. Le morceau suivant utilise par défaut un égaliseur neutre/désactivé, sauf s\'il possède son propre profil.';
+
+  @override
+  String get viewDeviceAudioCapabilities =>
+      'Voir les capacités audio de l\'appareil';
+
+  @override
+  String get deviceAudioCapabilities => 'Capacités audio de l\'appareil';
+
+  @override
+  String get noPlaybackActiveCapabilities =>
+      'Aucune lecture en cours ou informations sur les capacités indisponibles.';
+
+  @override
+  String get changeLyricsProvider => 'Changer de fournisseur de paroles';
+
+  @override
+  String get autoFallbackProviders => 'Fournisseurs de secours automatiques';
+
+  @override
+  String get autoFallbackProvidersDesc =>
+      'Essayer automatiquement les autres fournisseurs si le principal n\'a pas de paroles';
+
+  @override
+  String get ambientColorBackground => 'Fond couleur ambiante';
+
+  @override
+  String get ambientColorBackgroundDesc =>
+      'Dégradés ambiants doux et subtils dérivés de la pochette du morceau';
+
+  @override
+  String get exportLyricsLrc => 'Exporter les paroles (fichier .lrc)';
+
+  @override
+  String get saveLyricsToDevice =>
+      'Enregistrer les paroles actuelles sur l\'appareil';
+
+  @override
+  String get noLyricsToExport => 'Aucune parole disponible à exporter';
+
+  @override
+  String get useCustomLyricsLrc =>
+      'Utiliser des paroles personnalisées (fichier LRC)';
+
+  @override
+  String get selectLocalLrcFile =>
+      'Sélectionner un fichier .lrc ou .txt local pour ce morceau';
+
+  @override
+  String get customLyricsAppliedSuccess =>
+      'Paroles personnalisées appliquées avec succès !';
+
+  @override
+  String get noRecentlyPlayedTracks => 'Aucun morceau récemment écouté';
+
+  @override
+  String get close => 'Fermer';
+
+  @override
+  String get audioQualityAnalysis => 'Analyse de la qualité audio';
+
+  @override
+  String get audioQualityAnalysisDesc =>
+      'Effectuer une analyse spectrale et de format audio approfondie';
+
+  @override
+  String get audioStreamDetails => 'Détails du flux audio';
+
+  @override
+  String get perChannelMetrics => 'Mesures par canal';
+
+  @override
+  String get sleepTimer => 'Minuterie de veille';
+
+  @override
+  String get stopByTime => 'ARRÊT PAR DURÉE';
+
+  @override
+  String get start => 'Démarrer';
+
+  @override
+  String get stopBySongCount => 'ARRÊT PAR NOMBRE DE MORCEAUX';
+
+  @override
+  String get cancelSleepTimer => 'Annuler la minuterie de veille';
+
+  @override
+  String get nowPlayingAllCaps => 'LECTURE EN COURS';
+
+  @override
+  String get settingsAndBackups => 'Paramètres et sauvegardes';
+
+  @override
+  String get managePreferencesLibraryData =>
+      'Gérer les préférences et les données de la bibliothèque';
+
+  @override
+  String get logsClearedSuccess => 'Journaux effacés avec succès';
+
+  @override
+  String get editSongInfo => 'Modifier les infos du morceau';
+
+  @override
+  String get editAlbumInfo => 'Modifier les infos de l\'album';
+
+  @override
+  String get tapFieldToEdit => 'Appuyez sur un champ pour le modifier';
+
+  @override
+  String get alwaysBlurSheets => 'Toujours flouter les fiches';
+
+  @override
+  String get alwaysBlurSheetsDesc =>
+      'Floute les fiches contextuelles même quand le thème dynamique est désactivé';
+
+  @override
+  String get removeArtwork => 'Supprimer la pochette';
+
+  @override
+  String get resetArtworkToDefault => 'Réinitialiser par défaut';
+
+  @override
+  String get artworkResetToDefault => 'Pochette réinitialisée par défaut';
+
+  @override
+  String get noEmbeddedArtworkFound =>
+      'Aucune pochette intégrée trouvée pour cet album';
+
+  @override
+  String get saveChangesBtn => 'Enregistrer les modifications';
+
+  @override
+  String get enterFolderPathManually =>
+      'Saisir le chemin du dossier manuellement';
+
+  @override
+  String get folderPickerManualHint =>
+      'Si le sélecteur de répertoire système ne s\'ouvre pas, saisissez ou collez le chemin complet du répertoire ci-dessous :';
+
+  @override
+  String get noSupportedSongsFoundFolder =>
+      'Aucun morceau pris en charge trouvé dans le dossier sélectionné';
+
+  @override
+  String get add => 'Ajouter';
+
+  @override
+  String get folderPickerClosed => 'Sélecteur de dossier fermé';
+
+  @override
+  String get buyMeCoffee => 'M\'offrir un café';
+
+  @override
+  String get typeToSearchSettings => 'Rechercher dans les paramètres…';
+
+  @override
+  String get maintainersLabel => 'Mainteneurs';
+
+  @override
+  String get personBehindLooperPlayer => 'La personne derrière LooperPlayer';
+
+  @override
+  String get blurredArtworkForLyrics => 'Pochette floutée pour les paroles';
+
+  @override
+  String get blurredArtworkForLyricsDesc =>
+      'Afficher la pochette floutée en fond au lieu d\'un dégradé dynamique/statique';
+
+  @override
+  String get lyricsFontWeight => 'Graisse de police des paroles';
+
+  @override
+  String get openSourceLicenses => 'Licences open source';
+
+  @override
+  String get openSourceLicensesDesc =>
+      'Bibliothèques tierces utilisées dans cette application';
+
+  @override
+  String get done => 'Terminé';
+
+  @override
+  String get lyricsNotAvailable => 'Paroles non disponibles.';
+
+  @override
+  String get lyricsNotAvailableHint =>
+      'Importez un fichier .lrc ou .txt pour ajouter les paroles de ce morceau';
+
+  @override
+  String get importLyricsFile => 'Importer un fichier de paroles';
+
+  @override
+  String get approximatedSyncNoWordTimings =>
+      'Synchronisation approximative (sans minutage par mot)';
+
+  @override
+  String get lyricsSyncHelp => 'Aide à la synchronisation des paroles';
+
+  @override
+  String get simpleModeLabel => 'Mode simple';
+
+  @override
+  String get advancedModeLabel => 'Mode avancé';
+
+  @override
+  String get tips => 'Astuces';
+
+  @override
+  String get gotIt => 'Compris';
+
+  @override
+  String get lyricsSyncStudio => 'Studio de synchronisation des paroles';
+
+  @override
+  String get lyricsTextLabel => 'Texte des paroles';
+
+  @override
+  String get lyricsTextHelperDesc =>
+      'Une ligne par vers. Les outils de synchronisation ci-dessous associent des horodatages à ces lignes.';
+
+  @override
+  String get quickSync => 'Synchronisation rapide';
+
+  @override
+  String get autoAdvanceAfterStamping =>
+      'Avancer automatiquement après l\'horodatage';
+
+  @override
+  String get advancedSync => 'Synchronisation avancée';
+
+  @override
+  String get useCurrentTime => 'Utiliser l\'heure actuelle';
+
+  @override
+  String get playbackAssist => 'Assistant de lecture';
+
+  @override
+  String get timeShift => 'Décalage temporel';
+
+  @override
+  String get timeShiftDesc =>
+      'Décale toutes les paroles horodatées en avant ou en arrière, ensemble.';
+
+  @override
+  String get lyricsSaveLrcExplain =>
+      'L\'enregistrement crée si possible un fichier « .lrc » associé à côté du fichier audio du morceau, et l\'enregistre aussi dans la base de données locale du lecteur. Les lignes non horodatées seront interpolées automatiquement.';
+
+  @override
+  String get back => 'Retour';
+
+  @override
+  String get appSettingsLabel => 'Paramètres de l\'application';
+
+  @override
+  String get backupsAndLogs => 'Sauvegardes et journaux';
+
+  @override
+  String get backupsAndLogsDesc =>
+      'Exporter, importer et gérer les données de l\'application';
+
+  @override
+  String get exportBackupJson => 'Exporter la sauvegarde (JSON)';
+
+  @override
+  String get exportBackupJsonDesc =>
+      'Enregistre vos morceaux aimés et vos playlists dans un fichier JSON que vous pouvez conserver ou partager. Rien d\'autre n\'est inclus.';
+
+  @override
+  String get importBackupJson => 'Importer la sauvegarde (JSON)';
+
+  @override
+  String get importBackupJsonDesc =>
+      'Fusionne les morceaux aimés et les playlists d\'un fichier de sauvegarde avec votre bibliothèque. Les données existantes ne sont jamais écrasées ni supprimées.';
+
+  @override
+  String get exportDiagnosticsLogs => 'Exporter les journaux de diagnostic';
+
+  @override
+  String get exportDiagnosticsLogsDesc =>
+      'Partage le fichier journal de diagnostic de l\'application afin qu\'il puisse être examiné en cas de problème.';
+
+  @override
+  String get clearDiagnosticsLogs => 'Effacer les journaux de diagnostic';
+
+  @override
+  String get clearDiagnosticsLogsDesc =>
+      'Efface définitivement le fichier journal de diagnostic stocké sur cet appareil. Cette action est irréversible.';
+
+  @override
+  String get lyricsPlainTextOrLrc => 'Paroles (texte brut ou LRC)';
+
+  @override
+  String get syncModeLine => 'LIGNE';
+
+  @override
+  String get syncModeWord => 'MOT';
+
+  @override
+  String get syncModeChar => 'CARACTÈRE';
+
+  @override
+  String get enterManually => 'Saisir manuellement';
+
+  @override
+  String get rawFilterParametersHint => 'Paramètres de filtre bruts...';
+
+  @override
+  String get searchSettingsHint => 'Rechercher dans les paramètres...';
+
+  @override
+  String get repeatTooltip => 'Répéter';
+
+  @override
+  String get favoriteTooltip => 'Favori';
+
+  @override
+  String get instructionsTooltip => 'Instructions';
+
+  @override
+  String get pasteLyricsHint => 'Collez ou saisissez les paroles ici';
+
+  @override
+  String get timestampMmSsHint => 'Horodatage (mm:ss.xx)';
+
+  @override
+  String get nowLabel => 'Maintenant';
+
+  @override
+  String get playlistNameHint => 'Nom de la playlist';
+
+  @override
+  String get songInfoUpdated => 'Infos du morceau mises à jour !';
+
+  @override
+  String get albumInfoUpdated => 'Infos de l\'album mises à jour !';
+
+  @override
+  String get failedToSaveChanges =>
+      'Échec de l\'enregistrement des modifications.';
+
+  @override
+  String sleepTimerStoppingIn(String time) {
+    return 'Actif : Arrêt dans $time';
+  }
+
+  @override
+  String sleepTimerStoppingAfter(String time) {
+    return 'Actif : Arrêt après $time';
+  }
+
+  @override
+  String get selectWhenToPause => 'Choisissez quand mettre la musique en pause';
 }

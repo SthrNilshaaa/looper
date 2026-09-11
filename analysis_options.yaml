@@ -40,3 +40,9 @@ analyzer:
     unused_field: ignore
     dead_code: ignore
     dead_null_aware_expression: ignore
+  exclude:
+    - build/**
+    - android/**
+    - windows/**
+    - linux/**
+    - ad_firebase/**

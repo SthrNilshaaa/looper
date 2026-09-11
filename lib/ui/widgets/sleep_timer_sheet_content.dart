@@ -7,6 +7,7 @@ import 'package:looper_player/features/playback/presentation/playback_notifier.d
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 void showSleepTimerBottomSheet(BuildContext context, WidgetRef ref) {
   showModalBottomSheet(
@@ -32,10 +33,12 @@ class _SleepTimerSheetContentState extends ConsumerState<SleepTimerSheetContent>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
     final playbackState = ref.watch(playbackProvider);
     final accentColor = Color(settings.accentColor);
-    final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
+    final useBlur = settings.alwaysBlurSheets ||
+        (!settings.disableBlur && settings.enableDynamicTheming);
     final isPureBlack = settings.darkTheme;
 
     final sheetBg = isPureBlack
@@ -75,7 +78,7 @@ class _SleepTimerSheetContentState extends ConsumerState<SleepTimerSheetContent>
                 Icon(LucideIcons.timer, color: accentColor, size: 24),
                 const SizedBox(width: 12),
                 Text(
-                  'Sleep Timer',
+                  l10n.sleepTimer,
                   style: AppFonts.jostStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -88,9 +91,9 @@ class _SleepTimerSheetContentState extends ConsumerState<SleepTimerSheetContent>
             Text(
               playbackState.isSleepTimerActive
                   ? (playbackState.sleepTimerDurationRemaining != null
-                      ? 'Active: Stopping in ${formatSleepTimerRemaining(playbackState)}'
-                      : 'Active: Stopping after ${formatSleepTimerRemaining(playbackState)}')
-                  : 'Select when to pause music playback',
+                      ? l10n.sleepTimerStoppingIn(formatSleepTimerRemaining(playbackState))
+                      : l10n.sleepTimerStoppingAfter(formatSleepTimerRemaining(playbackState)))
+                  : l10n.selectWhenToPause,
               style: AppFonts.jostStyle(
                 fontSize: 14,
                 color: playbackState.isSleepTimerActive
@@ -100,7 +103,7 @@ class _SleepTimerSheetContentState extends ConsumerState<SleepTimerSheetContent>
             ),
             const SizedBox(height: 24),
             Text(
-              'STOP BY TIME',
+              l10n.stopByTime,
               style: AppFonts.jostStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -173,7 +176,7 @@ class _SleepTimerSheetContentState extends ConsumerState<SleepTimerSheetContent>
                       padding:
                           const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
-                    child: Text('Start',
+                    child: Text(l10n.start,
                         style: AppFonts.jostStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -205,7 +208,7 @@ class _SleepTimerSheetContentState extends ConsumerState<SleepTimerSheetContent>
             ),
             const SizedBox(height: 24),
             Text(
-              'STOP BY SONG COUNT',
+              l10n.stopBySongCount,
               style: AppFonts.jostStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
@@ -278,7 +281,7 @@ class _SleepTimerSheetContentState extends ConsumerState<SleepTimerSheetContent>
                       padding:
                           const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                     ),
-                    child: Text('Start',
+                    child: Text(l10n.start,
                         style: AppFonts.jostStyle(fontWeight: FontWeight.bold)),
                   ),
                 ],
@@ -312,7 +315,7 @@ class _SleepTimerSheetContentState extends ConsumerState<SleepTimerSheetContent>
                   Navigator.pop(context);
                 },
                 icon: const Icon(LucideIcons.xCircle, size: 20),
-                label: Text('Cancel Sleep Timer',
+                label: Text(l10n.cancelSleepTimer,
                     style: AppFonts.jostStyle(fontWeight: FontWeight.bold)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent.withValues(alpha: 0.2),

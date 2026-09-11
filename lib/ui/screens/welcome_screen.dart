@@ -13,12 +13,18 @@ import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/providers.dart';
 import '../../features/library/presentation/library_notifier.dart';
 import '../../features/settings/presentation/settings_notifier.dart';
+import '../../features/playback/presentation/playback_notifier.dart';
 
 enum WelcomeState { initial, scanning, noSongs }
 
 final welcomeBypassedProvider = StateProvider<bool>((ref) {
   final forceWelcome = ref.watch(forceWelcomeProvider);
   if (forceWelcome) return false;
+
+  // On desktop platforms (Linux, Windows, macOS), bypass mobile permission screen
+  if (!Platform.isAndroid && !Platform.isIOS) {
+    return true;
+  }
 
   final songs = ref.watch(libraryProvider).songs;
   final settings = ref.watch(settingsProvider);
@@ -85,11 +91,17 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     bool all = false;
 
     if (Platform.isAndroid) {
-      notif = await Permission.notification.isGranted;
-      all = await Permission.manageExternalStorage.isGranted;
-      aud =
-          (await Permission.audio.isGranted) ||
-          (await Permission.storage.isGranted);
+      try {
+        notif = await Permission.notification.isGranted;
+        all = await Permission.manageExternalStorage.isGranted;
+        aud =
+            (await Permission.audio.isGranted) ||
+            (await Permission.storage.isGranted);
+      } catch (_) {
+        aud = true;
+        all = true;
+        notif = true;
+      }
     } else {
       notif = true;
       aud = true;
@@ -108,20 +120,30 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 
   Future<void> _requestNotificationPermission() async {
     HapticFeedback.lightImpact();
-    await Permission.notification.request();
+    if (!Platform.isAndroid) return;
+    try {
+      await Permission.notification.request();
+    } catch (_) {}
     await _checkPermissionStatus();
+    ref.read(playbackProvider.notifier).updateNotification();
   }
 
   Future<void> _requestAudioPermission() async {
     HapticFeedback.lightImpact();
-    await Permission.audio.request();
-    await Permission.storage.request();
+    if (!Platform.isAndroid) return;
+    try {
+      await Permission.audio.request();
+      await Permission.storage.request();
+    } catch (_) {}
     await _checkPermissionStatus();
   }
 
   Future<void> _requestAllFilesPermission() async {
     HapticFeedback.lightImpact();
-    await Permission.manageExternalStorage.request();
+    if (!Platform.isAndroid) return;
+    try {
+      await Permission.manageExternalStorage.request();
+    } catch (_) {}
     await _checkPermissionStatus();
   }
 
@@ -583,17 +605,11 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 
   // State 2: Deep Scanning State
   Widget _buildScanningState(ColorScheme colorScheme, AppLocalizations l10n) {
-    final settings = ref.watch(settingsProvider);
     return Column(
       key: const ValueKey('scanning_state'),
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Custom interactive glowing spinner
-        SizedBox(
-          width: 400.s,
-          height: 300.s,
-          child: Lottie.asset('assets/loading.json', fit: BoxFit.contain),
-        ),
+        const _ScanningLottieAnimation(),
         const SizedBox(height: 24),
         Text(
           l10n.deepStorageScanProgress,
@@ -787,13 +803,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   // Scan & Permission Flow Functions
   Future<void> _startStorageScanFlow() async {
     _autoScanTriggered = true;
+    if (!mounted) return;
     setState(() {
       _currentState = WelcomeState.scanning;
-      _scanStatusMessage = "Clearing old data...";
+      _scanStatusMessage = "Preparing music scan...";
     });
 
-    await ref.read(libraryProvider.notifier).clearAllData();
-
+    if (!mounted) return;
     setState(() {
       _scanStatusMessage = "Checking system permissions...";
     });
@@ -801,16 +817,15 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     // Check again
     await _checkPermissionStatus();
 
+    if (!mounted) return;
     if (Platform.isAndroid && !_permissionGranted) {
-      if (mounted) {
-        final localizations = AppLocalizations.of(context)!;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(localizations.storagePermissionRequired)),
-        );
-        setState(() {
-          _currentState = WelcomeState.initial;
-        });
-      }
+      final localizations = AppLocalizations.of(context)!;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(localizations.storagePermissionRequired)),
+      );
+      setState(() {
+        _currentState = WelcomeState.initial;
+      });
       return;
     }
 
@@ -821,6 +836,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 
     // Determine scan roots including all popular directories for maximum coverage
     final List<String> scanRoots = [];
+    // Broad/coarse roots (e.g. the whole storage root) that must NOT be
+    // recorded as-is in libraryFolders - see recordFolder below.
+    final Set<String> coarseRoots = {};
     if (Platform.isLinux) {
       String defaultPath = '${Platform.environment['HOME']}/Music';
       try {
@@ -848,20 +866,26 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       ];
       int sdkInt = 0;
       try {
-        final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+        final sdkMatch = RegExp(
+          r'API\s+(\d+)',
+        ).firstMatch(Platform.operatingSystemVersion);
         if (sdkMatch != null) {
           sdkInt = int.parse(sdkMatch.group(1)!);
         }
       } catch (_) {}
 
-      final isAllFilesGranted = await Permission.manageExternalStorage.isGranted;
-      final isLegacyStorageGranted = sdkInt < 30 && await Permission.storage.isGranted;
+      final isAllFilesGranted =
+          await Permission.manageExternalStorage.isGranted;
+      final isLegacyStorageGranted =
+          sdkInt < 30 && await Permission.storage.isGranted;
       final canScanRoot = isAllFilesGranted || isLegacyStorageGranted;
 
       if (canScanRoot) {
         scanRoots.add('/storage/emulated/0');
-      } else {
-        scanRoots.addAll(commonPaths);
+        coarseRoots.add('/storage/emulated/0');
+      }
+      for (final cp in commonPaths) {
+        if (!scanRoots.contains(cp)) scanRoots.add(cp);
       }
       // Check for SD Card mount points
       try {
@@ -872,12 +896,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
               .toList();
           for (final entity in entities) {
             final name = p.context.basename(entity.path);
-            if (name != 'emulated' &&
+            if (entity is Directory &&
+                name != 'emulated' &&
                 name != 'self' &&
-                name != 'knox-emulated' &&
-                !name.contains('-')) {
+                name != 'knox-emulated') {
               if (canScanRoot) {
                 scanRoots.add(entity.path);
+                coarseRoots.add(entity.path);
               } else {
                 scanRoots.add('${entity.path}/Music');
                 scanRoots.add('${entity.path}/Download');
@@ -892,21 +917,39 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
 
     // Run scans
     for (final path in scanRoots) {
+      if (!mounted) return;
       if (Directory(path).existsSync()) {
-        setState(() {
-          _scanStatusMessage = "Analyzing path: ${p.context.basename(path)}...";
-        });
+        if (mounted) {
+          setState(() {
+            _scanStatusMessage =
+                "Analyzing path: ${p.context.basename(path)}...";
+          });
+        }
         final count = await ref
             .read(libraryProvider.notifier)
-            .scanLibrary(path);
+            .scanLibrary(path, recordFolder: !coarseRoots.contains(path));
         totalSongsDiscovered += count;
       }
     }
 
+    if (!mounted) return;
+
+    if (coarseRoots.isNotEmpty) {
+      // Coarse roots were scanned without recording themselves in
+      // libraryFolders - record the real per-song folders instead, so
+      // Settings > Library Folders shows e.g. "Music" / "Songs" rather
+      // than the whole storage root.
+      await ref.read(libraryProvider.notifier).recordActualLibraryFolders();
+    }
+
+    if (!mounted) return;
+
     if (totalSongsDiscovered == 0) {
-      setState(() {
-        _currentState = WelcomeState.noSongs;
-      });
+      if (mounted) {
+        setState(() {
+          _currentState = WelcomeState.noSongs;
+        });
+      }
     } else {
       ref.read(forceWelcomeProvider.notifier).state = false;
       ref.read(welcomeBypassedProvider.notifier).state = true;
@@ -916,26 +959,27 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   // Choose Custom Folder Backup Function
   Future<void> _selectCustomFolder() async {
     await _checkPermissionStatus();
+    if (!mounted) return;
     if (Platform.isAndroid && !_permissionGranted) return;
 
     final String? path = await FilePicker.platform.getDirectoryPath();
-    if (path != null) {
-      await ref.read(libraryProvider.notifier).clearAllData();
+    if (!mounted || path == null) return;
 
+    setState(() {
+      _currentState = WelcomeState.scanning;
+      _scanStatusMessage = "Scanning selected path: $path...";
+    });
+
+    final count = await ref.read(libraryProvider.notifier).scanLibrary(path);
+    if (!mounted) return;
+
+    if (count == 0) {
       setState(() {
-        _currentState = WelcomeState.scanning;
-        _scanStatusMessage = "Scanning selected path: $path...";
+        _currentState = WelcomeState.noSongs;
       });
-
-      final count = await ref.read(libraryProvider.notifier).scanLibrary(path);
-      if (count == 0) {
-        setState(() {
-          _currentState = WelcomeState.noSongs;
-        });
-      } else {
-        ref.read(forceWelcomeProvider.notifier).state = false;
-        ref.read(welcomeBypassedProvider.notifier).state = true;
-      }
+    } else {
+      ref.read(forceWelcomeProvider.notifier).state = false;
+      ref.read(welcomeBypassedProvider.notifier).state = true;
     }
   }
 }
@@ -1014,6 +1058,25 @@ class _PremiumButton extends StatelessWidget {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScanningLottieAnimation extends StatelessWidget {
+  const _ScanningLottieAnimation();
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: SizedBox(
+        width: 400.s,
+        height: 300.s,
+        child: Lottie.asset(
+          'assets/loading.json',
+          fit: BoxFit.contain,
+          repeat: true,
         ),
       ),
     );

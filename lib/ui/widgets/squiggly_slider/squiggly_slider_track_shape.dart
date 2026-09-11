@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -148,30 +149,29 @@ class SquigglySliderTrackShape extends SliderTrackShape
       final double endX = lr - radius;
       final double totalLength = endX - startX;
 
-      final path = Path();
-      const double ppp = 1.0;
-      final int pointsCount = (totalLength / ppp).ceil() + 1;
-      for (int index = 0; index < pointsCount; index++) {
-        final double xOff = index * ppp;
-        final double x = min(endX, startX + xOff);
-        final double easeLength = squiggleWavelength * 3;
-        final double easeFactor = (xOff < easeLength
-            ? xOff / easeLength
-            : xOff > totalLength - easeLength
-                ? (totalLength - xOff) / easeLength
-                : 1);
-        final double y = heightCenter +
-            (sin(x / squiggleWavelength + phase * 2 * pi) *
-                    squiggleAmplitude) *
-                easeFactor.clamp(0.0, 1.0);
-        if (index == 0) {
-          path.moveTo(x, y);
-        } else {
-          path.lineTo(x, y);
-        }
-      }
-      context.canvas.drawPath(
-        path,
+      const ppp = 1.0; // pixels per point -- the resolution of the curve
+      context.canvas.drawPoints(
+        PointMode.polygon,
+        List.generate(
+          (totalLength / ppp).ceil() + 1,
+          (index) {
+            final double xOff = index * ppp;
+            final double x = min(endX, startX + xOff);
+            final double easeLength = squiggleWavelength * 3;
+            final double easeFactor = (xOff < easeLength
+                ? xOff / easeLength
+                : xOff > totalLength - easeLength
+                    ? (totalLength - xOff) / easeLength
+                    : 1);
+            return Offset(
+              x,
+              heightCenter +
+                  (sin(x / squiggleWavelength + phase * 2 * pi) *
+                          squiggleAmplitude) *
+                      easeFactor.clamp(0.0, 1.0),
+            );
+          },
+        ),
         leftTrackPaint
           ..style = PaintingStyle.stroke
           ..strokeWidth = (lt - lb).abs()

@@ -508,6 +508,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newTitle => 'New Title';
 
   @override
+  String get nextUp => 'Next Up';
+
+  @override
   String get noAlbumsFound => 'No albums found';
 
   @override
@@ -619,6 +622,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentPlayed => 'Recent Played';
 
   @override
+  String get recentRowDesc => 'Horizontal shelf of recently played tracks';
+
+  @override
   String get removedFromPlaylist => 'Removed from Playlist';
 
   @override
@@ -645,6 +651,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get reorderDashboardSectionsDesc =>
       'Drag and drop to set preferred dashboard order';
+
+  @override
+  String get includeOtherDeviceAudioTitle => 'Include other device audio';
+
+  @override
+  String get includeOtherDeviceAudioDesc =>
+      'Scan ringtones, notifications, alarms, WhatsApp and Telegram audio';
 
   @override
   String get rescanLibrary => 'Rescan Library';
@@ -689,6 +702,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get persistQueueDesc =>
       'Saves the last played song, queue order, and playback position so the app can restore the same session after restart. In real use, this means when the app is reopened, the user can continue from the same song list instead of starting over.';
+
+  @override
+  String get keepSongProgressTitle => 'Keep Song Progress';
+
+  @override
+  String get keepSongProgressDesc =>
+      'Remembers each song\'s own playback position separately. Switch to another song partway through and come back later — even after playing other songs in between — and it resumes right where you left off instead of starting over.';
 
   @override
   String get right => 'Right';
@@ -793,6 +813,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get showQualityBadgeDesc =>
       'Display audio quality information badge on the now playing screen';
+
+  @override
+  String get showRecentRow => 'Show Recent Row';
+
+  @override
+  String get showRecentRowDesc =>
+      'Display a horizontal list of recently played tracks on your Home screen';
 
   @override
   String get silenceBetweenTracksDesc =>
@@ -1087,4 +1114,436 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sortDuration => 'Duration';
+
+  @override
+  String get myAlbums => 'My Albums';
+
+  @override
+  String get featuredArtists => 'Featured Artists';
+
+  @override
+  String get noSongPlaying => 'No song playing';
+
+  @override
+  String get nextLabel => 'Next';
+
+  @override
+  String get previousLabel => 'Previous';
+
+  @override
+  String get resync => 'Re-sync';
+
+  @override
+  String get equalizer => 'Equalizer';
+
+  @override
+  String get presets => 'PRESETS';
+
+  @override
+  String get preAmpGain => 'Pre-amp Gain';
+
+  @override
+  String get outputVolume => 'Output Volume';
+
+  @override
+  String get customFilterHint =>
+      'Type custom libavfilter audio filter parameters directly (e.g. volume=3dB, aecho=0.8:0.88:60:0.4):';
+
+  @override
+  String get flowGlobalActions => 'Flow & Global Actions';
+
+  @override
+  String get equalizerModeLabel => 'Equalizer Mode:';
+
+  @override
+  String get currentGainsAppliedGlobal =>
+      'Current gains applied as global default settings.';
+
+  @override
+  String get applyToGlobal => 'Apply to Global';
+
+  @override
+  String get songSpecificResetGlobal =>
+      'Song-specific settings reset to global default.';
+
+  @override
+  String get resetToGlobal => 'Reset to Global';
+
+  @override
+  String get resetAllSongsEq => 'Reset All Songs EQ';
+
+  @override
+  String get resetAllSongsEqConfirm =>
+      'Are you sure you want to clear custom equalizer settings for all songs in your library?';
+
+  @override
+  String get allSongsEqDataReset =>
+      'All song-specific equalizer data has been reset.';
+
+  @override
+  String get resetAllSongsEqData => 'Reset All Songs EQ Data';
+
+  @override
+  String get equalizerTargetMode => 'Equalizer Target Mode';
+
+  @override
+  String get equalizerTargetModeDesc =>
+      'Select how equalizer settings are applied across your music library.';
+
+  @override
+  String get globalMode => 'Global Mode';
+
+  @override
+  String get globalModeDesc =>
+      'Applies effects to all songs universally. Equalizer settings remain the same when the song changes.';
+
+  @override
+  String get songSpecificMode => 'Song-Specific Mode';
+
+  @override
+  String get songSpecificModeDesc =>
+      'Saves custom settings for the current song only. Next song defaults to no/flat equalizer unless it has its own profile.';
+
+  @override
+  String get viewDeviceAudioCapabilities => 'View Device Audio Capabilities';
+
+  @override
+  String get deviceAudioCapabilities => 'Device Audio Capabilities';
+
+  @override
+  String get noPlaybackActiveCapabilities =>
+      'No playback active or capabilities information unavailable.';
+
+  @override
+  String get changeLyricsProvider => 'Change Lyrics Provider';
+
+  @override
+  String get autoFallbackProviders => 'Auto Fallback Providers';
+
+  @override
+  String get autoFallbackProvidersDesc =>
+      'Try remaining providers automatically if primary has no lyrics';
+
+  @override
+  String get ambientColorBackground => 'Ambient Color Background';
+
+  @override
+  String get ambientColorBackgroundDesc =>
+      'Smooth, subtle ambient gradients derived from song artwork';
+
+  @override
+  String get exportLyricsLrc => 'Export Lyrics (.lrc file)';
+
+  @override
+  String get saveLyricsToDevice => 'Save current lyrics to device storage';
+
+  @override
+  String get noLyricsToExport => 'No lyrics available to export';
+
+  @override
+  String get useCustomLyricsLrc => 'Use Custom Lyrics (LRC File)';
+
+  @override
+  String get selectLocalLrcFile =>
+      'Select local .lrc or .txt file for this song';
+
+  @override
+  String get customLyricsAppliedSuccess =>
+      'Custom lyrics applied successfully!';
+
+  @override
+  String get noRecentlyPlayedTracks => 'No recently played tracks';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get audioQualityAnalysis => 'Audio Quality Analysis';
+
+  @override
+  String get audioQualityAnalysisDesc =>
+      'Perform deep spectral and audio format analysis';
+
+  @override
+  String get audioStreamDetails => 'Audio Stream Details';
+
+  @override
+  String get perChannelMetrics => 'Per-Channel Metrics';
+
+  @override
+  String get sleepTimer => 'Sleep Timer';
+
+  @override
+  String get stopByTime => 'STOP BY TIME';
+
+  @override
+  String get start => 'Start';
+
+  @override
+  String get stopBySongCount => 'STOP BY SONG COUNT';
+
+  @override
+  String get cancelSleepTimer => 'Cancel Sleep Timer';
+
+  @override
+  String get nowPlayingAllCaps => 'NOW PLAYING';
+
+  @override
+  String get settingsAndBackups => 'Settings & Backups';
+
+  @override
+  String get managePreferencesLibraryData =>
+      'Manage preferences and library data';
+
+  @override
+  String get logsClearedSuccess => 'Logs cleared successfully';
+
+  @override
+  String get editSongInfo => 'Edit Song Info';
+
+  @override
+  String get editAlbumInfo => 'Edit Album Info';
+
+  @override
+  String get tapFieldToEdit => 'Tap a field to edit';
+
+  @override
+  String get alwaysBlurSheets => 'Always Blur Sheets';
+
+  @override
+  String get alwaysBlurSheetsDesc =>
+      'Blur popup sheets even when Dynamic Theming is off';
+
+  @override
+  String get removeArtwork => 'Remove artwork';
+
+  @override
+  String get resetArtworkToDefault => 'Reset to default';
+
+  @override
+  String get artworkResetToDefault => 'Artwork reset to default';
+
+  @override
+  String get noEmbeddedArtworkFound =>
+      'No embedded artwork found for this album';
+
+  @override
+  String get saveChangesBtn => 'Save Changes';
+
+  @override
+  String get enterFolderPathManually => 'Enter Folder Path Manually';
+
+  @override
+  String get folderPickerManualHint =>
+      'If the system directory picker is not opening, type or paste the full directory path below:';
+
+  @override
+  String get noSupportedSongsFoundFolder =>
+      'No supported songs found in the selected folder';
+
+  @override
+  String get add => 'Add';
+
+  @override
+  String get folderPickerClosed => 'Folder picker closed';
+
+  @override
+  String get buyMeCoffee => 'Buy Me a Coffee';
+
+  @override
+  String get typeToSearchSettings => 'Type to search settings...';
+
+  @override
+  String get maintainersLabel => 'Maintainers';
+
+  @override
+  String get personBehindLooperPlayer => 'Person behind LooperPlayer';
+
+  @override
+  String get blurredArtworkForLyrics => 'Blurred Artwork for Lyrics';
+
+  @override
+  String get blurredArtworkForLyricsDesc =>
+      'Show blurred album art as background instead of dynamic/static gradient';
+
+  @override
+  String get lyricsFontWeight => 'Lyrics Font Weight';
+
+  @override
+  String get openSourceLicenses => 'Open Source Licenses';
+
+  @override
+  String get openSourceLicensesDesc => 'Third-party libraries used in this app';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get lyricsNotAvailable => 'Lyrics not available.';
+
+  @override
+  String get lyricsNotAvailableHint =>
+      'Import a .lrc or .txt file to add lyrics for this song';
+
+  @override
+  String get importLyricsFile => 'Import Lyrics File';
+
+  @override
+  String get approximatedSyncNoWordTimings =>
+      'Approximated Sync (No Word Timings)';
+
+  @override
+  String get lyricsSyncHelp => 'Lyrics Sync Help';
+
+  @override
+  String get simpleModeLabel => 'Simple Mode';
+
+  @override
+  String get advancedModeLabel => 'Advanced Mode';
+
+  @override
+  String get tips => 'Tips';
+
+  @override
+  String get gotIt => 'Got it';
+
+  @override
+  String get lyricsSyncStudio => 'Lyrics Sync Studio';
+
+  @override
+  String get lyricsTextLabel => 'Lyrics Text';
+
+  @override
+  String get lyricsTextHelperDesc =>
+      'One line per lyric row. The sync tools below attach timestamps to these lines.';
+
+  @override
+  String get quickSync => 'Quick Sync';
+
+  @override
+  String get autoAdvanceAfterStamping => 'Auto-advance after stamping';
+
+  @override
+  String get advancedSync => 'Advanced Sync';
+
+  @override
+  String get useCurrentTime => 'Use Current Time';
+
+  @override
+  String get playbackAssist => 'Playback Assist';
+
+  @override
+  String get timeShift => 'Time Shift';
+
+  @override
+  String get timeShiftDesc =>
+      'Move every stamped lyric forward or backward together.';
+
+  @override
+  String get lyricsSaveLrcExplain =>
+      'Save writes an `.lrc` sidecar file beside the song audio if possible, and saves it in the local player database. Unstamped lines will be interpolated automatically.';
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get appSettingsLabel => 'App Settings';
+
+  @override
+  String get backupsAndLogs => 'Backups & Logs';
+
+  @override
+  String get backupsAndLogsDesc => 'Export, import & manage app data';
+
+  @override
+  String get exportBackupJson => 'Export Backup (JSON)';
+
+  @override
+  String get exportBackupJsonDesc =>
+      'Saves your liked songs and playlists to a JSON file you can keep or share. Nothing else is included.';
+
+  @override
+  String get importBackupJson => 'Import Backup (JSON)';
+
+  @override
+  String get importBackupJsonDesc =>
+      'Merges liked songs and playlists from a backup file into your library. Existing data is never overwritten or removed.';
+
+  @override
+  String get exportDiagnosticsLogs => 'Export Diagnostics Logs';
+
+  @override
+  String get exportDiagnosticsLogsDesc =>
+      'Shares the app\'s diagnostic log file so it can be reviewed for troubleshooting.';
+
+  @override
+  String get clearDiagnosticsLogs => 'Clear Diagnostics Logs';
+
+  @override
+  String get clearDiagnosticsLogsDesc =>
+      'Permanently erases the diagnostic log file stored on this device. This cannot be undone.';
+
+  @override
+  String get lyricsPlainTextOrLrc => 'Lyrics (Plain text or LRC)';
+
+  @override
+  String get syncModeLine => 'LINE';
+
+  @override
+  String get syncModeWord => 'WORD';
+
+  @override
+  String get syncModeChar => 'CHAR';
+
+  @override
+  String get enterManually => 'Enter Manually';
+
+  @override
+  String get rawFilterParametersHint => 'Raw filter parameters...';
+
+  @override
+  String get searchSettingsHint => 'Search settings...';
+
+  @override
+  String get repeatTooltip => 'Repeat';
+
+  @override
+  String get favoriteTooltip => 'Favorite';
+
+  @override
+  String get instructionsTooltip => 'Instructions';
+
+  @override
+  String get pasteLyricsHint => 'Paste or type the song lyrics here';
+
+  @override
+  String get timestampMmSsHint => 'Timestamp (mm:ss.xx)';
+
+  @override
+  String get nowLabel => 'Now';
+
+  @override
+  String get playlistNameHint => 'Playlist name';
+
+  @override
+  String get songInfoUpdated => 'Song info updated!';
+
+  @override
+  String get albumInfoUpdated => 'Album info updated!';
+
+  @override
+  String get failedToSaveChanges => 'Failed to save changes.';
+
+  @override
+  String sleepTimerStoppingIn(String time) {
+    return 'Active: Stopping in $time';
+  }
+
+  @override
+  String sleepTimerStoppingAfter(String time) {
+    return 'Active: Stopping after $time';
+  }
+
+  @override
+  String get selectWhenToPause => 'Select when to pause music playback';
 }

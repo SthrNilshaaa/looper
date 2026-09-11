@@ -52,7 +52,7 @@ class OptimizedImage extends StatelessWidget {
     final int computedCacheWidth = cacheWidth ?? (width != null ? (width! * dpr).toInt() : 400);
     final int? computedCacheHeight = cacheHeight;
 
-    if (resolvedImagePath != null && File(resolvedImagePath).existsSync()) {
+    if (resolvedImagePath != null && resolvedImagePath.isNotEmpty) {
       imageWidget = Image.file(
         File(resolvedImagePath),
         width: width,

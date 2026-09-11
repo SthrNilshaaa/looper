@@ -17,23 +17,6 @@ import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 
-class DashboardGenresData {
-  final List<String> sortedGenres;
-  final Map<String, List<Song>> genresMap;
-  DashboardGenresData({required this.sortedGenres, required this.genresMap});
-}
-
-final dashboardGenresDataProvider = Provider.autoDispose<DashboardGenresData>((ref) {
-  final songs = ref.watch(libraryProvider.select((l) => l.songs));
-  final genresMap = <String, List<Song>>{};
-  for (var song in songs) {
-    final genre = song.genre ?? 'Unknown';
-    genresMap.putIfAbsent(genre, () => []).add(song);
-  }
-  final genres = genresMap.keys.toList()..sort();
-  return DashboardGenresData(sortedGenres: genres, genresMap: genresMap);
-});
-
 class HomeDashboard extends ConsumerWidget {
   const HomeDashboard({super.key});
 
@@ -44,9 +27,12 @@ class HomeDashboard extends ConsumerWidget {
     final library = ref.watch(libraryProvider);
     final l10n = AppLocalizations.of(context)!;
 
-    final genresData = ref.watch(dashboardGenresDataProvider);
-    final genres = genresData.sortedGenres;
-    final genresMap = genresData.genresMap;
+    final genresMap = <String, List<Song>>{};
+    for (var song in library.songs) {
+      final genre = song.genre ?? l10n.unknown;
+      genresMap.putIfAbsent(genre, () => []).add(song);
+    }
+    final genres = genresMap.keys.toList()..sort();
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -79,19 +65,19 @@ class HomeDashboard extends ConsumerWidget {
         }
 
         // Support desktop-specific helper rows at the very top
-        orderedChildren.add(_buildRecentlyPlayed(ref, isNarrow, isDynamic));
+        orderedChildren.add(_buildRecentlyPlayed(ref, isNarrow, isDynamic, l10n));
         orderedChildren.add(const SizedBox(height: 16));
-        orderedChildren.add(_buildAlbumsIfSmall(ref, isNarrow, isDynamic));
+        orderedChildren.add(_buildAlbumsIfSmall(ref, isNarrow, isDynamic, l10n));
         orderedChildren.add(const SizedBox(height: 16));
 
         // Render sections dynamically in user's customized order
         for (final section in settings.homeSectionOrder) {
           if (section == 'quick_picks') {
-            orderedChildren.add(_buildQuickPicks(ref, isNarrow, isMedium, isDynamic));
+            orderedChildren.add(_buildQuickPicks(ref, isNarrow, isMedium, isDynamic, l10n));
             orderedChildren.add(const SizedBox(height: 16));
           } else if (section == 'songs') {
             // Render Featured Artists and Albums for the "songs" slot on desktop
-            orderedChildren.add(_buildTopArtists(ref, isNarrow, isDynamic));
+            orderedChildren.add(_buildTopArtists(ref, isNarrow, isDynamic, l10n));
             orderedChildren.add(const SizedBox(height: 16));
             orderedChildren.add(_buildFeaturedAlbums(ref, isNarrow, isDynamic, context));
             orderedChildren.add(const SizedBox(height: 16));
@@ -99,7 +85,8 @@ class HomeDashboard extends ConsumerWidget {
             if (settings.showHomeArtists && library.artists.isNotEmpty) {
               orderedChildren.add(
                 _buildDesktopHorizontalSection(
-                  title: 'Artists',
+                  title: l10n.artists,
+                  l10n: l10n,
                   onViewAll: () => ref.read(appNavigationProvider.notifier).setItem(NavItem.artists),
                   itemCount: library.artists.length,
                   itemBuilder: (context, index) {
@@ -113,7 +100,8 @@ class HomeDashboard extends ConsumerWidget {
             if (settings.showHomeAlbums && library.albums.isNotEmpty) {
               orderedChildren.add(
                 _buildDesktopHorizontalSection(
-                  title: 'Albums',
+                  title: l10n.albums,
+                  l10n: l10n,
                   onViewAll: () => ref.read(appNavigationProvider.notifier).setItem(NavItem.albums),
                   itemCount: library.albums.length,
                   itemBuilder: (context, index) {
@@ -127,7 +115,8 @@ class HomeDashboard extends ConsumerWidget {
             if (settings.showHomeGenres && genres.isNotEmpty) {
               orderedChildren.add(
                 _buildDesktopHorizontalSection(
-                  title: 'Genres',
+                  title: l10n.genres,
+                  l10n: l10n,
                   onViewAll: () => ref.read(appNavigationProvider.notifier).setItem(NavItem.genres),
                   itemCount: genres.length,
                   itemBuilder: (context, index) {
@@ -155,7 +144,7 @@ class HomeDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildAlbumsIfSmall(WidgetRef ref, bool isNarrow, bool isDynamic) {
+  Widget _buildAlbumsIfSmall(WidgetRef ref, bool isNarrow, bool isDynamic, AppLocalizations l10n) {
     final albums = ref.watch(albumsProvider).value ?? [];
     if (albums.length >= 6 || albums.isEmpty) return const SizedBox.shrink();
 
@@ -163,7 +152,7 @@ class HomeDashboard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'My Albums',
+          l10n.myAlbums,
           style: TextStyle(
             fontSize: (isNarrow ? 14 : 18).ts,
             fontWeight: FontWeight.w400,
@@ -248,7 +237,7 @@ class HomeDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildRecentlyPlayed(WidgetRef ref, bool isNarrow, bool isDynamic) {
+  Widget _buildRecentlyPlayed(WidgetRef ref, bool isNarrow, bool isDynamic, AppLocalizations l10n) {
     final recentSongs = ref.watch(recentlyPlayedProvider).value ?? [];
 
     if (recentSongs.isEmpty) return const SizedBox.shrink();
@@ -257,7 +246,8 @@ class HomeDashboard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Recently Played',
+          //l10n.recentlyPlayed,
+          "Played",
           style: TextStyle(
             fontSize: (isNarrow ? 14 : 18).ts,
             fontWeight: FontWeight.w400,
@@ -334,6 +324,7 @@ class HomeDashboard extends ConsumerWidget {
     bool isNarrow,
     bool isMedium,
     bool isDynamic,
+    AppLocalizations l10n,
   ) {
     final topSongsAsync = ref.watch(topSongsProvider);
 
@@ -352,7 +343,7 @@ class HomeDashboard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Quick Picks',
+              l10n.quickPicks,
               style: TextStyle(
                 fontSize: isNarrow ? 14 : 18,
                 fontWeight: FontWeight.w400,
@@ -444,7 +435,7 @@ class HomeDashboard extends ConsumerWidget {
     );
   }
 
-  Widget _buildTopArtists(WidgetRef ref, bool isNarrow, bool isDynamic) {
+  Widget _buildTopArtists(WidgetRef ref, bool isNarrow, bool isDynamic, AppLocalizations l10n) {
     final artistsAsync = ref.watch(artistsProvider);
 
     return artistsAsync.when(
@@ -458,7 +449,7 @@ class HomeDashboard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Featured Artists',
+              l10n.featuredArtists,
               style: TextStyle(
                 fontSize: isNarrow ? 14 : 18,
                 fontWeight: FontWeight.w400,
@@ -613,6 +604,7 @@ class HomeDashboard extends ConsumerWidget {
     required VoidCallback onViewAll,
     required int itemCount,
     required Widget Function(BuildContext, int) itemBuilder,
+    required AppLocalizations l10n,
   }) {
     if (itemCount == 0) return const SizedBox.shrink();
     return Column(
@@ -631,14 +623,14 @@ class HomeDashboard extends ConsumerWidget {
             ),
             TextButton(
               onPressed: onViewAll,
-              child: const Row(
+              child: Row(
                 children: [
                   Text(
-                    'View All',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                    l10n.viewAll,
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
-                  SizedBox(width: 4),
-                  Icon(LucideIcons.chevronRight, size: 16, color: Colors.white70),
+                  const SizedBox(width: 4),
+                  const Icon(LucideIcons.chevronRight, size: 16, color: Colors.white70),
                 ],
               ),
             ),
@@ -728,6 +720,7 @@ class HomeDashboard extends ConsumerWidget {
             subtitle: album.artist ?? l10n.unknownArtist,
             art: album.artPath,
             songs: songs,
+            album: album,
           );
         },
         borderRadius: BorderRadius.circular(16),

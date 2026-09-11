@@ -118,6 +118,7 @@ class SongsList extends ConsumerWidget {
             itemBuilder: (context, index) {
               final song = songs[index];
               return SongTile(
+                key: ValueKey(song.path),
                 song: song,
                 l10n: l10n,
                 songs: songs,
@@ -130,7 +131,7 @@ class SongsList extends ConsumerWidget {
           Expanded(
             child: AppRefreshIndicator(
               onRefresh: () =>
-                  ref.read(libraryProvider.notifier).scanSavedFolders(),
+                  ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false),
               child: ListView.builder(
                 controller: controller,
                 shrinkWrap: false,
@@ -143,6 +144,7 @@ class SongsList extends ConsumerWidget {
                 itemBuilder: (context, index) {
                   final song = songs[index];
                   return SongTile(
+                    key: ValueKey(song.path),
                     song: song,
                     l10n: l10n,
                     songs: songs,
@@ -234,7 +236,7 @@ class SongTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     
     final isCurrent = ref.watch(playbackProvider.select((s) => s.currentSong?.path == song.path));
-    final isPlaying = ref.watch(playbackProvider.select((s) => s.currentSong?.path == song.path && s.isPlaying));
+    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
 
     String? lyricSnippet;
     if (searchQuery != null && searchQuery!.isNotEmpty && song.lyrics != null) {
@@ -421,6 +423,7 @@ class SongTile extends ConsumerWidget {
               ref: ref,
               song: song,
               playlist: playlist,
+              showEqualizerAndTechnicalInfoOptions: false,
             ),
           ),
         ),
@@ -461,7 +464,12 @@ class SongTile extends ConsumerWidget {
   }
 }
 
-
+String _formatDuration(Duration duration) {
+  String twoDigits(int n) => n.toString().padLeft(2, "0");
+  String twoDigitMinutes = twoDigits(duration.inMinutes.remainder(60));
+  String twoDigitSeconds = twoDigits(duration.inSeconds.remainder(60));
+  return "$twoDigitMinutes:$twoDigitSeconds";
+}
 
 void _showSortBottomSheet(
   BuildContext context,
@@ -780,8 +788,20 @@ class _SongTileBouncyTapState extends State<_SongTileBouncyTap> with SingleTicke
       },
       onTapCancel: () => _controller.reverse(),
       behavior: HitTestBehavior.opaque,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
+      // ScaleTransition builds a Transform, which always needs its own
+      // compositing layer whenever it has a child -- even sitting still at
+      // scale 1.0. With a long list of these tiles that's a permanent extra
+      // layer per visible row for the ~99% of the time nothing's being
+      // pressed, on top of the churn of allocating one per tile as
+      // ListView.builder recycles rows during a fling. Only pay for that
+      // layer while the press animation is actually running; otherwise
+      // render the row directly with no Transform at all.
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          if (_controller.value == 0.0) return child!;
+          return Transform.scale(scale: _scaleAnimation.value, child: child);
+        },
         child: widget.child,
       ),
     );

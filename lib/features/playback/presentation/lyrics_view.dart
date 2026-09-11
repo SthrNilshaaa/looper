@@ -1,11 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
 import 'widgets/advanced_lyric_renderer.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 enum LyricsSyncMode { line, word, char }
 
@@ -49,6 +55,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final lyricsState = ref.watch(lyricsProvider);
     final primaryColor = Theme.of(context).colorScheme.primary;
     //final playback = ref.watch(playbackProvider);
@@ -104,32 +111,12 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
         Column(
           children: [
             //const SizedBox(height: 48), // Space for floating button
-            if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(),
+            if (_syncMode != LyricsSyncMode.line) _buildDisclaimer(l10n),
             Expanded(
               child: lyricsState.isLoading
-                  ? const AppLoadingIndicator()
+                  ? const AppLoadingIndicator(size: 220.0)
                   : lyricsState.rawLrc == null
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.music_note,
-                            size: 80,
-                            color: primaryColor.withValues(alpha: 0.3),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Lyrics not available.',
-                            style: AppFonts.spaceGroteskStyle(
-                              color: Colors.white.withValues(alpha: 0.4),
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
+                  ? _buildNoLyricsState(context, l10n, primaryColor)
                   : AdvancedLyricRenderer(
                       lines: lyricsState.parsedLines,
                       mode: _syncMode,
@@ -143,7 +130,143 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     );
   }
 
-  Widget _buildDisclaimer() {
+  /// Illustrated empty state shown when no lyrics could be found, with a
+  /// button to import a local .lrc/.txt file for the currently playing song.
+  Widget _buildNoLyricsState(
+    BuildContext context,
+    AppLocalizations l10n,
+    Color primaryColor,
+  ) {
+    final song = ref.watch(playbackProvider.select((s) => s.currentSong));
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: 140,
+              height: 140,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Soft glow behind the illustration
+                  Container(
+                    width: 140,
+                    height: 140,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          primaryColor.withValues(alpha: 0.16),
+                          primaryColor.withValues(alpha: 0.0),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Main disc with a music file glyph
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white.withValues(alpha: 0.05),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.08),
+                      ),
+                    ),
+                    child: Icon(
+                      LucideIcons.fileMusic,
+                      size: 40,
+                      color: primaryColor.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  // "not found" badge overlapping the disc
+                  Positioned(
+                    right: 4,
+                    bottom: 4,
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFF1E1E1E),
+                        border: Border.all(
+                          color: Colors.black.withValues(alpha: 0.4),
+                          width: 2,
+                        ),
+                      ),
+                      child: const Icon(
+                        LucideIcons.searchX,
+                        size: 16,
+                        color: Colors.white54,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              l10n.lyricsNotAvailable,
+              textAlign: TextAlign.center,
+              style: AppFonts.spaceGroteskStyle(
+                color: Colors.white.withValues(alpha: 0.75),
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.lyricsNotAvailableHint,
+              textAlign: TextAlign.center,
+              style: AppFonts.jostStyle(
+                color: Colors.white.withValues(alpha: 0.4),
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 28),
+            if (song != null)
+              _ImportLyricsButton(
+                onTap: () => _importLyricsFile(context, song),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _importLyricsFile(BuildContext context, Song song) async {
+    final l10n = AppLocalizations.of(context)!;
+    HapticFeedback.mediumImpact();
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['lrc', 'txt'],
+      );
+      if (result == null || result.files.single.path == null) return;
+
+      final file = File(result.files.single.path!);
+      final content = await file.readAsString();
+      if (content.trim().isEmpty) return;
+
+      await ref.read(lyricsProvider.notifier).applyCustomLyrics(song, content);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(l10n.customLyricsAppliedSuccess)),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to import lyrics: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildDisclaimer(AppLocalizations l10n) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
       margin: const EdgeInsets.only(bottom: 8),
@@ -157,7 +280,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
           const Icon(Icons.info_outline, size: 12, color: Colors.orange),
           const SizedBox(width: 6),
           Text(
-            'Approximated Sync (No Word Timings)',
+            l10n.approximatedSyncNoWordTimings,
             style: AppFonts.spaceGroteskStyle(
               fontSize: 10,
               color: Colors.orange,
@@ -170,6 +293,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
   }
 
   Widget _buildModeSelector([bool isShort = false]) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
@@ -180,7 +304,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _ModeButton(
-            label: 'LINE',
+            label: l10n.syncModeLine,
             isSelected: _syncMode == LyricsSyncMode.line,
             isShort: isShort,
             onTap: () {
@@ -188,7 +312,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             },
           ),
           _ModeButton(
-            label: 'WORD',
+            label: l10n.syncModeWord,
             isSelected: _syncMode == LyricsSyncMode.word,
             isShort: isShort,
             onTap: () {
@@ -196,7 +320,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             },
           ),
           _ModeButton(
-            label: 'CHAR',
+            label: l10n.syncModeChar,
             isSelected: _syncMode == LyricsSyncMode.char,
             isShort: isShort,
             onTap: () {
@@ -204,6 +328,49 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             },
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ImportLyricsButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ImportLyricsButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final primary = Theme.of(context).colorScheme.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(28),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: primary.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(LucideIcons.filePlus, size: 18, color: primary),
+              const SizedBox(width: 8),
+              Text(
+                l10n.importLyricsFile,
+                style: AppFonts.jostStyle(
+                  color: primary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

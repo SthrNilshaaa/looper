@@ -60,7 +60,7 @@ class ExpandedPlayer extends ConsumerWidget {
                           .setPlayerExpansion(false),
                     ),
                     Text(
-                      'NOW PLAYING',
+                      l10n.nowPlayingAllCaps,
                       style: AppFonts.jostStyle(
                         color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12.ts,
@@ -163,9 +163,15 @@ class ExpandedPlayer extends ConsumerWidget {
                 padding: EdgeInsets.symmetric(horizontal: 32.s),
                 child: Consumer(
                   builder: (context, ref, child) {
-                    final position = ref.watch(playbackProvider.select((s) => s.position));
-                    final duration = ref.watch(playbackProvider.select((s) => s.duration));
-                    final isPlayingVal = ref.watch(playbackProvider.select((s) => s.isPlaying));
+                    final position = ref.watch(
+                      playbackProvider.select((s) => s.position),
+                    );
+                    final duration = ref.watch(
+                      playbackProvider.select((s) => s.duration),
+                    );
+                    final isPlayingVal = ref.watch(
+                      playbackProvider.select((s) => s.isPlaying),
+                    );
 
                     return Column(
                       children: [
@@ -202,7 +208,10 @@ class ExpandedPlayer extends ConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              _formatDuration(position),
+                              _formatDuration(
+                                position,
+                                showHours: duration.inHours > 0,
+                              ),
                               style: TextStyle(
                                 color: Colors.white60,
                                 fontSize: 12.ts,
@@ -234,9 +243,7 @@ class ExpandedPlayer extends ConsumerWidget {
                     IconButton(
                       icon: Icon(
                         LucideIcons.shuffle,
-                        color: isShuffle
-                            ? colorScheme.primary
-                            : Colors.white60,
+                        color: isShuffle ? colorScheme.primary : Colors.white60,
                         size: 24.s,
                       ),
                       onPressed: () =>
@@ -329,10 +336,10 @@ class ExpandedPlayer extends ConsumerWidget {
                       onPressed: () {
                         ref
                             .read(appNavigationProvider.notifier)
-                          .setPlayerExpansion(false);
+                            .setPlayerExpansion(false);
                         ref
                             .read(appNavigationProvider.notifier)
-                          .setItem(NavItem.queue);
+                            .setItem(NavItem.queue);
                       },
                     ),
                     IconButton(
@@ -344,10 +351,10 @@ class ExpandedPlayer extends ConsumerWidget {
                       onPressed: () {
                         ref
                             .read(appNavigationProvider.notifier)
-                          .setPlayerExpansion(false);
+                            .setPlayerExpansion(false);
                         ref
                             .read(appNavigationProvider.notifier)
-                          .setItem(NavItem.lyrics);
+                            .setItem(NavItem.lyrics);
                       },
                     ),
                   ],
@@ -360,10 +367,7 @@ class ExpandedPlayer extends ConsumerWidget {
     );
   }
 
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, "0");
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
+  String _formatDuration(Duration duration, {bool showHours = false}) {
+    return UiUtils.formatPlaybackDuration(duration, showHours: showHours);
   }
 }

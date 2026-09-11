@@ -8,6 +8,7 @@ import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:isar/isar.dart';
 import 'package:looper_player/core/app_fonts.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 class PlaylistNotifier extends StateNotifier<List<Playlist>> {
   PlaylistNotifier() : super([]) {
@@ -68,6 +69,7 @@ class PlaylistView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final playlists = ref.watch(playlistProvider);
     final hasActiveSong = ref.watch(playbackProvider.select((s) => s.currentSong != null));
 
@@ -84,11 +86,11 @@ class PlaylistView extends ConsumerWidget {
                     color: Colors.grey.withValues(alpha: 0.2),
                   ),
                   const SizedBox(height: 16),
-                  Text('No playlists yet', style: AppFonts.jostStyle(color: Colors.grey)),
+                  Text(l10n.noPlaylistsYet, style: AppFonts.jostStyle(color: Colors.grey)),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => _showCreateDialog(context, ref),
-                    child: Text('Create Playlist', style: AppFonts.jostStyle()),
+                    child: Text(l10n.createPlaylist, style: AppFonts.jostStyle()),
                   ),
                 ],
               ),
@@ -119,19 +121,20 @@ class PlaylistView extends ConsumerWidget {
 
   void _showCreateDialog(BuildContext context, WidgetRef ref) {
     final controller = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('New Playlist'),
+        title: Text(l10n.newPlaylist),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(hintText: 'Playlist name'),
+          decoration: InputDecoration(hintText: l10n.playlistNameHint),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -142,7 +145,7 @@ class PlaylistView extends ConsumerWidget {
                 Navigator.pop(context);
               }
             },
-            child: const Text('Create'),
+            child: Text(l10n.create),
           ),
         ],
       ),

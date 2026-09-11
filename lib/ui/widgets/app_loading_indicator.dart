@@ -3,7 +3,7 @@ import 'package:lottie/lottie.dart';
 
 class AppLoadingIndicator extends StatelessWidget {
   final double size;
-  const AppLoadingIndicator({super.key, this.size = 100.0});
+  const AppLoadingIndicator({super.key, this.size = 120.0});
 
   @override
   Widget build(BuildContext context) {

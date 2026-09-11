@@ -14,6 +14,9 @@ class AudioService {
   String? _customFilterString;
   String? _lastArtPath;
   MediaSessionArtwork _lastArtwork = MediaSessionArtwork.embedded;
+  String? _publishedMediaMetadataKey;
+  String? _pendingMediaMetadataKey;
+  int _mediaMetadataGeneration = 0;
   InterruptionPolicy _interruptionPolicy = InterruptionPolicy.pauseAndResume;
   bool _requestFocusOnPlay = true;
   bool _releaseFocusOnPause = true;
@@ -61,7 +64,9 @@ class AudioService {
   Future<void> setStopOnTaskRemoved(bool value) async {
     if (!Platform.isAndroid) return;
     try {
-      await _broadcastChannel.invokeMethod('setStopOnTaskRemoved', {'value': value});
+      await _broadcastChannel.invokeMethod('setStopOnTaskRemoved', {
+        'value': value,
+      });
     } catch (_) {}
   }
 
@@ -76,10 +81,24 @@ class AudioService {
   void Function()? onPause;
   void Function()? onPlayPause;
 
+  /// Resolves once the bootstrap `setMediaSession()` call in [_initPlayer]
+  /// has actually completed. mpv_audio_kit's `setMediaSession` lazily
+  /// allocates its native-side controller on the first non-null call and
+  /// explicitly does not support a second *concurrent* non-null call
+  /// racing the first (see the package's own `_MediaSessionModule` docs) —
+  /// the loser's freshly-created controller gets disposed, which tears
+  /// down the single native media-session singleton out from under the
+  /// winner, permanently killing the notification for the rest of the
+  /// process. Callers that need to reconfigure the session (e.g.
+  /// [applyAudioFocusPolicy]) must await this first so they land on the
+  /// safe "reconfigure existing controller" path instead of racing the
+  /// bootstrap create.
+  late final Future<void> ready;
+
   AudioService() {
     LoggerHelper.write('AudioService: Constructing Player...');
     player = Player();
-    _initPlayer();
+    ready = _initPlayer();
 
     // ── EQ deferred-apply on FILE_LOADED ────────────────────────────────────────
     // `player.open()` sends a loadfile command and returns before mpv
@@ -133,6 +152,22 @@ class AudioService {
       await player.setRawProperty('volume-max', '150');
     } catch (e) {}
 
+    try {
+      await player.setRawProperty('audio-buffer', '0.2');
+    } catch (e) {}
+
+    try {
+      await player.setRawProperty('audio-stream-silence', 'yes');
+    } catch (e) {}
+
+    try {
+      await player.setRawProperty('demuxer-lavf-analyzeduration', '1.0');
+    } catch (e) {}
+
+    try {
+      await player.setRawProperty('demuxer-lavf-probesize', '10000000');
+    } catch (e) {}
+
     /*
     try {
       await player.setRawProperty('audio-buffer', '4.0');
@@ -163,43 +198,47 @@ class AudioService {
       await player.setRawProperty('audio-pitch-correction', 'no');
     } catch (e) {}
 
-    // SpatialFlow Audio Stream Buffering & Readahead Calculations
-    try {
-      await player.setRawProperty('demuxer-max-bytes', '262144000'); // 250MB
-      await player.setRawProperty('demuxer-readahead-secs', '60'); // 60s forward readahead
-      await player.setRawProperty('demuxer-max-back-bytes', '104857600'); // 100MB back-cache
-    } catch (e) {}
-
     try {
       await player.setRawProperty('hwdec', 'no');
     } catch (e) {}
 
-    _initMediaSession();
+    await _initMediaSession();
   }
 
-  void _initMediaSession({
+  Future<void> _initMediaSession({
     InterruptionPolicy interruptionPolicy = InterruptionPolicy.pauseAndResume,
     bool requestFocusOnPlay = true,
     bool releaseFocusOnPause = true,
     bool stopOnOtherSession = true,
     bool restartOnFocusGain = true,
-  }) {
+  }) async {
     _interruptionPolicy = interruptionPolicy;
     _requestFocusOnPlay = requestFocusOnPlay;
     _releaseFocusOnPause = releaseFocusOnPause;
     _stopOnOtherSession = stopOnOtherSession;
     _restartOnFocusGain = restartOnFocusGain;
 
-    player.setMediaSession(
-      MediaSession(
+    final current = player.state.mediaSession;
+    // Must be awaited: mpv_audio_kit's setMediaSession() lazily allocates its
+    // native-side controller on the first non-null call, and explicitly does
+    // not support a second *concurrent* non-null call racing that bootstrap
+    // (see the package's `_MediaSessionModule` docs) - the loser's
+    // freshly-created controller gets disposed, which tears down the single
+    // native media-session singleton out from under the winner and silently
+    // kills the notification for the rest of the process. Firing this
+    // fire-and-forget let it race the constructor's own bootstrap call in
+    // _initPlayer(), which is exactly what `ready` above now serializes
+    // against.
+    await player.setMediaSession(
+      (current ?? const MediaSession()).copyWith(
         appName: 'Looper Player',
         desktopEntry: 'looper_player',
-        autoApplyPlaylistNavigation:
-            false, // Let our PlaybackNotifier coordinate queue actions
+        autoApplyPlaylistNavigation: false,
         actions: const {
           MediaAction.play,
           MediaAction.pause,
           MediaAction.playPause,
+          MediaAction.stop,
           MediaAction.next,
           MediaAction.previous,
           MediaAction.seek,
@@ -208,24 +247,23 @@ class AudioService {
           MediaAction.setRepeatMode,
         },
         interruptionPolicy: _interruptionPolicy,
-        requestFocusOnPlay: _requestFocusOnPlay,
-        releaseFocusOnPause: _releaseFocusOnPause,
-        stopOnOtherSession: _stopOnOtherSession,
-        restartOnFocusGain: _restartOnFocusGain,
       ),
     );
   }
 
   /// Call this when the audioFocus setting changes so the interruption
-  /// policy is re-published to the native media session.
-  void applyAudioFocusPolicy(
+  /// policy is re-published to the native media session. Awaits [ready]
+  /// first so a policy change fired before bootstrap finishes can't race it
+  /// (see [_initMediaSession]).
+  Future<void> applyAudioFocusPolicy(
     InterruptionPolicy interruptionPolicy, {
     bool requestFocusOnPlay = true,
     bool releaseFocusOnPause = true,
     bool stopOnOtherSession = true,
     bool restartOnFocusGain = true,
-  }) {
-    _initMediaSession(
+  }) async {
+    await ready;
+    await _initMediaSession(
       interruptionPolicy: interruptionPolicy,
       requestFocusOnPlay: requestFocusOnPlay,
       releaseFocusOnPause: releaseFocusOnPause,
@@ -236,29 +274,52 @@ class AudioService {
 
   // Listen to media session command streams
   void _attachMediaSessionListeners() {
-    player.stream.mediaSessionCommands.listen((cmd) {
-      if (cmd is MediaSessionCommandPlay) {
-        onPlay?.call();
-      } else if (cmd is MediaSessionCommandPause) {
-        onPause?.call();
-      } else if (cmd is MediaSessionCommandPlayPause) {
-        onPlayPause?.call();
-      } else if (cmd is MediaSessionCommandNext) {
-        onNext?.call();
-      } else if (cmd is MediaSessionCommandPrevious) {
-        onPrevious?.call();
-      } else if (cmd is MediaSessionCommandSeekTo) {
-        onSeek?.call(cmd.position);
-      } else if (cmd is MediaSessionCommandSetShuffle) {
-        onShuffleToggle?.call();
-      } else if (cmd is MediaSessionCommandSetRepeatMode) {
-        // Repeat mode toggling is handled by a custom callback; reuse onNext as a proxy
-        // The actual nextRepeatMode() is called via onRepeatToggle
-        onRepeatToggle?.call();
-      } else if (cmd is MediaSessionCommandLike) {
-        onFavoriteToggle?.call();
-      }
-    });
+    player.stream.mediaSessionCommands.listen(
+      (cmd) {
+        try {
+          LoggerHelper.write(
+            'AudioService: MediaSession command received: $cmd',
+          );
+          if (cmd is MediaSessionCommandPlay) {
+            onPlay?.call();
+          } else if (cmd is MediaSessionCommandPause) {
+            onPause?.call();
+          } else if (cmd is MediaSessionCommandPlayPause) {
+            onPlayPause?.call();
+          } else if (cmd is MediaSessionCommandNext) {
+            onNext?.call();
+          } else if (cmd is MediaSessionCommandPrevious) {
+            onPrevious?.call();
+          } else if (cmd is MediaSessionCommandStop) {
+            onPause?.call();
+          } else if (cmd is MediaSessionCommandSeekTo) {
+            onSeek?.call(cmd.position);
+          } else if (cmd is MediaSessionCommandSeekBy) {
+            final currentPos = player.state.position;
+            onSeek?.call(currentPos + cmd.offset);
+          } else if (cmd is MediaSessionCommandSetShuffle) {
+            onShuffleToggle?.call();
+          } else if (cmd is MediaSessionCommandSetRepeatMode) {
+            onRepeatToggle?.call();
+          } else if (cmd is MediaSessionCommandLike) {
+            onFavoriteToggle?.call();
+          }
+        } catch (e, stack) {
+          LoggerHelper.write(
+            'AudioService: Error executing MediaSession command $cmd',
+            e,
+            stack,
+          );
+        }
+      },
+      onError: (err) {
+        LoggerHelper.write(
+          'AudioService: MediaSession command stream error',
+          err,
+        );
+      },
+      cancelOnError: false,
+    );
   }
 
   // --- Caching Configurations ---
@@ -344,10 +405,12 @@ class AudioService {
   Future<List<Map<String, String>>> getAudioDevices() async {
     try {
       return player.state.audioDevices
-          .map<Map<String, String>>((d) => {
-                'name': (d.name as String?) ?? '',
-                'description': (d.description as String?) ?? ''
-              })
+          .map<Map<String, String>>(
+            (d) => {
+              'name': (d.name as String?) ?? '',
+              'description': (d.description as String?) ?? '',
+            },
+          )
           .toList();
     } catch (e) {
       return [];
@@ -379,13 +442,34 @@ class AudioService {
     String? artPath,
     Duration? duration,
     bool isFavorite = false,
+    bool forceFresh = false,
   }) async {
     final policy = _interruptionPolicy;
-    if (artPath != _lastArtPath) {
-      _lastArtPath = artPath;
-      if (artPath != null) {
+    final metadataKey = Object.hash(
+      title,
+      artist,
+      album,
+      artPath,
+      duration,
+      isFavorite,
+      policy,
+    ).toString();
+    if (!forceFresh &&
+        (metadataKey == _publishedMediaMetadataKey ||
+            metadataKey == _pendingMediaMetadataKey)) {
+      return;
+    }
+
+    final generation = ++_mediaMetadataGeneration;
+    _pendingMediaMetadataKey = metadataKey;
+    var resolvedArtPath = _lastArtPath;
+    var resolvedArtwork = _lastArtwork;
+
+    if (forceFresh || artPath != _lastArtPath) {
+      if (artPath != null && artPath.isNotEmpty) {
         if (artPath.startsWith('http://') || artPath.startsWith('https://')) {
-          _lastArtwork = MediaSessionArtwork.uri(Uri.parse(artPath));
+          resolvedArtPath = artPath;
+          resolvedArtwork = MediaSessionArtwork.uri(Uri.parse(artPath));
         } else {
           try {
             final file = File(artPath);
@@ -399,50 +483,69 @@ class AudioService {
                 'bmp' => 'image/bmp',
                 _ => 'image/jpeg',
               };
-              _lastArtwork = MediaSessionArtwork.custom(
+              resolvedArtPath = artPath;
+              resolvedArtwork = MediaSessionArtwork.custom(
                 CoverArt(bytes: bytes, mimeType: mimeType),
               );
             } else {
-              _lastArtwork = MediaSessionArtwork.embedded;
+              resolvedArtPath = null;
+              resolvedArtwork = MediaSessionArtwork.embedded;
             }
-          } catch (e) {
-            _lastArtwork = MediaSessionArtwork.embedded;
+          } catch (_) {
+            resolvedArtPath = null;
+            resolvedArtwork = MediaSessionArtwork.embedded;
           }
         }
       } else {
-        _lastArtwork = MediaSessionArtwork.embedded;
+        resolvedArtPath = null;
+        resolvedArtwork = MediaSessionArtwork.embedded;
       }
     }
 
-    await player.setMediaSession(
-      MediaSession(
-        title: title,
-        artist: artist,
-        album: album,
-        artwork: _lastArtwork,
-        duration: duration,
-        isFavorite: isFavorite,
-        appName: 'Looper Player',
-        desktopEntry: 'looper_player',
-        autoApplyPlaylistNavigation: false,
-        actions: const {
-          MediaAction.play,
-          MediaAction.pause,
-          MediaAction.playPause,
-          MediaAction.next,
-          MediaAction.previous,
-          MediaAction.seek,
-          MediaAction.like,
-          MediaAction.setShuffle,
-          MediaAction.setRepeatMode,
-        },
-        interruptionPolicy: policy,
-        requestFocusOnPlay: _requestFocusOnPlay,
-        releaseFocusOnPause: _releaseFocusOnPause,
-        stopOnOtherSession: _stopOnOtherSession,
-        restartOnFocusGain: _restartOnFocusGain,
-      ),
-    );
+    // Ignore a slow artwork result when a newer track has already started.
+    if (generation != _mediaMetadataGeneration) return;
+
+    try {
+      await player.setMediaSession(
+        MediaSession(
+          title: title,
+          artist: artist,
+          album: album,
+          artwork: resolvedArtwork,
+          duration: duration,
+          isFavorite: isFavorite,
+          appName: 'Looper Player',
+          desktopEntry: 'looper_player',
+          autoApplyPlaylistNavigation: false,
+          actions: const {
+            MediaAction.play,
+            MediaAction.pause,
+            MediaAction.playPause,
+            MediaAction.next,
+            MediaAction.previous,
+            MediaAction.seek,
+            MediaAction.like,
+            MediaAction.setShuffle,
+            MediaAction.setRepeatMode,
+          },
+          interruptionPolicy: policy,
+        ),
+      );
+      if (generation == _mediaMetadataGeneration) {
+        _lastArtPath = resolvedArtPath;
+        _lastArtwork = resolvedArtwork;
+        _publishedMediaMetadataKey = metadataKey;
+      }
+    } catch (error) {
+      LoggerHelper.write(
+        'AudioService: Failed to update media-session metadata',
+        error,
+      );
+    } finally {
+      if (generation == _mediaMetadataGeneration) {
+        _pendingMediaMetadataKey = null;
+      }
+    }
   }
 
   Future<void> play(
@@ -458,7 +561,9 @@ class AudioService {
     bool stopOnOtherSession = true,
     bool restartOnFocusGain = true,
   }) async {
-    LoggerHelper.write('AudioService: play() requested for path: $path, title: ${metadata?['title']}, play: $play');
+    LoggerHelper.write(
+      'AudioService: play() requested for path: $path, title: ${metadata?['title']}, play: $play',
+    );
     if (equalizerGains != null) {
       _lastEqualizerGains = equalizerGains;
     }
@@ -486,7 +591,10 @@ class AudioService {
     final String artist = metadata?['artist']?.toString() ?? 'Unknown Artist';
     final String album = metadata?['album']?.toString() ?? 'Unknown Album';
     final Duration? duration = metadata?['duration'] != null
-        ? Duration(milliseconds: int.tryParse(metadata?['duration']?.toString() ?? '0') ?? 0)
+        ? Duration(
+            milliseconds:
+                int.tryParse(metadata?['duration']?.toString() ?? '0') ?? 0,
+          )
         : null;
 
     await updateMediaSessionMetadata(
@@ -495,6 +603,7 @@ class AudioService {
       album: album,
       artPath: artPath,
       duration: duration,
+      forceFresh: true,
     );
 
     final media = Media(
@@ -512,6 +621,9 @@ class AudioService {
     // EQ is now applied via the playlist stream listener (deferred to FILE_LOADED)
     // so we do NOT call setEqualizerGains() here — that would race the empty playlist.
     await player.open(media, play: play);
+    if (play && !player.state.playing) {
+      await player.play();
+    }
   }
 
   Future<void> pause() async {
@@ -578,10 +690,44 @@ class AudioService {
     try {
       await player.updateAudioEffects((e) {
         final List<double> bandsFreq = [
-          65, 92, 131, 185, 262, 370, 523, 740, 1000, 1400, 2000, 2900, 4100, 5900, 8300, 11700, 16600, 20000
+          65,
+          92,
+          131,
+          185,
+          262,
+          370,
+          523,
+          740,
+          1000,
+          1400,
+          2000,
+          2900,
+          4100,
+          5900,
+          8300,
+          11700,
+          16600,
+          20000,
         ];
         final List<double> bandsWidth = [
-          20, 30, 40, 60, 80, 110, 160, 220, 300, 420, 600, 850, 1200, 1750, 2500, 3500, 5000, 6000
+          20,
+          30,
+          40,
+          60,
+          80,
+          110,
+          160,
+          220,
+          300,
+          420,
+          600,
+          850,
+          1200,
+          1750,
+          2500,
+          3500,
+          5000,
+          6000,
         ];
         final List<AnequalizerBand> bands = [];
         for (int i = 0; i < 18; i++) {
@@ -613,7 +759,9 @@ class AudioService {
     if (_lastEqualizerGains == null) return;
     _lastEqualizerGains![18] = preamp;
     try {
-      await player.setVolumeGain(_equalizerEnabled ? preamp.clamp(-12.0, 12.0) : 0.0);
+      await player.setVolumeGain(
+        _equalizerEnabled ? preamp.clamp(-12.0, 12.0) : 0.0,
+      );
     } catch (_) {}
   }
 
@@ -746,10 +894,44 @@ class AudioService {
 
     // 1. 18-band anequalizer settings
     final List<double> bandsFreq = [
-      65, 92, 131, 185, 262, 370, 523, 740, 1000, 1400, 2000, 2900, 4100, 5900, 8300, 11700, 16600, 20000
+      65,
+      92,
+      131,
+      185,
+      262,
+      370,
+      523,
+      740,
+      1000,
+      1400,
+      2000,
+      2900,
+      4100,
+      5900,
+      8300,
+      11700,
+      16600,
+      20000,
     ];
     final List<double> bandsWidth = [
-      20, 30, 40, 60, 80, 110, 160, 220, 300, 420, 600, 850, 1200, 1750, 2500, 3500, 5000, 6000
+      20,
+      30,
+      40,
+      60,
+      80,
+      110,
+      160,
+      220,
+      300,
+      420,
+      600,
+      850,
+      1200,
+      1750,
+      2500,
+      3500,
+      5000,
+      6000,
     ];
 
     final List<AnequalizerBand> bands = [];

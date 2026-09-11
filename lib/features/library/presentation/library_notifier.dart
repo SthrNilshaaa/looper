@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/logger_helper.dart';
 import 'package:path/path.dart' as p;
@@ -21,6 +23,20 @@ enum SongSortStrategy {
   year,
   playCount,
   lastPlayed,
+}
+
+/// True for a broad storage root such as "/storage/emulated/0" or a raw SD
+/// card mount point ("/storage/XXXX-XXXX") - the coarse roots scanned once
+/// "all files access" is granted, as opposed to a real per-song folder like
+/// "/storage/emulated/0/Music". These must never be recorded in
+/// libraryFolders, since scanning them recursively finds songs from every
+/// real folder underneath, making the root itself a misleading entry.
+bool _isCoarseStorageRoot(String path) {
+  final normalized = (path.length > 1 && path.endsWith('/'))
+      ? path.substring(0, path.length - 1)
+      : path;
+  if (normalized == '/storage/emulated/0') return true;
+  return RegExp(r'^/storage/[^/]+$').hasMatch(normalized);
 }
 
 class LibraryState {
@@ -78,8 +94,7 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     _ref.listen<List<String>>(
       settingsProvider.select((s) => s.libraryFolders),
       (previous, next) async {
-        if (previous != null && previous != next) {
-
+        if (previous != null && !listEquals(previous, next)) {
           await syncSongsWithFolders(next);
           _loadLibrary(); // Force-reload lists immediately
         }
@@ -131,62 +146,55 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     _watchSongs();
   }
 
-  void _watchSongs() {
-    _songsSubscription?.cancel();
-    
-    QueryBuilder<Song, Song, QAfterSortBy> query;
+  QueryBuilder<Song, Song, QAfterSortBy> _buildSongsQuery() {
     final isAsc = state.isAscending;
-
     switch (state.sortStrategy) {
       case SongSortStrategy.title:
-        query = isAsc
+        return isAsc
             ? DbService.isar.songs.where().sortByTitle()
             : DbService.isar.songs.where().sortByTitleDesc();
-        break;
       case SongSortStrategy.artist:
-        query = isAsc
+        return isAsc
             ? DbService.isar.songs.where().sortByArtist().thenByTitle()
             : DbService.isar.songs.where().sortByArtistDesc().thenByTitle();
-        break;
       case SongSortStrategy.album:
-        query = isAsc
+        return isAsc
             ? DbService.isar.songs.where().sortByAlbum().thenByTrackNumber()
-            : DbService.isar.songs.where().sortByAlbumDesc().thenByTrackNumber();
-        break;
+            : DbService.isar.songs
+                  .where()
+                  .sortByAlbumDesc()
+                  .thenByTrackNumber();
       case SongSortStrategy.duration:
-        query = isAsc
+        return isAsc
             ? DbService.isar.songs.where().sortByDuration()
             : DbService.isar.songs.where().sortByDurationDesc();
-        break;
       case SongSortStrategy.year:
-        query = isAsc
+        return isAsc
             ? DbService.isar.songs.where().sortByYear()
             : DbService.isar.songs.where().sortByYearDesc();
-        break;
       case SongSortStrategy.playCount:
-        query = isAsc
+        return isAsc
             ? DbService.isar.songs.where().sortByPlayCount()
             : DbService.isar.songs.where().sortByPlayCountDesc();
-        break;
       case SongSortStrategy.lastPlayed:
-        query = isAsc
+        return isAsc
             ? DbService.isar.songs.where().sortByLastPlayed()
             : DbService.isar.songs.where().sortByLastPlayedDesc();
-        break;
       case SongSortStrategy.dateAdded:
       default:
-        query = isAsc
+        return isAsc
             ? DbService.isar.songs.where().sortByDateAdded()
             : DbService.isar.songs.where().sortByDateAddedDesc();
-        break;
     }
+  }
 
-    _songsSubscription = query.watch(fireImmediately: true).listen((songs) {
-      state = state.copyWith(
-        songs: songs,
-        isInitialized: true,
-      );
-    });
+  void _watchSongs() {
+    _songsSubscription?.cancel();
+    _songsSubscription = _buildSongsQuery().watch(fireImmediately: true).listen(
+      (songs) {
+        state = state.copyWith(songs: songs, isInitialized: true);
+      },
+    );
   }
 
   void _watchArtists() {
@@ -195,9 +203,9 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         .sortByName()
         .watch(fireImmediately: true)
         .listen((artists) {
-      state = state.copyWith(artists: artists);
-      _fetchMissingArtistImages();
-    });
+          state = state.copyWith(artists: artists);
+          _fetchMissingArtistImages();
+        });
   }
 
   void _watchAlbums() {
@@ -206,8 +214,8 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         .sortByName()
         .watch(fireImmediately: true)
         .listen((albums) {
-      state = state.copyWith(albums: albums);
-    });
+          state = state.copyWith(albums: albums);
+        });
   }
 
   void _watchPlaylists() {
@@ -216,8 +224,8 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
         .sortByName()
         .watch(fireImmediately: true)
         .listen((playlists) {
-      state = state.copyWith(playlists: playlists);
-    });
+          state = state.copyWith(playlists: playlists);
+        });
   }
 
   Future<void> _fetchMissingArtistImages() async {
@@ -227,7 +235,9 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     _isFetchingArtistImages = true;
     try {
       final allArtists = await DbService.isar.artists.where().findAll();
-      final artists = allArtists.where((a) => a.artistImageUrl == null).toList();
+      final artists = allArtists
+          .where((a) => a.artistImageUrl == null)
+          .toList();
       final service = ArtistImageService();
 
       for (final artist in artists) {
@@ -254,20 +264,22 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
 
   Future<void> prefetchLibraryLyrics() async {
     final songs = await DbService.isar.songs.where().findAll();
-    final songsToFetch = songs.where((s) => s.lyrics == null || s.lyrics!.isEmpty).toList();
-    
+    final songsToFetch = songs
+        .where((s) => s.lyrics == null || s.lyrics!.isEmpty)
+        .toList();
+
     if (songsToFetch.isEmpty) return;
 
     state = state.copyWith(isScanning: true);
-    
+
     // Use a small concurrency limit to avoid overwhelming services
     const int batchSize = 5;
     for (int i = 0; i < songsToFetch.length; i += batchSize) {
-      final end = (i + batchSize < songsToFetch.length) 
-          ? i + batchSize 
+      final end = (i + batchSize < songsToFetch.length)
+          ? i + batchSize
           : songsToFetch.length;
       final batch = songsToFetch.sublist(i, end);
-      
+
       await Future.wait(batch.map((song) => LyricsFetcher.fetchLyrics(song)));
     }
 
@@ -279,28 +291,21 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
 
     int sdkInt = 0;
     try {
-      final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
+      final sdkMatch = RegExp(
+        r'API\s+(\d+)',
+      ).firstMatch(Platform.operatingSystemVersion);
       if (sdkMatch != null) {
         sdkInt = int.parse(sdkMatch.group(1)!);
       }
     } catch (_) {}
 
     // Check if standard or manage external storage permissions are already granted
-    // to bypass all slow OS request dialogues entirely.
+    // to bypass slow OS request dialogues.
     final bool hasAudio = await Permission.audio.isGranted;
     final bool hasManage = await Permission.manageExternalStorage.isGranted;
     final bool hasStorage = sdkInt < 33 && await Permission.storage.isGranted;
 
     if (hasAudio || hasManage || hasStorage) {
-      return true;
-    }
-
-    // 1. Request Notification permission (required for Android 13+)
-    await Permission.notification.request();
-
-    // 2. Check for "All Files Access" (Android 11+)
-    // This is the most powerful permission and usually what users mean by "all files"
-    if (await Permission.manageExternalStorage.isGranted) {
       return true;
     }
 
@@ -319,9 +324,14 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     return isGranted;
   }
 
-  Future<void> scanSavedFolders({bool showVisualIndicator = true}) async {
+  Future<void> scanSavedFolders({
+    bool showVisualIndicator = true,
+    bool fullStorageDiscovery = false,
+  }) async {
     if (_isScanRunning || state.isScanning) {
-      LoggerHelper.write('LibraryNotifier.scanSavedFolders: Scan already in progress, ignoring.');
+      LoggerHelper.write(
+        'LibraryNotifier.scanSavedFolders: Scan already in progress, ignoring.',
+      );
       return;
     }
     _isScanRunning = true;
@@ -329,13 +339,58 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       if (!await _requestPermissions()) {
         return;
       }
-      final folders = _ref.read(settingsProvider).libraryFolders;
-      
-      if (folders.isEmpty) {
-        // If no folders saved, try to discover music in common locations
-        List<String> scanRoots = [];
-        
-        if (Platform.isLinux) {
+      await Future.delayed(const Duration(milliseconds: 100));
+
+      final settings = _ref.read(settingsProvider);
+      final savedFolders = settings.libraryFolders;
+      List<String> scanRoots = [];
+
+      // Whole-storage discovery is explicit. App startup only refreshes
+      // already indexed/default folders and must never start a full scan.
+      if (fullStorageDiscovery) {
+        if (Platform.isAndroid) {
+          try {
+            const MethodChannel(
+              'com.looper.player/broadcast',
+            ).invokeMethod('rescanMedia', {'path': '/storage/emulated/0'});
+          } catch (_) {}
+          int sdkInt = 0;
+          try {
+            final sdkMatch = RegExp(
+              r'API\s+(\d+)',
+            ).firstMatch(Platform.operatingSystemVersion);
+            if (sdkMatch != null) {
+              sdkInt = int.parse(sdkMatch.group(1)!);
+            }
+          } catch (_) {}
+
+          final isAllFilesGranted =
+              await Permission.manageExternalStorage.isGranted;
+          final isLegacyStorageGranted =
+              sdkInt < 30 && await Permission.storage.isGranted;
+          final canScanRoot = isAllFilesGranted || isLegacyStorageGranted;
+
+          if (canScanRoot) {
+            scanRoots.add('/storage/emulated/0');
+            await _addSdCardRoots(scanRoots);
+          } else {
+            final List<String> commonPaths = [
+              '/storage/emulated/0/Music',
+              '/storage/emulated/0/Download',
+              '/storage/emulated/0/Documents',
+              '/storage/emulated/0/Audiobooks',
+              '/storage/emulated/0/Podcasts',
+              '/storage/emulated/0/DCIM',
+              '/storage/emulated/0/Recordings',
+              '/storage/emulated/0/Bluetooth',
+            ];
+            for (final cp in commonPaths) {
+              if (Directory(cp).existsSync() && !scanRoots.contains(cp)) {
+                scanRoots.add(cp);
+              }
+            }
+          }
+        } else if (Platform.isLinux) {
           String defaultPath = '${Platform.environment['HOME']}/Music';
           try {
             final result = await Process.run('xdg-user-dir', ['MUSIC']);
@@ -345,88 +400,144 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
             }
           } catch (_) {}
           scanRoots.add(defaultPath);
-        } else if (Platform.isAndroid) {
-          // Start with common folders
-          final List<String> commonPaths = [
-            '/storage/emulated/0/Music',
-            '/storage/emulated/0/Download',
-            '/storage/emulated/0/Documents',
-            '/storage/emulated/0/Audiobooks',
-            '/storage/emulated/0/Podcasts',
-          ];
+        }
 
-          int sdkInt = 0;
-          try {
-            final sdkMatch = RegExp(r'API\s+(\d+)').firstMatch(Platform.operatingSystemVersion);
-            if (sdkMatch != null) {
-              sdkInt = int.parse(sdkMatch.group(1)!);
-            }
-          } catch (_) {}
-
-          final isAllFilesGranted = await Permission.manageExternalStorage.isGranted;
-          final isLegacyStorageGranted = sdkInt < 30 && await Permission.storage.isGranted;
-          final canScanRoot = isAllFilesGranted || isLegacyStorageGranted;
-
-          // If we have "All Files Access" or legacy storage access, we can just scan the root /storage/emulated/0
-          // to find music in non-standard folders (Telegram, WhatsApp, etc.)
-          if (canScanRoot) {
-            scanRoots.add('/storage/emulated/0');
-          } else {
-            scanRoots.addAll(commonPaths);
+        for (final f in savedFolders) {
+          if (Directory(f).existsSync() && !scanRoots.contains(f)) {
+            scanRoots.add(f);
           }
-
-          // Try to find SD cards
-          try {
-            final storageDir = Directory('/storage');
-            if (await storageDir.exists()) {
-              final List<FileSystemEntity> entities = await storageDir.list().toList();
-              for (final entity in entities) {
-                final name = p.context.basename(entity.path);
-                // Avoid emulated and system internal paths
-                if (name != 'emulated' && name != 'self' && name != 'knox-emulated' && !name.contains('-')) {
-                  // This is likely an SD card mount point
-                  if (canScanRoot) {
-                    scanRoots.add(entity.path);
-                  } else {
-                    scanRoots.add('${entity.path}/Music');
-                    scanRoots.add('${entity.path}/Download');
-                  }
-                }
+        }
+      } else {
+        // Standard refresh / Pull-to-refresh / Rescan Library: Scan ONLY saved folders (or defaults if none saved)
+        if (savedFolders.isNotEmpty) {
+          for (final f in savedFolders) {
+            if (Directory(f).existsSync() && !scanRoots.contains(f)) {
+              scanRoots.add(f);
+            }
+          }
+        } else {
+          // Default fallback if savedFolders is empty
+          if (Platform.isAndroid) {
+            final List<String> commonPaths = [
+              '/storage/emulated/0/Music',
+              '/storage/emulated/0/Download',
+              '/storage/emulated/0/Documents',
+            ];
+            for (final cp in commonPaths) {
+              if (Directory(cp).existsSync()) {
+                scanRoots.add(cp);
               }
             }
-          } catch (e) {
-
+          } else if (Platform.isLinux) {
+            scanRoots.add('${Platform.environment['HOME']}/Music');
           }
         }
+      }
 
-        if (showVisualIndicator) {
-          state = state.copyWith(isScanning: true);
-        }
-        for (final path in scanRoots) {
-          if (Directory(path).existsSync()) {
-            await scanLibrary(path, updateIsScanning: showVisualIndicator);
-          }
-        }
-        if (showVisualIndicator) {
-          state = state.copyWith(isScanning: false);
-        }
-        return;
+      if (scanRoots.isEmpty) {
+        scanRoots.add('/storage/emulated/0');
       }
 
       if (showVisualIndicator) {
         state = state.copyWith(isScanning: true);
       }
-      for (final folder in folders) {
-        if (Directory(folder).existsSync()) {
-          await LibraryScanner().scanDirectory(folder);
+
+      final Set<String> allDiscoveredFolders = Set<String>.from(savedFolders);
+
+      for (final path in scanRoots) {
+        if (Directory(path).existsSync()) {
+          final result = await LibraryScanner().scanDirectory(path);
+          if (result.songsCount > 0) {
+            allDiscoveredFolders.addAll(result.musicFolders);
+          }
         }
       }
-      if (showVisualIndicator) {
-        state = state.copyWith(isScanning: false);
+
+      // Execute Post-Scan Cleanup Filter
+      await LibraryScanner().cleanupFilteredAudio(
+        includeSystemAndMessagingAudio: settings.includeSystemAndMessagingAudio,
+      );
+
+      // Rebuild libraryFolders from allDiscoveredFolders (previously-saved
+      // folders + the real per-song folders LibraryScanner just found),
+      // dropping any that no longer exist/contain songs, and dropping any
+      // broad storage-root entries (e.g. "/storage/emulated/0" recorded by
+      // an older buggy scan) in favor of the actual folders inside them.
+      final candidateFolders = allDiscoveredFolders.where(
+        (f) => !_isCoarseStorageRoot(f),
+      );
+      if (candidateFolders.isNotEmpty) {
+        final List<String> validFolders = [];
+        for (final folder in candidateFolders) {
+          final prefix = folder.endsWith('/') ? folder : '$folder/';
+          final hasSongs =
+              await DbService.isar.songs
+                  .filter()
+                  .pathStartsWith(prefix)
+                  .or()
+                  .pathEqualTo(folder)
+                  .count() >
+              0;
+          if (Directory(folder).existsSync() && hasSongs) {
+            validFolders.add(folder);
+          }
+        }
+        await _ref
+            .read(settingsProvider.notifier)
+            .updateLibraryFolders(validFolders);
       }
+
+      // Fetch fresh songs, albums, artists, and playlists directly from Isar DB
+      final freshSongs = await _buildSongsQuery().findAll();
+      final freshAlbums = await DbService.isar.albums
+          .where()
+          .sortByName()
+          .findAll();
+      final freshArtists = await DbService.isar.artists
+          .where()
+          .sortByName()
+          .findAll();
+      final freshPlaylists = await DbService.isar.playlists
+          .where()
+          .sortByName()
+          .findAll();
+
+      state = state.copyWith(
+        songs: freshSongs,
+        albums: freshAlbums,
+        artists: freshArtists,
+        playlists: freshPlaylists,
+        isScanning: false,
+        isInitialized: true,
+      );
+
+      // Force-reload stream listeners for continuous updates
+      _loadLibrary();
     } finally {
       _isScanRunning = false;
     }
+  }
+
+  Future<void> _addSdCardRoots(List<String> scanRoots) async {
+    try {
+      final storageDir = Directory('/storage');
+      if (await storageDir.exists()) {
+        final List<FileSystemEntity> entities = await storageDir
+            .list()
+            .toList();
+        for (final entity in entities) {
+          final name = p.basename(entity.path);
+          if (entity is Directory &&
+              name != 'emulated' &&
+              name != 'self' &&
+              name != 'knox-emulated') {
+            if (!scanRoots.contains(entity.path)) {
+              scanRoots.add(entity.path);
+            }
+          }
+        }
+      }
+    } catch (_) {}
   }
 
   Future<void> clearAllData() async {
@@ -450,16 +561,22 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     });
     await _ref.read(settingsProvider.notifier).updateLastPlayedSong(null);
 
-    final folders = _ref.read(settingsProvider).libraryFolders;
-    for (final folder in folders) {
-      if (Directory(folder).existsSync()) {
-        await LibraryScanner().scanDirectory(folder);
-      }
-    }
-    state = state.copyWith(isScanning: false);
+    await scanSavedFolders(
+      showVisualIndicator: true,
+      fullStorageDiscovery: true,
+    );
   }
 
-  Future<int> scanLibrary(String path, {bool updateIsScanning = true}) async {
+  Future<int> scanLibrary(
+    String path, {
+    bool updateIsScanning = true,
+    // False for a broad/coarse root (e.g. the whole internal storage root
+    // scanned once "all files access" is granted) - recording that root
+    // itself in libraryFolders would show the user "0" / "/storage/emulated/0"
+    // instead of the actual folders their music lives in. Use
+    // recordActualLibraryFolders() afterwards to record the real folders.
+    bool recordFolder = true,
+  }) async {
     if (!await _requestPermissions()) return 0;
 
     if (updateIsScanning) {
@@ -470,25 +587,29 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     try {
       final dir = Directory(path);
       if (dir.existsSync()) {
-
         final result = await LibraryScanner().scanDirectory(path);
         totalSongsFound = result.songsCount;
-        
-        // Always add the selected root folder path to saved library folders
-        final settings = _ref.read(settingsProvider);
-        final newFolders = Set<String>.from(settings.libraryFolders)
-          ..add(path);
-        if (totalSongsFound > 0) {
-          newFolders.addAll(result.musicFolders);
-        }
-        await _ref
-            .read(settingsProvider.notifier)
-            .updateLibraryFolders(newFolders.toList());
-      } else {
 
+        if (totalSongsFound > 0) {
+          final settings = _ref.read(settingsProvider);
+          final newFolders = Set<String>.from(settings.libraryFolders);
+          if (recordFolder) {
+            newFolders.add(path);
+          } else {
+            // Store actual song folders immediately for a broad root scan so
+            // an interrupted discovery cannot leave this list empty.
+            newFolders.addAll(result.musicFolders);
+          }
+          await _ref
+              .read(settingsProvider.notifier)
+              .updateLibraryFolders(newFolders.toList());
+        }
       }
     } catch (e) {
-
+      LoggerHelper.write(
+        'LibraryNotifier.scanLibrary: error scanning path $path',
+        e,
+      );
     }
 
     if (updateIsScanning) {
@@ -496,6 +617,28 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     }
 
     return totalSongsFound;
+  }
+
+  /// Recomputes libraryFolders from the actual parent folder of every song
+  /// currently in the library, merging them into the existing list. Use this
+  /// after a coarse/broad root scan (scanLibrary(..., recordFolder: false))
+  /// so the "Library Folders" list shows the real folders songs live in
+  /// (e.g. "Music", "Songs") instead of the broad root that was scanned.
+  Future<void> recordActualLibraryFolders() async {
+    final songs = await DbService.isar.songs.where().findAll();
+    if (songs.isEmpty) return;
+
+    final settings = _ref.read(settingsProvider);
+    final newFolders = Set<String>.from(settings.libraryFolders);
+    for (final song in songs) {
+      newFolders.add(Directory(song.path).parent.path);
+    }
+
+    if (newFolders.length != settings.libraryFolders.length) {
+      await _ref
+          .read(settingsProvider.notifier)
+          .updateLibraryFolders(newFolders.toList());
+    }
   }
 
   Future<void> toggleFavorite(Song song) async {
@@ -517,38 +660,111 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     await DbService.isar.writeTxn(() async {
       // Find all songs in the DB
       final allSongs = await DbService.isar.songs.where().findAll();
-      
+
       // Filter songs that do NOT belong to any of the active folders
       final songsToDelete = allSongs.where((song) {
         return !activeFolders.any((folder) => song.path.startsWith(folder));
       }).toList();
-      
+
       if (songsToDelete.isNotEmpty) {
         final idsToDelete = songsToDelete.map((s) => s.id).toList();
         await DbService.isar.songs.deleteAll(idsToDelete);
 
-        
         // Clean up empty albums & artists
         final remainingSongs = await DbService.isar.songs.where().findAll();
         final activeAlbumNames = remainingSongs.map((s) => s.album).toSet();
         final activeArtistNames = remainingSongs.map((s) => s.artist).toSet();
-        
+
         // Load all albums and artists
         final allAlbums = await DbService.isar.albums.where().findAll();
-        final albumsToDelete = allAlbums.where((a) => !activeAlbumNames.contains(a.name)).map((a) => a.id).toList();
+        final albumsToDelete = allAlbums
+            .where((a) => !activeAlbumNames.contains(a.name))
+            .map((a) => a.id)
+            .toList();
         if (albumsToDelete.isNotEmpty) {
           await DbService.isar.albums.deleteAll(albumsToDelete);
-
         }
 
         final allArtists = await DbService.isar.artists.where().findAll();
-        final artistsToDelete = allArtists.where((art) => !activeArtistNames.contains(art.name)).map((art) => art.id).toList();
+        final artistsToDelete = allArtists
+            .where((art) => !activeArtistNames.contains(art.name))
+            .map((art) => art.id)
+            .toList();
         if (artistsToDelete.isNotEmpty) {
           await DbService.isar.artists.deleteAll(artistsToDelete);
-
         }
       }
     });
+  }
+
+  /// Edits an album's metadata (name, artist, year, artwork) and cascades the
+  /// change to every song currently tagged with this album, since songs only
+  /// reference their album by name rather than a foreign key. Does NOT touch
+  /// the physical files — only the DB records (same contract as
+  /// [PlaybackNotifier.editSongMetadata] for individual songs).
+  Future<bool> editAlbumMetadata(
+    Album album, {
+    String? name,
+    String? artist,
+    int? year,
+    String? artPath, // null = unchanged, '' = cleared, '/path' = new artwork
+  }) async {
+    try {
+      await DbService.isar.writeTxn(() async {
+        final songs = await DbService.isar.songs
+            .filter()
+            .albumEqualTo(album.name)
+            .findAll();
+
+        final newName = (name != null && name.trim().isNotEmpty)
+            ? name.trim()
+            : null;
+
+        // Renaming onto another existing album's name merges into that
+        // album (adopting its identity) instead of colliding with the
+        // unique name index or leaving two entries for the same album.
+        Album target = album;
+        if (newName != null && newName != album.name) {
+          final existing = await DbService.isar.albums
+              .filter()
+              .nameEqualTo(newName)
+              .findFirst();
+          if (existing != null && existing.id != album.id) {
+            await DbService.isar.albums.delete(album.id);
+            target = existing;
+          }
+        }
+
+        target.name = newName ?? target.name;
+        if (artist != null) {
+          target.artist = artist.trim().isEmpty ? null : artist.trim();
+        }
+        if (year != null) target.year = year == 0 ? null : year;
+        if (artPath != null) {
+          target.artPath = artPath.trim().isEmpty ? null : artPath.trim();
+        }
+        await DbService.isar.albums.put(target);
+
+        // Cascade name/artist/year to every song that belonged to the (old)
+        // album so the library's text metadata stays consistent. Artwork is
+        // deliberately NOT cascaded: a song's own artPath is what the mini
+        // player, queue and song lists show for it, and songs can carry
+        // their own custom/embedded art independent of the album cover -
+        // overwriting it here made picking a new album cover silently
+        // replace every song's picture too.
+        for (final song in songs) {
+          song.album = target.name;
+          if (artist != null) song.artist = target.artist;
+          if (year != null) song.year = target.year;
+        }
+        if (songs.isNotEmpty) {
+          await DbService.isar.songs.putAll(songs);
+        }
+      });
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   @override

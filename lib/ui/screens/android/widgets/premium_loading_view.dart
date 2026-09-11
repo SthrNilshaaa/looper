@@ -14,13 +14,22 @@ class PremiumLoadingView extends ConsumerStatefulWidget {
   ConsumerState<PremiumLoadingView> createState() => _PremiumLoadingViewState();
 }
 
-class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView> {
+class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
   int _loadingPhase = 0;
+
   final int _loadingMessagesCount = 4;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 4),
+    )..repeat();
+
+    // Rotate messages for interactive high-fidelity feedback
     _rotatePhase();
   }
 
@@ -37,6 +46,7 @@ class _PremiumLoadingViewState extends ConsumerState<PremiumLoadingView> {
 
   @override
   void dispose() {
+    _controller.dispose();
     super.dispose();
   }
 

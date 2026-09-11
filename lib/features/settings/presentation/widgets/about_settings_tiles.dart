@@ -5,15 +5,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:looper_player/core/app_fonts.dart';
+import 'package:looper_player/core/app_links.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 
-class LooperVersionTile extends StatelessWidget {
+import 'package:looper_player/core/providers.dart';
+
+class LooperVersionTile extends ConsumerWidget {
   const LooperVersionTile({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final versionAsync = ref.watch(appVersionProvider);
+    final versionStr = versionAsync.value != null ? 'Version ${versionAsync.value}' : 'Version ...';
+
     return ListTile(
       leading: const Icon(LucideIcons.info, color: Colors.white70),
       title: Text(
@@ -21,16 +27,14 @@ class LooperVersionTile extends StatelessWidget {
         style: AppFonts.jostStyle(color: Colors.white, fontWeight: FontWeight.w500),
       ),
       subtitle: Text(
-        'Version 2.0.00',
+        versionStr,
         style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
       ),
       onTap: () async {
-        final Uri uri = Uri.parse('https://github.com/SthrNilshaaa/looper');
+        final Uri uri = Uri.parse(AppLinks.githubRepo);
         try {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } catch (e) {
-
-        }
+        } catch (e) {}
       },
     );
   }
@@ -50,15 +54,10 @@ class LyricsProviderTile extends ConsumerWidget {
       'Musixmatch',
       'AZLyrics',
       'LyricsMINT',
+      'LyricFind',
     ];
 
-    final providerUrls = {
-      'LRCLIB': 'https://lrclib.net',
-      'Genius': 'https://genius.com',
-      'Musixmatch': 'https://www.musixmatch.com',
-      'AZLyrics': 'https://www.azlyrics.com',
-      'LyricsMINT': 'https://www.lyricsmint.com',
-    };
+    final providerUrls = AppLinks.lyricsProviderUrls;
 
     final currentProvider = settings.lyricsProvider;
 
@@ -96,6 +95,44 @@ class LyricsProviderTile extends ConsumerWidget {
           }
         },
       ),
+    );
+  }
+}
+
+class OpenSourceLicensesTile extends ConsumerWidget {
+  const OpenSourceLicensesTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final versionAsync = ref.watch(appVersionProvider);
+
+    return ListTile(
+      leading: const Icon(LucideIcons.scrollText, color: Colors.white70),
+      title: Text(
+        l10n.openSourceLicenses,
+        style: AppFonts.jostStyle(color: Colors.white, fontWeight: FontWeight.w500),
+      ),
+      subtitle: Text(
+        l10n.openSourceLicensesDesc,
+        style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
+      ),
+      trailing: Icon(
+        LucideIcons.chevronRight,
+        color: Colors.white.withValues(alpha: 0.4),
+        size: 18,
+      ),
+      onTap: () {
+        HapticFeedback.lightImpact();
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute(
+            builder: (context) => LicensePage(
+              applicationName: 'Looper Player',
+              applicationVersion: versionAsync.value,
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -141,7 +178,7 @@ class GitHubStarTile extends StatelessWidget {
       ),
       onTap: () async {
         HapticFeedback.lightImpact();
-        final Uri uri = Uri.parse('https://github.com/SthrNilshaaa/looper');
+        final Uri uri = Uri.parse(AppLinks.githubRepo);
         try {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } catch (e) {

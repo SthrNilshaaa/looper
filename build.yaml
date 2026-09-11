@@ -1,0 +1,11 @@
+targets:
+  $default:
+    builders:
+      riverpod_generator:
+        generate_for:
+          exclude:
+            - lib/src/rust/frb_generated.web.dart
+      isar_generator:
+        generate_for:
+          exclude:
+            - lib/src/rust/frb_generated.web.dart

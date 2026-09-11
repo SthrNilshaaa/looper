@@ -398,47 +398,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get manageLanguageAndFocus => '管理语言偏好和呼叫者焦点状态';
 
   @override
-  String get audioFocusGetFocus => 'Get Focus';
+  String get audioFocusGetFocus => '获取焦点';
 
   @override
-  String get audioFocusGetFocusDesc =>
-      'Request audio focus when playback begins.';
+  String get audioFocusGetFocusDesc => '在播放开始时请求音频焦点。';
 
   @override
-  String get audioFocusReleaseFocus => 'Release Focus';
+  String get audioFocusReleaseFocus => '释放焦点';
 
   @override
-  String get audioFocusReleaseFocusDesc =>
-      'Release audio focus when playback pauses or stops.';
+  String get audioFocusReleaseFocusDesc => '在播放暂停或停止时释放音频焦点。';
 
   @override
-  String get audioFocusStopOnOtherSession =>
-      'Stop Music on Other Music Session';
+  String get audioFocusStopOnOtherSession => '在其他音乐会话中停止音乐';
 
   @override
-  String get audioFocusStopOnOtherSessionDesc =>
-      'Pause playback when another app starts playing audio.';
+  String get audioFocusStopOnOtherSessionDesc => '当其他应用开始播放音频时暂停播放。';
 
   @override
-  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+  String get audioFocusRestartOnGain => '获得焦点时恢复音乐';
 
   @override
-  String get audioFocusRestartOnGainDesc =>
-      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+  String get audioFocusRestartOnGainDesc => '当音频焦点恢复时自动继续播放,仅在播放因失去焦点而被中断时生效。';
 
   @override
-  String get pauseOnDuckTitle => 'Pause on Duck';
+  String get pauseOnDuckTitle => '音量降低时暂停';
 
   @override
-  String get pauseOnDuckDesc =>
-      'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).';
+  String get pauseOnDuckDesc => '当其他应用播放短暂的声音(例如通知、导航提示)时,暂停播放而不是降低音量。';
 
   @override
-  String get resumeOnBluetoothConnectTitle => 'Resume on Bluetooth Connect';
+  String get resumeOnBluetoothConnectTitle => '蓝牙连接时恢复播放';
 
   @override
-  String get resumeOnBluetoothConnectDesc =>
-      'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.';
+  String get resumeOnBluetoothConnectDesc => '当蓝牙音频设备(耳机、车载套件)重新连接时自动恢复播放。';
 
   @override
   String get manualCrossfadeDuration => '手动交叉淡化时长';
@@ -475,6 +468,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get newTitle => '新标题';
+
+  @override
+  String get nextUp => '接下来播放';
 
   @override
   String get noAlbumsFound => '没有找到专辑';
@@ -586,6 +582,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get recentPlayed => '最近玩过';
 
   @override
+  String get recentRowDesc => '最近播放歌曲的水平架';
+
+  @override
   String get removedFromPlaylist => '已从播放列表中移除';
 
   @override
@@ -611,6 +610,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reorderDashboardSectionsDesc => '拖放以设置首选仪表板顺序';
+
+  @override
+  String get includeOtherDeviceAudioTitle => '包含其他设备音频';
+
+  @override
+  String get includeOtherDeviceAudioDesc =>
+      '扫描铃声、通知、闹钟以及 WhatsApp 和 Telegram 音频';
 
   @override
   String get rescanLibrary => '重新扫描库';
@@ -650,6 +656,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get persistQueueDesc => '应用重启时保存上次播放的歌曲和队列';
+
+  @override
+  String get keepSongProgressTitle => '保留歌曲进度';
+
+  @override
+  String get keepSongProgressDesc =>
+      '分别记住每首歌曲自己的播放进度。中途切换到另一首歌曲后再回来——即使中间播放过其他歌曲——也会从上次停止的位置继续播放，而不是从头开始。';
 
   @override
   String get right => '居右';
@@ -750,6 +763,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get showQualityBadgeDesc => '在正在播放的屏幕上显示音频质量信息徽章';
 
   @override
+  String get showRecentRow => '显示最近播放行';
+
+  @override
+  String get showRecentRowDesc => '在主屏幕上显示最近播放歌曲的水平列表';
+
+  @override
   String get silenceBetweenTracksDesc => '在轨道之间添加静音间隙（0毫秒表示无缝播放）';
 
   @override
@@ -831,19 +850,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get toggleFavorite => '切换收藏夹';
 
   @override
-  String get shuffleTitle => 'Shuffle';
+  String get shuffleTitle => '随机播放';
 
   @override
   String get shuffleDisabledDesc =>
-      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+      '按原始队列顺序播放歌曲。关闭随机播放会让当前歌曲继续播放,并将剩余队列恢复为原始顺序,不影响播放或播放历史。';
 
   @override
   String get shuffleEnabledDesc =>
-      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+      '在保持当前歌曲不变的情况下随机打乱剩余歌曲的顺序。生成的随机顺序会保持不变,直到队列发生变化或请求新的随机播放,从而避免歌曲重复或被跳过。';
 
   @override
   String get shuffleSwitchingDesc =>
-      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+      '开启或关闭随机播放不会重新开始播放当前歌曲,只会改变即将播放歌曲的顺序——开启时为随机顺序,关闭时恢复为队列的原始顺序。';
 
   @override
   String get topResult => '最高结果';
@@ -1026,4 +1045,410 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sortDuration => '时长';
+
+  @override
+  String get myAlbums => '我的专辑';
+
+  @override
+  String get featuredArtists => '精选艺术家';
+
+  @override
+  String get noSongPlaying => '当前没有播放歌曲';
+
+  @override
+  String get nextLabel => '下一首';
+
+  @override
+  String get previousLabel => '上一首';
+
+  @override
+  String get resync => '重新同步';
+
+  @override
+  String get equalizer => '均衡器';
+
+  @override
+  String get presets => '预设';
+
+  @override
+  String get preAmpGain => '前置放大增益';
+
+  @override
+  String get outputVolume => '输出音量';
+
+  @override
+  String get customFilterHint =>
+      '直接输入自定义 libavfilter 音频滤镜参数(例如 volume=3dB, aecho=0.8:0.88:60:0.4):';
+
+  @override
+  String get flowGlobalActions => '流程与全局操作';
+
+  @override
+  String get equalizerModeLabel => '均衡器模式:';
+
+  @override
+  String get currentGainsAppliedGlobal => '当前增益已应用为全局默认设置。';
+
+  @override
+  String get applyToGlobal => '应用到全局';
+
+  @override
+  String get songSpecificResetGlobal => '歌曲专属设置已重置为全局默认值。';
+
+  @override
+  String get resetToGlobal => '重置为全局';
+
+  @override
+  String get resetAllSongsEq => '重置所有歌曲的均衡器';
+
+  @override
+  String get resetAllSongsEqConfirm => '确定要清除音乐库中所有歌曲的自定义均衡器设置吗?';
+
+  @override
+  String get allSongsEqDataReset => '所有歌曲专属均衡器数据已重置。';
+
+  @override
+  String get resetAllSongsEqData => '重置所有歌曲的均衡器数据';
+
+  @override
+  String get equalizerTargetMode => '均衡器应用模式';
+
+  @override
+  String get equalizerTargetModeDesc => '选择均衡器设置在音乐库中的应用方式。';
+
+  @override
+  String get globalMode => '全局模式';
+
+  @override
+  String get globalModeDesc => '对所有歌曲统一应用效果。切换歌曲时均衡器设置保持不变。';
+
+  @override
+  String get songSpecificMode => '歌曲专属模式';
+
+  @override
+  String get songSpecificModeDesc => '仅为当前歌曲保存自定义设置。除非下一首歌曲有自己的配置,否则默认不使用均衡器。';
+
+  @override
+  String get viewDeviceAudioCapabilities => '查看设备音频功能';
+
+  @override
+  String get deviceAudioCapabilities => '设备音频功能';
+
+  @override
+  String get noPlaybackActiveCapabilities => '当前没有正在播放,或功能信息不可用。';
+
+  @override
+  String get changeLyricsProvider => '更改歌词提供方';
+
+  @override
+  String get autoFallbackProviders => '自动备用提供方';
+
+  @override
+  String get autoFallbackProvidersDesc => '如果主要提供方没有歌词,自动尝试其余提供方';
+
+  @override
+  String get ambientColorBackground => '环境色背景';
+
+  @override
+  String get ambientColorBackgroundDesc => '根据歌曲封面生成的柔和、细腻的环境渐变';
+
+  @override
+  String get exportLyricsLrc => '导出歌词(.lrc 文件)';
+
+  @override
+  String get saveLyricsToDevice => '将当前歌词保存到设备存储';
+
+  @override
+  String get noLyricsToExport => '没有可导出的歌词';
+
+  @override
+  String get useCustomLyricsLrc => '使用自定义歌词(LRC 文件)';
+
+  @override
+  String get selectLocalLrcFile => '为此歌曲选择本地 .lrc 或 .txt 文件';
+
+  @override
+  String get customLyricsAppliedSuccess => '自定义歌词已成功应用!';
+
+  @override
+  String get noRecentlyPlayedTracks => '没有最近播放的曲目';
+
+  @override
+  String get close => '关闭';
+
+  @override
+  String get audioQualityAnalysis => '音频质量分析';
+
+  @override
+  String get audioQualityAnalysisDesc => '执行深度频谱与音频格式分析';
+
+  @override
+  String get audioStreamDetails => '音频流详情';
+
+  @override
+  String get perChannelMetrics => '各声道指标';
+
+  @override
+  String get sleepTimer => '睡眠定时器';
+
+  @override
+  String get stopByTime => '按时间停止';
+
+  @override
+  String get start => '开始';
+
+  @override
+  String get stopBySongCount => '按歌曲数停止';
+
+  @override
+  String get cancelSleepTimer => '取消睡眠定时器';
+
+  @override
+  String get nowPlayingAllCaps => '正在播放';
+
+  @override
+  String get settingsAndBackups => '设置与备份';
+
+  @override
+  String get managePreferencesLibraryData => '管理偏好设置和音乐库数据';
+
+  @override
+  String get logsClearedSuccess => '日志已成功清除';
+
+  @override
+  String get editSongInfo => '编辑歌曲信息';
+
+  @override
+  String get editAlbumInfo => '编辑专辑信息';
+
+  @override
+  String get tapFieldToEdit => '点击某个字段进行编辑';
+
+  @override
+  String get alwaysBlurSheets => '始终模糊面板';
+
+  @override
+  String get alwaysBlurSheetsDesc => '即使动态主题关闭，也模糊弹出面板';
+
+  @override
+  String get removeArtwork => '移除封面';
+
+  @override
+  String get resetArtworkToDefault => '重置为默认';
+
+  @override
+  String get artworkResetToDefault => '封面已重置为默认';
+
+  @override
+  String get noEmbeddedArtworkFound => '未找到此专辑的内嵌封面';
+
+  @override
+  String get saveChangesBtn => '保存更改';
+
+  @override
+  String get enterFolderPathManually => '手动输入文件夹路径';
+
+  @override
+  String get folderPickerManualHint => '如果系统目录选择器无法打开,请在下方输入或粘贴完整的目录路径:';
+
+  @override
+  String get noSupportedSongsFoundFolder => '所选文件夹中未找到受支持的歌曲';
+
+  @override
+  String get add => '添加';
+
+  @override
+  String get folderPickerClosed => '文件夹选择器已关闭';
+
+  @override
+  String get buyMeCoffee => '请我喝杯咖啡';
+
+  @override
+  String get typeToSearchSettings => '输入以搜索设置…';
+
+  @override
+  String get maintainersLabel => '维护者';
+
+  @override
+  String get personBehindLooperPlayer => 'LooperPlayer 背后的开发者';
+
+  @override
+  String get blurredArtworkForLyrics => '歌词页面使用模糊封面';
+
+  @override
+  String get blurredArtworkForLyricsDesc => '以模糊专辑封面作为背景,而非动态/静态渐变';
+
+  @override
+  String get lyricsFontWeight => '歌词字体粗细';
+
+  @override
+  String get openSourceLicenses => '开源许可';
+
+  @override
+  String get openSourceLicensesDesc => '本应用使用的第三方库';
+
+  @override
+  String get done => '完成';
+
+  @override
+  String get lyricsNotAvailable => '暂无歌词。';
+
+  @override
+  String get lyricsNotAvailableHint => '导入 .lrc 或 .txt 文件为这首歌添加歌词';
+
+  @override
+  String get importLyricsFile => '导入歌词文件';
+
+  @override
+  String get approximatedSyncNoWordTimings => '近似同步(无逐字时间)';
+
+  @override
+  String get lyricsSyncHelp => '歌词同步帮助';
+
+  @override
+  String get simpleModeLabel => '简单模式';
+
+  @override
+  String get advancedModeLabel => '高级模式';
+
+  @override
+  String get tips => '提示';
+
+  @override
+  String get gotIt => '知道了';
+
+  @override
+  String get lyricsSyncStudio => '歌词同步工作室';
+
+  @override
+  String get lyricsTextLabel => '歌词文本';
+
+  @override
+  String get lyricsTextHelperDesc => '每行歌词单独一行。下方的同步工具会为这些行附加时间戳。';
+
+  @override
+  String get quickSync => '快速同步';
+
+  @override
+  String get autoAdvanceAfterStamping => '打点后自动前进';
+
+  @override
+  String get advancedSync => '高级同步';
+
+  @override
+  String get useCurrentTime => '使用当前时间';
+
+  @override
+  String get playbackAssist => '播放辅助';
+
+  @override
+  String get timeShift => '时间偏移';
+
+  @override
+  String get timeShiftDesc => '将所有已打点的歌词一起前移或后移。';
+
+  @override
+  String get lyricsSaveLrcExplain =>
+      '保存时会尽可能在歌曲音频旁生成一个附属的“.lrc”文件,并同时保存到本地播放器数据库中。未打点的行将自动进行插值处理。';
+
+  @override
+  String get back => '返回';
+
+  @override
+  String get appSettingsLabel => '应用设置';
+
+  @override
+  String get backupsAndLogs => '备份与日志';
+
+  @override
+  String get backupsAndLogsDesc => '导出、导入并管理应用数据';
+
+  @override
+  String get exportBackupJson => '导出备份(JSON)';
+
+  @override
+  String get exportBackupJsonDesc =>
+      '将你喜欢的歌曲和播放列表保存为 JSON 文件，可保留或分享。不包含其他任何内容。';
+
+  @override
+  String get importBackupJson => '导入备份(JSON)';
+
+  @override
+  String get importBackupJsonDesc => '将备份文件中的喜欢歌曲和播放列表合并到你的音乐库中。现有数据不会被覆盖或删除。';
+
+  @override
+  String get exportDiagnosticsLogs => '导出诊断日志';
+
+  @override
+  String get exportDiagnosticsLogsDesc => '分享应用的诊断日志文件，以便进行故障排查审查。';
+
+  @override
+  String get clearDiagnosticsLogs => '清除诊断日志';
+
+  @override
+  String get clearDiagnosticsLogsDesc => '永久删除存储在此设备上的诊断日志文件。此操作无法撤销。';
+
+  @override
+  String get lyricsPlainTextOrLrc => '歌词(纯文本或 LRC)';
+
+  @override
+  String get syncModeLine => '行';
+
+  @override
+  String get syncModeWord => '单词';
+
+  @override
+  String get syncModeChar => '字符';
+
+  @override
+  String get enterManually => '手动输入';
+
+  @override
+  String get rawFilterParametersHint => '原始滤镜参数...';
+
+  @override
+  String get searchSettingsHint => '搜索设置...';
+
+  @override
+  String get repeatTooltip => '循环播放';
+
+  @override
+  String get favoriteTooltip => '收藏';
+
+  @override
+  String get instructionsTooltip => '使用说明';
+
+  @override
+  String get pasteLyricsHint => '在此粘贴或输入歌词';
+
+  @override
+  String get timestampMmSsHint => '时间戳 (mm:ss.xx)';
+
+  @override
+  String get nowLabel => '当前';
+
+  @override
+  String get playlistNameHint => '播放列表名称';
+
+  @override
+  String get songInfoUpdated => '歌曲信息已更新!';
+
+  @override
+  String get albumInfoUpdated => '专辑信息已更新!';
+
+  @override
+  String get failedToSaveChanges => '保存更改失败。';
+
+  @override
+  String sleepTimerStoppingIn(String time) {
+    return '已激活:将在 $time 后停止';
+  }
+
+  @override
+  String sleepTimerStoppingAfter(String time) {
+    return '已激活:$time 后停止';
+  }
+
+  @override
+  String get selectWhenToPause => '选择何时暂停音乐播放';
 }

@@ -60,12 +60,8 @@ class MaintainerTile extends StatelessWidget {
   Future<void> _launchUrl(String url) async {
     final Uri uri = Uri.parse(url);
     try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-
-      }
-    } catch (e) {
-
-    }
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {}
+    } catch (e) {}
   }
 
   @override
@@ -121,7 +117,19 @@ class LibraryFoldersList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final folders = ref.watch(settingsProvider).libraryFolders;
 
-    if (folders.isEmpty) return const SizedBox.shrink();
+    if (folders.isEmpty) {
+      return const ListTile(
+        leading: Icon(LucideIcons.folderSearch, color: Colors.white38),
+        title: Text(
+          'No indexed folders yet',
+          style: TextStyle(color: Colors.white54, fontSize: 14),
+        ),
+        subtitle: Text(
+          'Use Rescan Library to discover folders across storage.',
+          style: TextStyle(color: Colors.white38, fontSize: 11),
+        ),
+      );
+    }
 
     return Column(
       children: folders

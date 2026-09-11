@@ -402,47 +402,44 @@ class AppLocalizationsKo extends AppLocalizations {
   String get manageLanguageAndFocus => '언어 기본 설정 및 발신자 초점 상태 관리';
 
   @override
-  String get audioFocusGetFocus => 'Get Focus';
+  String get audioFocusGetFocus => '포커스 얻기';
 
   @override
-  String get audioFocusGetFocusDesc =>
-      'Request audio focus when playback begins.';
+  String get audioFocusGetFocusDesc => '재생이 시작될 때 오디오 포커스를 요청합니다.';
 
   @override
-  String get audioFocusReleaseFocus => 'Release Focus';
+  String get audioFocusReleaseFocus => '포커스 해제';
 
   @override
-  String get audioFocusReleaseFocusDesc =>
-      'Release audio focus when playback pauses or stops.';
+  String get audioFocusReleaseFocusDesc => '재생이 일시 중지되거나 중지될 때 오디오 포커스를 해제합니다.';
 
   @override
-  String get audioFocusStopOnOtherSession =>
-      'Stop Music on Other Music Session';
+  String get audioFocusStopOnOtherSession => '다른 음악 세션에서 음악 중지';
 
   @override
   String get audioFocusStopOnOtherSessionDesc =>
-      'Pause playback when another app starts playing audio.';
+      '다른 앱이 오디오 재생을 시작하면 재생을 일시 중지합니다.';
 
   @override
-  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+  String get audioFocusRestartOnGain => '포커스를 다시 얻으면 음악 재개';
 
   @override
   String get audioFocusRestartOnGainDesc =>
-      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+      '오디오 포커스가 돌아왔을 때, 포커스 손실로 재생이 중단되었던 경우에만 자동으로 재생을 재개합니다.';
 
   @override
-  String get pauseOnDuckTitle => 'Pause on Duck';
+  String get pauseOnDuckTitle => '음량 감소 시 일시 정지';
 
   @override
   String get pauseOnDuckDesc =>
-      'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).';
+      '다른 앱이 짧은 소리(예: 알림, 내비게이션 안내)를 재생할 때 음량을 낮추는 대신 재생을 일시 정지합니다.';
 
   @override
-  String get resumeOnBluetoothConnectTitle => 'Resume on Bluetooth Connect';
+  String get resumeOnBluetoothConnectTitle => '블루투스 연결 시 재개';
 
   @override
   String get resumeOnBluetoothConnectDesc =>
-      'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.';
+      '블루투스 오디오 기기(헤드폰, 차량 키트)가 다시 연결되면 자동으로 재생을 재개합니다.';
 
   @override
   String get manualCrossfadeDuration => '수동 크로스페이드 시간';
@@ -479,6 +476,9 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get newTitle => '새 제목';
+
+  @override
+  String get nextUp => '다음 곡';
 
   @override
   String get noAlbumsFound => '앨범을 찾을 수 없습니다.';
@@ -591,6 +591,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get recentPlayed => '최근 플레이';
 
   @override
+  String get recentRowDesc => '최근 재생한 곡의 가로 선반';
+
+  @override
   String get removedFromPlaylist => '재생목록에서 제거됨';
 
   @override
@@ -616,6 +619,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get reorderDashboardSectionsDesc => '드래그 앤 드롭하여 기본 대시보드 순서 설정';
+
+  @override
+  String get includeOtherDeviceAudioTitle => '기타 기기 오디오 포함';
+
+  @override
+  String get includeOtherDeviceAudioDesc =>
+      '벨소리, 알림, 알람, WhatsApp 및 Telegram 오디오를 스캔합니다';
 
   @override
   String get rescanLibrary => '라이브러리 다시 스캔';
@@ -657,6 +667,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get persistQueueDesc => '앱 재시작 시 마지막 재생 곡과 대기열 저장';
+
+  @override
+  String get keepSongProgressTitle => '곡 재생 위치 유지';
+
+  @override
+  String get keepSongProgressDesc =>
+      '각 곡의 재생 위치를 개별적으로 기억합니다. 곡을 재생하던 중 다른 곡으로 전환한 뒤 나중에 다시 돌아와도 — 그사이 다른 곡을 재생했더라도 — 처음부터가 아니라 멈췄던 지점부터 이어서 재생됩니다.';
 
   @override
   String get right => '오른쪽';
@@ -758,6 +775,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get showQualityBadgeDesc => '현재 재생 중인 화면에 오디오 품질 정보 배지 표시';
 
   @override
+  String get showRecentRow => '최근 플레이 행 표시';
+
+  @override
+  String get showRecentRowDesc => '홈 화면에 최근 재생한 곡의 가로 목록 표시';
+
+  @override
   String get silenceBetweenTracksDesc => '트랙 사이에 무음 간격을 추가합니다 (갭리스는 0ms)';
 
   @override
@@ -840,19 +863,19 @@ class AppLocalizationsKo extends AppLocalizations {
   String get toggleFavorite => '즐겨찾기 전환';
 
   @override
-  String get shuffleTitle => 'Shuffle';
+  String get shuffleTitle => '셔플';
 
   @override
   String get shuffleDisabledDesc =>
-      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+      '곡을 원래 대기열 순서대로 재생합니다. 셔플을 끄면 현재 곡은 계속 재생되며, 나머지 대기열은 재생이나 재생 기록에 영향을 주지 않고 원래 순서로 복원됩니다.';
 
   @override
   String get shuffleEnabledDesc =>
-      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+      '현재 곡은 그대로 유지하면서 나머지 곡의 순서를 무작위로 섞습니다. 생성된 셔플 순서는 대기열이 바뀌거나 새로운 셔플이 요청될 때까지 그대로 유지되어 곡이 반복되거나 건너뛰어지는 것을 방지합니다.';
 
   @override
   String get shuffleSwitchingDesc =>
-      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+      '셔플을 켜거나 꺼도 현재 재생 중인 곡은 다시 시작되지 않습니다. 다음에 재생될 곡의 순서만 바뀌며, 켜면 무작위로, 끄면 원래 대기열 순서로 복원됩니다.';
 
   @override
   String get topResult => '상위 결과';
@@ -1040,4 +1063,420 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get sortDuration => '재생 시간';
+
+  @override
+  String get myAlbums => '내 앨범';
+
+  @override
+  String get featuredArtists => '추천 아티스트';
+
+  @override
+  String get noSongPlaying => '재생 중인 곡이 없습니다';
+
+  @override
+  String get nextLabel => '다음';
+
+  @override
+  String get previousLabel => '이전';
+
+  @override
+  String get resync => '다시 동기화';
+
+  @override
+  String get equalizer => '이퀄라이저';
+
+  @override
+  String get presets => '프리셋';
+
+  @override
+  String get preAmpGain => '프리앰프 게인';
+
+  @override
+  String get outputVolume => '출력 볼륨';
+
+  @override
+  String get customFilterHint =>
+      '사용자 지정 libavfilter 오디오 필터 매개변수를 직접 입력하세요 (예: volume=3dB, aecho=0.8:0.88:60:0.4):';
+
+  @override
+  String get flowGlobalActions => '흐름 및 전역 작업';
+
+  @override
+  String get equalizerModeLabel => '이퀄라이저 모드:';
+
+  @override
+  String get currentGainsAppliedGlobal => '현재 게인이 전역 기본 설정으로 적용되었습니다.';
+
+  @override
+  String get applyToGlobal => '전역에 적용';
+
+  @override
+  String get songSpecificResetGlobal => '곡별 설정이 전역 기본값으로 재설정되었습니다.';
+
+  @override
+  String get resetToGlobal => '전역으로 재설정';
+
+  @override
+  String get resetAllSongsEq => '모든 곡 EQ 재설정';
+
+  @override
+  String get resetAllSongsEqConfirm =>
+      '라이브러리에 있는 모든 곡의 사용자 지정 이퀄라이저 설정을 지우시겠습니까?';
+
+  @override
+  String get allSongsEqDataReset => '모든 곡별 이퀄라이저 데이터가 재설정되었습니다.';
+
+  @override
+  String get resetAllSongsEqData => '모든 곡의 EQ 데이터 재설정';
+
+  @override
+  String get equalizerTargetMode => '이퀄라이저 적용 모드';
+
+  @override
+  String get equalizerTargetModeDesc =>
+      '음악 라이브러리 전체에 이퀄라이저 설정을 적용하는 방식을 선택하세요.';
+
+  @override
+  String get globalMode => '전역 모드';
+
+  @override
+  String get globalModeDesc =>
+      '모든 곡에 동일하게 효과를 적용합니다. 곡이 바뀌어도 이퀄라이저 설정은 그대로 유지됩니다.';
+
+  @override
+  String get songSpecificMode => '곡별 모드';
+
+  @override
+  String get songSpecificModeDesc =>
+      '현재 곡에 대해서만 사용자 지정 설정을 저장합니다. 다음 곡은 자체 프로필이 없는 한 기본적으로 이퀄라이저가 적용되지 않습니다.';
+
+  @override
+  String get viewDeviceAudioCapabilities => '기기 오디오 기능 보기';
+
+  @override
+  String get deviceAudioCapabilities => '기기 오디오 기능';
+
+  @override
+  String get noPlaybackActiveCapabilities => '재생 중이 아니거나 기능 정보를 사용할 수 없습니다.';
+
+  @override
+  String get changeLyricsProvider => '가사 제공자 변경';
+
+  @override
+  String get autoFallbackProviders => '자동 대체 제공자';
+
+  @override
+  String get autoFallbackProvidersDesc => '기본 제공자에 가사가 없으면 나머지 제공자를 자동으로 시도합니다';
+
+  @override
+  String get ambientColorBackground => '앰비언트 컬러 배경';
+
+  @override
+  String get ambientColorBackgroundDesc => '곡의 아트워크에서 추출한 부드럽고 은은한 앰비언트 그라데이션';
+
+  @override
+  String get exportLyricsLrc => '가사 내보내기 (.lrc 파일)';
+
+  @override
+  String get saveLyricsToDevice => '현재 가사를 기기 저장소에 저장';
+
+  @override
+  String get noLyricsToExport => '내보낼 가사가 없습니다';
+
+  @override
+  String get useCustomLyricsLrc => '사용자 지정 가사 사용 (LRC 파일)';
+
+  @override
+  String get selectLocalLrcFile => '이 곡에 사용할 로컬 .lrc 또는 .txt 파일 선택';
+
+  @override
+  String get customLyricsAppliedSuccess => '사용자 지정 가사가 성공적으로 적용되었습니다!';
+
+  @override
+  String get noRecentlyPlayedTracks => '최근에 재생한 트랙이 없습니다';
+
+  @override
+  String get close => '닫기';
+
+  @override
+  String get audioQualityAnalysis => '오디오 품질 분석';
+
+  @override
+  String get audioQualityAnalysisDesc => '심층 스펙트럼 및 오디오 형식 분석을 수행합니다';
+
+  @override
+  String get audioStreamDetails => '오디오 스트림 세부정보';
+
+  @override
+  String get perChannelMetrics => '채널별 지표';
+
+  @override
+  String get sleepTimer => '잠자기 타이머';
+
+  @override
+  String get stopByTime => '시간으로 중지';
+
+  @override
+  String get start => '시작';
+
+  @override
+  String get stopBySongCount => '곡 수로 중지';
+
+  @override
+  String get cancelSleepTimer => '잠자기 타이머 취소';
+
+  @override
+  String get nowPlayingAllCaps => '재생 중';
+
+  @override
+  String get settingsAndBackups => '설정 및 백업';
+
+  @override
+  String get managePreferencesLibraryData => '환경설정 및 라이브러리 데이터 관리';
+
+  @override
+  String get logsClearedSuccess => '로그가 성공적으로 지워졌습니다';
+
+  @override
+  String get editSongInfo => '곡 정보 편집';
+
+  @override
+  String get editAlbumInfo => '앨범 정보 편집';
+
+  @override
+  String get tapFieldToEdit => '편집하려면 필드를 탭하세요';
+
+  @override
+  String get alwaysBlurSheets => '시트 항상 흐리게';
+
+  @override
+  String get alwaysBlurSheetsDesc => '다이내믹 테마가 꺼져 있어도 팝업 시트를 흐리게 표시합니다';
+
+  @override
+  String get removeArtwork => '아트워크 제거';
+
+  @override
+  String get resetArtworkToDefault => '기본값으로 재설정';
+
+  @override
+  String get artworkResetToDefault => '아트워크가 기본값으로 재설정됨';
+
+  @override
+  String get noEmbeddedArtworkFound => '이 앨범에 포함된 아트워크를 찾을 수 없습니다';
+
+  @override
+  String get saveChangesBtn => '변경사항 저장';
+
+  @override
+  String get enterFolderPathManually => '폴더 경로 직접 입력';
+
+  @override
+  String get folderPickerManualHint =>
+      '시스템 디렉터리 선택기가 열리지 않으면 아래에 전체 디렉터리 경로를 입력하거나 붙여넣으세요:';
+
+  @override
+  String get noSupportedSongsFoundFolder => '선택한 폴더에서 지원되는 곡을 찾을 수 없습니다';
+
+  @override
+  String get add => '추가';
+
+  @override
+  String get folderPickerClosed => '폴더 선택기가 닫혔습니다';
+
+  @override
+  String get buyMeCoffee => '커피 한 잔 사주기';
+
+  @override
+  String get typeToSearchSettings => '설정을 검색하려면 입력하세요…';
+
+  @override
+  String get maintainersLabel => '관리자';
+
+  @override
+  String get personBehindLooperPlayer => 'LooperPlayer를 만든 사람';
+
+  @override
+  String get blurredArtworkForLyrics => '가사 화면의 흐림 아트워크';
+
+  @override
+  String get blurredArtworkForLyricsDesc =>
+      '동적/정적 그라데이션 대신 흐릿한 앨범 아트를 배경으로 표시합니다';
+
+  @override
+  String get lyricsFontWeight => '가사 글꼴 굵기';
+
+  @override
+  String get openSourceLicenses => '오픈소스 라이선스';
+
+  @override
+  String get openSourceLicensesDesc => '이 앱에서 사용된 타사 라이브러리';
+
+  @override
+  String get done => '완료';
+
+  @override
+  String get lyricsNotAvailable => '가사를 사용할 수 없습니다.';
+
+  @override
+  String get lyricsNotAvailableHint => '이 곡의 가사를 추가하려면 .lrc 또는 .txt 파일을 가져오세요';
+
+  @override
+  String get importLyricsFile => '가사 파일 가져오기';
+
+  @override
+  String get approximatedSyncNoWordTimings => '근사 동기화 (단어별 타이밍 없음)';
+
+  @override
+  String get lyricsSyncHelp => '가사 동기화 도움말';
+
+  @override
+  String get simpleModeLabel => '간단 모드';
+
+  @override
+  String get advancedModeLabel => '고급 모드';
+
+  @override
+  String get tips => '팁';
+
+  @override
+  String get gotIt => '확인했습니다';
+
+  @override
+  String get lyricsSyncStudio => '가사 동기화 스튜디오';
+
+  @override
+  String get lyricsTextLabel => '가사 텍스트';
+
+  @override
+  String get lyricsTextHelperDesc =>
+      '가사 한 줄당 한 행씩 입력하세요. 아래 동기화 도구가 이 줄에 타임스탬프를 붙입니다.';
+
+  @override
+  String get quickSync => '빠른 동기화';
+
+  @override
+  String get autoAdvanceAfterStamping => '타임스탬프 찍은 후 자동으로 다음 줄로 이동';
+
+  @override
+  String get advancedSync => '고급 동기화';
+
+  @override
+  String get useCurrentTime => '현재 시간 사용';
+
+  @override
+  String get playbackAssist => '재생 지원';
+
+  @override
+  String get timeShift => '시간 이동';
+
+  @override
+  String get timeShiftDesc => '타임스탬프가 찍힌 모든 가사를 함께 앞뒤로 이동합니다.';
+
+  @override
+  String get lyricsSaveLrcExplain =>
+      '저장하면 가능한 경우 곡 오디오 파일 옆에 `.lrc` 사이드카 파일을 만들고, 로컬 플레이어 데이터베이스에도 저장합니다. 타임스탬프가 없는 줄은 자동으로 보간됩니다.';
+
+  @override
+  String get back => '뒤로';
+
+  @override
+  String get appSettingsLabel => '앱 설정';
+
+  @override
+  String get backupsAndLogs => '백업 및 로그';
+
+  @override
+  String get backupsAndLogsDesc => '앱 데이터 내보내기, 가져오기 및 관리';
+
+  @override
+  String get exportBackupJson => '백업 내보내기 (JSON)';
+
+  @override
+  String get exportBackupJsonDesc =>
+      '좋아요한 곡과 재생목록을 보관하거나 공유할 수 있는 JSON 파일로 저장합니다. 그 외에는 포함되지 않습니다.';
+
+  @override
+  String get importBackupJson => '백업 가져오기 (JSON)';
+
+  @override
+  String get importBackupJsonDesc =>
+      '백업 파일의 좋아요한 곡과 재생목록을 라이브러리에 병합합니다. 기존 데이터는 절대 덮어쓰거나 삭제되지 않습니다.';
+
+  @override
+  String get exportDiagnosticsLogs => '진단 로그 내보내기';
+
+  @override
+  String get exportDiagnosticsLogsDesc =>
+      '문제 해결을 위해 검토할 수 있도록 앱의 진단 로그 파일을 공유합니다.';
+
+  @override
+  String get clearDiagnosticsLogs => '진단 로그 지우기';
+
+  @override
+  String get clearDiagnosticsLogsDesc =>
+      '이 기기에 저장된 진단 로그 파일을 영구적으로 삭제합니다. 이 작업은 되돌릴 수 없습니다.';
+
+  @override
+  String get lyricsPlainTextOrLrc => '가사 (일반 텍스트 또는 LRC)';
+
+  @override
+  String get syncModeLine => '줄';
+
+  @override
+  String get syncModeWord => '단어';
+
+  @override
+  String get syncModeChar => '문자';
+
+  @override
+  String get enterManually => '직접 입력';
+
+  @override
+  String get rawFilterParametersHint => '원시 필터 매개변수...';
+
+  @override
+  String get searchSettingsHint => '설정 검색...';
+
+  @override
+  String get repeatTooltip => '반복';
+
+  @override
+  String get favoriteTooltip => '즐겨찾기';
+
+  @override
+  String get instructionsTooltip => '사용법';
+
+  @override
+  String get pasteLyricsHint => '여기에 가사를 붙여넣거나 입력하세요';
+
+  @override
+  String get timestampMmSsHint => '타임스탬프 (mm:ss.xx)';
+
+  @override
+  String get nowLabel => '지금';
+
+  @override
+  String get playlistNameHint => '재생목록 이름';
+
+  @override
+  String get songInfoUpdated => '곡 정보가 업데이트되었습니다!';
+
+  @override
+  String get albumInfoUpdated => '앨범 정보가 업데이트되었습니다!';
+
+  @override
+  String get failedToSaveChanges => '변경사항을 저장하지 못했습니다.';
+
+  @override
+  String sleepTimerStoppingIn(String time) {
+    return '활성: $time 후 중지';
+  }
+
+  @override
+  String sleepTimerStoppingAfter(String time) {
+    return '활성: $time 경과 후 중지';
+  }
+
+  @override
+  String get selectWhenToPause => '음악 재생을 일시 중지할 시점을 선택하세요';
 }

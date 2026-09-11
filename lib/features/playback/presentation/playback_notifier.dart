@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:looper_player/core/logger_helper.dart';
 import 'package:looper_player/core/android_audio_focus_manager.dart';
+import 'package:looper_player/features/playback/presentation/lyrics_search_provider.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/providers.dart';
@@ -18,12 +19,10 @@ import 'package:looper_player/features/playback/presentation/lyrics_notifier.dar
 import 'package:looper_player/features/playback/presentation/equalizer_notifier.dart';
 import 'package:metadata_god/metadata_god.dart';
 import 'package:isar/isar.dart';
-import 'package:local_notifier/local_notifier.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:looper_player/features/streaming/data/youtube_stream_service.dart';
 
 enum RepeatMode { off, all, one }
 
@@ -89,7 +88,9 @@ class PlaybackState {
     Object? sleepTimerSongsInitial = _sentinel,
   }) {
     return PlaybackState(
-      currentSong: currentSong == _sentinel ? this.currentSong : currentSong as Song?,
+      currentSong: currentSong == _sentinel
+          ? this.currentSong
+          : currentSong as Song?,
       isPlaying: isPlaying ?? this.isPlaying,
       position: position ?? this.position,
       duration: duration ?? this.duration,
@@ -100,17 +101,17 @@ class PlaybackState {
       queue: queue ?? this.queue,
       isRestoredSession: isRestoredSession ?? this.isRestoredSession,
       isSleepTimerActive: isSleepTimerActive ?? this.isSleepTimerActive,
-      sleepTimerDurationRemaining: sleepTimerDurationRemaining == _sentinel 
-          ? this.sleepTimerDurationRemaining 
+      sleepTimerDurationRemaining: sleepTimerDurationRemaining == _sentinel
+          ? this.sleepTimerDurationRemaining
           : sleepTimerDurationRemaining as Duration?,
-      sleepTimerSongsRemaining: sleepTimerSongsRemaining == _sentinel 
-          ? this.sleepTimerSongsRemaining 
+      sleepTimerSongsRemaining: sleepTimerSongsRemaining == _sentinel
+          ? this.sleepTimerSongsRemaining
           : sleepTimerSongsRemaining as int?,
-      sleepTimerDurationInitial: sleepTimerDurationInitial == _sentinel 
-          ? this.sleepTimerDurationInitial 
+      sleepTimerDurationInitial: sleepTimerDurationInitial == _sentinel
+          ? this.sleepTimerDurationInitial
           : sleepTimerDurationInitial as Duration?,
-      sleepTimerSongsInitial: sleepTimerSongsInitial == _sentinel 
-          ? this.sleepTimerSongsInitial 
+      sleepTimerSongsInitial: sleepTimerSongsInitial == _sentinel
+          ? this.sleepTimerSongsInitial
           : sleepTimerSongsInitial as int?,
     );
   }
@@ -130,8 +131,6 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   int _activeCrossfadeId = 0;
   int _activeSeekId = 0;
   final int _activePlayPauseId = 0;
-  bool? _targetPlayingState;
-  bool _isTogglePlaying = false;
   Timer? _silenceTimer;
   Timer? _songCompletionTimer;
   int _lastWidgetPositionUpdate = 0;
@@ -139,6 +138,18 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   DateTime _lastSeekTime = DateTime.fromMillisecondsSinceEpoch(0);
   DateTime _lastPlayTime = DateTime.fromMillisecondsSinceEpoch(0);
   bool _isDucked = false;
+  bool _pausedForRouteChange = false;
+  final List<StreamSubscription> _subscriptions = [];
+
+  // --- Real listening-time tracking (Looper Analyze) ---------------------
+  // Wall-clock time actually spent with mpv reporting `playing: true` for
+  // the current song, NOT `playCount * duration`. See _pauseListenSegment/
+  // _flushListenedTime below.
+  DateTime? _listenSegmentStart;
+  int _pendingListenedMs = 0;
+  int? _activePlayEventId;
+  String? _activeListenSongPath;
+  DateTime _lastListenCheckpoint = DateTime.fromMillisecondsSinceEpoch(0);
 
   PlaybackNotifier(this.ref) : super(PlaybackState()) {
     if (Platform.isAndroid) {
@@ -170,51 +181,63 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           previous?.resumeAfterCall != next.resumeAfterCall ||
           previous?.pauseOnDuck != next.pauseOnDuck ||
           previous?.resumeOnBluetoothConnect != next.resumeOnBluetoothConnect ||
-          previous?.permanentAudioFocusChange != next.permanentAudioFocusChange ||
+          previous?.permanentAudioFocusChange !=
+              next.permanentAudioFocusChange ||
           previous?.audioFocusRequestOnPlay != next.audioFocusRequestOnPlay ||
           previous?.audioFocusReleaseOnPause != next.audioFocusReleaseOnPause ||
-          previous?.audioFocusStopOnOtherSession != next.audioFocusStopOnOtherSession ||
+          previous?.audioFocusStopOnOtherSession !=
+              next.audioFocusStopOnOtherSession ||
           previous?.audioFocusRestartOnGain != next.audioFocusRestartOnGain) {
+        ref
+            .read(audioServiceProvider)
+            .applyAudioFocusPolicy(
+              _getInterruptionPolicy(),
+              requestFocusOnPlay:
+                  next.audioFocus && next.audioFocusRequestOnPlay,
+              releaseFocusOnPause:
+                  next.audioFocus && next.audioFocusReleaseOnPause,
+              stopOnOtherSession:
+                  next.audioFocus && next.audioFocusStopOnOtherSession,
+              restartOnFocusGain:
+                  next.audioFocus && next.audioFocusRestartOnGain,
+            );
         if (Platform.isAndroid) {
-          ref.read(audioServiceProvider).applyAudioFocusPolicy(
-            _getInterruptionPolicy(),
-            requestFocusOnPlay: false,
-            releaseFocusOnPause: false,
-            stopOnOtherSession: false,
-            restartOnFocusGain: false,
-          );
           ref.read(androidAudioFocusManagerProvider).syncSettings();
-        } else {
-          ref.read(audioServiceProvider).applyAudioFocusPolicy(
-            _getInterruptionPolicy(),
-            requestFocusOnPlay: next.audioFocusRequestOnPlay,
-            releaseFocusOnPause: next.audioFocusReleaseOnPause,
-            stopOnOtherSession: next.audioFocusStopOnOtherSession,
-            restartOnFocusGain: next.audioFocusRestartOnGain,
-          );
         }
       }
       if (previous?.enableAudioCache != next.enableAudioCache ||
           previous?.audioCacheSizeMB != next.audioCacheSizeMB ||
           previous?.audioCacheSecs != next.audioCacheSecs ||
           previous?.audioBackCacheSizeMB != next.audioBackCacheSizeMB) {
-        ref.read(audioServiceProvider).configureCache(
-          enabled: next.enableAudioCache,
-          maxBytes: next.audioCacheSizeMB * 1024 * 1024,
-          cacheSecs: next.audioCacheSecs,
-          backBytes: next.audioBackCacheSizeMB * 1024 * 1024,
-        );
+        ref
+            .read(audioServiceProvider)
+            .configureCache(
+              enabled: next.enableAudioCache,
+              maxBytes: next.audioCacheSizeMB * 1024 * 1024,
+              cacheSecs: next.audioCacheSecs,
+              backBytes: next.audioBackCacheSizeMB * 1024 * 1024,
+            );
       }
       if (previous?.exclusiveHardwareMode != next.exclusiveHardwareMode) {
-        ref.read(audioServiceProvider).configureHardwareExclusive(next.exclusiveHardwareMode);
+        ref
+            .read(audioServiceProvider)
+            .configureHardwareExclusive(next.exclusiveHardwareMode);
       }
       if (previous?.stopOnTaskRemoved != next.stopOnTaskRemoved) {
-        ref.read(audioServiceProvider).setStopOnTaskRemoved(next.stopOnTaskRemoved);
+        ref
+            .read(audioServiceProvider)
+            .setStopOnTaskRemoved(next.stopOnTaskRemoved);
       }
     });
   }
 
-  void _updateNotification() {
+  void _syncAudioHandlerState() {}
+
+  void updateNotification({bool forceFresh = false}) {
+    _updateNotification(forceFresh: forceFresh);
+  }
+
+  void _updateNotification({bool forceFresh = false}) {
     final song = state.currentSong;
     if (song != null) {
       final audioSvc = ref.read(audioServiceProvider);
@@ -223,154 +246,192 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         artist: song.artist ?? 'Unknown Artist',
         album: song.album ?? 'Unknown Album',
         artPath: song.artPath,
-        duration: song.duration != null ? Duration(milliseconds: song.duration!) : null,
+        duration: song.duration != null
+            ? Duration(milliseconds: song.duration!)
+            : null,
         isFavorite: song.isFavorite,
+        forceFresh: forceFresh,
       );
     }
+    _syncAudioHandlerState();
     _updateWidgetState();
   }
 
   Future<void> _init() async {
-    player.stream.error.listen((err) {
-      LoggerHelper.write('Mpv Player Error: $err');
-    });
+    _subscriptions.add(
+      player.stream.error.listen((err) {
+        LoggerHelper.write('Mpv Player Error: $err');
+      }),
+    );
 
-    player.stream.log.listen((entry) {
-      LoggerHelper.write('Mpv Player Log: $entry');
-    });
+    _subscriptions.add(
+      player.stream.log.listen((entry) {
+        LoggerHelper.write('Mpv Player Log: $entry');
+      }),
+    );
 
-    player.stream.internalLog.listen((entry) {
-      LoggerHelper.write('Mpv Player InternalLog: $entry');
-    });
+    _subscriptions.add(
+      player.stream.internalLog.listen((entry) {
+        LoggerHelper.write('Mpv Player InternalLog: $entry');
+      }),
+    );
 
-    player.stream.playing.listen((playing) {
-      if (_isTogglePlaying) {
-        // Ignore native player updates while in the middle of play/pause transitions
-        return;
-      }
-      if (!playing) {
-        if (_isTransitioning || _autoCrossfadeTriggered) {
-          // Ignore temporary pause/stop events while transitioning/opening a new song
+    _subscriptions.add(
+      player.stream.playing.listen((playing) {
+        if (state.isScrubbing) {
           return;
         }
-        // If the song is near its end, ignore playing: false because it's completing
-        final remaining = state.duration - state.position;
-        if (remaining.inMilliseconds > 0 && remaining.inMilliseconds < 6000) {
+        if (DateTime.now().difference(_lastSeekTime).inMilliseconds < 400) {
           return;
         }
-        final now = DateTime.now();
-        if (now.difference(_lastPlayTime).inMilliseconds < 1500) {
+        // While a track switch is in flight, the native player briefly
+        // reports `playing: false` as it stops the old track and loads the
+        // new one, before `_playDirect` explicitly sets isPlaying back to
+        // true. Letting that transient `false` through made the play/pause
+        // button's background (bound directly to isPlaying) flash on every
+        // song change. `_isTransitioning` already tracks this window, so
+        // just ignore spurious pauses inside it - a real `true` still comes
+        // through once the new track actually starts.
+        if (_isTransitioning && !playing) {
           return;
         }
-      }
-      if (state.isScrubbing) {
 
-        // Ignore playing state changes while the user is scrubbing the seek bar
-        // to prevent the play/pause button from flickering
-        return;
-      }
-      if (DateTime.now().difference(_lastSeekTime).inMilliseconds < 400) {
-
-        // Ignore playing state changes immediately after a seek/scrub operation
-        // to prevent play/pause button state flickering
-        return;
-      }
-
-      state = state.copyWith(isPlaying: playing);
-      _updateNotification();
-      if (!playing && ref.read(settingsProvider).persistQueue) {
-        ref.read(settingsProvider.notifier).updateLastPosition(state.position.inMilliseconds);
-      }
-    });
-
-    player.stream.position.listen((position) {
-      if (!state.isScrubbing) {
-        state = state.copyWith(position: position);
-      }
-      _checkAndUpdateLyrics();
-
-      final now = DateTime.now().millisecondsSinceEpoch;
-      if (state.isPlaying && now - _lastWidgetPositionUpdate > 2000) {
-        _lastWidgetPositionUpdate = now;
-        _updateWidgetState();
-        if (ref.read(settingsProvider).persistQueue) {
-          ref.read(settingsProvider.notifier).updateLastPosition(position.inMilliseconds);
+        state = state.copyWith(isPlaying: playing);
+        _updateNotification();
+        if (!playing && ref.read(settingsProvider).persistQueue) {
+          ref
+              .read(settingsProvider.notifier)
+              .updateLastPosition(state.position.inMilliseconds);
         }
-      }
-    });
+        if (!playing) {
+          unawaited(
+            _savePerSongProgress(
+              state.currentSong,
+              state.position,
+              state.duration,
+            ),
+          );
+        }
 
-    player.stream.duration.listen((duration) {
-      if (duration != Duration.zero) {
-        state = state.copyWith(duration: duration);
-      }
-    });
+        // Real listening-time tracking for Looper Analyze: `playing` here is
+        // mpv's own core-idle-derived signal, so a segment only ever opens
+        // while audio is genuinely advancing and closes the instant it
+        // isn't (pause, seek-buffering, focus loss, EOF, ...).
+        if (playing) {
+          _startListenSegment();
+        } else {
+          _pauseListenSegment();
+          unawaited(_flushListenedTime());
+        }
+      }),
+    );
+
+    _subscriptions.add(
+      player.stream.position.listen((position) {
+        if (!state.isScrubbing) {
+          state = state.copyWith(position: position);
+        }
+        _checkAndUpdateLyrics();
+
+        final now = DateTime.now().millisecondsSinceEpoch;
+        if (state.isPlaying && now - _lastWidgetPositionUpdate > 2000) {
+          _lastWidgetPositionUpdate = now;
+          _updateWidgetState();
+          _syncAudioHandlerState();
+          if (ref.read(settingsProvider).persistQueue) {
+            ref
+                .read(settingsProvider.notifier)
+                .updateLastPosition(position.inMilliseconds);
+          }
+          unawaited(
+            _savePerSongProgress(state.currentSong, position, state.duration),
+          );
+        }
+        unawaited(_checkpointListenedTimeIfDue());
+      }),
+    );
+
+    _subscriptions.add(
+      player.stream.duration.listen((duration) {
+        if (duration != Duration.zero) {
+          state = state.copyWith(duration: duration);
+        }
+      }),
+    );
 
     DateTime? lastCompletedTime;
-    player.stream.completed.listen((completed) {
-      debugPrint("======== COMPLETED ========");
-      debugPrint("completed = $completed");
-      debugPrint("position  = ${player.state.position}");
-      debugPrint("duration  = ${player.state.duration}");
-      debugPrint("playlist completed = ${player.state.completed}");
+    _subscriptions.add(
+      player.stream.completed.listen((completed) {
+        debugPrint("======== COMPLETED ========");
+        debugPrint("completed = $completed");
+        debugPrint("position  = ${player.state.position}");
+        debugPrint("duration  = ${player.state.duration}");
+        debugPrint("playlist completed = ${player.state.completed}");
 
-      if (completed) {
-        if (_isTransitioning) {
+        if (completed) {
+          if (_isTransitioning) {
+            return;
+          }
+          _isTransitioning = true;
+          final now = DateTime.now();
+          if (now.difference(_lastPlayTime).inMilliseconds < 1500) {
+            _isTransitioning = false;
+            return;
+          }
+          if (lastCompletedTime != null &&
+              now.difference(lastCompletedTime!).inMilliseconds < 1000) {
+            _isTransitioning = false;
+            return;
+          }
+          lastCompletedTime = now;
 
-          return;
-        }
-        _isTransitioning = true;
-        final now = DateTime.now();
-        if (now.difference(_lastPlayTime).inMilliseconds < 1500) {
-          _isTransitioning = false;
-          return;
-        }
-        if (lastCompletedTime != null && now.difference(lastCompletedTime!).inMilliseconds < 1000) {
-          _isTransitioning = false;
-          return;
-        }
-        lastCompletedTime = now;
+          _songCompletionTimer?.cancel();
 
-        _songCompletionTimer?.cancel();
+          void onSongFinished() {
+            if (state.isSleepTimerActive &&
+                state.sleepTimerSongsRemaining != null) {
+              final remaining = state.sleepTimerSongsRemaining! - 1;
+              if (remaining <= 0) {
+                state = state.copyWith(
+                  isSleepTimerActive: false,
+                  sleepTimerSongsRemaining: null,
+                  sleepTimerSongsInitial: null,
+                  sleepTimerDurationRemaining: null,
+                  sleepTimerDurationInitial: null,
+                );
+                player.pause();
+                _isTransitioning = false;
+                return;
+              } else {
+                state = state.copyWith(sleepTimerSongsRemaining: remaining);
+              }
+            }
 
-        void onSongFinished() {
-          if (state.isSleepTimerActive && state.sleepTimerSongsRemaining != null) {
-            final remaining = state.sleepTimerSongsRemaining! - 1;
-            if (remaining <= 0) {
-              state = state.copyWith(
-                isSleepTimerActive: false,
-                sleepTimerSongsRemaining: null,
-                sleepTimerSongsInitial: null,
-                sleepTimerDurationRemaining: null,
-                sleepTimerDurationInitial: null,
-              );
-              player.pause();
+            _isLastPlayManual = false;
+
+            if (state.repeatMode == RepeatMode.one) {
               _isTransitioning = false;
-              return;
+              player.seek(Duration.zero);
+              ref.read(audioServiceProvider).resume();
             } else {
-              state = state.copyWith(sleepTimerSongsRemaining: remaining);
+              _isTransitioning = true;
+              skipNext(isManual: false);
             }
           }
 
-          _isLastPlayManual = false;
-
-          if (state.repeatMode == RepeatMode.one) {
-            _isTransitioning = false;
-            player.seek(Duration.zero);
-            ref.read(audioServiceProvider).resume();
+          final remaining = state.duration - state.position;
+          if (remaining.inMilliseconds > 0 &&
+              remaining.inMilliseconds < 10000) {
+            _songCompletionTimer = Timer(
+              remaining + const Duration(milliseconds: 100),
+              onSongFinished,
+            );
           } else {
-            _isTransitioning = true;
-            skipNext(isManual: false);
+            onSongFinished();
           }
         }
-
-        final remaining = state.duration - state.position;
-        if (remaining.inMilliseconds > 0 && remaining.inMilliseconds < 10000) {
-          _songCompletionTimer = Timer(remaining + const Duration(milliseconds: 100), onSongFinished);
-        } else {
-          onSongFinished();
-        }
-      }
-    });
+      }),
+    );
 
     // Wait for settings to load
     await ref.read(settingsProvider.notifier).initialization;
@@ -386,23 +447,19 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
     // Apply cache and hardware configurations
     final audioSvc = ref.read(audioServiceProvider);
+    await audioSvc.applyAudioFocusPolicy(
+      _getInterruptionPolicy(),
+      requestFocusOnPlay:
+          settings.audioFocus && settings.audioFocusRequestOnPlay,
+      releaseFocusOnPause:
+          settings.audioFocus && settings.audioFocusReleaseOnPause,
+      stopOnOtherSession:
+          settings.audioFocus && settings.audioFocusStopOnOtherSession,
+      restartOnFocusGain:
+          settings.audioFocus && settings.audioFocusRestartOnGain,
+    );
     if (Platform.isAndroid) {
-      audioSvc.applyAudioFocusPolicy(
-        _getInterruptionPolicy(),
-        requestFocusOnPlay: false,
-        releaseFocusOnPause: false,
-        stopOnOtherSession: false,
-        restartOnFocusGain: false,
-      );
       ref.read(androidAudioFocusManagerProvider).syncSettings();
-    } else {
-      audioSvc.applyAudioFocusPolicy(
-        _getInterruptionPolicy(),
-        requestFocusOnPlay: settings.audioFocusRequestOnPlay,
-        releaseFocusOnPause: settings.audioFocusReleaseOnPause,
-        stopOnOtherSession: settings.audioFocusStopOnOtherSession,
-        restartOnFocusGain: settings.audioFocusRestartOnGain,
-      );
     }
     await audioSvc.configureCache(
       enabled: settings.enableAudioCache,
@@ -415,7 +472,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
     final savedSongIds = settings.lastQueueSongIds;
     final savedIndex = settings.lastQueueIndex;
-    
+
     if (settings.persistQueue && savedSongIds.isNotEmpty) {
       final List<Song> loadedSongs = [];
       for (final id in savedSongIds) {
@@ -427,22 +484,31 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       if (loadedSongs.isNotEmpty) {
         _playlist = loadedSongs;
         _originalPlaylist = List.from(loadedSongs);
-        _currentIndex = (savedIndex >= 0 && savedIndex < loadedSongs.length) ? savedIndex : 0;
+        _currentIndex = (savedIndex >= 0 && savedIndex < loadedSongs.length)
+            ? savedIndex
+            : 0;
         final song = _playlist[_currentIndex];
         state = state.copyWith(
           queue: List.from(_playlist),
           currentSong: song,
           isRestoredSession: true,
           position: Duration(milliseconds: settings.lastPositionMs),
-          duration: song.duration != null ? Duration(milliseconds: song.duration!) : Duration.zero,
+          duration: song.duration != null
+              ? Duration(milliseconds: song.duration!)
+              : Duration.zero,
         );
         ref.read(lyricsProvider.notifier).fetchForSong(song);
         ref.read(equalizerProvider.notifier).onSongChanged(song);
         _updateWidgetState();
-        
+
         final initialPos = Duration(milliseconds: settings.lastPositionMs);
         Future.delayed(const Duration(milliseconds: 500), () async {
-          await play(song, forceDisableCrossfade: true, play: settings.resumeOnStart, initialPosition: initialPos);
+          await play(
+            song,
+            forceDisableCrossfade: true,
+            play: settings.resumeOnStart,
+            initialPosition: initialPos,
+          );
         });
       }
     } else if (settings.persistQueue && settings.lastPlayedSongId != null) {
@@ -452,21 +518,30 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           currentSong: song,
           isRestoredSession: true,
           position: Duration(milliseconds: settings.lastPositionMs),
-          duration: song.duration != null ? Duration(milliseconds: song.duration!) : Duration.zero,
+          duration: song.duration != null
+              ? Duration(milliseconds: song.duration!)
+              : Duration.zero,
         );
         ref.read(lyricsProvider.notifier).fetchForSong(song);
         ref.read(equalizerProvider.notifier).onSongChanged(song);
         _playlist = [song];
         _currentIndex = 0;
         _updateWidgetState(); // Sync initial song data with home screen widgets on launch
-        
+
         final initialPos = Duration(milliseconds: settings.lastPositionMs);
         Future.delayed(const Duration(milliseconds: 500), () async {
-          await play(song, forceDisableCrossfade: true, play: settings.resumeOnStart, initialPosition: initialPos);
+          await play(
+            song,
+            forceDisableCrossfade: true,
+            play: settings.resumeOnStart,
+            initialPosition: initialPos,
+          );
         });
       }
     } else {
-      await ref.read(settingsProvider.notifier).updateLastQueueState([], -1, null, positionMs: 0);
+      await ref
+          .read(settingsProvider.notifier)
+          .updateLastQueueState([], -1, null, positionMs: 0);
     }
 
     // Ensure dynamic queue is populated right after startup loading finishes
@@ -486,7 +561,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     // Extract manual queue songs before replacing the playlist
     final start = _currentIndex + 1;
     final end = (start + _manualQueueCount).clamp(0, _playlist.length);
-    final manualSongs = (start < _playlist.length) ? _playlist.sublist(start, end) : <Song>[];
+    final manualSongs = (start < _playlist.length)
+        ? _playlist.sublist(start, end)
+        : <Song>[];
 
     _originalPlaylist = List.from(songs);
 
@@ -510,7 +587,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     if (_currentIndex != -1 && manualSongs.isNotEmpty) {
       _playlist.insertAll(_currentIndex + 1, manualSongs);
       // Also insert into _originalPlaylist at corresponding position
-      final origIdx = _originalPlaylist.indexWhere((s) => s.path == _playlist[_currentIndex].path);
+      final origIdx = _originalPlaylist.indexWhere(
+        (s) => s.path == _playlist[_currentIndex].path,
+      );
       if (origIdx != -1) {
         _originalPlaylist.insertAll(origIdx + 1, manualSongs);
       } else {
@@ -527,45 +606,19 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
   }
 
-  Future<void> play(Song song, {bool forceDisableCrossfade = false, bool play = true, Duration? initialPosition}) async {
-    if (song.isOnlineStream) {
-      if (song.streamUrl == null || _isStreamUrlExpired(song.streamUrl)) {
-        final youtubeId = song.youtubeId;
-        if (youtubeId != null && youtubeId.isNotEmpty) {
-          final settings = ref.read(settingsProvider);
-          final streamService = YouTubeStreamService();
-          try {
-            final newUrl = await streamService.resolveAudioStreamUrl(
-              youtubeId,
-              quality: settings.streamingQuality,
-            );
-            if (newUrl != null) {
-              song.streamUrl = newUrl;
-              song.path = 'https://youtube.com/watch?v=$youtubeId';
-
-              // Only save if it's already in the database
-              if (song.id != Isar.autoIncrement) {
-                await DbService.isar.writeTxn(() async {
-                  await DbService.isar.songs.put(song);
-                });
-              }
-            }
-          } catch (e) {
-            LoggerHelper.write('Failed to re-resolve expired online stream URL: $e');
-          } finally {
-            streamService.dispose();
-          }
-        }
-      }
-    }
-
+  Future<void> play(
+    Song song, {
+    bool forceDisableCrossfade = false,
+    bool play = true,
+    Duration? initialPosition,
+  }) async {
     _silenceTimer?.cancel();
     _songCompletionTimer?.cancel();
+    _pausedForRouteChange = false;
     final settings = ref.read(settingsProvider);
     if (play && settings.audioFocus) {
       final onCall = await ref.read(audioServiceProvider).isOnCall();
       if (onCall) {
-
         _showErrorSnackBar(
           'Playback blocked: Cannot play music during an active call',
           (l10n) => l10n.activeCallCannotPlay,
@@ -574,12 +627,12 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
     }
 
-    final isUrl = song.isOnlineStream || song.path.startsWith('http://') || song.path.startsWith('https://');
+    final isUrl =
+        song.path.startsWith('http://') || song.path.startsWith('https://');
     if (!isUrl) {
       await _requestStoragePermissions();
       final file = File(song.path);
       if (!await file.exists()) {
-
         _showErrorSnackBar(
           'File not found or inaccessible: ${song.title}',
           (l10n) => 'File not found or inaccessible: ${song.title}',
@@ -592,36 +645,45 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _isTransitioning = true;
     _lastPlayTime = DateTime.now();
 
-
     try {
       player.setVolume(state.volume * 100);
 
-      await _playDirect(song, crossfadeId, play: play, initialPosition: initialPosition);
-
+      await _playDirect(
+        song,
+        crossfadeId,
+        play: play,
+        initialPosition: initialPosition,
+      );
     } catch (e) {
-
       if (crossfadeId == _activeCrossfadeId) {
         try {
-
           player.setVolume(state.volume * 100);
-          await _playDirect(song, crossfadeId, play: play, initialPosition: initialPosition);
-
+          await _playDirect(
+            song,
+            crossfadeId,
+            play: play,
+            initialPosition: initialPosition,
+          );
         } catch (retryError, stack) {
-          LoggerHelper.write('Playback failed permanently for: ${song.path}', retryError, stack);
+          LoggerHelper.write(
+            'Playback failed permanently for: ${song.path}',
+            retryError,
+            stack,
+          );
           _showErrorSnackBar(
             'Playback failed: Unable to load or play "${song.title}". Please verify the file is not corrupted.',
-            (l10n) => 'Playback failed: Unable to load or play "${song.title}". Please verify the file is not corrupted.',
+            (l10n) =>
+                'Playback failed: Unable to load or play "${song.title}". Please verify the file is not corrupted.',
           );
           rethrow;
         }
-      } else {
-
-      }
+      } else {}
     } finally {
       if (crossfadeId == _activeCrossfadeId) {
         int attempts = 0;
 
-        while ((player.state.completed || (play && !state.isPlaying)) && attempts < 40) {
+        while ((player.state.completed || (play && !state.isPlaying)) &&
+            attempts < 40) {
           await Future.delayed(const Duration(milliseconds: 25));
           attempts++;
         }
@@ -631,18 +693,39 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
   }
 
-  Future<void> _playDirect(Song song, int crossfadeId, {bool play = true, Duration? initialPosition}) async {
+  Future<void> _playDirect(
+    Song song,
+    int crossfadeId, {
+    bool play = true,
+    Duration? initialPosition,
+  }) async {
+    // A new track is loading - close out whatever real listening-time
+    // segment was accruing for the outgoing song before attribution moves
+    // to this one.
+    _pauseListenSegment();
+    unawaited(_flushListenedTime());
+
+    // Same idea for "Keep Song Progress" - save the outgoing song's position
+    // (state.currentSong/state.position still refer to it, one line above
+    // where they get overwritten below) before this song takes over.
+    unawaited(
+      _savePerSongProgress(state.currentSong, state.position, state.duration),
+    );
+
     _autoCrossfadeTriggered = false;
     _lastWidgetLyricLine = '';
+    ref.read(lyricsSearchQueryProvider.notifier).state = '';
     state = state.copyWith(
       currentSong: song,
-      duration: song.duration != null ? Duration(milliseconds: song.duration!) : Duration.zero,
+      duration: song.duration != null
+          ? Duration(milliseconds: song.duration!)
+          : Duration.zero,
       position: initialPosition ?? Duration.zero,
       isRestoredSession: initialPosition != null,
     );
     ref.read(lyricsProvider.notifier).fetchForSong(song);
     ref.read(equalizerProvider.notifier).onSongChanged(song);
-    
+
     // Apply equalizer settings for the song
     final settings = ref.read(settingsProvider);
     final gains = ref.read(equalizerProvider).currentSongGains;
@@ -657,13 +740,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     };
     final double targetVol = state.volume;
     bool targetPlay = play;
-    if (targetPlay && Platform.isAndroid && settings.audioFocus) {
-      final granted = await ref.read(androidAudioFocusManagerProvider).requestAudioFocus();
-      if (!granted) {
-        targetPlay = false;
-      }
-    }
-    final int fadeLength = settings.fadePlayPauseStop ? settings.playPauseStopFadeLength : 0;
+    final int fadeLength = settings.fadePlayPauseStop
+        ? settings.playPauseStopFadeLength
+        : 0;
     final bool shouldFade = fadeLength > 0 && targetPlay;
     if (shouldFade) {
       player.setVolume(0);
@@ -671,24 +750,36 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       player.setVolume(state.volume * 100);
     }
 
-    await ref.read(audioServiceProvider).play(
-      (song.isOnlineStream && song.streamUrl != null && song.streamUrl!.isNotEmpty)
-          ? song.streamUrl!
-          : song.path,
-      metadata: metadata,
-      play: targetPlay,
-      equalizerGains: gains,
-      equalizerEnabled: settings.equalizerEnabled,
-      customFilter: customFilter,
-      interruptionPolicy: _getInterruptionPolicy(),
-      requestFocusOnPlay: Platform.isAndroid ? false : settings.audioFocusRequestOnPlay,
-      releaseFocusOnPause: Platform.isAndroid ? false : settings.audioFocusReleaseOnPause,
-      stopOnOtherSession: Platform.isAndroid ? false : settings.audioFocusStopOnOtherSession,
-      restartOnFocusGain: Platform.isAndroid ? false : settings.audioFocusRestartOnGain,
-    );
+    await ref
+        .read(audioServiceProvider)
+        .play(
+          song.path,
+          metadata: metadata,
+          play: targetPlay,
+          equalizerGains: gains,
+          equalizerEnabled: settings.equalizerEnabled,
+          customFilter: customFilter,
+          interruptionPolicy: _getInterruptionPolicy(),
+          requestFocusOnPlay:
+              settings.audioFocus && settings.audioFocusRequestOnPlay,
+          releaseFocusOnPause:
+              settings.audioFocus && settings.audioFocusReleaseOnPause,
+          stopOnOtherSession:
+              settings.audioFocus && settings.audioFocusStopOnOtherSession,
+          restartOnFocusGain:
+              settings.audioFocus && settings.audioFocusRestartOnGain,
+        );
 
     if (targetPlay) {
-      await ref.read(audioServiceProvider).resume();
+      state = state.copyWith(isPlaying: true);
+      _updateNotification(forceFresh: true);
+      // Note: audio focus itself is requested natively by mpv_audio_kit's own
+      // MediaSession/InterruptionPolicy as soon as playback starts (it is the
+      // sole focus owner - see AudioFocusController.kt). Do NOT also call
+      // androidAudioFocusManagerProvider.requestAudioFocus() here: that opens
+      // a second, competing AudioFocusRequest for the same app, which makes
+      // Android immediately deliver a spurious focus-loss to mpv's listener
+      // and pause playback right after it started.
     }
 
     if (shouldFade && crossfadeId == _activeCrossfadeId) {
@@ -705,34 +796,28 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       );
     }
 
-    if (Platform.isLinux) {
-      final notification = LocalNotification(
-        title: song.title,
-        body: '${song.artist ?? 'Unknown Artist'}\n${song.album ?? 'Unknown Album'}',
-      );
-      await notification.show();
-    }
-
     await DbService.isar.writeTxn(() async {
-      final dbSong = (song.isOnlineStream && song.youtubeId != null && song.youtubeId!.isNotEmpty)
-          ? await DbService.isar.songs
-              .filter()
-              .youtubeIdEqualTo(song.youtubeId)
-              .findFirst()
-          : await DbService.isar.songs
-              .filter()
-              .pathEqualTo(song.path)
-              .findFirst();
+      final dbSong = await DbService.isar.songs
+          .filter()
+          .pathEqualTo(song.path)
+          .findFirst();
 
       final songToUpdate = dbSong ?? song;
-      if (song.isOnlineStream) {
-        songToUpdate.streamUrl = song.streamUrl;
-        songToUpdate.path = song.path;
-      }
       if (play) {
         songToUpdate.lastPlayed = DateTime.now();
         songToUpdate.playCount++;
+        _activePlayEventId = await _logPlayEvent(songToUpdate);
+      } else {
+        // Loaded but not actually starting playback (e.g. a paused restore)
+        // - nothing "played" yet, so no play-event row to top up.
+        _activePlayEventId = null;
       }
+      // Real listening time now attributes to this song regardless of
+      // `play`, so a later manual resume of a paused restore still counts
+      // toward its Song.totalListenedMs even without a fresh play event.
+      _activeListenSongPath = songToUpdate.path;
+      _pendingListenedMs = 0;
+      _lastListenCheckpoint = DateTime.now();
 
       if (dbSong != null) {
         song.id = dbSong.id;
@@ -764,7 +849,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       } else {
         final currentSong = _playlist[_currentIndex];
         _playlist.insert(_currentIndex + 1, song);
-        final origIdx = _originalPlaylist.indexWhere((s) => s.path == currentSong.path);
+        final origIdx = _originalPlaylist.indexWhere(
+          (s) => s.path == currentSong.path,
+        );
         if (origIdx != -1) {
           _originalPlaylist.insert(origIdx + 1, song);
         } else {
@@ -778,13 +865,35 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     await _ensureDynamicQueue();
     await _saveQueueState();
 
-    if (initialPosition != null && initialPosition > Duration.zero) {
+    // Explicit initialPosition (e.g. the "Persist Last Queue" app-restart
+    // resume) always wins; otherwise fall back to this song's own saved
+    // position when "Keep Song Progress" is on. A fresh DB read here since
+    // the in-memory `song` may be a stale copy from a playlist built earlier.
+    Duration? effectivePosition = initialPosition;
+    if (effectivePosition == null && settings.keepSongProgress) {
+      final dbSong = await DbService.isar.songs.get(song.id);
+      final savedMs = dbSong?.lastPositionMs ?? song.lastPositionMs;
+      if (savedMs > 0) {
+        effectivePosition = Duration(milliseconds: savedMs);
+      }
+    }
+
+    if (effectivePosition != null && effectivePosition > Duration.zero) {
       int attempts = 0;
       while (player.state.duration == Duration.zero && attempts < 40) {
         await Future.delayed(const Duration(milliseconds: 50));
         attempts++;
       }
-      await seek(initialPosition);
+      // Defensively clamp against a stale/corrupt saved value outliving the
+      // song's actual duration (e.g. re-tagged file) rather than seeking
+      // past the end.
+      final dur = player.state.duration;
+      final target = (dur > Duration.zero && effectivePosition > dur)
+          ? Duration.zero
+          : effectivePosition;
+      if (target > Duration.zero) {
+        await seek(target);
+      }
     }
   }
 
@@ -803,10 +912,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       // Insert randomly into the remaining queue
       final minIndex = _currentIndex + 1;
       final maxIndex = _playlist.length;
-      final insertIndex = minIndex >= maxIndex 
-          ? minIndex 
+      final insertIndex = minIndex >= maxIndex
+          ? minIndex
           : minIndex + math.Random().nextInt(maxIndex - minIndex + 1);
-      
+
       if (insertIndex >= _playlist.length) {
         _playlist.add(song);
       } else {
@@ -825,7 +934,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       final refSongIdx = _currentIndex + _manualQueueCount;
       if (refSongIdx >= 0 && refSongIdx < _playlist.length) {
         final refSong = _playlist[refSongIdx];
-        final origIdx = _originalPlaylist.indexWhere((s) => s.path == refSong.path);
+        final origIdx = _originalPlaylist.indexWhere(
+          (s) => s.path == refSong.path,
+        );
         if (origIdx != -1) {
           _originalPlaylist.insert(origIdx + 1, song);
         } else {
@@ -860,7 +971,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
 
     if (state.currentSong != null) {
-      final origIdx = _originalPlaylist.indexWhere((s) => s.path == state.currentSong!.path);
+      final origIdx = _originalPlaylist.indexWhere(
+        (s) => s.path == state.currentSong!.path,
+      );
       if (origIdx != -1) {
         _originalPlaylist.insert(origIdx + 1, song);
       } else {
@@ -872,6 +985,118 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     _manualQueueCount++;
 
     state = state.copyWith(queue: List.from(_playlist));
+  }
+
+  /// Logs a timestamped "song started playing" event for Looper Analyze,
+  /// alongside the [Song.playCount]/[Song.lastPlayed] aggregate already
+  /// updated by the caller. Must be called from within the same writeTxn.
+  /// Denormalizes song fields onto the row so history stays meaningful even
+  /// if the song is later retagged, moved, or removed from the library.
+  /// Returns the new row's id so real listened time can be topped up onto
+  /// it later, as playback actually happens (see _flushListenedTime).
+  Future<int> _logPlayEvent(Song song) async {
+    final id = await DbService.isar.playEvents.put(
+      PlayEvent()
+        ..songId = song.id
+        ..songPath = song.path
+        ..songTitle = song.title
+        ..artist = song.artist
+        ..album = song.album
+        ..genre = song.genre
+        ..durationMs = song.duration
+        ..playedAt = DateTime.now(),
+    );
+
+    // Keep the log bounded for long-term use: once it grows past ~20k rows,
+    // trim the oldest ~500 so it never grows unbounded over years of use.
+    const maxEntries = 20000;
+    const trimCount = 500;
+    final total = await DbService.isar.playEvents.count();
+    if (total > maxEntries) {
+      final oldest = await DbService.isar.playEvents
+          .where()
+          .sortByPlayedAt()
+          .limit(trimCount)
+          .findAll();
+      if (oldest.isNotEmpty) {
+        await DbService.isar.playEvents.deleteAll(
+          oldest.map((e) => e.id).toList(),
+        );
+      }
+    }
+
+    return id;
+  }
+
+  /// Starts a new real-time "actually listening" segment. Called only from
+  /// mpv's own authoritative `playing` signal (core-idle derived - see the
+  /// `player.stream.playing` subscription in [_init]), never optimistically,
+  /// so a song sitting paused/buffered never accrues time.
+  void _startListenSegment() {
+    _listenSegmentStart = DateTime.now();
+  }
+
+  /// Ends the current segment (if any) and folds its elapsed wall-clock time
+  /// into the pending total for whichever song is currently attributed.
+  /// Doesn't touch the DB itself - pair with [_flushListenedTime].
+  void _pauseListenSegment() {
+    final start = _listenSegmentStart;
+    if (start == null) return;
+    _pendingListenedMs += DateTime.now().difference(start).inMilliseconds;
+    _listenSegmentStart = null;
+  }
+
+  /// Persists whatever real listened time has accumulated since the last
+  /// flush onto both the song's running [Song.totalListenedMs] total and
+  /// the currently active [PlayEvent.listenedMs] (if this segment started
+  /// from a genuine "play", not just a paused restore). Safe to call often -
+  /// it's a no-op once there's nothing pending.
+  Future<void> _flushListenedTime() async {
+    final ms = _pendingListenedMs;
+    final path = _activeListenSongPath;
+    if (ms <= 0 || path == null) return;
+    _pendingListenedMs = 0;
+    final eventId = _activePlayEventId;
+
+    try {
+      await DbService.isar.writeTxn(() async {
+        final dbSong = await DbService.isar.songs
+            .filter()
+            .pathEqualTo(path)
+            .findFirst();
+        if (dbSong != null) {
+          dbSong.totalListenedMs += ms;
+          await DbService.isar.songs.put(dbSong);
+        }
+        if (eventId != null) {
+          final event = await DbService.isar.playEvents.get(eventId);
+          if (event != null) {
+            event.listenedMs += ms;
+            await DbService.isar.playEvents.put(event);
+          }
+        }
+      });
+    } catch (e) {
+      LoggerHelper.write('PlaybackNotifier._flushListenedTime failed', e);
+    }
+  }
+
+  /// Checkpoints an in-progress segment during long uninterrupted playback,
+  /// so an app kill mid-song loses at most ~[_listenCheckpointInterval] of
+  /// listened time instead of the whole session. Called from the position
+  /// stream tick alongside the existing widget/queue-persistence throttle.
+  static const _listenCheckpointInterval = Duration(seconds: 20);
+
+  Future<void> _checkpointListenedTimeIfDue() async {
+    if (_listenSegmentStart == null) return;
+    if (DateTime.now().difference(_lastListenCheckpoint) <
+        _listenCheckpointInterval) {
+      return;
+    }
+    _lastListenCheckpoint = DateTime.now();
+    _pauseListenSegment();
+    await _flushListenedTime();
+    _startListenSegment();
   }
 
   Future<void> playFromFile(String path) async {
@@ -908,130 +1133,139 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     await play(song);
   }
 
-  Future<void> togglePlay() async {
-    if (_isTogglePlaying) {
-      final currentPlaying = _targetPlayingState ?? state.isPlaying;
-      final targetPlaying = !currentPlaying;
-      _targetPlayingState = targetPlaying;
-      state = state.copyWith(isPlaying: targetPlaying);
-      _updateNotification();
-      return;
+  Future<void> stop() async {
+    _silenceTimer?.cancel();
+    _songCompletionTimer?.cancel();
+    _pauseListenSegment();
+    unawaited(_flushListenedTime());
+    final settings = ref.read(settingsProvider);
+    if (settings.fadePlayPauseStop && settings.playPauseStopFadeLength > 0) {
+      await _fadeVolume(
+        0.0,
+        Duration(milliseconds: settings.playPauseStopFadeLength),
+      );
     }
+    state = state.copyWith(isPlaying: false);
+    await ref.read(audioServiceProvider).stop();
+    // The user explicitly stopped playback: disarm mpv_audio_kit's
+    // auto-resume-on-focus-gain latch so an unrelated transient focus
+    // loss/gain cycle (e.g. a notification sound) can't resurrect the song.
+    await _disarmAutoResumeAfterFocusGain();
+    if (Platform.isAndroid && settings.audioFocus) {
+      // Also clear any pending "resume after interruption" state on the
+      // native side for parity.
+      ref.read(androidAudioFocusManagerProvider).setPlaybackInterrupted(false);
+    }
+    _syncAudioHandlerState();
+  }
 
-    _isTogglePlaying = true;
+  Future<void> setSpeed(double speed) async {
+    await player.setRate(speed);
+    _syncAudioHandlerState();
+  }
+
+  Future<void> togglePlay() async {
     _silenceTimer?.cancel();
     final settings = ref.read(settingsProvider);
+    final targetPlaying = !state.isPlaying;
+
+    state = state.copyWith(isPlaying: targetPlaying);
+    _updateNotification();
 
     try {
-      while (true) {
-        final currentPlaying = _targetPlayingState ?? state.isPlaying;
-        final targetPlaying = !currentPlaying;
-        _targetPlayingState = targetPlaying;
+      final audioSvc = ref.read(audioServiceProvider);
 
-        // Update UI state immediately to be ultra-responsive
-        state = state.copyWith(isPlaying: targetPlaying);
-        _updateNotification();
-
-        if (!targetPlaying) {
-          _songCompletionTimer?.cancel();
-        }
-
-        final audioSvc = ref.read(audioServiceProvider);
-
-        if (targetPlaying) {
-          if (settings.audioFocus) {
-            final onCall = await ref.read(audioServiceProvider).isOnCall();
-            if (onCall) {
-              _showErrorSnackBar(
-                'Playback blocked: Cannot play music during an active call',
-                (l10n) => l10n.activeCallCannotPlay,
-              );
-              break;
-            }
-          }
-          if (Platform.isAndroid && settings.audioFocus) {
-            final granted = await ref.read(androidAudioFocusManagerProvider).requestAudioFocus();
-            if (!granted) {
-              state = state.copyWith(isPlaying: false);
-              _updateNotification();
-              break;
-            }
+      if (targetPlaying) {
+        if (settings.audioFocus) {
+          final onCall = await audioSvc.isOnCall();
+          if (onCall) {
+            state = state.copyWith(isPlaying: false);
+            _updateNotification();
+            _showErrorSnackBar(
+              'Playback blocked: Cannot play music during an active call',
+              (l10n) => l10n.activeCallCannotPlay,
+            );
+            return;
           }
         }
+      }
 
-        if (!targetPlaying) {
-          if (settings.fadePlayPauseStop && settings.playPauseStopFadeLength > 0) {
-            await _fadeVolume(0.0, Duration(milliseconds: settings.playPauseStopFadeLength));
-            if (_targetPlayingState != targetPlaying) {
-              // Target state changed during fade, skip pause and process next loop iteration
-              continue;
-            }
-          }
-          await audioSvc.pause();
-          if (Platform.isAndroid && settings.audioFocus && settings.audioFocusReleaseOnPause) {
+      if (!targetPlaying) {
+        _pausedForRouteChange = false;
+        _songCompletionTimer?.cancel();
+        if (settings.fadePlayPauseStop &&
+            settings.playPauseStopFadeLength > 0) {
+          await _fadeVolume(
+            0.0,
+            Duration(milliseconds: settings.playPauseStopFadeLength),
+          );
+        }
+        await audioSvc.pause();
+        if (Platform.isAndroid && settings.audioFocus) {
+          // This is a deliberate user pause, not an OS interruption, so make
+          // sure AudioFocusManager doesn't think it should auto-resume us
+          // once focus comes back (e.g. after a transient loss/gain cycle
+          // from an unrelated notification sound).
+          ref.read(androidAudioFocusManagerProvider).setPlaybackInterrupted(false);
+          if (settings.audioFocusReleaseOnPause) {
             await ref.read(androidAudioFocusManagerProvider).abandonAudioFocus();
           }
-        } else {
-          Song? songToPlay = state.currentSong;
-          if (songToPlay == null) {
-            if (_playlist.isNotEmpty) {
-              if (_currentIndex >= 0 && _currentIndex < _playlist.length) {
-                songToPlay = _playlist[_currentIndex];
-              } else {
-                songToPlay = _playlist.first;
-                _currentIndex = 0;
-              }
-            } else {
-              if (settings.lastPlayedSongId != null) {
-                songToPlay = await DbService.isar.songs.get(settings.lastPlayedSongId!);
-              }
-              if (songToPlay == null) {
-                final libSongs = await DbService.isar.songs.where().findAll();
-                if (libSongs.isNotEmpty) {
-                  songToPlay = libSongs.first;
-                }
-              }
-            }
-          }
-
-          if (player.state.playlist.items.isEmpty || player.state.completed || state.duration == Duration.zero) {
-            if (songToPlay != null) {
-              await play(songToPlay);
-            }
+        }
+        // Deliberate user pause: disarm mpv_audio_kit's auto-resume-on-focus-
+        // gain latch (see _disarmAutoResumeAfterFocusGain doc) so it doesn't
+        // resume this track behind the user's back later.
+        await _disarmAutoResumeAfterFocusGain();
+      } else {
+        // About to (re)start playback: restore whatever interruption policy
+        // the settings actually dictate, undoing any disarm from a previous
+        // manual pause/stop.
+        await _reapplyInterruptionPolicy();
+        Song? songToPlay = state.currentSong;
+        if (songToPlay == null) {
+          if (_playlist.isNotEmpty) {
+            songToPlay =
+                (_currentIndex >= 0 && _currentIndex < _playlist.length)
+                ? _playlist[_currentIndex]
+                : _playlist.first;
           } else {
-            _lastPlayTime = DateTime.now(); // Record resumption time
-            if (settings.fadePlayPauseStop && settings.playPauseStopFadeLength > 0) {
-              player.setVolume(0);
-              await audioSvc.resume();
-              if (_targetPlayingState != targetPlaying) {
-                // Target state changed during resume FFI call, skip fade and process next loop iteration
-                continue;
-              }
-              await _fadeVolume(state.volume, Duration(milliseconds: settings.playPauseStopFadeLength));
-            } else {
-              player.setVolume(state.volume * 100);
-              await audioSvc.resume();
+            if (settings.lastPlayedSongId != null) {
+              songToPlay = await DbService.isar.songs.get(
+                settings.lastPlayedSongId!,
+              );
             }
+            songToPlay ??= await DbService.isar.songs.where().findFirst();
+          }
+          if (songToPlay != null) {
+            await play(songToPlay);
+            return;
           }
         }
 
-        // If the target state hasn't changed since we started this loop iteration, we are done!
-        if (_targetPlayingState == targetPlaying) {
-          break;
+        if (player.state.completed) {
+          if (songToPlay != null) {
+            await play(songToPlay);
+            return;
+          }
         }
+
+        _lastPlayTime = DateTime.now();
+        if (settings.fadePlayPauseStop &&
+            settings.playPauseStopFadeLength > 0) {
+          player.setVolume(0);
+          await audioSvc.resume();
+          await _fadeVolume(
+            state.volume,
+            Duration(milliseconds: settings.playPauseStopFadeLength),
+          );
+        } else {
+          player.setVolume(state.volume * 100);
+          await audioSvc.resume();
+        }
+        // See note in _playDirect(): mpv_audio_kit already requests audio
+        // focus natively on resume; do not request it again here.
       }
     } catch (e, stack) {
       LoggerHelper.write('Playback toggle action failed', e, stack);
-      _showErrorSnackBar(
-        'Playback action failed: An error occurred during audio controls operation.',
-        (l10n) => 'Playback action failed: An error occurred during audio controls operation.',
-      );
-    } finally {
-      // Small cooldown to let the audio hardware stabilize
-      await Future.delayed(const Duration(milliseconds: 150));
-      _isTogglePlaying = false;
-      _targetPlayingState = null;
-      // Sync the final FFI playing state to our state
       state = state.copyWith(isPlaying: player.state.playing);
       _updateNotification();
     }
@@ -1054,7 +1288,10 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       if (state.repeatMode == RepeatMode.all) {
         if (state.isShuffle) {
           final newPlaylist = List<Song>.from(_originalPlaylist)..shuffle();
-          if (_playlist.isNotEmpty && newPlaylist.isNotEmpty && newPlaylist.first.path == _playlist.last.path && newPlaylist.length > 1) {
+          if (_playlist.isNotEmpty &&
+              newPlaylist.isNotEmpty &&
+              newPlaylist.first.path == _playlist.last.path &&
+              newPlaylist.length > 1) {
             final swapIdx = 1 + math.Random().nextInt(newPlaylist.length - 1);
             final temp = newPlaylist[0];
             newPlaylist[0] = newPlaylist[swapIdx];
@@ -1087,7 +1324,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
     _currentIndex--;
     if (_currentIndex < 0) {
-      _currentIndex = state.repeatMode == RepeatMode.all ? _playlist.length - 1 : 0;
+      _currentIndex = state.repeatMode == RepeatMode.all
+          ? _playlist.length - 1
+          : 0;
     }
     await play(_playlist[_currentIndex]);
   }
@@ -1125,7 +1364,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           final idx = remainingSongs.indexWhere((s) => s.path == song.path);
           if (idx != -1) remainingSongs.removeAt(idx);
         }
-        final curIdx = remainingSongs.indexWhere((s) => s.path == currentSong.path);
+        final curIdx = remainingSongs.indexWhere(
+          (s) => s.path == currentSong.path,
+        );
         if (curIdx != -1) remainingSongs.removeAt(curIdx);
 
         // Shuffle only the remaining unplayed songs
@@ -1142,7 +1383,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         _currentIndex = -1;
       } else {
         final currentSong = _playlist[_currentIndex];
-        int newIndex = _originalPlaylist.indexWhere((s) => s.path == currentSong.path);
+        int newIndex = _originalPlaylist.indexWhere(
+          (s) => s.path == currentSong.path,
+        );
         if (newIndex == -1) {
           newIndex = _currentIndex.clamp(0, _originalPlaylist.length);
         }
@@ -1192,7 +1435,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         }
       }
       if (ref.read(settingsProvider).persistQueue) {
-        ref.read(settingsProvider.notifier).updateLastPosition(position.inMilliseconds);
+        ref
+            .read(settingsProvider.notifier)
+            .updateLastPosition(position.inMilliseconds);
       }
     } catch (e) {
       debugPrint('Seek failed: $e');
@@ -1210,14 +1455,15 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   void stopScrubbing() {
     _activeSeekId++;
     _lastSeekTime = DateTime.now();
-    state = state.copyWith(
-      isScrubbing: false,
-      position: player.state.position,
-    );
+    state = state.copyWith(isScrubbing: false, position: player.state.position);
     player.setVolume(state.volume * 100);
   }
 
-  Future<void> reorderQueue(int oldIndex, int newIndex, {String? rotationSongPath}) async {
+  Future<void> reorderQueue(
+    int oldIndex,
+    int newIndex, {
+    String? rotationSongPath,
+  }) async {
     if (_playlist.isEmpty) return;
 
     final targetSongPath = rotationSongPath ?? state.currentSong?.path;
@@ -1264,7 +1510,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     // 4. Update state and save
     state = state.copyWith(queue: List.from(_playlist));
     if (state.currentSong != null) {
-      _currentIndex = _playlist.indexWhere((s) => s.path == state.currentSong!.path);
+      _currentIndex = _playlist.indexWhere(
+        (s) => s.path == state.currentSong!.path,
+      );
     }
     await _saveQueueState();
   }
@@ -1286,7 +1534,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
       state = state.copyWith(queue: List.from(_playlist));
       if (state.currentSong != null) {
-        _currentIndex = _playlist.indexWhere((s) => s.path == state.currentSong!.path);
+        _currentIndex = _playlist.indexWhere(
+          (s) => s.path == state.currentSong!.path,
+        );
       }
       await _ensureDynamicQueue();
     }
@@ -1326,10 +1576,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     final idx = _playlist.indexWhere((s) => s.id == freshSong.id);
     if (idx != -1) _playlist[idx] = freshSong;
 
-    state = state.copyWith(
-      currentSong: freshSong,
-      queue: List.from(_playlist),
-    );
+    state = state.copyWith(currentSong: freshSong, queue: List.from(_playlist));
     _updateNotification();
   }
 
@@ -1347,16 +1594,18 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   Future<bool> _requestStoragePermissions() async {
     if (!Platform.isAndroid) return true;
     try {
+      if (!await Permission.notification.isGranted) {
+        await Permission.notification.request();
+      }
+
       final audioStatusBefore = await Permission.audio.status;
       final storageStatusBefore = await Permission.storage.status;
       final manageStatusBefore = await Permission.manageExternalStorage.status;
-
 
       // Check if we already have permissions
       if (audioStatusBefore.isGranted ||
           storageStatusBefore.isGranted ||
           manageStatusBefore.isGranted) {
-
         return true;
       }
 
@@ -1366,15 +1615,17 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         Permission.storage,
       ].request();
 
-      final audioStatusAfter = statuses[Permission.audio] ?? PermissionStatus.denied;
-      final storageStatusAfter = statuses[Permission.storage] ?? PermissionStatus.denied;
+      final audioStatusAfter =
+          statuses[Permission.audio] ?? PermissionStatus.denied;
+      final storageStatusAfter =
+          statuses[Permission.storage] ?? PermissionStatus.denied;
 
-
-      bool isGranted = audioStatusAfter.isGranted || storageStatusAfter.isGranted;
+      bool isGranted =
+          audioStatusAfter.isGranted || storageStatusAfter.isGranted;
 
       if (!isGranted) {
-
-        final manageStatusAfter = await Permission.manageExternalStorage.request();
+        final manageStatusAfter = await Permission.manageExternalStorage
+            .request();
 
         if (manageStatusAfter.isGranted) {
           isGranted = true;
@@ -1383,7 +1634,6 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
       return isGranted;
     } catch (e) {
-
       return true; // Fallback to let the app try physical operations
     }
   }
@@ -1391,11 +1641,11 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   Future<FileActionResult> renameSong(Song song, String newTitle) async {
     try {
       await _requestStoragePermissions();
-    } catch (e) {
+    } catch (e) {}
 
-    }
-
-    final sanitizedTitle = newTitle.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').trim();
+    final sanitizedTitle = newTitle
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+        .trim();
     if (sanitizedTitle.isEmpty) {
       return FileActionResult.failure;
     }
@@ -1419,8 +1669,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     bool fileRenamed = false;
     if (newPath != song.path) {
       try {
-        if (newPath.toLowerCase() != song.path.toLowerCase() && await File(newPath).exists()) {
-
+        if (newPath.toLowerCase() != song.path.toLowerCase() &&
+            await File(newPath).exists()) {
           if (isCurrent) {
             // Restore playback of the original song
             await play(song, play: wasPlaying);
@@ -1433,9 +1683,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
           await file.rename(newPath);
           fileRenamed = true;
         }
-      } catch (e) {
-
-      }
+      } catch (e) {}
     } else {
       fileRenamed = true;
     }
@@ -1459,10 +1707,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
       // Update state if it's the current song
       if (isCurrent) {
-        state = state.copyWith(
-          currentSong: song,
-          queue: List.from(_playlist),
-        );
+        state = state.copyWith(currentSong: song, queue: List.from(_playlist));
         // Resume playing track from the new path
         await play(song, play: wasPlaying);
         await seek(lastPosition);
@@ -1470,7 +1715,6 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         state = state.copyWith(queue: List.from(_playlist));
       }
     } catch (e) {
-
       if (isCurrent) {
         // Fallback: restore player using original song/state
         await play(song, play: wasPlaying);
@@ -1481,10 +1725,16 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     if (!dbSuccess) {
       return FileActionResult.failure;
     }
-    return (fileRenamed && newPath != song.path) ? FileActionResult.success : FileActionResult.dbOnly;
+    return (fileRenamed && newPath != song.path)
+        ? FileActionResult.success
+        : FileActionResult.dbOnly;
   }
 
-  void updateSongEqualizer({required int songId, required bool hasCustom, List<double>? gains}) {
+  void updateSongEqualizer({
+    required int songId,
+    required bool hasCustom,
+    List<double>? gains,
+  }) {
     // Update in playlist
     final idx = _playlist.indexWhere((s) => s.id == songId);
     if (idx != -1) {
@@ -1535,7 +1785,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   /// Edits song metadata in the database (title, artist, album, year, genre, artPath).
   /// Does NOT rename the physical file — only updates the DB record.
-  Future<bool> editSongMetadata(Song song, {
+  Future<bool> editSongMetadata(
+    Song song, {
     String? title,
     String? artist,
     String? album,
@@ -1547,12 +1798,18 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     try {
       await DbService.isar.writeTxn(() async {
         if (title != null && title.isNotEmpty) song.title = title.trim();
-        if (artist != null) song.artist = artist.trim().isEmpty ? null : artist.trim();
-        if (album != null) song.album = album.trim().isEmpty ? null : album.trim();
+        if (artist != null)
+          song.artist = artist.trim().isEmpty ? null : artist.trim();
+        if (album != null)
+          song.album = album.trim().isEmpty ? null : album.trim();
         if (year != null) song.year = year == 0 ? null : year;
-        if (genre != null) song.genre = genre.trim().isEmpty ? null : genre.trim();
-        if (artPath != null) song.artPath = artPath.trim().isEmpty ? null : artPath.trim();
-        song.lyrics = (lyrics == null || lyrics.trim().isEmpty) ? null : lyrics.trim();
+        if (genre != null)
+          song.genre = genre.trim().isEmpty ? null : genre.trim();
+        if (artPath != null)
+          song.artPath = artPath.trim().isEmpty ? null : artPath.trim();
+        song.lyrics = (lyrics == null || lyrics.trim().isEmpty)
+            ? null
+            : lyrics.trim();
         await DbService.isar.songs.put(song);
       });
 
@@ -1570,7 +1827,6 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       }
       return true;
     } catch (e) {
-
       return false;
     }
   }
@@ -1578,9 +1834,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   Future<FileActionResult> deleteSong(Song song) async {
     try {
       await _requestStoragePermissions();
-    } catch (e) {
-
-    }
+    } catch (e) {}
 
     final isCurrent = state.currentSong?.id == song.id;
     final wasPlaying = state.isPlaying;
@@ -1599,9 +1853,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         await file.delete();
         fileDeleted = true;
       }
-    } catch (e) {
-
-    }
+    } catch (e) {}
 
     bool dbSuccess = false;
     try {
@@ -1640,16 +1892,16 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       } else {
         // Adjust _currentIndex if the deleted song was before the current one
         if (state.currentSong != null) {
-          _currentIndex = _playlist.indexWhere((s) => s.id == state.currentSong!.id);
+          _currentIndex = _playlist.indexWhere(
+            (s) => s.id == state.currentSong!.id,
+          );
         }
         state = state.copyWith(queue: List.from(_playlist));
       }
 
       // Clean up orphaned artists and albums
       await _cleanUpOrphanedArtistsAndAlbums();
-    } catch (e) {
-
-    }
+    } catch (e) {}
 
     if (!dbSuccess) {
       return FileActionResult.failure;
@@ -1665,27 +1917,36 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         final activeArtistNames = remainingSongs.map((s) => s.artist).toSet();
 
         final allAlbums = await DbService.isar.albums.where().findAll();
-        final albumsToDelete = allAlbums.where((a) => !activeAlbumNames.contains(a.name)).map((a) => a.id).toList();
+        final albumsToDelete = allAlbums
+            .where((a) => !activeAlbumNames.contains(a.name))
+            .map((a) => a.id)
+            .toList();
         if (albumsToDelete.isNotEmpty) {
           await DbService.isar.albums.deleteAll(albumsToDelete);
         }
 
         final allArtists = await DbService.isar.artists.where().findAll();
-        final artistsToDelete = allArtists.where((art) => !activeArtistNames.contains(art.name)).map((art) => art.id).toList();
+        final artistsToDelete = allArtists
+            .where((art) => !activeArtistNames.contains(art.name))
+            .map((art) => art.id)
+            .toList();
         if (artistsToDelete.isNotEmpty) {
           await DbService.isar.artists.deleteAll(artistsToDelete);
         }
       });
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   Future<void> shareSong(Song song) async {
-    await Share.shareXFiles([XFile(song.path)], text: 'Check out this song: ${song.title}');
+    await Share.shareXFiles([
+      XFile(song.path),
+    ], text: 'Check out this song: ${song.title}');
   }
 
-  void _showErrorSnackBar(String defaultMessage, String Function(AppLocalizations) getLocalizedMessage) {
+  void _showErrorSnackBar(
+    String defaultMessage,
+    String Function(AppLocalizations) getLocalizedMessage,
+  ) {
     final context = scaffoldMessengerKey.currentContext;
     String message = defaultMessage;
     if (context != null) {
@@ -1694,9 +1955,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         if (l10n != null) {
           message = getLocalizedMessage(l10n);
         }
-      } catch (e) {
-
-      }
+      } catch (e) {}
     }
 
     scaffoldMessengerKey.currentState?.clearSnackBars();
@@ -1704,19 +1963,16 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       SnackBar(
         content: Text(
           message,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         backgroundColor: Colors.redAccent.shade700,
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        margin: const EdgeInsets.only(
-          bottom: 24,
-          left: 24,
-          right: 24,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.only(bottom: 24, left: 24, right: 24),
       ),
     );
   }
@@ -1754,7 +2010,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       String currentLine = "";
       if (lyricsState.rawLrc != null) {
         int activeLineIndex = lyricsState.parsedLines.indexWhere(
-          (line) => currentPosition >= line.startTime && currentPosition < line.endTime,
+          (line) =>
+              currentPosition >= line.startTime &&
+              currentPosition < line.endTime,
         );
         if (activeLineIndex == -1 && lyricsState.parsedLines.isNotEmpty) {
           if (currentPosition < lyricsState.parsedLines.first.startTime) {
@@ -1771,9 +2029,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
         _lastWidgetLyricLine = currentLine;
         _updateWidgetState();
       }
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   Future<void> _updateWidgetState() async {
@@ -1786,7 +2042,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       String nextLine = "";
       if (lyricsState.rawLrc != null) {
         int activeLineIndex = lyricsState.parsedLines.indexWhere(
-          (line) => currentPosition >= line.startTime && currentPosition < line.endTime,
+          (line) =>
+              currentPosition >= line.startTime &&
+              currentPosition < line.endTime,
         );
         if (activeLineIndex == -1 && lyricsState.parsedLines.isNotEmpty) {
           if (currentPosition < lyricsState.parsedLines.first.startTime) {
@@ -1805,17 +2063,29 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
       final accentColor = ref.read(settingsProvider).accentColor;
 
-      await HomeWidget.saveWidgetData<String>('title', song?.title ?? 'No song playing');
+      await HomeWidget.saveWidgetData<String>(
+        'title',
+        song?.title ?? 'No song playing',
+      );
       await HomeWidget.saveWidgetData<String>('artist', song?.artist ?? '');
       await HomeWidget.saveWidgetData<bool>('isPlaying', state.isPlaying);
       await HomeWidget.saveWidgetData<bool>('isShuffle', state.isShuffle);
-      await HomeWidget.saveWidgetData<int>('repeatMode', state.repeatMode.index);
+      await HomeWidget.saveWidgetData<int>(
+        'repeatMode',
+        state.repeatMode.index,
+      );
       await HomeWidget.saveWidgetData<String>('lyrics', currentLine);
       await HomeWidget.saveWidgetData<String>('nextLyrics', nextLine);
       await HomeWidget.saveWidgetData<String>('artPath', song?.artPath ?? '');
       await HomeWidget.saveWidgetData<int>('accentColor', accentColor);
-      await HomeWidget.saveWidgetData<int>('position', currentPosition.inMilliseconds);
-      await HomeWidget.saveWidgetData<int>('duration', state.duration.inMilliseconds);
+      await HomeWidget.saveWidgetData<int>(
+        'position',
+        currentPosition.inMilliseconds,
+      );
+      await HomeWidget.saveWidgetData<int>(
+        'duration',
+        state.duration.inMilliseconds,
+      );
 
       await HomeWidget.updateWidget(
         name: 'PlayerWidgetProvider',
@@ -1823,19 +2093,20 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       );
       await HomeWidget.updateWidget(
         name: 'PlayerWidgetProviderSquareArtwork',
-        qualifiedAndroidName: 'com.looper.player.PlayerWidgetProviderSquareArtwork',
+        qualifiedAndroidName:
+            'com.looper.player.PlayerWidgetProviderSquareArtwork',
       );
       await HomeWidget.updateWidget(
         name: 'PlayerWidgetProviderSquareProgress',
-        qualifiedAndroidName: 'com.looper.player.PlayerWidgetProviderSquareProgress',
+        qualifiedAndroidName:
+            'com.looper.player.PlayerWidgetProviderSquareProgress',
       );
       await HomeWidget.updateWidget(
         name: 'PlayerWidgetProviderLargeLyrics',
-        qualifiedAndroidName: 'com.looper.player.PlayerWidgetProviderLargeLyrics',
+        qualifiedAndroidName:
+            'com.looper.player.PlayerWidgetProviderLargeLyrics',
       );
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   Timer? _sleepTimer;
@@ -1854,13 +2125,15 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       );
 
       _sleepTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (!state.isSleepTimerActive || state.sleepTimerDurationRemaining == null) {
+        if (!state.isSleepTimerActive ||
+            state.sleepTimerDurationRemaining == null) {
           timer.cancel();
           _sleepTimer = null;
           return;
         }
 
-        final remaining = state.sleepTimerDurationRemaining! - const Duration(seconds: 1);
+        final remaining =
+            state.sleepTimerDurationRemaining! - const Duration(seconds: 1);
         if (remaining <= Duration.zero) {
           timer.cancel();
           _sleepTimer = null;
@@ -1899,16 +2172,48 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     );
   }
 
+  /// Persists [song]'s current listening position for "Keep Song Progress".
+  /// A song that's essentially finished (within 3s of its own end) gets its
+  /// saved position cleared back to 0 instead of stored near-the-end, so
+  /// replaying a track that played through naturally starts fresh rather
+  /// than immediately re-ending.
+  Future<void> _savePerSongProgress(
+    Song? song,
+    Duration position,
+    Duration duration,
+  ) async {
+    if (song == null) return;
+    if (!ref.read(settingsProvider).keepSongProgress) return;
+
+    final remaining = duration - position;
+    final isFinished =
+        duration > Duration.zero && remaining <= const Duration(seconds: 3);
+    final valueMs = isFinished ? 0 : position.inMilliseconds;
+
+    if (song.lastPositionMs == valueMs) return;
+    song.lastPositionMs = valueMs;
+
+    await DbService.isar.writeTxn(() async {
+      final dbSong = await DbService.isar.songs.get(song.id);
+      if (dbSong != null) {
+        dbSong.lastPositionMs = valueMs;
+        await DbService.isar.songs.put(dbSong);
+      }
+    });
+  }
+
   Future<void> _saveQueueState() async {
     final settings = ref.read(settingsProvider);
     if (!settings.persistQueue) return;
     final songIds = _playlist.map((s) => s.id).toList();
-    await ref.read(settingsProvider.notifier).updateLastQueueState(
-      songIds,
-      _currentIndex,
-      state.currentSong?.id,
-      positionMs: state.position.inMilliseconds,
-    );
+    await ref
+        .read(settingsProvider.notifier)
+        .updateLastQueueState(
+          songIds,
+          _currentIndex,
+          state.currentSong?.id,
+          positionMs: state.position.inMilliseconds,
+        );
   }
 
   Future<void> _ensureDynamicQueue() async {
@@ -1952,17 +2257,48 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   InterruptionPolicy _getInterruptionPolicy() {
     final settings = ref.read(settingsProvider);
-    if (Platform.isAndroid) {
-      // With custom Android AudioFocusManager, we always let mpv_audio_kit keep playing,
-      // so our custom Kotlin manager takes exclusive control of focus and commands.
-      return InterruptionPolicy.keepPlaying;
-    }
     if (!settings.audioFocus) {
       return InterruptionPolicy.keepPlaying;
     }
-    return settings.resumeAfterCall
+    return settings.resumeAfterCall && settings.audioFocusRestartOnGain
         ? InterruptionPolicy.pauseAndResume
         : InterruptionPolicy.pauseOnly;
+  }
+
+  Future<void> _applyInterruptionPolicy(InterruptionPolicy policy) async {
+    final settings = ref.read(settingsProvider);
+    await ref
+        .read(audioServiceProvider)
+        .applyAudioFocusPolicy(
+          policy,
+          requestFocusOnPlay:
+              settings.audioFocus && settings.audioFocusRequestOnPlay,
+          releaseFocusOnPause:
+              settings.audioFocus && settings.audioFocusReleaseOnPause,
+          stopOnOtherSession:
+              settings.audioFocus && settings.audioFocusStopOnOtherSession,
+          restartOnFocusGain:
+              settings.audioFocus && settings.audioFocusRestartOnGain,
+        );
+  }
+
+  // mpv_audio_kit keeps holding audio focus across a pause/stop (by design,
+  // so a quick manual resume doesn't re-duck other apps) and, under
+  // InterruptionPolicy.pauseAndResume, arms auto-resume on the *next*
+  // transient focus loss/gain cycle regardless of why playback isn't
+  // running. Without this, an unrelated notification chime arriving after
+  // the user has explicitly paused/stopped would silently resume this app's
+  // playback. Forcing the policy to pauseOnly disarms that latch; the next
+  // deliberate play/resume restores whatever policy the settings dictate
+  // via _reapplyInterruptionPolicy().
+  Future<void> _disarmAutoResumeAfterFocusGain() async {
+    if (!ref.read(settingsProvider).audioFocus) return;
+    await _applyInterruptionPolicy(InterruptionPolicy.pauseOnly);
+  }
+
+  Future<void> _reapplyInterruptionPolicy() async {
+    if (!ref.read(settingsProvider).audioFocus) return;
+    await _applyInterruptionPolicy(_getInterruptionPolicy());
   }
 
   Timer? _fadeVolumeTimer;
@@ -1983,7 +2319,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
     _fadeVolumeTimer = Timer.periodic(Duration(milliseconds: stepMs), (timer) {
       currentStep++;
-      final double nextVolume = (startVolume + (volumeStep * currentStep)).clamp(0.0, 1.5);
+      final double nextVolume = (startVolume + (volumeStep * currentStep))
+          .clamp(0.0, 1.5);
       player.setVolume(nextVolume * 100);
 
       if (currentStep >= steps) {
@@ -1998,6 +2335,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   void pauseForInterruption({required bool permanent}) {
     final settings = ref.read(settingsProvider);
     if (!state.isPlaying) return;
+    _pausedForRouteChange = false;
 
     _silenceTimer?.cancel();
     _songCompletionTimer?.cancel();
@@ -2013,12 +2351,13 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
     }
   }
 
-  void resumeAfterInterruption() {
+  void resumeAfterInterruption() async {
     if (state.isPlaying) return;
+    _pausedForRouteChange = false;
 
     ref.read(androidAudioFocusManagerProvider).setPlaybackInterrupted(false);
     _lastPlayTime = DateTime.now();
-    ref.read(audioServiceProvider).resume();
+    await ref.read(audioServiceProvider).resume();
     state = state.copyWith(isPlaying: true);
     _updateNotification();
   }
@@ -2036,6 +2375,8 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
   void pauseForNoisy() {
     if (!state.isPlaying) return;
 
+    _pausedForRouteChange = true;
+
     _silenceTimer?.cancel();
     _songCompletionTimer?.cancel();
     ref.read(audioServiceProvider).pause();
@@ -2048,33 +2389,31 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
   void resumeOnBluetoothConnect() {
     final settings = ref.read(settingsProvider);
-    if (state.isPlaying) return;
+    if (state.isPlaying || !_pausedForRouteChange) return;
 
     if (settings.resumeOnBluetoothConnect) {
+      _pausedForRouteChange = false;
       _lastPlayTime = DateTime.now();
       ref.read(audioServiceProvider).resume();
       state = state.copyWith(isPlaying: true);
       _updateNotification();
-    }
-  }
-
-  bool _isStreamUrlExpired(String? url) {
-    if (url == null || url.isEmpty) return true;
-    try {
-      final uri = Uri.parse(url);
-      final expireStr = uri.queryParameters['expire'];
-      if (expireStr == null) return false;
-      final expireUnix = int.tryParse(expireStr);
-      if (expireUnix == null) return false;
-      final expireTime = DateTime.fromMillisecondsSinceEpoch(expireUnix * 1000);
-      return DateTime.now().add(const Duration(minutes: 10)).isAfter(expireTime);
-    } catch (_) {
-      return true;
+      // See note in _playDirect(): mpv_audio_kit already requests audio
+      // focus natively on resume; do not request it again here.
     }
   }
 
   @override
   void dispose() {
+    // Best-effort: flush whatever real listening time is pending. There's no
+    // synchronous flush available here, so a hard process kill in the same
+    // instant can still lose the last few seconds - unavoidable without a
+    // native-side write.
+    _pauseListenSegment();
+    unawaited(_flushListenedTime());
+    for (final sub in _subscriptions) {
+      sub.cancel();
+    }
+    _subscriptions.clear();
     _silenceTimer?.cancel();
     _sleepTimer?.cancel();
     _fadeVolumeTimer?.cancel();

@@ -10,7 +10,7 @@ plugins {
 
 android {
     namespace = "com.looper.player"
-    compileSdk = 36
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -56,21 +56,29 @@ android {
     }
 
     buildTypes {
-        release {
-            signingConfig = if (hasSigningConfig) {
-                signingConfigs.getByName("release")
-            } else {
-                signingConfigs.getByName("debug")
-            }
-            isMinifyEnabled = false
-            isShrinkResources = false
+        // Resolve which signing configuration to use once
+        val sharedSigningConfig = if (hasSigningConfig) {
+            signingConfigs.getByName("release")
+        } else {
+            signingConfigs.getByName("debug")
+        }
+
+        getByName("release") {
+            signingConfig = sharedSigningConfig
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+
+        getByName("debug") {
+            signingConfig = sharedSigningConfig
         }
     }
 
     packaging {
         jniLibs {
             pickFirsts.add("**/libc++_shared.so")
+            pickFirsts.add("**/libmpv.so")
         }
     }
 }
@@ -83,4 +91,5 @@ dependencies {
     val media3Version = "1.10.1"
     implementation("androidx.media3:media3-session:$media3Version")
     implementation("androidx.media3:media3-common:$media3Version")
+    implementation("androidx.media:media:1.7.0")
 }

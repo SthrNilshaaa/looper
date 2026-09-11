@@ -7,6 +7,7 @@ import 'package:looper_player/ui/screens/android/player/android_expanded_player.
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/core/app_icons.dart';
+import 'package:looper_player/ui/widgets/animated_play_pause_icon.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/ui/widgets/scrolling_text.dart';
 import 'package:looper_player/core/player_expand_provider.dart';
@@ -14,7 +15,6 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 import 'dart:ui';
 
 import 'premium_section.dart';
-import 'package:looper_player/core/ui_calculations.dart';
 
 // Keeping the provider for future use but it won't be used by navbar now
 final navbarBounceProvider = StateProvider<Offset>((ref) => Offset.zero);
@@ -55,7 +55,7 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
 
   void _pushExpandedPlayer(BuildContext context, dynamic settings) async {
     if (settings.enableSlideGesture) {
-      _dragController.forward();
+      _dragController.animateTo(1.0, curve: Curves.easeOutCubic);
     } else {
       if (_isPushing) return;
       _isPushing = true;
@@ -86,9 +86,6 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
         : 0.0;
 
     ref.listen<double>(playerExpandProgressProvider, (prev, next) {
-      if (next == 0.0) {
-        ref.read(playerArtworkTopProvider.notifier).state = null;
-      }
       if (settings.enableSlideGesture) {
         if (next == 0.0 && _dragController.value > 0.0 && !_isDragging) {
           _dragController.animateTo(0.0, curve: Curves.easeOutCubic);
@@ -99,7 +96,8 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
     });
 
     ref.listen<int>(playerCollapseTriggerProvider, (prev, next) {
-      if (settings.enableSlideGesture && _dragController.value > 0.0) {
+      if (settings.enableSlideGesture) {
+        _isDragging = false;
         _dragController.animateTo(0.0, curve: Curves.easeOutCubic);
       }
     });
@@ -122,26 +120,23 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
           },
           onPanEnd: (details) {
             _isDragging = false;
-             final action = UiCalculations.getMiniPlayerAction(_dragOffset);
-             switch (action) {
-               case MiniPlayerGestureAction.clearQueue:
-                 HapticFeedback.heavyImpact();
-                 ref.read(playbackProvider.notifier).clearQueue();
-                 break;
-               case MiniPlayerGestureAction.expand:
-                 _pushExpandedPlayer(context, settings);
-                 break;
-               case MiniPlayerGestureAction.skipPrevious:
-                 _triggerHaptic();
-                 ref.read(playbackProvider.notifier).skipPrevious();
-                 break;
-               case MiniPlayerGestureAction.skipNext:
-                 _triggerHaptic();
-                 ref.read(playbackProvider.notifier).skipNext();
-                 break;
-               case MiniPlayerGestureAction.none:
-                 break;
-             }
+            final dx = _dragOffset.dx;
+            final dy = _dragOffset.dy;
+
+            if (dy > 70 && dy.abs() > dx.abs()) {
+              HapticFeedback.heavyImpact();
+              ref.read(playbackProvider.notifier).clearQueue();
+            } else if (dy < -70 && dy.abs() > dx.abs()) {
+              _pushExpandedPlayer(context, settings);
+            } else if (dx.abs() > dy.abs()) {
+              if (dx > 70) {
+                _triggerHaptic();
+                ref.read(playbackProvider.notifier).skipPrevious();
+              } else if (dx < -70) {
+                _triggerHaptic();
+                ref.read(playbackProvider.notifier).skipNext();
+              }
+            }
 
             setState(() {
               _dragOffset = Offset.zero;
@@ -166,7 +161,16 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
             curve: Curves.easeOutCubic,
             tween: Tween(begin: Offset.zero, end: _dragOffset),
             builder: (context, offset, child) {
-              final matrix = UiCalculations.getMiniPlayerTiltMatrix(offset);
+              final double tiltX = (offset.dx / 100).clamp(-0.2, 0.2);
+              final double tiltY = (offset.dy / 100).clamp(-0.1, 0.1);
+              
+              final matrix = Matrix4.identity();
+              if (tiltX != 0 || tiltY != 0) {
+                matrix.setEntry(3, 2, 0.001); // perspective
+                matrix.rotateX(-tiltY);
+                matrix.rotateY(tiltX);
+                matrix.translate(offset.dx * 0.3, offset.dy * 0.3);
+              }
               
               return Transform(
                 transform: matrix,
@@ -198,8 +202,8 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
       return Hero(tag: tag, child: child);
     }
 
-    final double marginHorizontal = UiCalculations.getMiniPlayerMargin(expandProgress, settings.enableSlideGesture);
-    final double borderRadiusVal = UiCalculations.getMiniPlayerBorderRadius(settings.enableSlideGesture);
+    final double marginHorizontal = settings.enableSlideGesture ? 16.0 * (1.0 - expandProgress) : 0.0;
+    final double borderRadiusVal = settings.enableSlideGesture ? 36.0 : 0.0;
     final double topPadding = MediaQuery.of(context).padding.top;
     final double screenHeight = MediaQuery.of(context).size.height;
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -232,39 +236,34 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
             if (_dragController.value > 0.01) {
               final velocity = details.velocity.pixelsPerSecond.dy;
               if (velocity < -200) {
-                _dragController.fling(velocity: 1.0);
+                _dragController.animateTo(1.0, curve: Curves.easeOutCubic);
               } else if (velocity > 200) {
-                _dragController.fling(velocity: -1.0);
+                _dragController.animateTo(0.0, curve: Curves.easeOutCubic);
               } else if (_dragController.value > 0.4) {
-                _dragController.forward();
+                _dragController.animateTo(1.0, curve: Curves.easeOutCubic);
               } else {
-                _dragController.reverse();
+                _dragController.animateTo(0.0, curve: Curves.easeOutCubic);
               }
               return;
             }
           }
 
-          final action = UiCalculations.getMiniPlayerAction(_dragOffset);
-          switch (action) {
-            case MiniPlayerGestureAction.clearQueue:
-              HapticFeedback.heavyImpact();
-              ref.read(playbackProvider.notifier).clearQueue();
-              break;
-            case MiniPlayerGestureAction.expand:
-              if (!settings.enableSlideGesture) {
-                _pushExpandedPlayer(context, settings);
-              }
-              break;
-            case MiniPlayerGestureAction.skipPrevious:
+          final dx = _dragOffset.dx;
+          final dy = _dragOffset.dy;
+
+          if (dy > 70 && dy.abs() > dx.abs()) {
+            HapticFeedback.heavyImpact();
+            ref.read(playbackProvider.notifier).clearQueue();
+          } else if (dy < -70 && dy.abs() > dx.abs() && !settings.enableSlideGesture) {
+            _pushExpandedPlayer(context, settings);
+          } else if (dx.abs() > dy.abs()) {
+            if (dx > 70) {
               _triggerHaptic();
               ref.read(playbackProvider.notifier).skipPrevious();
-              break;
-            case MiniPlayerGestureAction.skipNext:
+            } else if (dx < -70) {
               _triggerHaptic();
               ref.read(playbackProvider.notifier).skipNext();
-              break;
-            case MiniPlayerGestureAction.none:
-              break;
+            }
           }
 
           setState(() {
@@ -312,12 +311,10 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(borderRadiusVal),
-              border: expandProgress < 0.99
-                  ? Border.all(
-                      color: currentBorderColor,
-                      width: 1.2 * (1.0 - expandProgress),
-                    )
-                  : null,
+              border: Border.all(
+                color: currentBorderColor,
+                width: 1.2,
+              ),
               boxShadow: expandProgress < 0.95
                   ? [
                       BoxShadow(
@@ -335,20 +332,25 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                   // 1. Dynamic background stack (cross-fading minimized translucent/blur and expanded player backgrounds)
                   if (settings.enableSlideGesture) ...[
                     // Minimized background (translucent surface container / white glass + backdrop filter blur behind it)
+                    // BackdropFilter forces a full offscreen composite pass every frame
+                    // regardless of sigma, so it's only mounted when blur is actually
+                    // active — a sigma-0 filter would still pay the full cost for
+                    // nothing since this bar is present on almost every screen.
                     Positioned.fill(
                       child: Opacity(
                         opacity: (1.0 - expandProgress).clamp(0.0, 1.0),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(borderRadiusVal),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(
-                              sigmaX: isBlurActive ? 3.0 : 0.0,
-                              sigmaY: isBlurActive ? 3.0 : 0.0,
-                            ),
-                            child: Container(
-                              color: minimizedBgColor,
-                            ),
-                          ),
+                          child: isBlurActive
+                              ? BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 3.0, sigmaY: 3.0),
+                                  child: Container(
+                                    color: minimizedBgColor,
+                                  ),
+                                )
+                              : Container(
+                                  color: minimizedBgColor,
+                                ),
                         ),
                       ),
                     ),
@@ -428,9 +430,9 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                     () {
                       final double dpr = MediaQuery.maybeDevicePixelRatioOf(context) ?? 2.0;
                       final double expandedArtSize = screenWidth - 60.0;
-                      final measuredArtTop = ref.watch(playerArtworkTopProvider);
-                      final double expandedArtTop = measuredArtTop ?? (topPadding + 56.0 + 
-                          ((screenHeight - topPadding - 56.0 - 380.0) - expandedArtSize).clamp(0.0, double.infinity) / 2);
+                      final double availableHeight = screenHeight - topPadding - 56.0 - 380.0;
+                      final double expandedArtTop = topPadding + 56.0 +
+                          (availableHeight - expandedArtSize).clamp(0.0, double.infinity) / 2;
 
                       final double artSize = 50.0 + (expandedArtSize - 50.0) * expandProgress;
                       final double artLeft = 12.0 + (30.0 - 12.0) * expandProgress;
@@ -630,18 +632,10 @@ class _PremiumMusicBarState extends ConsumerState<PremiumMusicBar> with TickerPr
                   scale:  1.0,
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOutBack,
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween<double>(end: isPlaying ? 1.0 : 0.0),
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOutCubic,
-                    builder: (context, value, child) {
-                      return AnimatedIcon(
-                        icon: AnimatedIcons.play_pause,
-                        progress: AlwaysStoppedAnimation(value),
-                        color: Colors.white,
-                        size: AppIcons.expandedPlayerPlayPauseIcon.s,
-                      );
-                    },
+                  child: AnimatedPlayPauseIcon(
+                    isPlaying: isPlaying,
+                    color: Colors.white,
+                    size: AppIcons.expandedPlayerPlayPauseIcon.s,
                   ),
                 ),
               ),

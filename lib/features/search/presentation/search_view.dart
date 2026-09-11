@@ -227,6 +227,7 @@ class SearchView extends ConsumerWidget {
               (context, index) {
                 final song = songListToRender[index];
                 return SongTile(
+                  key: ValueKey(song.path),
                   song: song,
                   l10n: l10n,
                   songs: songListToRender,
@@ -341,9 +342,7 @@ class _SongResultCard extends ConsumerWidget {
 
     return InkWell(
       onTap: () {
-        if (searchQuery != null) {
-          ref.read(lyricsSearchQueryProvider.notifier).state = searchQuery!;
-        }
+        ref.read(lyricsSearchQueryProvider.notifier).state = '';
         ref.read(playbackProvider.notifier).play(song);
       },
       borderRadius: BorderRadius.circular(16),
@@ -709,6 +708,7 @@ class _AlbumResultCard extends ConsumerWidget {
               subtitle: album.artist ?? l10n.unknownArtist,
               songs: songs,
               art: album.artPath,
+              album: album,
             );
       },
       child: Container(

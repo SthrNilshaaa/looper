@@ -3,10 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  dynamic_color
-  ffmpeg_kit_flutter_new_full
   isar_flutter_libs
-  local_notifier
   mpv_audio_kit
   permission_handler_windows
   screen_retriever_windows

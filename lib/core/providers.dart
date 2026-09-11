@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'audio_service.dart';
 import 'db_service.dart';
 import 'package:isar/isar.dart';
 
 final scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
-
 
 final audioServiceProvider = Provider<AudioService>((ref) {
   final service = AudioService();
@@ -28,3 +28,12 @@ final searchFocusNodeProvider = Provider<FocusNode>((ref) {
 final overlayModeProvider = StateProvider<bool>((ref) => false);
 
 final forceWelcomeProvider = StateProvider<bool>((ref) => false);
+
+final appVersionProvider = FutureProvider<String>((ref) async {
+  try {
+    final info = await PackageInfo.fromPlatform();
+    return info.version;
+  } catch (_) {
+    return '2.3.0';
+  }
+});

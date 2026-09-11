@@ -1,8 +1,6 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
 
 class LyricsCache {
   static Future<Directory> _getCacheDir() async {
@@ -16,7 +14,8 @@ class LyricsCache {
 
   static String _generateKey(String artist, String title) {
     final input = '${artist.trim().toLowerCase()}_${title.trim().toLowerCase()}';
-    return md5.convert(utf8.encode(input)).toString();
+    final safeName = input.replaceAll(RegExp(r'[^a-z0-9_]'), '_');
+    return '${safeName}_${input.hashCode.abs()}';
   }
 
   static Future<void> save(String artist, String title, String lrc) async {

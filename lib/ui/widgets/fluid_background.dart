@@ -1,8 +1,8 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:adaptive_palette/adaptive_palette.dart';
 
 /// Fallback palette mode when image is unavailable or extraction fails.
@@ -12,18 +12,21 @@ enum FluidFallbackMode {
   auto,
 }
 
-/// A highly-optimized, lightweight fluid background that uses radial mesh gradient blobs
-/// animated on the GPU via composited layer translation.
+/// An ambient "noise blur" background — a slow, organic field of color
+/// sampled from the song's artwork with a fine animated grain dusted on
+/// top, rendered on the GPU via a fragment shader. Mirrors the relaxing,
+/// continuously-breathing lyrics background used by Apple Music: no hard
+/// edges, no discrete shapes, just color drifting into color.
 class FluidBackground extends StatefulWidget {
   const FluidBackground({
     super.key,
     this.imageProvider,
     required this.child,
-    this.blurSigma = 40, // Kept for API compatibility, but soft radial gradients replace heavy image blurs
+    this.blurSigma = 40, // Kept for API compatibility; the shader is inherently soft, no image blur pass needed
     this.overlayDarken = 0.10,
     this.animate = false,
     this.fallbackMode = FluidFallbackMode.auto,
-    this.transitionDuration = const Duration(milliseconds: 1400),
+    this.transitionDuration = const Duration(milliseconds: 1800),
   });
 
   final ImageProvider? imageProvider;
@@ -51,10 +54,30 @@ class _FluidBackgroundState extends State<FluidBackground>
     duration: widget.transitionDuration,
   );
 
-  late final AnimationController _motionController = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 12), // Slow, premium fluid drifting
-  );
+  /// Free-running elapsed time (seconds) fed to the shader as `uTime`.
+  /// Unbounded and never looped, so the flow field never visibly "resets".
+  final ValueNotifier<double> _time = ValueNotifier<double>(0);
+  late final Ticker _ticker = createTicker(_onTick);
+  Duration _tickBase = Duration.zero;
+
+  void _onTick(Duration elapsed) {
+    _time.value = (elapsed - _tickBase).inMicroseconds / 1e6;
+  }
+
+  void _startTicker() {
+    if (!_ticker.isTicking) {
+      // A fresh Ticker.start() measures `elapsed` from zero again, so
+      // offset it by the negative of where the clock left off — resuming
+      // continues the flow field exactly where it froze instead of
+      // jumping, with no visible jolt.
+      _tickBase = Duration(microseconds: -(_time.value * 1e6).round());
+      _ticker.start();
+    }
+  }
+
+  void _stopTicker() {
+    if (_ticker.isTicking) _ticker.stop();
+  }
 
   FluidPalette _fallbackFor(BuildContext context) {
     switch (widget.fallbackMode) {
@@ -74,7 +97,7 @@ class _FluidBackgroundState extends State<FluidBackground>
   void initState() {
     super.initState();
     if (widget.animate) {
-      _motionController.repeat();
+      _startTicker();
     }
   }
 
@@ -90,9 +113,7 @@ class _FluidBackgroundState extends State<FluidBackground>
         if (animation.isCompleted) {
           _routeTransitionFinished = true;
           _kickLoad();
-          if (widget.animate) {
-            _motionController.repeat();
-          }
+          if (widget.animate) _startTicker();
         } else {
           _routeTransitionFinished = false;
           animation.addStatusListener(_onRouteAnimationStatusChanged);
@@ -100,9 +121,7 @@ class _FluidBackgroundState extends State<FluidBackground>
       } else {
         _routeTransitionFinished = true;
         _kickLoad();
-        if (widget.animate) {
-          _motionController.repeat();
-        }
+        if (widget.animate) _startTicker();
       }
     }
   }
@@ -114,16 +133,14 @@ class _FluidBackgroundState extends State<FluidBackground>
           _routeTransitionFinished = true;
         });
         _kickLoad();
-        if (widget.animate) {
-          _motionController.repeat();
-        }
+        if (widget.animate) _startTicker();
       }
     } else {
       if (mounted && _routeTransitionFinished) {
         setState(() {
           _routeTransitionFinished = false;
         });
-        _motionController.stop();
+        _stopTicker();
       }
     }
   }
@@ -134,9 +151,9 @@ class _FluidBackgroundState extends State<FluidBackground>
 
     if (oldWidget.animate != widget.animate) {
       if (widget.animate && _routeTransitionFinished) {
-        _motionController.repeat();
+        _startTicker();
       } else {
-        _motionController.stop();
+        _stopTicker();
       }
     }
 
@@ -148,7 +165,8 @@ class _FluidBackgroundState extends State<FluidBackground>
   @override
   void dispose() {
     _routeAnimation?.removeStatusListener(_onRouteAnimationStatusChanged);
-    _motionController.dispose();
+    _ticker.dispose();
+    _time.dispose();
     _revealController.dispose();
     super.dispose();
   }
@@ -166,8 +184,8 @@ class _FluidBackgroundState extends State<FluidBackground>
       _revealController.forward(from: 0);
       return;
     }
-    // Downsample the image to 64x64 using ResizeImage to minimize GPU memory and shader processing overhead
-    final downsampledProvider = ResizeImage(provider, width: 64, height: 64);
+    // Downsample the image to 128x128 for high pixel quality color extraction without pixelation or banding
+    final downsampledProvider = ResizeImage(provider, width: 128, height: 128);
     _load(downsampledProvider, loadToken: loadToken);
   }
 
@@ -218,31 +236,19 @@ class _FluidBackgroundState extends State<FluidBackground>
           return Stack(
             fit: StackFit.expand,
             children: [
-              // Matte Base Gradient
+              // Matte base so there's never a flash of nothing while the
+              // shader compiles on first frame.
               _MatteBase(palette: current),
 
-              // Animated Mesh Gradient Blobs (only animated and rendered when transition is finished and palette loaded)
-              if (_palette != null && _routeTransitionFinished)
-                _AnimatedBlobs(
-                  palette: current,
-                  controller: _motionController,
-                  animate: widget.animate,
-                ),
-
-              // Corner glows for secondary lighting and depth
-              _CornerGlows(
-                tl: current.accent1,
-                tr: current.accent2,
-                bl: current.accent3,
-                br: current.accent4,
-              ),
+              // GPU noise-blur color field, driven by the artwork palette.
+              _NoiseBlurField(palette: current, time: _time),
 
               // Legibility overlay (static layer)
               IgnorePointer(
                 child: Container(color: overlayColor),
               ),
 
-              // Foregrounds Child
+              // Foreground Child
               child!,
             ],
           );
@@ -252,7 +258,7 @@ class _FluidBackgroundState extends State<FluidBackground>
   }
 }
 
-/// Matte gradient base layer.
+/// Soft matte gradient shown beneath (and briefly before) the shader.
 class _MatteBase extends StatelessWidget {
   const _MatteBase({required this.palette});
   final FluidPalette palette;
@@ -274,163 +280,111 @@ class _MatteBase extends StatelessWidget {
   }
 }
 
-/// Highly-optimized individual soft glowing blob.
-/// Radial gradient transparent falloff provides native GPU blur at zero CPU cost.
-class _Blob extends StatelessWidget {
-  const _Blob({
-    required this.color,
-    required this.size,
-  });
-
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: 0.30),
-              color.withValues(alpha: 0.10),
-              Colors.transparent,
-            ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Stack of floating mesh blobs animated purely using GPU translation matrices.
-class _AnimatedBlobs extends StatelessWidget {
-  const _AnimatedBlobs({
-    required this.palette,
-    required this.controller,
-    required this.animate,
-  });
+/// Renders the animated noise-blur color field via `shaders/ambient_noise.frag`.
+///
+/// The shader blends a 6-stop ramp built from the artwork palette through a
+/// slow-drifting value-noise flow field (the "blur" — organically soft with
+/// no gaussian pass needed) and dusts a fine, filmic grain on top (the
+/// "noise") for texture and color variety, matching the relaxing, ever-
+/// shifting ambient background used by Apple Music's lyrics screen.
+class _NoiseBlurField extends StatefulWidget {
+  const _NoiseBlurField({required this.palette, required this.time});
 
   final FluidPalette palette;
-  final AnimationController controller;
-  final bool animate;
+  final ValueNotifier<double> time;
+
+  @override
+  State<_NoiseBlurField> createState() => _NoiseBlurFieldState();
+}
+
+class _NoiseBlurFieldState extends State<_NoiseBlurField> {
+  static Future<ui.FragmentProgram>? _programFuture;
+  ui.FragmentShader? _shader;
+
+  @override
+  void initState() {
+    super.initState();
+    _programFuture ??= ui.FragmentProgram.fromAsset(
+      'shaders/ambient_noise.frag',
+    );
+    _programFuture!.then((program) {
+      if (!mounted) return;
+      setState(() {
+        _shader = program.fragmentShader();
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        final height = constraints.maxHeight;
+    final shader = _shader;
+    if (shader == null) return const SizedBox.shrink();
 
-        // Base size of blobs
-        final blobSize = (width * 0.85).clamp(300.0, 600.0);
-
-        return AnimatedBuilder(
-          animation: controller,
-          builder: (context, child) {
-            final t = controller.value;
-
-            // Orbiter math to move blobs in slow, distinct circular paths
-            final offset1 = Offset(
-              width * 0.15 + math.sin(t * 2 * math.pi) * (width * 0.12),
-              height * 0.20 + math.cos(t * 2 * math.pi) * (height * 0.10),
-            );
-
-            final offset2 = Offset(
-              width * 0.65 + math.cos((t + 0.25) * 2 * math.pi) * (width * 0.15),
-              height * 0.15 + math.sin((t + 0.25) * 2 * math.pi) * (height * 0.12),
-            );
-
-            final offset3 = Offset(
-              width * 0.10 + math.sin((t + 0.50) * 2 * math.pi) * (width * 0.10),
-              height * 0.65 + math.cos((t + 0.50) * 2 * math.pi) * (height * 0.15),
-            );
-
-            final offset4 = Offset(
-              width * 0.60 + math.cos((t + 0.75) * 2 * math.pi) * (width * 0.14),
-              height * 0.70 + math.sin((t + 0.75) * 2 * math.pi) * (height * 0.12),
-            );
-
-            return Stack(
-              children: [
-                // Blob 1
-                Transform.translate(
-                  offset: offset1 - Offset(blobSize / 2, blobSize / 2),
-                  child: _Blob(color: palette.accent1, size: blobSize),
-                ),
-                // Blob 2
-                Transform.translate(
-                  offset: offset2 - Offset(blobSize / 2, blobSize / 2),
-                  child: _Blob(color: palette.accent2, size: blobSize),
-                ),
-                // Blob 3
-                Transform.translate(
-                  offset: offset3 - Offset(blobSize / 2, blobSize / 2),
-                  child: _Blob(color: palette.accent3, size: blobSize),
-                ),
-                // Blob 4
-                Transform.translate(
-                  offset: offset4 - Offset(blobSize / 2, blobSize / 2),
-                  child: _Blob(color: palette.accent4, size: blobSize),
-                ),
-              ],
-            );
-          },
-        );
-      },
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: _NoiseBlurPainter(
+          shader: shader,
+          palette: widget.palette,
+          time: widget.time,
+        ),
+        size: Size.infinite,
+      ),
     );
   }
 }
 
-/// Corner radial glow accents utilizing fast native radial gradients.
-class _CornerGlows extends StatelessWidget {
-  const _CornerGlows({
-    required this.tl,
-    required this.tr,
-    required this.bl,
-    required this.br,
-  });
+class _NoiseBlurPainter extends CustomPainter {
+  _NoiseBlurPainter({
+    required this.shader,
+    required this.palette,
+    required this.time,
+  }) : super(repaint: time);
 
-  final Color tl;
-  final Color tr;
-  final Color bl;
-  final Color br;
+  final ui.FragmentShader shader;
+  final FluidPalette palette;
+  final ValueNotifier<double> time;
+
+  static const double _grainStrength = 0.028;
 
   @override
-  Widget build(BuildContext context) {
-    Widget glow(Color c, Alignment a) {
-      return Align(
-        alignment: a,
-        child: Container(
-          width: 420,
-          height: 420,
-          decoration: BoxDecoration(
-            gradient: RadialGradient(
-              colors: [
-                c.withValues(alpha: 0.20),
-                c.withValues(alpha: 0.05),
-                Colors.transparent,
-              ],
-              stops: const [0.0, 0.5, 1.0],
-            ),
-          ),
-        ),
-      );
+  void paint(Canvas canvas, Size size) {
+    if (size.isEmpty) return;
+
+    // Six-stop color ramp derived from the extracted palette: the dark
+    // base anchors both rare extremes (occasional deeper patches for
+    // depth) while the four vivid accents dominate the middle of the
+    // field, giving natural-looking color variety without ever repeating
+    // the exact same blend twice.
+    final Color c5 = Color.lerp(palette.baseDark, palette.accent4, 0.35) ??
+        palette.baseDark;
+
+    int i = 0;
+    shader
+      ..setFloat(i++, size.width)
+      ..setFloat(i++, size.height)
+      ..setFloat(i++, time.value)
+      ..setFloat(i++, _grainStrength);
+
+    void setColor(Color color) {
+      shader
+        ..setFloat(i++, color.r)
+        ..setFloat(i++, color.g)
+        ..setFloat(i++, color.b);
     }
 
-    return IgnorePointer(
-      child: Stack(
-        children: [
-          glow(tl, Alignment.topLeft),
-          glow(tr, Alignment.topRight),
-          glow(bl, Alignment.bottomLeft),
-          glow(br, Alignment.bottomRight),
-        ],
-      ),
-    );
+    setColor(palette.baseDark);
+    setColor(palette.accent1);
+    setColor(palette.accent2);
+    setColor(palette.accent3);
+    setColor(palette.accent4);
+    setColor(c5);
+
+    final paint = Paint()..shader = shader;
+    canvas.drawRect(Offset.zero & size, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _NoiseBlurPainter oldDelegate) {
+    return oldDelegate.palette != palette || oldDelegate.shader != shader;
   }
 }

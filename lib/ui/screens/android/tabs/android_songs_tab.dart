@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:looper_player/core/app_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -13,7 +15,6 @@ import 'package:looper_player/core/app_fonts.dart';
 import '../widgets/premium_section.dart';
 import '../widgets/empty_library_view.dart';
 import '../widgets/premium_loading_view.dart';
-import 'package:looper_player/ui/widgets/settings_options_bottom_sheet.dart';
 
 class AndroidSongsTab extends ConsumerStatefulWidget {
   const AndroidSongsTab({super.key});
@@ -32,6 +33,11 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_scrollListener);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
+      }
+    });
   }
 
   @override
@@ -69,23 +75,24 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
   Widget build(BuildContext context) {
     final library = ref.watch(libraryProvider);
     final settings = ref.watch(settingsProvider);
+    // Only the presence of a current song matters here (to make room for the
+    // mini player), so select a bool instead of the Song object - otherwise
+    // this whole (potentially large) list rebuilds on every track change.
+    final hasCurrentSong = ref.watch(playbackProvider.select((s) => s.currentSong != null));
     final l10n = AppLocalizations.of(context)!;
-    
+
     if (!library.isInitialized || (library.isScanning && library.songs.isEmpty)) {
       return const PremiumLoadingView();
     }
 
     return library.songs.isEmpty
-        ? EmptyLibraryView(
-            title: l10n.noSongsFound,
-          )
-        : RepaintBoundary(
-            child: Container(
-              color: (settings.enableDynamicTheming || settings.keepBackgroundGradient)
-                  ? Colors.transparent
-                  : Theme.of(context).colorScheme.surface,
-              child: Stack(
-                children: [
+        ? EmptyLibraryView(title: l10n.noSongsFound)
+        : Container(
+            color: (settings.enableDynamicTheming || settings.keepBackgroundGradient)
+                ? Colors.transparent
+                : Theme.of(context).colorScheme.surface,
+            child: Stack(
+              children: [
                 SafeArea(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,60 +102,55 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                             PremiumSection(
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(32),
-                                    bottomLeft: Radius.circular(32),
-                                    topRight: Radius.circular(10),
-                                    bottomRight: Radius.circular(10),
-                                  ),
-                                  width: 48,
-                                  height: 48,
-                                  useBlur: true,
-                                  useExpanded: false,
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
-                                  },
-                                  child: const Icon(
-                                    LucideIcons.search,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
-                                 Text(
-                                   l10n.allSongs,
-                                   style: AppFonts.jostStyle(
-                                     color: Colors.white,
-                                     fontSize: 24,
-                                     fontWeight: FontWeight.bold,
-                                   ),
-                                 ),
-                                PremiumSection(
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(10),
-                                    bottomLeft: Radius.circular(10),
-                                    topRight: Radius.circular(32),
-                                    bottomRight: Radius.circular(32),
-                                  ),
-                                  width: 48,
-                                  height: 48,
-                                  useExpanded: false,
-                                  useBlur: true,
-                                  forceNoBlur: true,
-                                  onTap: () {
-                                    HapticFeedback.lightImpact();
-                                    showSettingsOptionsBottomSheet(
-                                      context: context,
-                                      ref: ref,
-                                    );
-                                  },
-                                  child: const Icon(
-                                    LucideIcons.settings,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                ),
+                            PremiumSection(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(32),
+                                bottomLeft: Radius.circular(32),
+                                topRight: Radius.circular(10),
+                                bottomRight: Radius.circular(10),
+                              ),
+                              width: 48,
+                              height: 48,
+                              backgroundColor: Colors.white.withValues(alpha: 0.04),
+                              useBlur: true,
+                              useExpanded: false,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
+                              },
+                              child: const Icon(LucideIcons.search, color: Colors.white, size: 20),
+                            ),
+                            Text(
+                              l10n.allSongs,
+                              style: AppFonts.jostStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            PremiumSection(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(10),
+                                bottomLeft: Radius.circular(10),
+                                topRight: Radius.circular(32),
+                                bottomRight: Radius.circular(32),
+                              ),
+                              width: 48,
+                              height: 48,
+                              useExpanded: false,
+                              useBlur: true,
+                              backgroundColor: Colors.white.withValues(alpha: 0.04),
+                              forceNoBlur: true,
+                              onTap: () {
+                                HapticFeedback.lightImpact();
+                                ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
+                              },
+                              child: const Icon(
+                                LucideIcons.settings,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -161,10 +163,7 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                       ),
                       const SizedBox(height: 8),
                       Expanded(
-                        child: SongsList(
-                          songs: library.songs,
-                          controller: _scrollController,
-                        ),
+                        child: SongsList(songs: library.songs, controller: _scrollController),
                       ),
                     ],
                   ),
@@ -178,38 +177,30 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                     child: AnimatedOpacity(
                       duration: const Duration(milliseconds: 300),
                       opacity: _isButtonVisible ? 1.0 : 0.0,
-                      child: Consumer(
-                        builder: (context, ref, child) {
-                          final song = ref.watch(playbackProvider.select((s) => s.currentSong));
-                          return AnimatedPadding(
-                            duration: const Duration(milliseconds: 250),
-                            curve: Curves.easeInOut,
-                            padding: EdgeInsets.only(bottom: song != null ? 200 : 120, right: 40),
-                            child: child!,
-                          );
-                        },
+                      child: AnimatedPadding(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        padding: EdgeInsets.only(bottom: hasCurrentSong ? 200 : 120, right: 40),
                         child: PremiumSection(
                           width: 48,
                           height: 48,
-                          // borderRadius: const BorderRadius.only(
-                          //   topLeft: Radius.circular(20),
-                          //   bottomLeft: Radius.circular(10),
-                          //   topRight: Radius.circular(20),
-                          //   bottomRight: Radius.circular(10),
-                          // ),
                           borderRadius: BorderRadius.circular(48),
                           useBlur: true,
                           useExpanded: false,
-                          forceNoBlur: true,
+                          // forceNoBlur: true,
+                          backgroundColor: Colors.white.withValues(alpha: 0.04),
                           onTap: () {
                             HapticFeedback.mediumImpact();
                             final songs = library.songs;
                             if (songs.isNotEmpty) {
                               final randomSongList = List<Song>.from(songs)..shuffle();
-                              ref.read(playbackProvider.notifier).setPlaylist(randomSongList, initialIndex: 0);
+                              ref
+                                  .read(playbackProvider.notifier)
+                                  .setPlaylist(randomSongList, initialIndex: 0);
                             }
                           },
-                          child: const Icon(LucideIcons.shuffle, color: Colors.white, size: 18),
+                          child: SvgPicture.asset(AppIcons.shuffleHome, width: 40),
+                          // Icon(LucideIcons.shuffle, color: Colors.white, size: 18),
                         ),
                       ),
                     ),
@@ -217,7 +208,6 @@ class _AndroidSongsTabState extends ConsumerState<AndroidSongsTab> {
                 ),
               ],
             ),
-          ),
-        );
+          );
   }
 }

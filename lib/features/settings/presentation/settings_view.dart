@@ -1,4 +1,3 @@
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,9 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:animations/animations.dart';
 
 import 'package:looper_player/core/app_fonts.dart';
+import 'package:looper_player/core/app_links.dart';
+import 'package:looper_player/core/providers.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
@@ -24,7 +24,7 @@ import 'widgets/playback_settings_tiles.dart';
 import 'widgets/audio_playback_settings_tiles.dart';
 import 'widgets/library_settings_tiles.dart';
 import 'widgets/about_settings_tiles.dart';
-import 'widgets/streaming_settings_tiles.dart';
+import 'widgets/backup_logs_settings_tiles.dart';
 
 final supportUsSheetVisibleProvider = StateProvider<bool>((ref) => false);
 
@@ -45,7 +45,11 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     super.dispose();
   }
 
-  void _showSupportUsDialog(BuildContext context, ColorScheme colorScheme, bool useBlur) {
+  void _showSupportUsDialog(
+    BuildContext context,
+    ColorScheme colorScheme,
+    bool useBlur,
+  ) {
     ref.read(supportUsSheetVisibleProvider.notifier).state = true;
     showModalBottomSheet(
       context: context,
@@ -53,11 +57,16 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       isScrollControlled: true,
       barrierColor: Colors.black54,
       builder: (context) {
-        const coffeeUrl = 'https://buymeacoffee.com/sthrnilshaaa';
+        const coffeeUrl = AppLinks.buyMeACoffee;
         final l10n = AppLocalizations.of(context)!;
 
         return AppBottomSheetContainer(
-          padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 24),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            16,
+            24,
+            MediaQuery.of(context).padding.bottom + 24,
+          ),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
@@ -104,9 +113,26 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                     child: InkWell(
                       onTap: () async {
                         HapticFeedback.mediumImpact();
-                        final uri = Uri.parse(coffeeUrl);
-                        if (await canLaunchUrl(uri)) {
-                          await launchUrl(uri, mode: LaunchMode.externalApplication);
+                        final upiUri = Uri.parse(AppLinks.upiPay);
+                        final webUri = Uri.parse(AppLinks.buyMeACoffee);
+                        try {
+                          final launched = await launchUrl(
+                            upiUri,
+                            mode: LaunchMode.externalApplication,
+                          );
+                          if (!launched) {
+                            await launchUrl(
+                              webUri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          }
+                        } catch (_) {
+                          try {
+                            await launchUrl(
+                              webUri,
+                              mode: LaunchMode.externalApplication,
+                            );
+                          } catch (_) {}
                         }
                       },
                       borderRadius: BorderRadius.circular(16),
@@ -121,7 +147,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                             ),
                             const SizedBox(width: 10),
                             Text(
-                              'Buy Me a Coffee',
+                              l10n.buyMeCoffee,
                               style: AppFonts.jostStyle(
                                 color: Colors.black,
                                 fontSize: 15,
@@ -150,293 +176,303 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
     final settings = ref.watch(settingsProvider);
     final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
 
-    return RepaintBoundary(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) {
+          if (ref.read(appNavigationProvider).activeItem == NavItem.settings) {
+            ref.read(appNavigationProvider.notifier).goBack();
+          }
+        }
+      },
       child: Material(
         color: Colors.transparent,
         child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Header title / Search bar
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: _isSearching
-                      ? Row(
-                          key: const ValueKey('searching_header'),
-                          children: [
-                            PremiumSection(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(32),
-                                bottomLeft: Radius.circular(32),
-                                topRight: Radius.circular(10),
-                                bottomRight: Radius.circular(10),
-                              ),
-                              width: 48,
-                              height: 48,
-                              useBlur: useBlur,
-                              useExpanded: false,
-                              forceNoBlur: true,
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                setState(() {
-                                  _isSearching = false;
-                                  _searchController.clear();
-                                });
-                              },
-                              child: const Icon(
-                                LucideIcons.arrowLeft,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Container(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Header title / Search bar
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: _isSearching
+                        ? Row(
+                            key: const ValueKey('searching_header'),
+                            children: [
+                              PremiumSection(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(32),
+                                  bottomLeft: Radius.circular(32),
+                                  topRight: Radius.circular(10),
+                                  bottomRight: Radius.circular(10),
+                                ),
+                                width: 48,
                                 height: 48,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
+                                useBlur: useBlur,
+                                useExpanded: false,
+                                forceNoBlur: true,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  setState(() {
+                                    _isSearching = false;
+                                    _searchController.clear();
+                                  });
+                                },
+                                child: const Icon(
+                                  LucideIcons.arrowLeft,
+                                  color: Colors.white,
+                                  size: 20,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.06),
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(10),
-                                    bottomLeft: Radius.circular(10),
-                                    topRight: Radius.circular(32),
-                                    bottomRight: Radius.circular(32),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Container(
+                                  height: 48,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
                                   ),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.08),
-                                  ),
-                                ),
-                                child: Center(
-                                  child: TextField(
-                                    controller: _searchController,
-                                    autofocus: true,
-                                    style: AppFonts.jostStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.06),
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(10),
+                                      bottomLeft: Radius.circular(10),
+                                      topRight: Radius.circular(32),
+                                      bottomRight: Radius.circular(32),
                                     ),
-                                    decoration: InputDecoration(
-                                      hintText: 'Search settings...',
-                                      hintStyle: AppFonts.jostStyle(
-                                        color: Colors.white38,
+                                    border: Border.all(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.08,
                                       ),
-                                      border: InputBorder.none,
-                                      isDense: true,
-                                      suffixIcon:
-                                          _searchController.text.isNotEmpty
-                                              ? IconButton(
-                                                  icon: const Icon(
-                                                    LucideIcons.x,
-                                                    color: Colors.white70,
-                                                    size: 18,
-                                                  ),
-                                                  padding: EdgeInsets.zero,
-                                                  constraints:
-                                                      const BoxConstraints(),
-                                                  onPressed: () {
-                                                    _searchController.clear();
-                                                    setState(() {});
-                                                  },
-                                                )
-                                              : null,
                                     ),
-                                    onChanged: (val) {
-                                      setState(() {});
-                                    },
+                                  ),
+                                  child: Center(
+                                    child: TextField(
+                                      controller: _searchController,
+                                      autofocus: true,
+                                      style: AppFonts.jostStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                      ),
+                                      decoration: InputDecoration(
+                                        hintText: l10n.searchSettingsHint,
+                                        hintStyle: AppFonts.jostStyle(
+                                          color: Colors.white38,
+                                        ),
+                                        border: InputBorder.none,
+                                        isDense: true,
+                                        suffixIcon:
+                                            _searchController.text.isNotEmpty
+                                            ? IconButton(
+                                                icon: const Icon(
+                                                  LucideIcons.x,
+                                                  color: Colors.white70,
+                                                  size: 18,
+                                                ),
+                                                padding: EdgeInsets.zero,
+                                                constraints:
+                                                    const BoxConstraints(),
+                                                onPressed: () {
+                                                  _searchController.clear();
+                                                  setState(() {});
+                                                },
+                                              )
+                                            : null,
+                                      ),
+                                      onChanged: (val) {
+                                        setState(() {});
+                                      },
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          key: const ValueKey('standard_header'),
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            ],
+                          )
+                        : Row(
+                            key: const ValueKey('standard_header'),
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              PremiumSection(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(32),
+                                  bottomLeft: Radius.circular(32),
+                                  topRight: Radius.circular(10),
+                                  bottomRight: Radius.circular(10),
+                                ),
+                                width: 48,
+                                height: 48,
+                                useBlur: useBlur,
+                                forceNoBlur: true,
+                                useExpanded: false,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  ref
+                                      .read(appNavigationProvider.notifier)
+                                      .goBack();
+                                },
+                                child: const Icon(
+                                  LucideIcons.arrowLeft,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                              Text(
+                                l10n.settings,
+                                style: AppFonts.jostStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              PremiumSection(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(10),
+                                  bottomLeft: Radius.circular(10),
+                                  topRight: Radius.circular(32),
+                                  bottomRight: Radius.circular(32),
+                                ),
+                                width: 48,
+                                height: 48,
+                                useExpanded: false,
+                                forceNoBlur: true,
+                                useBlur: useBlur,
+                                onTap: () {
+                                  HapticFeedback.lightImpact();
+                                  setState(() {
+                                    _isSearching = true;
+                                  });
+                                },
+                                child: const Icon(
+                                  LucideIcons.search,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
+                ),
+
+                // Settings Body
+                Expanded(
+                  child: _isSearching
+                      ? _buildSearchResults(context, ref, settings, l10n)
+                      : ListView(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 12.0,
+                          ),
+                          physics: const BouncingScrollPhysics(),
                           children: [
-                            PremiumSection(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(32),
-                                bottomLeft: Radius.circular(32),
-                                topRight: Radius.circular(10),
-                                bottomRight: Radius.circular(10),
-                              ),
-                              width: 48,
-                              height: 48,
+                            // 1. Theme & Appearance
+                            _buildCategoryGroup(
+                              context: context,
+                              id: 'theme',
+                              title: l10n.theme,
+                              subtitle: l10n.customizeColorsTheme,
+                              icon: LucideIcons.palette,
+                              colorScheme: Theme.of(context).colorScheme,
                               useBlur: useBlur,
-                              forceNoBlur: true,
-                              useExpanded: false,
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                ref
-                                    .read(appNavigationProvider.notifier)
-                                    .goBack();
-                              },
-                              child: const Icon(
-                                LucideIcons.arrowLeft,
-                                color: Colors.white,
-                                size: 20,
-                              ),
+                              settings: settings,
                             ),
-                            Text(
-                              l10n.settings,
-                              style: AppFonts.jostStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            PremiumSection(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(10),
-                                bottomLeft: Radius.circular(10),
-                                topRight: Radius.circular(32),
-                                bottomRight: Radius.circular(32),
-                              ),
-                              width: 48,
-                              height: 48,
-                              useExpanded: false,
-                              forceNoBlur: true,
+
+                            // 2. Home Screen Customization
+                            _buildCategoryGroup(
+                              context: context,
+                              id: 'dashboard',
+                              title: l10n.homeDashboardSettings,
+                              subtitle: l10n.homeDashboardSettingsDesc,
+                              icon: LucideIcons.layout,
+                              colorScheme: Theme.of(context).colorScheme,
                               useBlur: useBlur,
-                              onTap: () {
-                                HapticFeedback.lightImpact();
-                                setState(() {
-                                  _isSearching = true;
-                                });
-                              },
-                              child: const Icon(
-                                LucideIcons.search,
-                                color: Colors.white,
-                                size: 20,
-                              ),
+                              settings: settings,
                             ),
+
+                            // 3. Playback & Language
+                            _buildCategoryGroup(
+                              context: context,
+                              id: 'playback',
+                              title: l10n.playbackAudio,
+                              subtitle: l10n.manageLanguageAndFocus,
+                              icon: LucideIcons.playCircle,
+                              colorScheme: Theme.of(context).colorScheme,
+                              useBlur: useBlur,
+                              settings: settings,
+                            ),
+
+                            // 4. Audio & Playback
+                            _buildCategoryGroup(
+                              context: context,
+                              id: 'audio_playback',
+                              title: l10n.audioPlayback,
+                              subtitle: l10n.audioPlaybackDesc,
+                              icon: LucideIcons.music,
+                              colorScheme: Theme.of(context).colorScheme,
+                              useBlur: useBlur,
+                              settings: settings,
+                            ),
+
+                            // 5. Music Library
+                            _buildCategoryGroup(
+                              context: context,
+                              id: 'library',
+                              title: l10n.musicLibrary,
+                              subtitle: l10n.libraryFoldersSync,
+                              icon: LucideIcons.database,
+                              colorScheme: Theme.of(context).colorScheme,
+                              useBlur: useBlur,
+                              settings: settings,
+                            ),
+
+                            // 6. Backups & Logs
+                            _buildCategoryGroup(
+                              context: context,
+                              id: 'backups_logs',
+                              title: l10n.backupsAndLogs,
+                              subtitle: l10n.backupsAndLogsDesc,
+                              icon: LucideIcons.databaseBackup,
+                              colorScheme: Theme.of(context).colorScheme,
+                              useBlur: useBlur,
+                              settings: settings,
+                            ),
+
+                            // 7. About & Creators
+                            _buildCategoryGroup(
+                              context: context,
+                              id: 'about',
+                              title: l10n.aboutAndMaintainers,
+                              subtitle: l10n.appDetailsCreator,
+                              icon: LucideIcons.info,
+                              colorScheme: Theme.of(context).colorScheme,
+                              useBlur: useBlur,
+                              settings: settings,
+                            ),
+
+                            // 7. Support Us
+                            _buildCategoryGroup(
+                              context: context,
+                              id: 'support_us',
+                              title: l10n.supportUs,
+                              subtitle: l10n.supportUsDesc,
+                              icon: LucideIcons.heart,
+                              colorScheme: Theme.of(context).colorScheme,
+                              useBlur: useBlur,
+                              settings: settings,
+                            ),
+
+                            const SizedBox(
+                              height: 140,
+                            ), // Bottom breathing room for expanded player bar
                           ],
                         ),
                 ),
-              ),
-
-              // Settings Body
-              Expanded(
-                child: _isSearching
-                    ? _buildSearchResults(context, ref, settings, l10n)
-                    : ListView(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 12.0,
-                        ),
-                        physics: const BouncingScrollPhysics(),
-                        children: [
-                          // 1. Theme & Appearance
-                          _buildCategoryGroup(
-                            context: context,
-                            id: 'theme',
-                            title: l10n.theme,
-                            subtitle: l10n.customizeColorsTheme,
-                            icon: LucideIcons.palette,
-                            colorScheme: Theme.of(context).colorScheme,
-                            useBlur: useBlur,
-                            settings: settings,
-                          ),
-
-                          // 2. Home Screen Customization
-                          _buildCategoryGroup(
-                            context: context,
-                            id: 'dashboard',
-                            title: l10n.homeDashboardSettings,
-                            subtitle: l10n.homeDashboardSettingsDesc,
-                            icon: LucideIcons.layout,
-                            colorScheme: Theme.of(context).colorScheme,
-                            useBlur: useBlur,
-                            settings: settings,
-                          ),
-
-                          // 3. Playback & Language
-                          _buildCategoryGroup(
-                            context: context,
-                            id: 'playback',
-                            title: l10n.playbackAudio,
-                            subtitle: l10n.manageLanguageAndFocus,
-                            icon: LucideIcons.playCircle,
-                            colorScheme: Theme.of(context).colorScheme,
-                            useBlur: useBlur,
-                            settings: settings,
-                          ),
-
-                          // 4. Audio & Playback
-                          _buildCategoryGroup(
-                            context: context,
-                            id: 'audio_playback',
-                            title: l10n.audioPlayback,
-                            subtitle: l10n.audioPlaybackDesc,
-                            icon: LucideIcons.music,
-                            colorScheme: Theme.of(context).colorScheme,
-                            useBlur: useBlur,
-                            settings: settings,
-                          ),
-
-                          // SpatialFlow Network Streaming Mode
-                          _buildCategoryGroup(
-                            context: context,
-                            id: 'streaming',
-                            title: 'Network Streaming & Mode',
-                            subtitle: 'Hybrid, Local-only, or Online Streaming mode',
-                            icon: LucideIcons.globe,
-                            colorScheme: Theme.of(context).colorScheme,
-                            useBlur: useBlur,
-                            settings: settings,
-                          ),
-
-                          // 5. Music Library
-                          _buildCategoryGroup(
-                            context: context,
-                            id: 'library',
-                            title: l10n.musicLibrary,
-                            subtitle: l10n.libraryFoldersSync,
-                            icon: LucideIcons.database,
-                            colorScheme: Theme.of(context).colorScheme,
-                            useBlur: useBlur,
-                            settings: settings,
-                          ),
-
-                          // 7. About & Creators
-                          _buildCategoryGroup(
-                            context: context,
-                            id: 'about',
-                            title: l10n.aboutAndMaintainers,
-                            subtitle: l10n.appDetailsCreator,
-                            icon: LucideIcons.info,
-                            colorScheme: Theme.of(context).colorScheme,
-                            useBlur: useBlur,
-                            settings: settings,
-                          ),
-
-                          // 7. Support Us
-                          _buildCategoryGroup(
-                            context: context,
-                            id: 'support_us',
-                            title: l10n.supportUs,
-                            subtitle: l10n.supportUsDesc,
-                            icon: LucideIcons.heart,
-                            colorScheme: Theme.of(context).colorScheme,
-                            useBlur: useBlur,
-                            settings: settings,
-                          ),
-
-                          const SizedBox(
-                            height: 140,
-                          ), // Bottom breathing room for expanded player bar
-                        ],
-                      ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
+    );
   }
 
   Widget _buildCategoryGroup({
@@ -464,26 +500,15 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                 _showSupportUsDialog(context, colorScheme, useBlur);
                 return;
               }
-              Navigator.of(context).push(
-                PageRouteBuilder(
-                  settings: const RouteSettings(name: 'settings_subpage'),
-                  opaque: false,
-                  transitionDuration: const Duration(milliseconds: 350),
-                  reverseTransitionDuration: const Duration(milliseconds: 250),
-                  pageBuilder: (context, animation, secondaryAnimation) {
-                    return SettingsCategoryScreen(categoryId: id, title: title);
-                  },
-                  transitionsBuilder:
-                      (context, animation, secondaryAnimation, child) {
-                    return SharedAxisTransition(
-                      animation: animation,
-                      secondaryAnimation: secondaryAnimation,
-                      transitionType: SharedAxisTransitionType.horizontal,
-                      child: child,
-                    );
-                  },
-                ),
-              );
+              // Routed through appNavigationProvider (not a raw Navigator
+              // push) so the sub-page is tracked in nav history -- otherwise
+              // the system back button's PopScope handler (which always
+              // resolves through appNavigationProvider.goBack()) has no
+              // record of this level and collapses straight past both this
+              // screen and Settings back to the main tab in one shot.
+              ref
+                  .read(appNavigationProvider.notifier)
+                  .showSettingsCategory(id: id, title: title);
             },
             borderRadius: BorderRadius.circular(20),
             child: Padding(
@@ -493,7 +518,9 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Color(settings.accentColor).withValues(alpha: 0.08),
+                      color: Color(
+                        settings.accentColor,
+                      ).withValues(alpha: 0.08),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -563,7 +590,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
             const Icon(LucideIcons.search, size: 48, color: Colors.white24),
             const SizedBox(height: 16),
             Text(
-              'Type to search settings...',
+              l10n.typeToSearchSettings,
               style: AppFonts.jostStyle(
                 color: Colors.white38,
                 fontSize: 15,
@@ -677,6 +704,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           category: l10n.theme,
           widget: const PureBlackOledTile(),
         ),
+        SettingsSearchItem(
+          title: l10n.alwaysBlurSheets,
+          subtitle: l10n.alwaysBlurSheetsDesc,
+          category: l10n.theme,
+          widget: const AlwaysBlurSheetsTile(),
+        ),
         if (!settings.dynamicAccentColor) ...[
           SettingsSearchItem(
             title: l10n.accentColor,
@@ -693,13 +726,13 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ],
       ],
       //if (!settings.enableDynamicTheming)
-        SettingsSearchItem(
-          title: l10n.dynamicLyricsBg,
-          subtitle: l10n.dynamicBgOnlyLyrics,
-          category: l10n.theme,
-          widget: const DynamicLyricsBgTile(),
-        ),
-      if ( !settings.dynamicLyrics)
+      SettingsSearchItem(
+        title: l10n.ambientColorBackground,
+        subtitle: l10n.ambientColorBackgroundDesc,
+        category: l10n.theme,
+        widget: const AmbientLyricsBgTile(),
+      ),
+      if (!settings.ambientColorBackground)
         SettingsSearchItem(
           title: 'Blurred Artwork for Lyrics',
           subtitle:
@@ -786,7 +819,8 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ),
         SettingsSearchItem(
           title: 'Lyrics Font Weight',
-          subtitle: 'Lyrics font weight: ${700 + settings.activeLyricsFontWeightDelta * 100}',
+          subtitle:
+              'Lyrics font weight: ${700 + settings.activeLyricsFontWeightDelta * 100}',
           category: l10n.theme,
           widget: const LyricsFontWeightSelectionTile(),
         ),
@@ -812,6 +846,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         widget: const ShowGenresRowTile(),
       ),
       SettingsSearchItem(
+        title: l10n.showRecentRow,
+        subtitle: l10n.showRecentRowDesc,
+        category: l10n.homeDashboardSettings,
+        widget: const ShowRecentRowTile(),
+      ),
+      SettingsSearchItem(
         title: l10n.reorderDashboardSections,
         subtitle: l10n.reorderDashboardSectionsDesc,
         category: l10n.homeDashboardSettings,
@@ -825,11 +865,18 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         category: l10n.playbackAudio,
         widget: const LanguageTile(),
       ),
+      if (!Platform.isLinux)
+        SettingsSearchItem(
+          title: 'Vertical Motion Effect Player',
+          subtitle: 'Swipe down on the expanded player to dismiss it',
+          category: l10n.playbackAudio,
+          widget: const VerticalMotionEffectTile(),
+        ),
       SettingsSearchItem(
-        title: 'Vertical Motion Effect Player',
-        subtitle: 'Swipe down on the expanded player to dismiss it',
+        title: 'Equalizer',
+        subtitle: 'Adjust 18-band equalizer and audio presets',
         category: l10n.playbackAudio,
-        widget: const VerticalMotionEffectTile(),
+        widget: const EqualizerTile(),
       ),
       if (Platform.isAndroid)
         SettingsSearchItem(
@@ -876,34 +923,10 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         ),
         if (settings.audioFocus) ...[
           SettingsSearchItem(
-            title: l10n.audioFocusGetFocus,
-            subtitle: l10n.audioFocusGetFocusDesc,
+            title: l10n.resumeAfterCallTitle,
+            subtitle: l10n.resumeAfterCallDesc,
             category: l10n.audioPlayback,
-            widget: const AudioFocusRequestOnPlayTile(),
-          ),
-          SettingsSearchItem(
-            title: l10n.audioFocusReleaseFocus,
-            subtitle: l10n.audioFocusReleaseFocusDesc,
-            category: l10n.audioPlayback,
-            widget: const AudioFocusReleaseOnPauseTile(),
-          ),
-          SettingsSearchItem(
-            title: l10n.audioFocusStopOnOtherSession,
-            subtitle: l10n.audioFocusStopOnOtherSessionDesc,
-            category: l10n.audioPlayback,
-            widget: const AudioFocusStopOnOtherSessionTile(),
-          ),
-          SettingsSearchItem(
-            title: l10n.audioFocusRestartOnGain,
-            subtitle: l10n.audioFocusRestartOnGainDesc,
-            category: l10n.audioPlayback,
-            widget: const AudioFocusRestartOnGainTile(),
-          ),
-          SettingsSearchItem(
-            title: l10n.pauseOnDuckTitle,
-            subtitle: l10n.pauseOnDuckDesc,
-            category: l10n.audioPlayback,
-            widget: const PauseOnDuckTile(),
+            widget: const ResumeAfterCallTile(),
           ),
           SettingsSearchItem(
             title: l10n.resumeOnBluetoothConnectTitle,
@@ -931,6 +954,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         category: l10n.audioPlayback,
         widget: const PersistQueueTile(),
       ),
+      SettingsSearchItem(
+        title: l10n.keepSongProgressTitle,
+        subtitle: l10n.keepSongProgressDesc,
+        category: l10n.audioPlayback,
+        widget: const KeepSongProgressTile(),
+      ),
 
       // Library
       SettingsSearchItem(
@@ -952,6 +981,12 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
         widget: const RescanLibraryTile(),
       ),
       SettingsSearchItem(
+        title: 'Include other device audio',
+        subtitle: 'Ringtones, notifications and messaging audio',
+        category: l10n.musicLibrary,
+        widget: const IncludeSystemAndMessagingAudioTile(),
+      ),
+      SettingsSearchItem(
         title: l10n.resetLibrary,
         subtitle: 'Clear library data',
         category: l10n.musicLibrary,
@@ -961,7 +996,7 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
       // About
       SettingsSearchItem(
         title: 'Looper Player Version',
-        subtitle: 'Version 2.2.0',
+        subtitle: 'Version ${ref.watch(appVersionProvider).value ?? ""}'.trim(),
         category: l10n.aboutAndMaintainers,
         widget: const LooperVersionTile(),
       ),
@@ -1004,6 +1039,8 @@ class SettingsCategoryScreen extends ConsumerWidget {
           const DynamicAccentColorTile(),
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const PureBlackOledTile(),
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const AlwaysBlurSheetsTile(),
           if (!settings.dynamicAccentColor) ...[
             const Divider(height: 1, indent: 72, color: Colors.white10),
             const AccentColorTile(),
@@ -1011,13 +1048,14 @@ class SettingsCategoryScreen extends ConsumerWidget {
             const CustomAccentColorTile(),
           ],
         ],
-       // if (!settings.enableDynamicTheming) ...[
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const DynamicLyricsBgTile(),
-       // ],
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const BlurredArtworkLyricsTile(),
-        if (settings.enableDynamicTheming || settings.dynamicLyrics) ...[
+        // if (!settings.enableDynamicTheming) ...[
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        const AmbientLyricsBgTile(),
+        // ],
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        const BlurredArtworkLyricsTile(),
+        if (settings.enableDynamicTheming ||
+            settings.ambientColorBackground) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const DynamicColorActiveLyricsTile(),
         ],
@@ -1065,13 +1103,23 @@ class SettingsCategoryScreen extends ConsumerWidget {
           const MusicDarknessSlider(),
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const LyricsDarknessSlider(),
-        ] else if (settings.dynamicLyrics ||
-            settings.keepBackgroundGradient ||
-            settings.blurredArtworkForLyrics) ...[
-          const Divider(height: 1, indent: 72, color: Colors.white10),
-          const LyricsDarknessSlider(),
+        ] else ...[
+          if (settings.keepBackgroundGradient) ...[
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const HomeDarknessSlider(),
+          ],
+          if (settings.enablePlayerGradient) ...[
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const MusicDarknessSlider(),
+          ],
+          if (settings.ambientColorBackground ||
+              settings.keepBackgroundGradient ||
+              settings.blurredArtworkForLyrics) ...[
+            const Divider(height: 1, indent: 72, color: Colors.white10),
+            const LyricsDarknessSlider(),
+          ],
         ],
-        const PerformanceOptimizerTile(),
+        //const PerformanceOptimizerTile(),
       ];
     } else if (categoryId == 'dashboard') {
       children = [
@@ -1081,13 +1129,17 @@ class SettingsCategoryScreen extends ConsumerWidget {
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const ShowGenresRowTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
+        const ShowRecentRowTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
         const ReorderDashboardSectionsTile(),
       ];
     } else if (categoryId == 'playback') {
       children = [
         const LanguageTile(),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        const VerticalMotionEffectTile(),
+        if (!Platform.isLinux) ...[
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const VerticalMotionEffectTile(),
+        ],
         if (Platform.isAndroid) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const StopServiceTile(),
@@ -1099,6 +1151,8 @@ class SettingsCategoryScreen extends ConsumerWidget {
       ];
     } else if (categoryId == 'audio_playback') {
       children = [
+        const EqualizerTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
         const FadePlayPauseStopTile(),
         if (settings.fadePlayPauseStop) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
@@ -1109,6 +1163,8 @@ class SettingsCategoryScreen extends ConsumerWidget {
         const ShuffleTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const PersistQueueTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        const KeepSongProgressTile(),
         if (!Platform.isAndroid) ...[
           const Divider(height: 1, indent: 72, color: Colors.white10),
           const ResumeOnStartTile(),
@@ -1118,27 +1174,13 @@ class SettingsCategoryScreen extends ConsumerWidget {
           const ManageAudioFocusTile(),
           if (settings.audioFocus) ...[
             const Divider(height: 1, indent: 72, color: Colors.white10),
-            const AudioFocusRequestOnPlayTile(),
-            const Divider(height: 1, indent: 72, color: Colors.white10),
-            const AudioFocusReleaseOnPauseTile(),
-            const Divider(height: 1, indent: 72, color: Colors.white10),
-            const AudioFocusStopOnOtherSessionTile(),
-            const Divider(height: 1, indent: 72, color: Colors.white10),
-            const AudioFocusRestartOnGainTile(),
-            const Divider(height: 1, indent: 72, color: Colors.white10),
-            const PauseOnDuckTile(),
+            const ResumeAfterCallTile(),
             const Divider(height: 1, indent: 72, color: Colors.white10),
             const ResumeOnBluetoothConnectTile(),
-            const Divider(height: 1, indent: 72, color: Colors.white10),
-            const ResumeOnStartTile(),
           ],
+          const Divider(height: 1, indent: 72, color: Colors.white10),
+          const ResumeOnStartTile(),
         ],
-      ];
-    } else if (categoryId == 'streaming') {
-      children = [
-        const StreamingModeTile(),
-        const Divider(height: 1, indent: 72, color: Colors.white10),
-        const StreamingQualityTile(),
       ];
     } else if (categoryId == 'library') {
       children = [
@@ -1148,42 +1190,55 @@ class SettingsCategoryScreen extends ConsumerWidget {
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const SyncLyricsOfflineTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
+        const IncludeSystemAndMessagingAudioTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
         const RescanLibraryTile(),
         const Divider(height: 1, indent: 72, color: Colors.white10),
         const ResetLibraryTile(),
       ];
-
+    } else if (categoryId == 'backups_logs') {
+      children = [
+        const ExportBackupTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        const ImportBackupTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        const ExportLogsTile(),
+        const Divider(height: 1, indent: 72, color: Colors.white10),
+        const ClearLogsTile(),
+      ];
     } else if (categoryId == 'about') {
       children = [
         const LooperVersionTile(), //1
         const Divider(height: 1, indent: 72, color: Colors.white10), //2
-        const LyricsProviderTile(), //3
-        const Divider(height: 1, indent: 72, color: Colors.white10),//4
-        AboutMaintainerRow( //5
+        AboutMaintainerRow(
+          //3
           name: 'Nilesh Suthar',
           role: l10n.creatorAndMaintainer,
           avatar: 'assets/about/maintainer_avatar.png',
-          github: 'https://github.com/SthrNilshaaa',
-          telegram: 'https://t.me/neelshy',
+          github: AppLinks.nileshGithub,
+          telegram: AppLinks.nileshTelegram,
         ),
-        const Divider(height: 1, indent: 72, color: Colors.white10), //6
-        AboutMaintainerRow( //7
+        const Divider(height: 1, indent: 72, color: Colors.white10), //4
+        AboutMaintainerRow(
+          //5
           name: 'Krn.',
           role: l10n.designerAndMaintainer,
           avatar: 'assets/about/designer_avatar.png',
-          github: 'https://github.com/sthrkaran',
-          telegram: 'https://t.me/karanwhy',
+          github: AppLinks.karanGithub,
+          telegram: AppLinks.karanTelegram,
+        ),
+        const Divider(height: 1, indent: 72, color: Colors.white10), //6
+        AboutMaintainerRow(
+          //7
+          name: 'Madan Suthar',
+          role: 'Free Rider',
+          avatar: 'assets/about/free_rider_avatar.png',
+          github: AppLinks.madanGithub,
+          telegram: AppLinks.madanTelegram,
         ),
         const Divider(height: 1, indent: 72, color: Colors.white10), //8
-        AboutMaintainerRow( //9
-          name: 'Madan Suthar',
-          role: 'Active Contributor',
-          avatar: 'assets/about/designer_avatar.png',
-          github: 'https://github.com/',
-          telegram: 'https://t.me/madansthr',
-        ),
-        const Divider(height: 1, indent: 72, color: Colors.white10), //10
-        Padding(  //11
+        Padding(
+          //11
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1251,7 +1306,11 @@ class SettingsCategoryScreen extends ConsumerWidget {
                     useExpanded: false,
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      Navigator.of(context).pop();
+                      // Go through appNavigationProvider (not a raw Navigator
+                      // pop) so its logical history stays in sync with the
+                      // physical route stack -- see showSettingsCategory's
+                      // call site for why that matters for the back button.
+                      ref.read(appNavigationProvider.notifier).goBack();
                     },
                     child: const Icon(
                       LucideIcons.arrowLeft,
@@ -1293,7 +1352,9 @@ class SettingsCategoryScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(14),
                           useExpanded: false,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 20),
+                            horizontal: 20,
+                            vertical: 20,
+                          ),
                           child: Row(
                             children: [
                               SvgPicture.asset(
@@ -1304,7 +1365,9 @@ class SettingsCategoryScreen extends ConsumerWidget {
                               const Spacer(),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 8),
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   borderRadius: const BorderRadius.only(
                                     topLeft: Radius.circular(32),
@@ -1318,7 +1381,8 @@ class SettingsCategoryScreen extends ConsumerWidget {
                                   ),
                                 ),
                                 child: Text(
-                                  'Version 2.2',
+                                  'v${ref.watch(appVersionProvider).value ?? ""}'
+                                      .trim(),
                                   style: AppFonts.jostStyle(
                                     color: Colors.white,
                                     fontSize: 14,
@@ -1331,13 +1395,14 @@ class SettingsCategoryScreen extends ConsumerWidget {
                                 onTap: () async {
                                   HapticFeedback.lightImpact();
                                   final Uri uri = Uri.parse(
-                                      'https://github.com/SthrNilshaaa/looper');
+                                    AppLinks.githubRepo,
+                                  );
                                   try {
-                                    await launchUrl(uri,
-                                        mode: LaunchMode.externalApplication);
-                                  } catch (e) {
-
-                                  }
+                                    await launchUrl(
+                                      uri,
+                                      mode: LaunchMode.externalApplication,
+                                    );
+                                  } catch (e) {}
                                 },
                                 child: SizedBox(
                                   width: 32,
@@ -1357,6 +1422,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                         const SizedBox(height: 12),
                         // Give Star on Github Card
                         const GitHubStarTile(),
+
                         const SizedBox(height: 32),
                         // Maintainers Header
                         Padding(
@@ -1365,7 +1431,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Maintainers',
+                                l10n.maintainersLabel,
                                 style: AppFonts.jostStyle(
                                   color: Colors.white,
                                   fontSize: 26,
@@ -1374,7 +1440,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Person behind LooperPlayer',
+                                l10n.personBehindLooperPlayer,
                                 style: AppFonts.jostStyle(
                                   color: Colors.white.withValues(alpha: 0.4),
                                   fontSize: 14,
@@ -1392,7 +1458,7 @@ class SettingsCategoryScreen extends ConsumerWidget {
                           useExpanded: false,
                           padding: const EdgeInsets.symmetric(vertical: 8),
                           child: Column(
-                            children: children.sublist(4,7), //.sublist(2, 5),
+                            children: children.sublist(2, 7), //.sublist(2, 5),
                           ),
                         ),
                         const SizedBox(height: 32),
@@ -1403,10 +1469,13 @@ class SettingsCategoryScreen extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(14),
                           useExpanded: false,
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 20),
+                            horizontal: 20,
+                            vertical: 20,
+                          ),
                           child: children.last,
                         ),
                         const SizedBox(height: 120),
+                        const OpenSourceLicensesTile(),
                       ]
                     : [
                         PremiumSection(
@@ -1431,7 +1500,6 @@ class SettingsCategoryScreen extends ConsumerWidget {
   }
 }
 
-
 class _PulsingHeart extends StatefulWidget {
   const _PulsingHeart();
 
@@ -1439,7 +1507,8 @@ class _PulsingHeart extends StatefulWidget {
   State<_PulsingHeart> createState() => _PulsingHeartState();
 }
 
-class _PulsingHeartState extends State<_PulsingHeart> with SingleTickerProviderStateMixin {
+class _PulsingHeartState extends State<_PulsingHeart>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
@@ -1450,9 +1519,10 @@ class _PulsingHeartState extends State<_PulsingHeart> with SingleTickerProviderS
       vsync: this,
       duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.15,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -1478,11 +1548,7 @@ class _PulsingHeartState extends State<_PulsingHeart> with SingleTickerProviderS
             ),
           ],
         ),
-        child: const Icon(
-          LucideIcons.heart,
-          color: Colors.redAccent,
-          size: 32,
-        ),
+        child: const Icon(LucideIcons.heart, color: Colors.redAccent, size: 32),
       ),
     );
   }

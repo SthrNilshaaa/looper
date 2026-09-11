@@ -2,11 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'squiggly_slider/slider.dart';
-import 'package:looper_player/core/ui_utils.dart';
-import 'package:looper_player/core/ui_calculations.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/core/ui_utils.dart';
 
 class ExpressiveSlider extends ConsumerStatefulWidget {
   final Duration position;
@@ -37,7 +36,12 @@ class ExpressiveSlider extends ConsumerStatefulWidget {
 class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
   double? _dragValue;
 
-
+  String _formatDuration(Duration duration) {
+    return UiUtils.formatPlaybackDuration(
+      duration,
+      showHours: widget.duration.inHours > 0,
+    );
+  }
 
   Widget _buildAnimatedDuration(String durationStr, bool isRightAligned) {
     final settings = ref.watch(settingsProvider);
@@ -45,7 +49,7 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
       return Text(
         durationStr,
         style: AppFonts.jostStyle(
-          color: Colors.white70,
+          color: Colors.white,
           fontWeight: Platform.isLinux ? FontWeight.w300 : FontWeight.w600,
           fontSize: 14,
           fontFeatures: const [FontFeature.tabularFigures()],
@@ -79,8 +83,10 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
               char,
               key: ValueKey(char),
               style: AppFonts.jostStyle(
-                color: Colors.white70,
-                fontWeight:Platform.isLinux ? FontWeight.w300: FontWeight.w600,
+                color: Colors.white,
+                fontWeight: Platform.isLinux
+                    ? FontWeight.w300
+                    : FontWeight.w600,
                 fontSize: 12,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
@@ -95,26 +101,29 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final double progress = UiCalculations.getProgressFraction(widget.position, widget.duration);
+    final double progress = widget.duration.inMilliseconds > 0
+        ? (widget.position.inMilliseconds / widget.duration.inMilliseconds)
+              .clamp(0.0, 1.0)
+        : 0.0;
 
     final displayValue = _dragValue ?? progress;
     final bool enableWave = widget.isPlaying && displayValue > 0.12;
-    final displayPosition = _dragValue != null 
-        ? widget.duration * _dragValue! 
+    final displayPosition = _dragValue != null
+        ? widget.duration * _dragValue!
         : widget.position;
 
-    final targetAmplitude = settings.disableSquiggle ? 0.0 : (enableWave ? 2.0 : 0.0);
+    final targetAmplitude = settings.disableSquiggle
+        ? 0.0
+        : (enableWave ? 2.0 : 0.0);
 
     final sliderWidget = SliderTheme(
       data: SliderTheme.of(context).copyWith(
         trackHeight: Platform.isLinux ? 3.0 : 8.0,
         activeTrackColor: widget.color,
-        trackShape: PremiumGapTrackShape(
-          gap: Platform.isLinux ? 4 : 6,
-        ),
+        trackShape: PremiumGapTrackShape(gap: Platform.isLinux ? 4 : 6),
         inactiveTrackColor: Colors.white10,
-        
-         thumbShape:  LineThumbShape(
+
+        thumbShape: LineThumbShape(
           thumbHeight: Platform.isLinux ? 12 : 16,
           thumbWidth: Platform.isLinux ? 3 : 6,
         ),
@@ -142,8 +151,8 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
             activeColor: widget.color,
             inactiveColor: Colors.white10,
             squiggleAmplitude: amplitude,
-            squiggleWavelength:Platform.isLinux? 4.5:6.0,
-            squiggleSpeed:Platform.isLinux? 0.08:0.05,
+            squiggleWavelength: Platform.isLinux ? 4.5 : 6.0,
+            squiggleSpeed: Platform.isLinux ? 0.08 : 0.05,
             useLineThumb: false,
           );
         },
@@ -156,13 +165,13 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (widget.showTimestamps) ...[
-            _buildAnimatedDuration(UiUtils.formatDuration(displayPosition), false),
+            _buildAnimatedDuration(_formatDuration(displayPosition), false),
             const SizedBox(width: 12),
           ],
           Expanded(child: sliderWidget),
           if (widget.showTimestamps) ...[
             const SizedBox(width: 12),
-            _buildAnimatedDuration(UiUtils.formatDuration(widget.duration), true),
+            _buildAnimatedDuration(_formatDuration(widget.duration), true),
           ],
         ],
       );
@@ -179,8 +188,8 @@ class _ExpressiveSliderState extends ConsumerState<ExpressiveSlider> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildAnimatedDuration(UiUtils.formatDuration(displayPosition), false),
-                _buildAnimatedDuration(UiUtils.formatDuration(widget.duration), true),
+                _buildAnimatedDuration(_formatDuration(displayPosition), false),
+                _buildAnimatedDuration(_formatDuration(widget.duration), true),
               ],
             ),
           ),
@@ -230,31 +239,29 @@ class LineThumbShape extends SliderComponentShape {
     );
   }
 }
+
 class PremiumGapTrackShape extends RoundedRectSliderTrackShape {
-    final double gap;
+  final double gap;
 
-  const PremiumGapTrackShape({
-    this.gap = 6,
-    });
+  const PremiumGapTrackShape({this.gap = 6});
 
-    @override
-    void paint(
-      PaintingContext context,
-      Offset offset, {
-      required RenderBox parentBox,
-      required SliderThemeData sliderTheme,
-      required Animation<double> enableAnimation,
-      required Offset thumbCenter,
-      Offset? secondaryOffset,
-      bool isEnabled = false,
-      bool isDiscrete = false,
-      required TextDirection textDirection,
-      double additionalActiveTrackHeight = 0.0,
-    }) {
-        if (sliderTheme.trackHeight == null ||
-          sliderTheme.trackHeight! <= 0) {
-        return;
-        }
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+    required TextDirection textDirection,
+    double additionalActiveTrackHeight = 0.0,
+  }) {
+    if (sliderTheme.trackHeight == null || sliderTheme.trackHeight! <= 0) {
+      return;
+    }
 
     final Rect trackRect = getPreferredRect(
       parentBox: parentBox,
@@ -264,8 +271,7 @@ class PremiumGapTrackShape extends RoundedRectSliderTrackShape {
       isDiscrete: isDiscrete,
     );
 
-    final Paint activePaint = Paint()
-      ..color = sliderTheme.activeTrackColor!;
+    final Paint activePaint = Paint()..color = sliderTheme.activeTrackColor!;
 
     final Paint inactivePaint = Paint()
       ..color = sliderTheme.inactiveTrackColor!;
@@ -299,7 +305,5 @@ class PremiumGapTrackShape extends RoundedRectSliderTrackShape {
 
     context.canvas.drawRRect(activeRRect, activePaint);
     context.canvas.drawRRect(inactiveRRect, inactivePaint);
-
-
   }
 }

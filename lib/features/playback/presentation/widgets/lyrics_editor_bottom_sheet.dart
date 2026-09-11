@@ -9,6 +9,7 @@ import 'package:looper_player/features/playback/domain/lyric_models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 enum LyricsEditorViewMode { simple, advanced }
 
@@ -311,6 +312,23 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
         if (filled[index] != null) index,
     ];
 
+    // A manual stamp can end up chronologically earlier than a stamp on a
+    // line before it (e.g. re-timing an earlier line after later ones were
+    // already stamped) -- unlike the main LRC parser, line order here is
+    // fixed by the text, not re-sorted, so nothing else catches that.
+    // Clamping each stamp to be at least the previous one keeps the
+    // interpolation below strictly non-decreasing, preventing two lines
+    // from landing on (or straddling) the same instant in the saved .lrc --
+    // which is exactly what made the active-line highlight flicker between
+    // them during playback.
+    for (var i = 1; i < stampedIndices.length; i++) {
+      final prevIndex = stampedIndices[i - 1];
+      final index = stampedIndices[i];
+      if (filled[index]! < filled[prevIndex]!) {
+        filled[index] = filled[prevIndex];
+      }
+    }
+
     if (stampedIndices.isEmpty) {
       final totalMs = widget.song.duration ?? 0;
       final interval = totalMs > 0 ? totalMs ~/ sourceLines.length : 2000;
@@ -495,6 +513,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
   }
 
   Future<void> _showInstructions() async {
+    final l10n = AppLocalizations.of(context)!;
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -503,7 +522,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
           borderRadius: BorderRadius.circular(16),
         ),
         title: Text(
-          'Lyrics Sync Help',
+          l10n.lyricsSyncHelp,
           style: AppFonts.jostStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: SingleChildScrollView(
@@ -512,7 +531,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Simple Mode',
+                l10n.simpleModeLabel,
                 style: AppFonts.jostStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -533,7 +552,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
               ),
               const SizedBox(height: 16),
               Text(
-                'Advanced Mode',
+                l10n.advancedModeLabel,
                 style: AppFonts.jostStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -553,7 +572,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
               ),
               const SizedBox(height: 16),
               Text(
-                'Tips',
+                l10n.tips,
                 style: AppFonts.jostStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -576,7 +595,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
-              'Got it',
+              l10n.gotIt,
               style: AppFonts.jostStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
             ),
           ),
@@ -587,6 +606,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     ref.listen<PlaybackState>(playbackProvider, (previous, next) {
       if (next.position != previous?.position) {
         setState(() {
@@ -623,7 +643,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Lyrics Sync Studio',
+                      l10n.lyricsSyncStudio,
                       style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontSize: 22,
@@ -650,7 +670,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
               IconButton(
                 onPressed: _isSaving ? null : _showInstructions,
                 icon: const Icon(LucideIcons.helpCircle, color: Colors.white70),
-                tooltip: 'Instructions',
+                tooltip: l10n.instructionsTooltip,
               ),
             ],
           ),
@@ -689,7 +709,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
-                  child: Text('Cancel', style: AppFonts.jostStyle(fontWeight: FontWeight.bold)),
+                  child: Text(l10n.cancel, style: AppFonts.jostStyle(fontWeight: FontWeight.bold)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -723,6 +743,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
   }
 
   Widget _buildModePicker(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.03),
@@ -748,7 +769,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 alignment: Alignment.center,
                 child: Text(
-                  mode == LyricsEditorViewMode.simple ? 'Simple Mode' : 'Advanced Mode',
+                  mode == LyricsEditorViewMode.simple ? l10n.simpleModeLabel : l10n.advancedModeLabel,
                   style: AppFonts.jostStyle(
                     color: selected ? Colors.black : Colors.white70,
                     fontWeight: FontWeight.bold,
@@ -812,11 +833,12 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
   }
 
   Widget _buildLyricsTextEditor(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Lyrics Text',
+          l10n.lyricsTextLabel,
           style: AppFonts.jostStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -825,7 +847,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
         ),
         const SizedBox(height: 4),
         Text(
-          'One line per lyric row. The sync tools below attach timestamps to these lines.',
+          l10n.lyricsTextHelperDesc,
           style: AppFonts.jostStyle(color: Colors.white38, fontSize: 11),
         ),
         const SizedBox(height: 8),
@@ -835,7 +857,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
           maxLines: 8,
           style: AppFonts.jostStyle(color: Colors.white, fontSize: 14),
           decoration: InputDecoration(
-            hintText: 'Paste or type the song lyrics here',
+            hintText: l10n.pasteLyricsHint,
             hintStyle: AppFonts.jostStyle(color: Colors.white24, fontSize: 14),
             filled: true,
             fillColor: Colors.white.withValues(alpha: 0.02),
@@ -854,6 +876,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
   }
 
   Widget _buildSimpleSyncView(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final selectedLine =
         _selectedLineIndex >= 0 && _selectedLineIndex < _lines.length
         ? _lines[_selectedLineIndex]
@@ -865,7 +888,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Sync',
+          l10n.quickSync,
           style: AppFonts.jostStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -972,7 +995,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
                       onPressed: selectedLine?.timestamp != null
                           ? _clearSelectedTimestamp
                           : null,
-                      child: Text('Clear', style: AppFonts.jostStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      child: Text(l10n.clear, style: AppFonts.jostStyle(fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ),
                 ],
@@ -982,7 +1005,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
                 children: [
                   Expanded(
                     child: Text(
-                      'Auto-advance after stamping',
+                      l10n.autoAdvanceAfterStamping,
                       style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ),
@@ -1010,13 +1033,14 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
   }
 
   Widget _buildAdvancedSyncView(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final accentColor = Theme.of(context).colorScheme.primary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Advanced Sync',
+          l10n.advancedSync,
           style: AppFonts.jostStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -1077,7 +1101,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
                           _stampSelectedLine(advance: false);
                         },
                         icon: const Icon(LucideIcons.clock, size: 12),
-                        label: Text('Use Current Time', style: AppFonts.jostStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                        label: Text(l10n.useCurrentTime, style: AppFonts.jostStyle(fontSize: 11, fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -1097,7 +1121,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
                     onChanged: (value) => _applyTimestampText(index, value),
                     style: AppFonts.jostStyle(color: Colors.white, fontSize: 13),
                     decoration: InputDecoration(
-                      labelText: 'Timestamp (mm:ss.xx)',
+                      labelText: l10n.timestampMmSsHint,
                       labelStyle: AppFonts.jostStyle(color: Colors.white38, fontSize: 12),
                       hintText: '00:12.34',
                       hintStyle: AppFonts.jostStyle(color: Colors.white12, fontSize: 13),
@@ -1124,6 +1148,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
   }
 
   Widget _buildPlaybackTools(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final playbackState = ref.watch(playbackProvider);
     final isPlaying = playbackState.isPlaying;
     final accentColor = Theme.of(context).colorScheme.primary;
@@ -1139,7 +1164,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Playback Assist',
+            l10n.playbackAssist,
             style: AppFonts.jostStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -1196,7 +1221,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
                   readOnly: true,
                   style: AppFonts.jostStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
-                    labelText: 'Now',
+                    labelText: l10n.nowLabel,
                     labelStyle: AppFonts.jostStyle(color: Colors.white38, fontSize: 10),
                     filled: true,
                     fillColor: Colors.white.withValues(alpha: 0.01),
@@ -1220,6 +1245,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
   }
 
   Widget _buildShiftTools(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1231,7 +1257,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Time Shift',
+            l10n.timeShift,
             style: AppFonts.jostStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -1240,7 +1266,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
           ),
           const SizedBox(height: 4),
           Text(
-            'Move every stamped lyric forward or backward together.',
+            l10n.timeShiftDesc,
             style: AppFonts.jostStyle(color: Colors.white38, fontSize: 11),
           ),
           const SizedBox(height: 8),
@@ -1362,6 +1388,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
   }
 
   Widget _buildSaveNotice(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -1380,7 +1407,7 @@ class _LyricsEditorBottomSheetState extends ConsumerState<LyricsEditorBottomShee
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Save writes an `.lrc` sidecar file beside the song audio if possible, and saves it in the local player database. Unstamped lines will be interpolated automatically.',
+              l10n.lyricsSaveLrcExplain,
               style: AppFonts.jostStyle(
                 color: Colors.white38,
                 fontSize: 11,

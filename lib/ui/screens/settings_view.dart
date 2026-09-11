@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,6 +11,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
+import 'package:looper_player/core/providers.dart';
+import 'package:looper_player/ui/screens/android/player/android_equalizer_screen.dart';
 import 'package:looper_player/ui/widgets/folder_picker_helper.dart';
 
 class SettingsView extends ConsumerWidget {
@@ -153,7 +156,10 @@ class SettingsView extends ConsumerWidget {
                           value: 'center',
                           child: Text(l10n.center),
                         ),
-                        DropdownMenuItem(value: 'right', child: Text(l10n.right)),
+                        DropdownMenuItem(
+                          value: 'right',
+                          child: Text(l10n.right),
+                        ),
                       ],
                       onChanged: (align) {
                         if (align != null) {
@@ -191,32 +197,34 @@ class SettingsView extends ConsumerWidget {
                       },
                       isLast: false,
                     ),
-                    _PremiumSwitchRow(
-                      icon: LucideIcons.move,
-                      title: l10n.verticalMotionEffectPlayer,
-                      subtitle: l10n.verticalMotionEffectPlayerDesc,
-                      value: settings.enableSlideGesture,
-                      onChanged: (value) {
-                        HapticFeedback.lightImpact();
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateEnableSlideGesture(value);
-                      },
-                      isLast: false,
-                    ),
-                    _PremiumSwitchRow(
-                      icon: LucideIcons.power,
-                      title: l10n.stopServiceOnAppDismissal,
-                      subtitle: l10n.stopServiceOnAppDismissalDesc,
-                      value: settings.stopOnTaskRemoved,
-                      onChanged: (value) {
-                        HapticFeedback.lightImpact();
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateStopOnTaskRemoved(value);
-                      },
-                      isLast: true,
-                    ),
+                    if (!Platform.isLinux)
+                      _PremiumSwitchRow(
+                        icon: LucideIcons.move,
+                        title: l10n.verticalMotionEffectPlayer,
+                        subtitle: l10n.verticalMotionEffectPlayerDesc,
+                        value: settings.enableSlideGesture,
+                        onChanged: (value) {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateEnableSlideGesture(value);
+                        },
+                        isLast: !Platform.isAndroid,
+                      ),
+                    if (Platform.isAndroid)
+                      _PremiumSwitchRow(
+                        icon: LucideIcons.power,
+                        title: l10n.stopServiceOnAppDismissal,
+                        subtitle: l10n.stopServiceOnAppDismissalDesc,
+                        value: settings.stopOnTaskRemoved,
+                        onChanged: (value) {
+                          HapticFeedback.lightImpact();
+                          ref
+                              .read(settingsProvider.notifier)
+                              .updateStopOnTaskRemoved(value);
+                        },
+                        isLast: true,
+                      ),
                   ],
                 ),
               ),
@@ -240,22 +248,24 @@ class SettingsView extends ConsumerWidget {
                         ),
                         ...AppLocalizations.supportedLocales.map((locale) {
                           final code = locale.languageCode;
-                          final name = {
-                            'en': 'English',
-                            'es': 'Español',
-                            'fr': 'Français',
-                            'de': 'Deutsch',
-                            'pt': 'Português',
-                            'ru': 'Русский',
-                            'it': 'Italiano',
-                            'zh': '中文',
-                            'ja': '日本語',
-                            'ko': '한국어',
-                            'ar': 'العربية',
-                            'tr': 'Türkçe',
-                            'nl': 'Nederlands',
-                            'hi': 'हिन्दी',
-                          }[code] ?? code;
+                          final name =
+                              {
+                                'en': 'English',
+                                'es': 'Español',
+                                'fr': 'Français',
+                                'de': 'Deutsch',
+                                'pt': 'Português',
+                                'ru': 'Русский',
+                                'it': 'Italiano',
+                                'zh': '中文',
+                                'ja': '日本語',
+                                'ko': '한국어',
+                                'ar': 'العربية',
+                                'tr': 'Türkçe',
+                                'nl': 'Nederlands',
+                                'hi': 'हिन्दी',
+                              }[code] ??
+                              code;
                           return DropdownMenuItem(
                             value: code,
                             child: Text(name),
@@ -315,59 +325,84 @@ class SettingsView extends ConsumerWidget {
                         isLast: false,
                       ),
 
-                    _PremiumSwitchRow(
-                      icon: LucideIcons.phoneCall,
-                      title: l10n.manageAudioFocusTitle,
-                      subtitle: l10n.manageAudioFocusDesc,
-                      value: settings.audioFocus,
-                      onChanged: (value) {
-                        HapticFeedback.lightImpact();
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateAudioFocus(value);
+                    _PremiumActionRow(
+                      icon: LucideIcons.sliders,
+                      title: 'Equalizer',
+                      subtitle: settings.equalizerEnabled
+                          ? 'Enabled (18-band MPV EQ)'
+                          : 'Disabled',
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          useSafeArea: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => const AndroidEqualizerScreen(),
+                        );
                       },
-                      isLast: !settings.audioFocus,
+                      trailing: const Icon(
+                        LucideIcons.chevronRight,
+                        color: Colors.white38,
+                        size: 18,
+                      ),
+                      isLast: !Platform.isAndroid,
                     ),
-                    if (settings.audioFocus) ...[
+
+                    if (Platform.isAndroid) ...[
                       _PremiumSwitchRow(
                         icon: LucideIcons.phoneCall,
-                        title: l10n.resumeAfterCallTitle,
-                        subtitle: l10n.resumeAfterCallDesc,
-                        value: settings.resumeAfterCall,
+                        title: l10n.manageAudioFocusTitle,
+                        subtitle: l10n.manageAudioFocusDesc,
+                        value: settings.audioFocus,
                         onChanged: (value) {
                           HapticFeedback.lightImpact();
                           ref
                               .read(settingsProvider.notifier)
-                              .updateResumeAfterCall(value);
+                              .updateAudioFocus(value);
                         },
-                        isLast: false,
+                        isLast: !settings.audioFocus,
                       ),
-                      _PremiumSwitchRow(
-                        icon: LucideIcons.power,
-                        title: l10n.resumeOnStartTitle,
-                        subtitle: l10n.resumeOnStartDesc,
-                        value: settings.resumeOnStart,
-                        onChanged: (value) {
-                          HapticFeedback.lightImpact();
-                          ref
-                              .read(settingsProvider.notifier)
-                              .updateResumeOnStart(value);
-                        },
-                        isLast: false,
-                      ),
-                      _PremiumSwitchRow(
-                        icon: LucideIcons.alertCircle,
-                        title: l10n.permanentFocusChangePause,
-                        subtitle: l10n.permanentFocusChangePauseDesc,
-                        value: settings.permanentAudioFocusChange,
-                        onChanged: (value) {
-                          HapticFeedback.lightImpact();
-                          ref
-                              .read(settingsProvider.notifier)
-                              .updatePermanentAudioFocusChange(value);
-                        },
-                        isLast: true,
-                      ),
+                      if (settings.audioFocus) ...[
+                        _PremiumSwitchRow(
+                          icon: LucideIcons.phoneCall,
+                          title: l10n.resumeAfterCallTitle,
+                          subtitle: l10n.resumeAfterCallDesc,
+                          value: settings.resumeAfterCall,
+                          onChanged: (value) {
+                            HapticFeedback.lightImpact();
+                            ref
+                                .read(settingsProvider.notifier)
+                                .updateResumeAfterCall(value);
+                          },
+                          isLast: false,
+                        ),
+                        _PremiumSwitchRow(
+                          icon: LucideIcons.power,
+                          title: l10n.resumeOnStartTitle,
+                          subtitle: l10n.resumeOnStartDesc,
+                          value: settings.resumeOnStart,
+                          onChanged: (value) {
+                            HapticFeedback.lightImpact();
+                            ref
+                                .read(settingsProvider.notifier)
+                                .updateResumeOnStart(value);
+                          },
+                          isLast: false,
+                        ),
+                        _PremiumSwitchRow(
+                          icon: LucideIcons.alertCircle,
+                          title: l10n.permanentFocusChangePause,
+                          subtitle: l10n.permanentFocusChangePauseDesc,
+                          value: settings.permanentAudioFocusChange,
+                          onChanged: (value) {
+                            HapticFeedback.lightImpact();
+                            ref
+                                .read(settingsProvider.notifier)
+                                .updatePermanentAudioFocusChange(value);
+                          },
+                          isLast: true,
+                        ),
+                      ],
                     ],
                   ],
                 ),
@@ -375,7 +410,7 @@ class SettingsView extends ConsumerWidget {
             ),
 
             // Library Section
-             SliverToBoxAdapter(
+            SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: _Section(
@@ -398,10 +433,29 @@ class SettingsView extends ConsumerWidget {
                       subtitle: l10n.updateLibraryIndexing,
                       onTap: () {
                         HapticFeedback.lightImpact();
-                        ref.read(libraryProvider.notifier).scanSavedFolders();
+                        ref
+                            .read(libraryProvider.notifier)
+                            .scanSavedFolders(fullStorageDiscovery: true);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(l10n.scanningLibrary)),
                         );
+                      },
+                      isLast: false,
+                    ),
+                    _PremiumSwitchRow(
+                      icon: LucideIcons.audioLines,
+                      title: 'Include other device audio',
+                      subtitle:
+                          'Ringtones, notifications, alarms and messaging audio',
+                      value: settings.includeSystemAndMessagingAudio,
+                      onChanged: (value) async {
+                        HapticFeedback.lightImpact();
+                        await ref
+                            .read(settingsProvider.notifier)
+                            .updateIncludeSystemAndMessagingAudio(value);
+                        await ref
+                            .read(libraryProvider.notifier)
+                            .scanSavedFolders(fullStorageDiscovery: true);
                       },
                       isLast: false,
                     ),
@@ -441,16 +495,24 @@ class SettingsView extends ConsumerWidget {
                 child: _Section(
                   title: l10n.aboutApp,
                   children: [
-                    _PremiumActionRow(
-                      icon: LucideIcons.info,
-                      title: l10n.appTitle,
-                      subtitle: 'Version 2.2.0',
-                      onTap: () {},
-                      trailing: const Text(
-                        'v2.2.0',
-                        style: TextStyle(color: Colors.white38, fontSize: 13),
-                      ),
-                      isLast: false,
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final ver = ref.watch(appVersionProvider).value ?? '';
+                        return _PremiumActionRow(
+                          icon: LucideIcons.info,
+                          title: l10n.appTitle,
+                          subtitle: ver.isEmpty ? 'Version' : 'Version $ver',
+                          onTap: () {},
+                          trailing: Text(
+                            ver.isEmpty ? '' : 'v$ver',
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 13,
+                            ),
+                          ),
+                          isLast: false,
+                        );
+                      },
                     ),
                     _PremiumActionRow(
                       icon: LucideIcons.music,
@@ -622,7 +684,11 @@ class _PremiumSwitchRow extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
-                Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
+                Icon(
+                  icon,
+                  color: Colors.white.withValues(alpha: 0.9),
+                  size: 22,
+                ),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -835,7 +901,15 @@ class _PremiumLibraryFoldersList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final folders = ref.watch(settingsProvider).libraryFolders;
 
-    if (folders.isEmpty) return const SizedBox.shrink();
+    if (folders.isEmpty) {
+      return _PremiumActionRow(
+        icon: LucideIcons.folderSearch,
+        title: 'No indexed folders yet',
+        subtitle: 'Use Rescan Library to discover storage folders',
+        onTap: () {},
+        isLast: false,
+      );
+    }
 
     return Column(
       children: folders
@@ -917,12 +991,8 @@ class _PremiumMaintainerRow extends StatelessWidget {
   Future<void> _launchUrl(String url) async {
     final Uri uri = Uri.parse(url);
     try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-
-      }
-    } catch (e) {
-
-    }
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {}
+    } catch (e) {}
   }
 
   @override
@@ -1169,7 +1239,11 @@ class _PremiumSliderRow extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(icon, color: Colors.white.withValues(alpha: 0.9), size: 22),
+                  Icon(
+                    icon,
+                    color: Colors.white.withValues(alpha: 0.9),
+                    size: 22,
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(

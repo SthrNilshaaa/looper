@@ -98,6 +98,22 @@ class LrcParser {
       (a, b) => (a['start'] as Duration).compareTo(b['start'] as Duration),
     );
 
+    // Give every line a real, catchable active window. Two lines sharing
+    // (or nearly sharing) a timestamp is common in dual-language/karaoke
+    // LRC exports; without a floor here, endTime below (the next line's
+    // start) collapses to the same instant as this line's own start, so
+    // `position >= start && position < end` can never be true for it and
+    // it silently never highlights as active during playback even though
+    // it's still shown on screen.
+    const minLineGap = Duration(milliseconds: 10);
+    for (var i = 1; i < rawLines.length; i++) {
+      final prevStart = rawLines[i - 1]['start'] as Duration;
+      final start = rawLines[i]['start'] as Duration;
+      if (start - prevStart < minLineGap) {
+        rawLines[i]['start'] = prevStart + minLineGap;
+      }
+    }
+
     final List<LyricLine> result = [];
     for (var i = 0; i < rawLines.length; i++) {
       final startTime = rawLines[i]['start'] as Duration;

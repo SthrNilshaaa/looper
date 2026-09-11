@@ -46,6 +46,13 @@ class AdvancedLyricLine extends ConsumerWidget {
   final VoidCallback onTap;
   final double fontScale;
 
+  /// Whether this line is part of the current share-card selection, and
+  /// whether a selection is in progress at all (used to dim non-selected
+  /// lines so the picked lines stand out). Long-pressing starts a selection.
+  final bool isSelected;
+  final bool selectionActive;
+  final VoidCallback onLongPress;
+
   const AdvancedLyricLine({
     super.key,
     required this.line,
@@ -53,6 +60,9 @@ class AdvancedLyricLine extends ConsumerWidget {
     required this.isActive,
     required this.relativeIndex,
     required this.onTap,
+    required this.onLongPress,
+    this.isSelected = false,
+    this.selectionActive = false,
     this.fontScale = 1.0,
   });
 
@@ -76,7 +86,11 @@ class AdvancedLyricLine extends ConsumerWidget {
     
     // Calculate dynamic opacity based on distance from active line for a smoother transition
     double lineOpacity = 1.0;
-    if (!isActive) {
+    if (isSelected) {
+      lineOpacity = 1.0; // selected lines should read clearly regardless of playback position
+    } else if (selectionActive) {
+      lineOpacity = 0.18; // dim everything else while the user is picking lines to share
+    } else if (!isActive) {
       lineOpacity = 0.35; // ponytail: make inactive lyrics lines all have uniform opacity
     }
 
@@ -108,11 +122,16 @@ class AdvancedLyricLine extends ConsumerWidget {
     final artworkColorAsync = ref.watch(artworkColorProvider);
     final artworkColor = artworkColorAsync.valueOrNull;
 
-    final activeColor = useDynamicColor 
-        ? (artworkColor ?? Theme.of(context).colorScheme.primary) 
-        : ((!settings.dynamicLyrics && !settings.dynamicColorActiveLyrics)
-            ? Color(settings.accentColor)
-            : Colors.white);
+    // useDynamicColor already covers every case where dynamicColorActiveLyrics
+    // is meaningfully "on" (it requires enableDynamicTheming, dynamicLyrics, or
+    // blurredArtworkForLyrics to actually have a dynamic source). So once we're
+    // here, dynamicColorActiveLyrics being true with nothing dynamic active
+    // (e.g. blurred artwork turned off) must still fall back to the accent
+    // color, not white -- white is only correct while dynamicLyrics' own
+    // visual mode is genuinely active and needs contrast against it.
+    final activeColor = useDynamicColor
+        ? (artworkColor ?? Theme.of(context).colorScheme.primary)
+        : (settings.dynamicLyrics ? Colors.white : Color(settings.accentColor));
 
     // Language-aware font selection
     final bool isHindiText = _isHindi(line.text);
@@ -161,16 +180,19 @@ class AdvancedLyricLine extends ConsumerWidget {
     if (absIndex > 2) {
       return GestureDetector(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Padding(
           padding: EdgeInsets.only(
             top: 8 * fontScale,
             bottom: 8 * fontScale,
           ),
-          child: DefaultTextStyle(
-            style: baseStyle,
-            textAlign: textAlign,
-            softWrap: true,
-            child: childWidget,
+          child: _selectionHighlight(
+            child: DefaultTextStyle(
+              style: baseStyle,
+              textAlign: textAlign,
+              softWrap: true,
+              child: childWidget,
+            ),
           ),
         ),
       );
@@ -180,6 +202,7 @@ class AdvancedLyricLine extends ConsumerWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: AnimatedPadding(
           duration: animDuration,
           curve: curve,
@@ -187,16 +210,33 @@ class AdvancedLyricLine extends ConsumerWidget {
             top: (isActive ? 12 : 8) * fontScale,
             bottom: (isActive ? 16 : 8) * fontScale,
           ),
-          child: AnimatedDefaultTextStyle(
-            duration: animDuration,
-            curve: curve,
-            style: baseStyle,
-            softWrap: true,
-            textAlign: textAlign,
-            child: childWidget,
+          child: _selectionHighlight(
+            child: AnimatedDefaultTextStyle(
+              duration: animDuration,
+              curve: curve,
+              style: baseStyle,
+              softWrap: true,
+              textAlign: textAlign,
+              child: childWidget,
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  /// Wraps [child] in a tinted, rounded background when this line is part
+  /// of the active share-card selection.
+  Widget _selectionHighlight({required Widget child}) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.symmetric(horizontal: isSelected ? 10 * fontScale : 0, vertical: 2 * fontScale),
+      decoration: BoxDecoration(
+        color: isSelected ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: child,
     );
   }
 

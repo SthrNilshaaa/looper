@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:looper_player/core/app_fonts.dart';
+import 'package:looper_player/core/app_icons.dart';
+import 'package:looper_player/core/ui_utils.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/ui/widgets/song_options_bottom_sheet.dart';
 import 'package:flutter/services.dart';
@@ -17,111 +20,8 @@ import 'package:isar/isar.dart';
 import '../widgets/premium_section.dart';
 import '../widgets/empty_library_view.dart';
 import '../widgets/premium_loading_view.dart';
+import 'package:looper_player/ui/widgets/app_refresh_indicator.dart';
 import 'views/library_categories_views.dart';
-import 'package:looper_player/ui/widgets/playback_mode_selector.dart';
-
-class GenresData {
-  final List<String> genres;
-  final Map<String, List<Song>> genresMap;
-  GenresData({required this.genres, required this.genresMap});
-}
-
-final homeGenresDataProvider = Provider<GenresData>((ref) {
-  final library = ref.watch(libraryProvider);
-  final settings = ref.watch(settingsProvider);
-  final genreSort = GenreSortOption.values[settings.genreSortOptionIndex.clamp(0, GenreSortOption.values.length - 1)];
-
-  final genresMap = <String, List<Song>>{};
-  for (var song in library.songs) {
-    final genre = song.genre ?? 'Unknown';
-    genresMap.putIfAbsent(genre, () => []).add(song);
-  }
-
-  final genres = genresMap.keys.toList();
-  switch (genreSort) {
-    case GenreSortOption.nameAsc:
-      genres.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-      break;
-    case GenreSortOption.nameDesc:
-      genres.sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
-      break;
-    case GenreSortOption.songCountDesc:
-      genres.sort((a, b) => genresMap[b]!.length.compareTo(genresMap[a]!.length));
-      break;
-    case GenreSortOption.songCountAsc:
-      genres.sort((a, b) => genresMap[a]!.length.compareTo(genresMap[b]!.length));
-      break;
-  }
-
-  return GenresData(genres: genres, genresMap: genresMap);
-});
-
-final homeSortedArtistsProvider = Provider<List<Artist>>((ref) {
-  final library = ref.watch(libraryProvider);
-  final settings = ref.watch(settingsProvider);
-  final artistSort = ArtistSortOption.values[settings.artistSortOptionIndex.clamp(0, ArtistSortOption.values.length - 1)];
-
-  final artists = List<Artist>.from(library.artists);
-  if (artistSort == ArtistSortOption.nameAsc) {
-    artists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-  } else {
-    artists.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
-  }
-  return artists;
-});
-
-final homeSortedAlbumsProvider = Provider<List<Album>>((ref) {
-  final library = ref.watch(libraryProvider);
-  final settings = ref.watch(settingsProvider);
-  final albumSort = AlbumSortOption.values[settings.albumSortOptionIndex.clamp(0, AlbumSortOption.values.length - 1)];
-
-  final albums = List<Album>.from(library.albums);
-  switch (albumSort) {
-    case AlbumSortOption.nameAsc:
-      albums.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-      break;
-    case AlbumSortOption.nameDesc:
-      albums.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
-      break;
-    case AlbumSortOption.dateAddedNewest:
-      albums.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
-      break;
-    case AlbumSortOption.dateAddedOldest:
-      albums.sort((a, b) => a.dateAdded.compareTo(b.dateAdded));
-      break;
-    case AlbumSortOption.yearNewest:
-      albums.sort((a, b) {
-        if (a.year == null && b.year == null) return 0;
-        if (a.year == null) return 1;
-        if (b.year == null) return -1;
-        return b.year!.compareTo(a.year!);
-      });
-      break;
-    case AlbumSortOption.yearOldest:
-      albums.sort((a, b) {
-        if (a.year == null && b.year == null) return 0;
-        if (a.year == null) return 1;
-        if (b.year == null) return -1;
-        return a.year!.compareTo(b.year!);
-      });
-      break;
-  }
-  return albums;
-});
-
-final homeQuickPicksProvider = Provider<List<Song>>((ref) {
-  final library = ref.watch(libraryProvider);
-  final allSongs = List<Song>.from(library.songs);
-  allSongs.sort((a, b) => b.playCount.compareTo(a.playCount));
-  return allSongs.take(18).toList();
-});
-
-final homeRecentlyAddedSongsProvider = Provider<List<Song>>((ref) {
-  final library = ref.watch(libraryProvider);
-  final dateAddedSongs = List<Song>.from(library.songs);
-  dateAddedSongs.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
-  return dateAddedSongs;
-});
 
 class AndroidHomeTab extends ConsumerStatefulWidget {
   const AndroidHomeTab({super.key});
@@ -144,7 +44,12 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
   }
 
   void _showSongOptions(BuildContext context, Song song) {
-    showSongOptionsBottomSheet(context: context, ref: ref, song: song);
+    showSongOptionsBottomSheet(
+      context: context,
+      ref: ref,
+      song: song,
+      showEqualizerAndTechnicalInfoOptions: false,
+    );
   }
 
   Widget _buildHorizontalSection({
@@ -174,14 +79,13 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                 ),
                 PremiumSection(
                   borderRadius: BorderRadius.circular(32),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   height: 36,
                   useExpanded: false,
                   onTap: onActionTap,
                   useBlur: true,
+                  forceNoBlur: true,
+                  backgroundColor: Colors.white.withValues(alpha: 0.04),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -194,11 +98,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(
-                        LucideIcons.arrowRight,
-                        size: 14,
-                        color: Colors.white,
-                      ),
+                      const Icon(LucideIcons.arrowRight, size: 14, color: Colors.white),
                     ],
                   ),
                 ),
@@ -227,10 +127,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
       child: InkWell(
         onTap: () async {
           HapticFeedback.lightImpact();
-          final songs = await DbService.isar.songs
-              .filter()
-              .artistEqualTo(artist.name)
-              .findAll();
+          final songs = await DbService.isar.songs.filter().artistEqualTo(artist.name).findAll();
           final imageUrl = artist.artistImageUrl;
           final bool isLocalImage = imageUrl != null && !imageUrl.startsWith('http');
           final bool isNetworkImage = imageUrl != null && imageUrl.startsWith('http');
@@ -240,8 +137,8 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                 title: artist.name,
                 subtitle: l10n.artist,
 
-            art: isLocalImage ? imageUrl : artist.artPath,
-            imageUrl: isNetworkImage ? imageUrl : null,
+                art: isLocalImage ? imageUrl : artist.artPath,
+                imageUrl: isNetworkImage ? imageUrl : null,
 
                 songs: songs,
               );
@@ -255,17 +152,19 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
               height: 92,
               child: ClipOval(
                 child: OptimizedImage(
-                  imageUrl: artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : null,
-                  imagePath: artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http') ? artist.artistImageUrl : artist.artPath,
+                  imageUrl:
+                      artist.artistImageUrl != null && artist.artistImageUrl!.startsWith('http')
+                      ? artist.artistImageUrl
+                      : null,
+                  imagePath:
+                      artist.artistImageUrl != null && !artist.artistImageUrl!.startsWith('http')
+                      ? artist.artistImageUrl
+                      : artist.artPath,
                   fit: BoxFit.cover,
                   placeholder: Container(
                     color: Colors.white.withValues(alpha: 0.05),
                     child: const Center(
-                      child: Icon(
-                        LucideIcons.user,
-                        size: 28,
-                        color: Colors.white38,
-                      ),
+                      child: Icon(LucideIcons.user, size: 28, color: Colors.white38),
                     ),
                   ),
                 ),
@@ -296,10 +195,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
       child: InkWell(
         onTap: () async {
           HapticFeedback.lightImpact();
-          final songs = await DbService.isar.songs
-              .filter()
-              .albumEqualTo(album.name)
-              .findAll();
+          final songs = await DbService.isar.songs.filter().albumEqualTo(album.name).findAll();
           ref
               .read(appNavigationProvider.notifier)
               .showCollection(
@@ -307,6 +203,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                 subtitle: album.artist ?? l10n.unknownArtist,
                 art: album.artPath,
                 songs: songs,
+                album: album,
               );
         },
         borderRadius: BorderRadius.circular(16),
@@ -318,10 +215,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
               aspectRatio: 1.0,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: OptimizedImage(
-                  imagePath: album.artPath,
-                  fit: BoxFit.cover,
-                ),
+                child: OptimizedImage(imagePath: album.artPath, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 8),
@@ -347,11 +241,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
     );
   }
 
-  Widget _buildGenreItem(
-    String genre,
-    List<Song> genreSongs,
-    AppLocalizations l10n,
-  ) {
+  Widget _buildGenreItem(String genre, List<Song> genreSongs, AppLocalizations l10n) {
     // Hash the genre string to produce a consistent vibrant color gradient
     final int hash = genre.hashCode;
     final double hue = (hash.abs() % 360).toDouble();
@@ -371,7 +261,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
         onTap: () {
           HapticFeedback.lightImpact();
           final firstWithArt = genreSongs.firstWhere(
-                (s) => s.artPath != null,
+            (s) => s.artPath != null,
             orElse: () => genreSongs.first,
           );
           ref
@@ -379,7 +269,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
               .showCollection(
                 title: genre,
                 subtitle: l10n.genre,
-            art: firstWithArt.artPath,
+                art: firstWithArt.artPath,
                 songs: genreSongs,
               );
         },
@@ -447,15 +337,11 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                         color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(
-                        LucideIcons.music,
-                        size: 28,
-                        color: Colors.white70,
-                      ),
+                      child: const Icon(LucideIcons.music, size: 28, color: Colors.white70),
                     ),
                   ),
                 ),
-              
+
               // Genre info on the left side
               Positioned(
                 left: 16,
@@ -495,11 +381,166 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
     );
   }
 
+  // Recent played row, matching the pill style used in the Library tab.
+  Widget _buildRecentPlayedRow(List<Song> recentSongs) {
+    final row1Songs = <Song>[];
+    final row2Songs = <Song>[];
+    for (int i = 0; i < recentSongs.length; i++) {
+      if (i % 2 == 0) {
+        row1Songs.add(recentSongs[i]);
+      } else {
+        row2Songs.add(recentSongs[i]);
+      }
+    }
+
+    final hasTwoRows = recentSongs.length > 1;
+
+    return SizedBox(
+      height: hasTwoRows ? 100 : 50,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: row1Songs.map((song) {
+                final globalIndex = recentSongs.indexOf(song);
+                return _buildRecentPill(song, recentSongs, globalIndex);
+              }).toList(),
+            ),
+            if (hasTwoRows) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: row2Songs.map((song) {
+                  final globalIndex = recentSongs.indexOf(song);
+                  return _buildRecentPill(song, recentSongs, globalIndex);
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentPill(Song song, List<Song> recentSongs, int index) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 8.0),
+      child: PremiumSection(
+        borderRadius: BorderRadius.circular(36),
+        useExpanded: false,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          ref.read(playbackProvider.notifier).setPlaylist(recentSongs, initialIndex: index);
+        },
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: OptimizedImage(imagePath: song.artPath, fit: BoxFit.cover),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              song.title,
+              style: AppFonts.jostStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final library = ref.watch(libraryProvider);
     final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
+    final recentSongs = ref.watch(recentlyPlayedProvider).value ?? [];
+
+    final albumSort = AlbumSortOption
+        .values[settings.albumSortOptionIndex.clamp(0, AlbumSortOption.values.length - 1)];
+    final artistSort = ArtistSortOption
+        .values[settings.artistSortOptionIndex.clamp(0, ArtistSortOption.values.length - 1)];
+    final genreSort = GenreSortOption
+        .values[settings.genreSortOptionIndex.clamp(0, GenreSortOption.values.length - 1)];
+
+    final genresMap = <String, List<Song>>{};
+    for (var song in library.songs) {
+      final genre = song.genre ?? l10n.unknown;
+      genresMap.putIfAbsent(genre, () => []).add(song);
+    }
+
+    final genres = genresMap.keys.toList();
+    switch (genreSort) {
+      case GenreSortOption.nameAsc:
+        genres.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+        break;
+      case GenreSortOption.nameDesc:
+        genres.sort((a, b) => b.toLowerCase().compareTo(a.toLowerCase()));
+        break;
+      case GenreSortOption.songCountDesc:
+        genres.sort((a, b) => genresMap[b]!.length.compareTo(genresMap[a]!.length));
+        break;
+      case GenreSortOption.songCountAsc:
+        genres.sort((a, b) => genresMap[a]!.length.compareTo(genresMap[b]!.length));
+        break;
+    }
+
+    final artists = List<Artist>.from(library.artists);
+    if (artistSort == ArtistSortOption.nameAsc) {
+      artists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+    } else {
+      artists.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+    }
+
+    final albums = List<Album>.from(library.albums);
+    switch (albumSort) {
+      case AlbumSortOption.nameAsc:
+        albums.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        break;
+      case AlbumSortOption.nameDesc:
+        albums.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+        break;
+      case AlbumSortOption.dateAddedNewest:
+        albums.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
+        break;
+      case AlbumSortOption.dateAddedOldest:
+        albums.sort((a, b) => a.dateAdded.compareTo(b.dateAdded));
+        break;
+      case AlbumSortOption.yearNewest:
+        albums.sort((a, b) {
+          if (a.year == null && b.year == null) return 0;
+          if (a.year == null) return 1;
+          if (b.year == null) return -1;
+          return b.year!.compareTo(a.year!);
+        });
+        break;
+      case AlbumSortOption.yearOldest:
+        albums.sort((a, b) {
+          if (a.year == null && b.year == null) return 0;
+          if (a.year == null) return 1;
+          if (b.year == null) return -1;
+          return a.year!.compareTo(b.year!);
+        });
+        break;
+    }
 
     if (!library.isInitialized || (library.isScanning && library.songs.isEmpty)) {
       return const PremiumLoadingView();
@@ -509,91 +550,75 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
       return SafeArea(child: EmptyLibraryView(title: l10n.noSongsFound));
     }
 
-    final genresData = ref.watch(homeGenresDataProvider);
-    final genres = genresData.genres;
-    final genresMap = genresData.genresMap;
-    final artists = ref.watch(homeSortedArtistsProvider);
-    final albums = ref.watch(homeSortedAlbumsProvider);
-    final allQuickPicks = ref.watch(homeQuickPicksProvider);
-    final dateAddedSongs = ref.watch(homeRecentlyAddedSongsProvider);
+    // Sort songs for Quick Picks (most played)
+    final allSongs = List<Song>.from(library.songs);
+    allSongs.sort((a, b) => b.playCount.compareTo(a.playCount));
+    // Provide up to 18 songs for 3 pages of 6 items each
+    final allQuickPicks = allSongs.take(18).toList();
+
+    // Sort songs by date added (newest first)
+    final dateAddedSongs = List<Song>.from(library.songs);
+    dateAddedSongs.sort((a, b) => b.dateAdded.compareTo(a.dateAdded));
 
     final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
-
 
     final orderedSlivers = <Widget>[
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
             children: [
-              PremiumSection(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(32),
-                  bottomLeft: Radius.circular(32),
-                  topRight: Radius.circular(10),
-                  bottomRight: Radius.circular(10),
-                ),
-                width: 48,
-                height: 48,
-                useExpanded: false,
-                useBlur: useBlur,
-                forceNoBlur: true,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ref
-                      .read(appNavigationProvider.notifier)
-                      .setItem(NavItem.search);
-                },
-                child: const Icon(
-                  LucideIcons.search,
-                  color: Colors.white,
-                  size: 20,
-                ),
+             
+              SizedBox(
+                height: 40,
+                width: 50,
+                child:
+                    Image.asset('assets/logo_appbar.png'),
               ),
-              const SizedBox(width: 8),
-              PremiumSection(
-                borderRadius: BorderRadius.circular(32),
-                width: 44,
-                height: 44,
-                useExpanded: false,
-                useBlur: useBlur,
-                forceNoBlur: true,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
-                },
-                child: const Icon(
-                  LucideIcons.globe,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 8),
-              const PlaybackModeSelector(compact: true),
-              PremiumSection(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(10),
-                  bottomLeft: Radius.circular(10),
-                  topRight: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
-                ),
-                width: 48,
-                height: 48,
-                useExpanded: false,
-                useBlur: useBlur,
-                forceNoBlur: true,
-                onTap: () {
-                  HapticFeedback.lightImpact();
-                  ref
-                      .read(appNavigationProvider.notifier)
-                      .setItem(NavItem.settings);
-                },
-                child: const Icon(
-                  LucideIcons.settings,
-                  color: Colors.white,
-                  size: 20,
-                ),
+              Row(
+                children: [
+                  PremiumSection(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(32),
+                      bottomLeft: Radius.circular(32),
+                      topRight: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
+                    width: 48,
+                    height: 48,
+                    useExpanded: false,
+                    useBlur: useBlur,
+                    forceNoBlur: true,
+                    backgroundColor: Colors.white.withValues(alpha: 0.04),
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      ref.read(appNavigationProvider.notifier).setItem(NavItem.search);
+                    },
+                    child: const Icon(LucideIcons.search, color: Colors.white, size: 20),
+                  ),
+                  SizedBox(width: 5),
+                  PremiumSection(
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      bottomLeft: Radius.circular(10),
+                      topRight: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
+                    ),
+                    width: 48,
+                    height: 48,
+                    useExpanded: false,
+                    useBlur: useBlur,
+                    backgroundColor: Colors.white.withValues(alpha: 0.04),
+                    forceNoBlur: true,
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      ref.read(appNavigationProvider.notifier).setItem(NavItem.settings);
+                    },
+                    child: const Icon(LucideIcons.settings, color: Colors.white, size: 20),
+                  ),
+                ],
               ),
             ],
           ),
@@ -633,42 +658,36 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                   ),
                   PremiumSection(
                     borderRadius: BorderRadius.circular(32),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
                     height: 40,
                     useExpanded: false,
                     useBlur: useBlur,
+                    backgroundColor: Colors.white.withValues(alpha: 0.04),
                     forceNoBlur: true,
                     onTap: () {
                       if (allQuickPicks.isNotEmpty) {
                         HapticFeedback.mediumImpact();
-                        final shuffledPicks = List<Song>.from(allQuickPicks)
-                          ..shuffle();
+                        final shuffledPicks = List<Song>.from(allQuickPicks)..shuffle();
                         ref
                             .read(playbackProvider.notifier)
                             .setPlaylist(shuffledPicks, initialIndex: 0);
                       }
                     },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          LucideIcons.shuffle,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          l10n.play,
-                          style: AppFonts.jostStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
+                    child: SvgPicture.asset(AppIcons.shuffleHome, width: 40),
+                    // Row(
+                    //   mainAxisSize: MainAxisSize.min,
+                    //   children: [
+                    //     const Icon(LucideIcons.shuffle, size: 16, color: Colors.white),
+                    //     const SizedBox(width: 8),
+                    //     Text(
+                    //       l10n.play,
+                    //       style: AppFonts.jostStyle(
+                    //         color: Colors.white,
+                    //         fontWeight: FontWeight.w600,
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
                   ),
                 ],
               ),
@@ -680,18 +699,9 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
           SliverToBoxAdapter(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final availableWidth = (constraints.maxWidth - 32).clamp(
-                  0.0,
-                  double.infinity,
-                );
-                final itemWidth = ((availableWidth - 16) / 3).clamp(
-                  0.0,
-                  double.infinity,
-                );
-                final gridHeight = ((itemWidth * 2) + 8).clamp(
-                  8.0,
-                  double.infinity,
-                );
+                final availableWidth = (constraints.maxWidth - 32).clamp(0.0, double.infinity);
+                final itemWidth = ((availableWidth - 16) / 3).clamp(0.0, double.infinity);
+                final gridHeight = ((itemWidth * 2) + 8).clamp(8.0, double.infinity);
 
                 final pageCount = (allQuickPicks.length / 6).ceil();
                 final validPageCount = pageCount == 0 ? 1 : pageCount;
@@ -709,113 +719,113 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                         itemCount: validPageCount,
                         itemBuilder: (context, pageIndex) {
                           final startIndex = pageIndex * 6;
-                          if (startIndex >= allQuickPicks.length &&
-                              allQuickPicks.isNotEmpty) {
+                          if (startIndex >= allQuickPicks.length && allQuickPicks.isNotEmpty) {
                             return const SizedBox();
                           }
 
-                          final pageItems = allQuickPicks
-                              .skip(startIndex)
-                              .take(6)
-                              .toList();
+                          final pageItems = allQuickPicks.skip(startIndex).take(6).toList();
 
                           return Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0),
                             child: GridView.builder(
                               padding: EdgeInsets.zero,
                               physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    childAspectRatio: 1.0,
-                                    crossAxisSpacing: 8,
-                                    mainAxisSpacing: 8,
-                                  ),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                childAspectRatio: 1.0,
+                                crossAxisSpacing: 8,
+                                mainAxisSpacing: 8,
+                              ),
                               itemCount: pageItems.length,
-                                itemBuilder: (context, index) {
+                              itemBuilder: (context, index) {
                                 final song = pageItems[index];
-                                return Consumer(
-                                  builder: (context, ref, child) {
-                                    final currentSong = ref.watch(playbackProvider.select((s) => s.currentSong));
-                                    final isPlaying = ref.watch(playbackProvider.select((s) => s.isPlaying));
-                                    final isCurrent = currentSong?.path == song.path;
 
-                                    return GestureDetector(
-                                      onTap: () {
-                                        ref
-                                            .read(playbackProvider.notifier)
-                                            .setPlaylist(
-                                              allQuickPicks,
-                                              initialIndex: startIndex + index,
-                                            );
-                                      },
-                                      onLongPress: () {
-                                        HapticFeedback.mediumImpact();
-                                        _showSongOptions(context, song);
-                                      },
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Stack(
-                                          children: [
-                                            Positioned.fill(
-                                              child: OptimizedImage(
-                                                imagePath: song.artPath,
-                                                width: itemWidth,
-                                                height: itemWidth,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            Positioned.fill(
-                                              child: Container(
-                                                decoration: const BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    begin: Alignment.topCenter,
-                                                    end: Alignment.bottomCenter,
-                                                    colors: [
-                                                      Colors.transparent,
-                                                      Colors.black54,
-                                                    ],
-                                                    stops: [0.5, 1.0],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            Positioned(
-                                              left: 8,
-                                              bottom: 8,
-                                              right: 8,
-                                              child: Text(
-                                                song.title,
-                                                style: AppFonts.jostStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.w500,
-                                                  fontSize: 13,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                            if (isCurrent && isPlaying)
-                                              Positioned.fill(
-                                                child: Container(
-                                                  color: Colors.black.withValues(alpha: 0.5),
-                                                  child: Center(
-                                                    child: Image.asset(
-                                                      'assets/android_icons/Playing.gif',
-                                                      width: 32,
-                                                      height: 32,
-                                                      color: Colors.white,
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
+                                return GestureDetector(
+                                  onTap: () {
+                                    ref
+                                        .read(playbackProvider.notifier)
+                                        .setPlaylist(
+                                          allQuickPicks,
+                                          initialIndex: startIndex + index,
+                                        );
                                   },
+                                  onLongPress: () {
+                                    HapticFeedback.mediumImpact();
+                                    _showSongOptions(context, song);
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Stack(
+                                      children: [
+                                        Positioned.fill(
+                                          child: OptimizedImage(
+                                            imagePath: song.artPath,
+                                            width: itemWidth,
+                                            height: itemWidth,
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                        Positioned.fill(
+                                          child: Container(
+                                            decoration: const BoxDecoration(
+                                              gradient: LinearGradient(
+                                                begin: Alignment.topCenter,
+                                                end: Alignment.bottomCenter,
+                                                colors: [Colors.transparent, Colors.black54],
+                                                stops: [0.5, 1.0],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        Positioned(
+                                          left: 8,
+                                          bottom: 8,
+                                          right: 8,
+                                          child: Text(
+                                            song.title,
+                                            style: AppFonts.jostStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w500,
+                                              fontSize: 13,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Positioned.fill(
+                                          child: Consumer(
+                                            builder: (context, ref, _) {
+                                              // Scoped watch: only this tile rebuilds on
+                                              // playback ticks, instead of the whole home
+                                              // tab (which also re-sorts the entire
+                                              // library) re-rendering on every play/pause.
+                                              final isNowPlayingHere = ref.watch(
+                                                playbackProvider.select(
+                                                  (s) =>
+                                                      s.isPlaying &&
+                                                      s.currentSong?.path == song.path,
+                                                ),
+                                              );
+                                              if (!isNowPlayingHere) {
+                                                return const SizedBox.shrink();
+                                              }
+                                              return Container(
+                                                color: Colors.black.withValues(alpha: 0.5),
+                                                child: Center(
+                                                  child: Image.asset(
+                                                    'assets/android_icons/Playing.gif',
+                                                    width: 32,
+                                                    height: 32,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 );
                               },
                             ),
@@ -845,9 +855,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
             ),
           ),
         );
-        orderedSlivers.add(
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        );
+        orderedSlivers.add(const SliverToBoxAdapter(child: SizedBox(height: 16)));
       } else if (section == 'songs') {
         orderedSlivers.add(
           SliverToBoxAdapter(
@@ -866,19 +874,15 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                   ),
                   PremiumSection(
                     borderRadius: BorderRadius.circular(32),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     height: 40,
                     useExpanded: false,
                     useBlur: useBlur,
                     forceNoBlur: true,
+                    backgroundColor: Colors.white.withValues(alpha: 0.04),
                     onTap: () {
                       HapticFeedback.lightImpact();
-                      ref
-                          .read(appNavigationProvider.notifier)
-                          .setItem(NavItem.songs);
+                      ref.read(appNavigationProvider.notifier).setItem(NavItem.songs);
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -891,11 +895,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
                           ),
                         ),
                         const SizedBox(width: 4),
-                        const Icon(
-                          LucideIcons.arrowRight,
-                          size: 16,
-                          color: Colors.white,
-                        ),
+                        const Icon(LucideIcons.arrowRight, size: 16, color: Colors.white),
                       ],
                     ),
                   ),
@@ -907,24 +907,18 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
 
         orderedSlivers.add(
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final song = dateAddedSongs[index];
-                return SongTile(
-                  song: song,
-                  l10n: l10n,
-                  songs: dateAddedSongs,
-                );
-              },
-              childCount: dateAddedSongs.length > 10
-                  ? 10
-                  : dateAddedSongs.length,
-            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final song = dateAddedSongs[index];
+              return SongTile(
+                key: ValueKey(song.path),
+                song: song,
+                l10n: l10n,
+                songs: dateAddedSongs,
+              );
+            }, childCount: dateAddedSongs.length > 10 ? 10 : dateAddedSongs.length),
           ),
         );
-        orderedSlivers.add(
-          const SliverToBoxAdapter(child: SizedBox(height: 16)),
-        );
+        orderedSlivers.add(const SliverToBoxAdapter(child: SizedBox(height: 16)));
       } else if (section == 'artists') {
         if (settings.showHomeArtists && artists.isNotEmpty) {
           orderedSlivers.add(
@@ -933,9 +927,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
               actionText: l10n.viewAll,
               onActionTap: () {
                 HapticFeedback.mediumImpact();
-                ref
-                    .read(appNavigationProvider.notifier)
-                    .setItem(NavItem.artists);
+                ref.read(appNavigationProvider.notifier).setItem(NavItem.artists);
               },
               itemCount: artists.length,
               itemBuilder: (context, index) {
@@ -952,9 +944,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
               actionText: l10n.viewAll,
               onActionTap: () {
                 HapticFeedback.mediumImpact();
-                ref
-                    .read(appNavigationProvider.notifier)
-                    .setItem(NavItem.albums);
+                ref.read(appNavigationProvider.notifier).setItem(NavItem.albums);
               },
               itemCount: albums.length,
               itemBuilder: (context, index) {
@@ -971,9 +961,7 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
               actionText: l10n.viewAll,
               onActionTap: () {
                 HapticFeedback.mediumImpact();
-                ref
-                    .read(appNavigationProvider.notifier)
-                    .setItem(NavItem.genres);
+                ref.read(appNavigationProvider.notifier).setItem(NavItem.genres);
               },
               itemCount: genres.length,
               itemBuilder: (context, index) {
@@ -983,15 +971,70 @@ class _AndroidHomeTabState extends ConsumerState<AndroidHomeTab> {
             ),
           );
         }
+      } else if (section == 'recent') {
+        if (settings.showHomeRecent && recentSongs.isNotEmpty) {
+          orderedSlivers.add(
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      l10n.recentPlayed,
+                      style: AppFonts.jostStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    PremiumSection(
+                      borderRadius: BorderRadius.circular(32),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      height: 40,
+                      useExpanded: false,
+                      useBlur: useBlur,
+                      forceNoBlur: true,
+                      backgroundColor: Colors.white.withValues(alpha: 0.04),
+                      onTap: () {
+                        HapticFeedback.lightImpact();
+                        ref.read(appNavigationProvider.notifier).setItem(NavItem.history);
+                      },
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.viewAll,
+                            style: AppFonts.jostStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Icon(LucideIcons.arrowRight, size: 16, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+
+          orderedSlivers.add(SliverToBoxAdapter(child: _buildRecentPlayedRow(recentSongs)));
+          orderedSlivers.add(const SliverToBoxAdapter(child: SizedBox(height: 16)));
+        }
       }
     }
 
     orderedSlivers.add(const SliverToBoxAdapter(child: SizedBox(height: 200)));
 
-    return RepaintBoundary(
-      child: SafeArea(
+    return SafeArea(
+      child: AppRefreshIndicator(
+        onRefresh: () =>
+            ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: true),
         child: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
           slivers: orderedSlivers,
         ),
       ),

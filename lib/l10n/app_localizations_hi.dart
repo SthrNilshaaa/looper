@@ -105,7 +105,7 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get audioFocusDenied =>
-      'Playback paused: Audio focus denied by system';
+      'प्लेबैक रोका गया: सिस्टम ने ऑडियो फ़ोकस देने से मना किया';
 
   @override
   String get audioPlayback => 'ऑडियो और प्लेबैक';
@@ -232,11 +232,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get dynamicBgOnlyLyrics => 'केवल बोल के लिए डायनामिक बैकग्राउंड';
 
   @override
-  String get dynamicColorActiveLyrics => 'Dynamic Color Active Line';
+  String get dynamicColorActiveLyrics => 'सक्रिय लाइन के लिए डायनामिक रंग';
 
   @override
   String get dynamicColorActiveLyricsDesc =>
-      'Use extracted artwork colors for the currently playing lyrics line';
+      'वर्तमान में चल रही लिरिक्स लाइन के लिए आर्टवर्क से निकाले गए रंगों का उपयोग करें';
 
   @override
   String get dynamicLyricsBg => 'डायनामिक बोल बैकग्राउंड';
@@ -256,11 +256,11 @@ class AppLocalizationsHi extends AppLocalizations {
       'ऑनलाइन बोल और आर्टवर्क के लिए नेटवर्क का उपयोग सक्षम करें';
 
   @override
-  String get enablePlayerGradient => 'Music Screen Gradient';
+  String get enablePlayerGradient => 'म्यूज़िक स्क्रीन ग्रेडिएंट';
 
   @override
   String get enablePlayerGradientDesc =>
-      'Enable the radial accent gradient background on the now playing screen';
+      'नाउ प्लेइंग स्क्रीन पर रेडियल एक्सेंट ग्रेडिएंट बैकग्राउंड सक्षम करें';
 
   @override
   String get fadeDuration => 'फ़ेड की अवधि';
@@ -320,11 +320,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get home => 'होम';
 
   @override
-  String get homeDarkness => 'Home Screen Darkness';
+  String get homeDarkness => 'होम स्क्रीन डार्कनेस';
 
   @override
   String get homeDarknessDesc =>
-      'Adjust background overlay darkness for the Home screen';
+      'होम स्क्रीन के लिए बैकग्राउंड ओवरले डार्कनेस समायोजित करें';
 
   @override
   String get homeDashboardSettings => 'होम डैशबोर्ड सेटिंग्स';
@@ -353,11 +353,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get library => 'लाइब्रेरी';
 
   @override
-  String get libraryDarkness => 'Library Screen Darkness';
+  String get libraryDarkness => 'लाइब्रेरी स्क्रीन डार्कनेस';
 
   @override
   String get libraryDarknessDesc =>
-      'Adjust background overlay darkness for the Library screen';
+      'लाइब्रेरी स्क्रीन के लिए बैकग्राउंड ओवरले डार्कनेस समायोजित करें';
 
   @override
   String get libraryFoldersSync =>
@@ -389,17 +389,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get lyrics => 'बोल';
 
   @override
-  String get lyricsAlignment => 'Lyrics Alignment';
+  String get lyricsAlignment => 'लिरिक्स अलाइनमेंट';
 
   @override
-  String get lyricsAlignmentDesc => 'Align text positions for scrolling lyrics';
+  String get lyricsAlignmentDesc =>
+      'स्क्रॉल होने वाली लिरिक्स के लिए टेक्स्ट की स्थिति सेट करें';
 
   @override
-  String get lyricsDarkness => 'Lyrics Screen Darkness';
+  String get lyricsDarkness => 'लिरिक्स स्क्रीन डार्कनेस';
 
   @override
   String get lyricsDarknessDesc =>
-      'Adjust background overlay darkness for the Lyrics screen';
+      'लिरिक्स स्क्रीन के लिए बैकग्राउंड ओवरले डार्कनेस समायोजित करें';
 
   @override
   String get lyricsProvider => 'बोल प्रदाता';
@@ -426,47 +427,48 @@ class AppLocalizationsHi extends AppLocalizations {
       'भाषा प्राथमिकताएं और कॉलर फ़ोकस प्रबंधित करें';
 
   @override
-  String get audioFocusGetFocus => 'Get Focus';
+  String get audioFocusGetFocus => 'फ़ोकस प्राप्त करें';
 
   @override
   String get audioFocusGetFocusDesc =>
-      'Request audio focus when playback begins.';
+      'प्लेबैक शुरू होने पर ऑडियो फ़ोकस का अनुरोध करें।';
 
   @override
-  String get audioFocusReleaseFocus => 'Release Focus';
+  String get audioFocusReleaseFocus => 'फ़ोकस जारी करें';
 
   @override
   String get audioFocusReleaseFocusDesc =>
-      'Release audio focus when playback pauses or stops.';
+      'प्लेबैक रुकने या बंद होने पर ऑडियो फ़ोकस जारी करें।';
 
   @override
   String get audioFocusStopOnOtherSession =>
-      'Stop Music on Other Music Session';
+      'अन्य म्यूज़िक सेशन पर संगीत रोकें';
 
   @override
   String get audioFocusStopOnOtherSessionDesc =>
-      'Pause playback when another app starts playing audio.';
+      'जब कोई अन्य ऐप ऑडियो चलाना शुरू करे, तो प्लेबैक रोक दें।';
 
   @override
-  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+  String get audioFocusRestartOnGain => 'फ़ोकस मिलने पर संगीत फिर से शुरू करें';
 
   @override
   String get audioFocusRestartOnGainDesc =>
-      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+      'ऑडियो फ़ोकस वापस मिलने पर अपने आप प्लेबैक फिर से शुरू करें, लेकिन केवल तभी जब फ़ोकस खोने की वजह से प्लेबैक रुका हो।';
 
   @override
-  String get pauseOnDuckTitle => 'Pause on Duck';
+  String get pauseOnDuckTitle => 'आवाज़ कम होने पर रोकें';
 
   @override
   String get pauseOnDuckDesc =>
-      'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).';
+      'जब कोई अन्य ऐप छोटी अवधि की आवाज़ चलाए (जैसे सूचनाएं, नेविगेशन दिशा-निर्देश), तो आवाज़ धीमी करने के बजाय प्लेबैक रोक दें।';
 
   @override
-  String get resumeOnBluetoothConnectTitle => 'Resume on Bluetooth Connect';
+  String get resumeOnBluetoothConnectTitle =>
+      'ब्लूटूथ कनेक्ट होने पर फिर से शुरू करें';
 
   @override
   String get resumeOnBluetoothConnectDesc =>
-      'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.';
+      'जब कोई ब्लूटूथ ऑडियो डिवाइस (हेडफ़ोन, कार किट) फिर से जुड़े, तो अपने आप प्लेबैक फिर से शुरू करें।';
 
   @override
   String get manualCrossfadeDuration => 'मैनुअल क्रॉसफ़ेड अवधि';
@@ -488,11 +490,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get musicAudioAccess => 'म्यूजिक और ऑडियो एक्सेस';
 
   @override
-  String get musicDarkness => 'Music Player Darkness';
+  String get musicDarkness => 'म्यूज़िक प्लेयर डार्कनेस';
 
   @override
   String get musicDarknessDesc =>
-      'Adjust background overlay darkness for the Music Player screen';
+      'म्यूज़िक प्लेयर स्क्रीन के लिए बैकग्राउंड ओवरले डार्कनेस समायोजित करें';
 
   @override
   String get musicLibrary => 'संगीत लाइब्रेरी';
@@ -506,6 +508,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get newTitle => 'नया शीर्षक';
+
+  @override
+  String get nextUp => 'आगे क्या';
 
   @override
   String get noAlbumsFound => 'कोई एल्बम नहीं मिला';
@@ -621,6 +626,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get recentPlayed => 'हाल ही में चलाए गए';
 
   @override
+  String get recentRowDesc => 'हाल ही में चलाए गए गानों की क्षैतिज शेल्फ';
+
+  @override
   String get removedFromPlaylist => 'प्लेलिस्ट से हटाया गया';
 
   @override
@@ -648,6 +656,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get reorderDashboardSectionsDesc =>
       'पसंदीदा डैशबोर्ड क्रम सेट करने के लिए खींचें और छोड़ें';
+
+  @override
+  String get includeOtherDeviceAudioTitle => 'अन्य डिवाइस ऑडियो शामिल करें';
+
+  @override
+  String get includeOtherDeviceAudioDesc =>
+      'रिंगटोन, सूचनाएं, अलार्म, व्हाट्सएप और टेलीग्राम ऑडियो स्कैन करें';
 
   @override
   String get rescanLibrary => 'लाइब्रेरी रीस्कैन करें';
@@ -692,6 +707,13 @@ class AppLocalizationsHi extends AppLocalizations {
   @override
   String get persistQueueDesc =>
       'ऐप रीस्टार्ट होने पर आखिरी बजाया गया गाना और कतार सहेजें';
+
+  @override
+  String get keepSongProgressTitle => 'गाने की प्रगति याद रखें';
+
+  @override
+  String get keepSongProgressDesc =>
+      'हर गाने की अपनी प्लेबैक पोज़िशन को अलग से याद रखता है। बीच में किसी दूसरे गाने पर स्विच करें और बाद में वापस आएं — भले ही बीच में दूसरे गाने चलाए हों — यह वहीं से शुरू होगा जहाँ आपने छोड़ा था, शुरुआत से नहीं।';
 
   @override
   String get right => 'दायें';
@@ -792,11 +814,18 @@ class AppLocalizationsHi extends AppLocalizations {
   String get showMore => 'अधिक दिखाएं';
 
   @override
-  String get showQualityBadge => 'Show Quality Badge';
+  String get showQualityBadge => 'क्वालिटी बैज दिखाएं';
 
   @override
   String get showQualityBadgeDesc =>
-      'Display audio quality information badge on the now playing screen';
+      'नाउ प्लेइंग स्क्रीन पर ऑडियो क्वालिटी जानकारी बैज दिखाएं';
+
+  @override
+  String get showRecentRow => 'हाल ही में चलाए गए पंक्ति दिखाएं';
+
+  @override
+  String get showRecentRowDesc =>
+      'अपनी होम स्क्रीन पर हाल ही में चलाए गए गानों की एक क्षैतिज सूची प्रदर्शित करें';
 
   @override
   String get silenceBetweenTracksDesc =>
@@ -835,11 +864,11 @@ class AppLocalizationsHi extends AppLocalizations {
   String get songs => 'गाने';
 
   @override
-  String get songsDarkness => 'Songs Screen Darkness';
+  String get songsDarkness => 'सॉन्ग्स स्क्रीन डार्कनेस';
 
   @override
   String get songsDarknessDesc =>
-      'Adjust background overlay darkness for the Songs screen';
+      'सॉन्ग्स स्क्रीन के लिए बैकग्राउंड ओवरले डार्कनेस समायोजित करें';
 
   @override
   String get sortBy => 'क्रमबद्ध करें';
@@ -886,19 +915,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get toggleFavorite => 'पसंदीदा टॉगल करें';
 
   @override
-  String get shuffleTitle => 'Shuffle';
+  String get shuffleTitle => 'शफ़ल';
 
   @override
   String get shuffleDisabledDesc =>
-      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+      'गानों को उनके मूल कतार क्रम में चलाएं। शफ़ल बंद करने पर मौजूदा गाना चलता रहता है और बाकी कतार बिना प्लेबैक या उसके इतिहास को प्रभावित किए अपने मूल क्रम में वापस आ जाती है।';
 
   @override
   String get shuffleEnabledDesc =>
-      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+      'मौजूदा गाने को बिना बदले बाकी गानों को क्रम बदलकर चलाएं। जब तक कतार नहीं बदलती या नया शफ़ल नहीं माँगा जाता, तब तक बना हुआ शफ़ल क्रम एक जैसा रहता है, जिससे गाने न दोहराए जाते हैं और न ही छूटते हैं।';
 
   @override
   String get shuffleSwitchingDesc =>
-      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+      'शफ़ल चालू या बंद करने से मौजूदा गाना कभी दोबारा शुरू नहीं होता। इससे सिर्फ आने वाले गानों का क्रम बदलता है — चालू होने पर बेतरतीब और बंद होने पर कतार के मूल क्रम में वापस।';
 
   @override
   String get topResult => 'शीर्ष परिणाम';
@@ -1095,4 +1124,439 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get sortDuration => 'अवधि';
+
+  @override
+  String get myAlbums => 'मेरे एल्बम';
+
+  @override
+  String get featuredArtists => 'फ़ीचर्ड कलाकार';
+
+  @override
+  String get noSongPlaying => 'कोई गाना नहीं चल रहा';
+
+  @override
+  String get nextLabel => 'अगला';
+
+  @override
+  String get previousLabel => 'पिछला';
+
+  @override
+  String get resync => 'फिर से सिंक करें';
+
+  @override
+  String get equalizer => 'इक्वलाइज़र';
+
+  @override
+  String get presets => 'प्रीसेट';
+
+  @override
+  String get preAmpGain => 'प्री-एम्प गेन';
+
+  @override
+  String get outputVolume => 'आउटपुट वॉल्यूम';
+
+  @override
+  String get customFilterHint =>
+      'कस्टम libavfilter ऑडियो फ़िल्टर पैरामीटर सीधे टाइप करें (जैसे volume=3dB, aecho=0.8:0.88:60:0.4):';
+
+  @override
+  String get flowGlobalActions => 'फ़्लो और ग्लोबल एक्शन';
+
+  @override
+  String get equalizerModeLabel => 'इक्वलाइज़र मोड:';
+
+  @override
+  String get currentGainsAppliedGlobal =>
+      'मौजूदा गेन को ग्लोबल डिफ़ॉल्ट सेटिंग के रूप में लागू किया गया।';
+
+  @override
+  String get applyToGlobal => 'ग्लोबल पर लागू करें';
+
+  @override
+  String get songSpecificResetGlobal =>
+      'गाना-विशेष सेटिंग्स को ग्लोबल डिफ़ॉल्ट पर रीसेट किया गया।';
+
+  @override
+  String get resetToGlobal => 'ग्लोबल पर रीसेट करें';
+
+  @override
+  String get resetAllSongsEq => 'सभी गानों का EQ रीसेट करें';
+
+  @override
+  String get resetAllSongsEqConfirm =>
+      'क्या आप वाकई अपनी लाइब्रेरी के सभी गानों की कस्टम इक्वलाइज़र सेटिंग्स हटाना चाहते हैं?';
+
+  @override
+  String get allSongsEqDataReset =>
+      'सभी गाना-विशेष इक्वलाइज़र डेटा रीसेट कर दिया गया है।';
+
+  @override
+  String get resetAllSongsEqData => 'सभी गानों का EQ डेटा रीसेट करें';
+
+  @override
+  String get equalizerTargetMode => 'इक्वलाइज़र टारगेट मोड';
+
+  @override
+  String get equalizerTargetModeDesc =>
+      'चुनें कि आपकी म्यूज़िक लाइब्रेरी में इक्वलाइज़र सेटिंग्स कैसे लागू होंगी।';
+
+  @override
+  String get globalMode => 'ग्लोबल मोड';
+
+  @override
+  String get globalModeDesc =>
+      'सभी गानों पर समान रूप से प्रभाव लागू करता है। गाना बदलने पर भी इक्वलाइज़र सेटिंग्स वही रहती हैं।';
+
+  @override
+  String get songSpecificMode => 'गाना-विशेष मोड';
+
+  @override
+  String get songSpecificModeDesc =>
+      'केवल मौजूदा गाने के लिए कस्टम सेटिंग्स सेव करता है। अगला गाना, जब तक उसकी अपनी प्रोफ़ाइल न हो, डिफ़ॉल्ट रूप से बिना इक्वलाइज़र के चलता है।';
+
+  @override
+  String get viewDeviceAudioCapabilities => 'डिवाइस ऑडियो क्षमताएं देखें';
+
+  @override
+  String get deviceAudioCapabilities => 'डिवाइस ऑडियो क्षमताएं';
+
+  @override
+  String get noPlaybackActiveCapabilities =>
+      'कोई प्लेबैक सक्रिय नहीं है या क्षमता जानकारी उपलब्ध नहीं है।';
+
+  @override
+  String get changeLyricsProvider => 'लिरिक्स प्रोवाइडर बदलें';
+
+  @override
+  String get autoFallbackProviders => 'ऑटो फ़ॉलबैक प्रोवाइडर';
+
+  @override
+  String get autoFallbackProvidersDesc =>
+      'अगर मुख्य प्रोवाइडर के पास लिरिक्स न हों, तो बाकी प्रोवाइडर अपने आप आज़माएं';
+
+  @override
+  String get ambientColorBackground => 'एम्बिएंट कलर बैकग्राउंड';
+
+  @override
+  String get ambientColorBackgroundDesc =>
+      'गाने के आर्टवर्क से बना हल्का, सहज एम्बिएंट ग्रेडिएंट';
+
+  @override
+  String get exportLyricsLrc => 'लिरिक्स एक्सपोर्ट करें (.lrc फ़ाइल)';
+
+  @override
+  String get saveLyricsToDevice => 'मौजूदा लिरिक्स डिवाइस स्टोरेज में सेव करें';
+
+  @override
+  String get noLyricsToExport =>
+      'एक्सपोर्ट करने के लिए कोई लिरिक्स उपलब्ध नहीं';
+
+  @override
+  String get useCustomLyricsLrc => 'कस्टम लिरिक्स इस्तेमाल करें (LRC फ़ाइल)';
+
+  @override
+  String get selectLocalLrcFile =>
+      'इस गाने के लिए लोकल .lrc या .txt फ़ाइल चुनें';
+
+  @override
+  String get customLyricsAppliedSuccess =>
+      'कस्टम लिरिक्स सफलतापूर्वक लागू हो गए!';
+
+  @override
+  String get noRecentlyPlayedTracks => 'हाल ही में चलाए गए कोई ट्रैक नहीं';
+
+  @override
+  String get close => 'बंद करें';
+
+  @override
+  String get audioQualityAnalysis => 'ऑडियो क्वालिटी विश्लेषण';
+
+  @override
+  String get audioQualityAnalysisDesc =>
+      'गहन स्पेक्ट्रल और ऑडियो फ़ॉर्मेट विश्लेषण करें';
+
+  @override
+  String get audioStreamDetails => 'ऑडियो स्ट्रीम विवरण';
+
+  @override
+  String get perChannelMetrics => 'प्रति-चैनल मेट्रिक्स';
+
+  @override
+  String get sleepTimer => 'स्लीप टाइमर';
+
+  @override
+  String get stopByTime => 'समय के अनुसार रोकें';
+
+  @override
+  String get start => 'शुरू करें';
+
+  @override
+  String get stopBySongCount => 'गानों की संख्या के अनुसार रोकें';
+
+  @override
+  String get cancelSleepTimer => 'स्लीप टाइमर रद्द करें';
+
+  @override
+  String get nowPlayingAllCaps => 'अभी चल रहा है';
+
+  @override
+  String get settingsAndBackups => 'सेटिंग्स और बैकअप';
+
+  @override
+  String get managePreferencesLibraryData =>
+      'प्राथमिकताएं और लाइब्रेरी डेटा प्रबंधित करें';
+
+  @override
+  String get logsClearedSuccess => 'लॉग सफलतापूर्वक हटाए गए';
+
+  @override
+  String get editSongInfo => 'गाने की जानकारी संपादित करें';
+
+  @override
+  String get editAlbumInfo => 'एल्बम जानकारी संपादित करें';
+
+  @override
+  String get tapFieldToEdit => 'संपादित करने के लिए किसी फ़ील्ड पर टैप करें';
+
+  @override
+  String get alwaysBlurSheets => 'शीट्स को हमेशा ब्लर करें';
+
+  @override
+  String get alwaysBlurSheetsDesc =>
+      'डायनामिक थीमिंग बंद होने पर भी पॉपअप शीट्स को ब्लर करें';
+
+  @override
+  String get removeArtwork => 'आर्टवर्क हटाएं';
+
+  @override
+  String get resetArtworkToDefault => 'डिफ़ॉल्ट पर रीसेट करें';
+
+  @override
+  String get artworkResetToDefault => 'आर्टवर्क डिफ़ॉल्ट पर रीसेट हो गई';
+
+  @override
+  String get noEmbeddedArtworkFound =>
+      'इस एल्बम के लिए कोई एम्बेडेड आर्टवर्क नहीं मिली';
+
+  @override
+  String get saveChangesBtn => 'बदलाव सेव करें';
+
+  @override
+  String get enterFolderPathManually => 'फ़ोल्डर पथ मैन्युअल रूप से दर्ज करें';
+
+  @override
+  String get folderPickerManualHint =>
+      'अगर सिस्टम डायरेक्टरी पिकर नहीं खुल रहा है, तो नीचे पूरा डायरेक्टरी पथ टाइप या पेस्ट करें:';
+
+  @override
+  String get noSupportedSongsFoundFolder =>
+      'चुने गए फ़ोल्डर में कोई समर्थित गाना नहीं मिला';
+
+  @override
+  String get add => 'जोड़ें';
+
+  @override
+  String get folderPickerClosed => 'फ़ोल्डर पिकर बंद हो गया';
+
+  @override
+  String get buyMeCoffee => 'मुझे कॉफ़ी पिलाएं';
+
+  @override
+  String get typeToSearchSettings => 'सेटिंग्स खोजने के लिए टाइप करें…';
+
+  @override
+  String get maintainersLabel => 'मेंटेनर्स';
+
+  @override
+  String get personBehindLooperPlayer => 'LooperPlayer के पीछे का व्यक्ति';
+
+  @override
+  String get blurredArtworkForLyrics => 'लिरिक्स के लिए धुंधला आर्टवर्क';
+
+  @override
+  String get blurredArtworkForLyricsDesc =>
+      'डायनामिक/स्टैटिक ग्रेडिएंट की बजाय बैकग्राउंड के रूप में धुंधला एल्बम आर्ट दिखाएं';
+
+  @override
+  String get lyricsFontWeight => 'लिरिक्स फ़ॉन्ट वेट';
+
+  @override
+  String get openSourceLicenses => 'ओपन सोर्स लाइसेंस';
+
+  @override
+  String get openSourceLicensesDesc =>
+      'इस ऐप में इस्तेमाल की गई थर्ड-पार्टी लाइब्रेरीज़';
+
+  @override
+  String get done => 'हो गया';
+
+  @override
+  String get lyricsNotAvailable => 'लिरिक्स उपलब्ध नहीं हैं।';
+
+  @override
+  String get lyricsNotAvailableHint =>
+      'इस गाने के लिए लिरिक्स जोड़ने हेतु .lrc या .txt फ़ाइल इंपोर्ट करें';
+
+  @override
+  String get importLyricsFile => 'लिरिक्स फ़ाइल इंपोर्ट करें';
+
+  @override
+  String get approximatedSyncNoWordTimings =>
+      'अनुमानित सिंक (शब्द-टाइमिंग के बिना)';
+
+  @override
+  String get lyricsSyncHelp => 'लिरिक्स सिंक सहायता';
+
+  @override
+  String get simpleModeLabel => 'सरल मोड';
+
+  @override
+  String get advancedModeLabel => 'एडवांस्ड मोड';
+
+  @override
+  String get tips => 'सुझाव';
+
+  @override
+  String get gotIt => 'समझ गया';
+
+  @override
+  String get lyricsSyncStudio => 'लिरिक्स सिंक स्टूडियो';
+
+  @override
+  String get lyricsTextLabel => 'लिरिक्स टेक्स्ट';
+
+  @override
+  String get lyricsTextHelperDesc =>
+      'हर लिरिक पंक्ति के लिए एक लाइन। नीचे दिए सिंक टूल्स इन पंक्तियों में टाइमस्टैंप जोड़ते हैं।';
+
+  @override
+  String get quickSync => 'क्विक सिंक';
+
+  @override
+  String get autoAdvanceAfterStamping =>
+      'टाइमस्टैंप लगाने के बाद अपने आप आगे बढ़ें';
+
+  @override
+  String get advancedSync => 'एडवांस्ड सिंक';
+
+  @override
+  String get useCurrentTime => 'मौजूदा समय इस्तेमाल करें';
+
+  @override
+  String get playbackAssist => 'प्लेबैक सहायता';
+
+  @override
+  String get timeShift => 'टाइम शिफ्ट';
+
+  @override
+  String get timeShiftDesc =>
+      'हर टाइमस्टैंप की गई लिरिक को एक साथ आगे या पीछे खिसकाएं।';
+
+  @override
+  String get lyricsSaveLrcExplain =>
+      'सेव करने पर, संभव होने पर गाने की ऑडियो फ़ाइल के साथ एक `.lrc` साइडकार फ़ाइल बनती है, और इसे लोकल प्लेयर डेटाबेस में भी सेव किया जाता है। बिना टाइमस्टैंप वाली पंक्तियों को अपने आप इंटरपोलेट किया जाएगा।';
+
+  @override
+  String get back => 'वापस';
+
+  @override
+  String get appSettingsLabel => 'ऐप सेटिंग्स';
+
+  @override
+  String get backupsAndLogs => 'बैकअप और लॉग';
+
+  @override
+  String get backupsAndLogsDesc => 'ऐप डेटा एक्सपोर्ट, इंपोर्ट और मैनेज करें';
+
+  @override
+  String get exportBackupJson => 'बैकअप एक्सपोर्ट करें (JSON)';
+
+  @override
+  String get exportBackupJsonDesc =>
+      'आपके पसंदीदा गानों और प्लेलिस्ट को एक JSON फ़ाइल में सेव करता है जिसे आप रख या शेयर कर सकते हैं। इसके अलावा कुछ भी शामिल नहीं है।';
+
+  @override
+  String get importBackupJson => 'बैकअप इंपोर्ट करें (JSON)';
+
+  @override
+  String get importBackupJsonDesc =>
+      'बैकअप फ़ाइल से पसंदीदा गानों और प्लेलिस्ट को आपकी लाइब्रेरी में मर्ज करता है। मौजूदा डेटा कभी भी ओवरराइट या हटाया नहीं जाता।';
+
+  @override
+  String get exportDiagnosticsLogs => 'डायग्नोस्टिक्स लॉग एक्सपोर्ट करें';
+
+  @override
+  String get exportDiagnosticsLogsDesc =>
+      'समस्या निवारण के लिए समीक्षा हेतु ऐप की डायग्नोस्टिक लॉग फ़ाइल शेयर करता है।';
+
+  @override
+  String get clearDiagnosticsLogs => 'डायग्नोस्टिक्स लॉग हटाएं';
+
+  @override
+  String get clearDiagnosticsLogsDesc =>
+      'इस डिवाइस पर संग्रहीत डायग्नोस्टिक लॉग फ़ाइल को स्थायी रूप से मिटा देता है। इसे पूर्ववत नहीं किया जा सकता।';
+
+  @override
+  String get lyricsPlainTextOrLrc => 'लिरिक्स (प्लेन टेक्स्ट या LRC)';
+
+  @override
+  String get syncModeLine => 'लाइन';
+
+  @override
+  String get syncModeWord => 'शब्द';
+
+  @override
+  String get syncModeChar => 'अक्षर';
+
+  @override
+  String get enterManually => 'मैन्युअल रूप से दर्ज करें';
+
+  @override
+  String get rawFilterParametersHint => 'रॉ फ़िल्टर पैरामीटर...';
+
+  @override
+  String get searchSettingsHint => 'सेटिंग्स खोजें...';
+
+  @override
+  String get repeatTooltip => 'रिपीट';
+
+  @override
+  String get favoriteTooltip => 'पसंदीदा';
+
+  @override
+  String get instructionsTooltip => 'निर्देश';
+
+  @override
+  String get pasteLyricsHint => 'यहां गाने के बोल पेस्ट करें या टाइप करें';
+
+  @override
+  String get timestampMmSsHint => 'टाइमस्टैंप (mm:ss.xx)';
+
+  @override
+  String get nowLabel => 'अभी';
+
+  @override
+  String get playlistNameHint => 'प्लेलिस्ट का नाम';
+
+  @override
+  String get songInfoUpdated => 'गाने की जानकारी अपडेट हो गई!';
+
+  @override
+  String get albumInfoUpdated => 'एल्बम जानकारी अपडेट हो गई!';
+
+  @override
+  String get failedToSaveChanges => 'बदलाव सेव करने में विफल रहा।';
+
+  @override
+  String sleepTimerStoppingIn(String time) {
+    return 'सक्रिय: $time में रुकेगा';
+  }
+
+  @override
+  String sleepTimerStoppingAfter(String time) {
+    return 'सक्रिय: $time बाद रुकेगा';
+  }
+
+  @override
+  String get selectWhenToPause => 'चुनें कि म्यूज़िक प्लेबैक कब रोका जाए';
 }

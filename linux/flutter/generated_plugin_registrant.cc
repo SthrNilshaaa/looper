@@ -6,24 +6,16 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <dynamic_color/dynamic_color_plugin.h>
 #include <isar_flutter_libs/isar_flutter_libs_plugin.h>
-#include <local_notifier/local_notifier_plugin.h>
 #include <mpv_audio_kit/mpv_audio_kit_plugin.h>
 #include <screen_retriever_linux/screen_retriever_linux_plugin.h>
 #include <url_launcher_linux/url_launcher_plugin.h>
 #include <window_manager/window_manager_plugin.h>
 
 void fl_register_plugins(FlPluginRegistry* registry) {
-  g_autoptr(FlPluginRegistrar) dynamic_color_registrar =
-      fl_plugin_registry_get_registrar_for_plugin(registry, "DynamicColorPlugin");
-  dynamic_color_plugin_register_with_registrar(dynamic_color_registrar);
   g_autoptr(FlPluginRegistrar) isar_flutter_libs_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "IsarFlutterLibsPlugin");
   isar_flutter_libs_plugin_register_with_registrar(isar_flutter_libs_registrar);
-  g_autoptr(FlPluginRegistrar) local_notifier_registrar =
-      fl_plugin_registry_get_registrar_for_plugin(registry, "LocalNotifierPlugin");
-  local_notifier_plugin_register_with_registrar(local_notifier_registrar);
   g_autoptr(FlPluginRegistrar) mpv_audio_kit_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "MpvAudioKitPlugin");
   mpv_audio_kit_plugin_register_with_registrar(mpv_audio_kit_registrar);

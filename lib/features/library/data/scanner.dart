@@ -1,7 +1,11 @@
 import 'dart:io';
+import 'dart:isolate';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:metadata_god/metadata_god.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../core/db_service.dart';
 import '../domain/models/models.dart';
 import 'package:isar/isar.dart';
@@ -13,6 +17,152 @@ class ScanResult {
   final Set<String> musicFolders;
 
   ScanResult({required this.songsCount, required this.musicFolders});
+}
+
+class ArtistParser {
+  /// Splits strings like "Artist A feat. Artist B", "Artist A / Artist B", "Artist A; Artist B", "Artist A & Artist B"
+  static List<String> parse(String? rawArtist) {
+    if (rawArtist == null ||
+        rawArtist.trim().isEmpty ||
+        rawArtist.trim().toLowerCase() == 'unknown artist') {
+      return ['Unknown Artist'];
+    }
+
+    final regex = RegExp(
+      r'\s*(?:;|\/|\\|&|feat\.|ft\.|,|AND)\s*',
+      caseSensitive: false,
+    );
+    final parts = rawArtist
+        .split(regex)
+        .map((a) => a.trim())
+        .where((a) => a.isNotEmpty)
+        .toList();
+
+    return parts.isNotEmpty ? parts : [rawArtist.trim()];
+  }
+
+  static String primaryArtist(String? rawArtist) {
+    final parsed = parse(rawArtist);
+    return parsed.first;
+  }
+}
+
+@visibleForTesting
+bool isIgnoredScanPath(
+  String targetPath, {
+  bool includeSystemAndMessagingAudio = false,
+}) {
+  final lower = targetPath.toLowerCase();
+  final baseName = p.basename(lower);
+  final segments = p
+      .split(lower)
+      .where((segment) => segment.isNotEmpty && segment != p.separator)
+      .toList();
+
+  if (baseName.startsWith('.') && baseName != '.') return true;
+  if (lower.contains('/android/data/') ||
+      lower.endsWith('/android/data') ||
+      lower.contains('/android/obb/') ||
+      lower.endsWith('/android/obb') ||
+      segments.contains('.cache') ||
+      baseName == '.nomedia') {
+    return true;
+  }
+
+  if (includeSystemAndMessagingAudio) return false;
+
+  // Ringtones, Notifications, Alarms
+  if (segments.any(
+        const {
+          'ringtones',
+          'ringtone',
+          'notifications',
+          'notification',
+          'alarms',
+          'alarm',
+        }.contains,
+      ) ||
+      lower.contains('/system/media/audio')) {
+    return true;
+  }
+
+  // WhatsApp & Messaging Voice Notes / Audio
+  if (segments.any(
+    (segment) =>
+        segment == 'whatsapp' ||
+        segment == 'whatsapp business' ||
+        segment == 'whatsapp voice notes' ||
+        segment == 'whatsapp audio' ||
+        segment == 'telegram audio' ||
+        segment == 'telegram voice',
+  )) {
+    return true;
+  }
+
+  // Common voice note filename prefixes (PTT, AUD)
+  if (baseName.startsWith('ptt-') || baseName.startsWith('aud-')) {
+    return true;
+  }
+
+  return false;
+}
+
+Future<List<String>> _isolatedDirectoryTraversal(
+  Map<String, dynamic> params,
+) async {
+  final String rootPath = params['rootPath'] as String;
+  final List<String> extensions = List<String>.from(
+    params['extensions'] as List,
+  );
+  final int minSizeBytes = params['minSizeBytes'] as int;
+  final bool includeSystemAndMessagingAudio =
+      params['includeSystemAndMessagingAudio'] as bool? ?? false;
+
+  final dir = Directory(rootPath);
+  if (!dir.existsSync()) return [];
+
+  final List<String> validFiles = [];
+
+  void walk(Directory currentDir) {
+    if (isIgnoredScanPath(
+      currentDir.path,
+      includeSystemAndMessagingAudio: includeSystemAndMessagingAudio,
+    )) {
+      return;
+    }
+
+    List<FileSystemEntity> entities = [];
+    try {
+      entities = currentDir.listSync(recursive: false, followLinks: false);
+    } catch (_) {
+      return;
+    }
+
+    for (final entity in entities) {
+      if (isIgnoredScanPath(
+        entity.path,
+        includeSystemAndMessagingAudio: includeSystemAndMessagingAudio,
+      )) {
+        continue;
+      }
+
+      if (entity is File) {
+        final ext = p.extension(entity.path).toLowerCase();
+        if (extensions.contains(ext)) {
+          try {
+            if (entity.lengthSync() >= minSizeBytes) {
+              validFiles.add(entity.path);
+            }
+          } catch (_) {}
+        }
+      } else if (entity is Directory) {
+        walk(entity);
+      }
+    }
+  }
+
+  walk(dir);
+  return validFiles;
 }
 
 class LibraryScanner {
@@ -28,59 +178,125 @@ class LibraryScanner {
     '.aiff',
     '.alac',
     '.wma',
+    '.ape',
+    '.wv',
+    '.tta',
+    '.dsf',
+    '.dff',
   ];
 
-  Future<ScanResult> scanDirectory(String path, {bool addFolderToSettings = false}) async {
+  static const int minDurationMs = 0; // Skipped filter as requested
+  static const int minSizeBytes = 0; // Skipped filter as requested
 
-    final dir = Directory(path);
-    if (!await dir.exists()) {
+  static const MethodChannel _broadcastChannel = MethodChannel(
+    'com.looper.player/broadcast',
+  );
+  final Map<String, String?> _folderArtCache = {};
 
-      return ScanResult(songsCount: 0, musicFolders: {});
+  // A full-storage-discovery scan calls scanDirectory() once per candidate
+  // folder (Music, Download, DCIM, ...), and without All Files Access every
+  // one of those calls needs the *entire* device-wide MediaStore audio index
+  // (see the merge logic below). Re-running that native query per-folder was
+  // pure waste, so the most recent result is memoized briefly and shared
+  // across every LibraryScanner instance created during one scan pass.
+  static List<Map<String, dynamic>>? _cachedMediaStoreItems;
+  static bool? _cachedMediaStoreFlag;
+  static DateTime? _cachedMediaStoreAt;
+  static const Duration _mediaStoreCacheTtl = Duration(seconds: 15);
+
+  Future<List<Map<String, dynamic>>?> _queryMediaStoreNative({
+    required bool includeSystemAndMessagingAudio,
+  }) async {
+    if (!Platform.isAndroid) return null;
+
+    final cachedAt = _cachedMediaStoreAt;
+    if (cachedAt != null &&
+        _cachedMediaStoreFlag == includeSystemAndMessagingAudio &&
+        DateTime.now().difference(cachedAt) < _mediaStoreCacheTtl) {
+      return _cachedMediaStoreItems;
     }
 
+    try {
+      final List<dynamic>? rawList = await _broadcastChannel
+          .invokeMethod<List<dynamic>>('queryMediaStore', {
+            'minDurationMs': minDurationMs,
+            'minSizeBytes': minSizeBytes,
+            'includeSystemAndMessagingAudio': includeSystemAndMessagingAudio,
+          });
+      if (rawList == null) return null;
+      final items = rawList
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      _cachedMediaStoreItems = items;
+      _cachedMediaStoreFlag = includeSystemAndMessagingAudio;
+      _cachedMediaStoreAt = DateTime.now();
+      return items;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<ScanResult> scanDirectory(
+    String path, {
+    bool addFolderToSettings = false,
+  }) async {
     final List<File> filesToProcess = [];
     final Set<String> musicFolders = {};
-    
-    Future<void> traverse(Directory currentDir) async {
-      final baseName = p.basename(currentDir.path);
-      // Skip hidden folders and Android system directories to avoid slow scans or access issues
-      if (baseName.startsWith('.') && baseName != '.') return;
-      if (baseName.toLowerCase() == 'android') return;
 
-      List<FileSystemEntity> entities = [];
-      try {
-        entities = await currentDir.list(recursive: false, followLinks: true).toList();
-      } catch (e) {
-        // Silently catch and skip restricted directories without crashing the whole scan!
-        return;
-      }
+    final Set<String> discoveredPaths = {};
 
-      for (final entity in entities) {
-        final name = p.basename(entity.path);
-        if (name.startsWith('.') && name != '.') continue;
+    final Map<String, Map<String, dynamic>> mediaStoreMap = {};
+    final settings = await DbService.isar.appSettings.get(0);
+    final includeSystemAndMessagingAudio =
+        settings?.includeSystemAndMessagingAudio ?? false;
 
-        if (entity is File) {
-          final ext = p.extension(entity.path).toLowerCase();
-          if (supportedExtensions.contains(ext)) {
-            filesToProcess.add(entity);
-            musicFolders.add(p.dirname(entity.path));
+    // 1. Direct Background Isolate Directory Traversal for full disk coverage
+    if (Directory(path).existsSync()) {
+      final List<String> filePaths =
+          await compute(_isolatedDirectoryTraversal, {
+            'rootPath': path,
+            'extensions': supportedExtensions,
+            'minSizeBytes': minSizeBytes,
+            'includeSystemAndMessagingAudio': includeSystemAndMessagingAudio,
+          });
+      discoveredPaths.addAll(filePaths);
+    }
+
+    // 2. Native Android MediaStore Query to complement filesystem traversal
+    if (Platform.isAndroid) {
+      final mediaStoreItems = await _queryMediaStoreNative(
+        includeSystemAndMessagingAudio: includeSystemAndMessagingAudio,
+      );
+      if (mediaStoreItems != null && mediaStoreItems.isNotEmpty) {
+        final normalizedPath = p.canonicalize(path);
+        final isAllFilesGranted =
+            await Permission.manageExternalStorage.isGranted;
+        for (final item in mediaStoreItems) {
+          final filePath = item['path'] as String?;
+          if (filePath != null && filePath.isNotEmpty) {
+            mediaStoreMap[filePath] = item;
+            mediaStoreMap[p.canonicalize(filePath)] = item;
+            final ext = p.extension(filePath).toLowerCase();
+            if (supportedExtensions.contains(ext)) {
+              final canonicalFilePath = p.canonicalize(filePath);
+              if (normalizedPath == '/storage/emulated/0' ||
+                  normalizedPath == '/storage/emulated/0/' ||
+                  canonicalFilePath.startsWith(normalizedPath) ||
+                  !isAllFilesGranted) {
+                discoveredPaths.add(filePath);
+              }
+            }
           }
-        } else if (entity is Directory) {
-          await traverse(entity);
         }
       }
     }
 
-    try {
-      await traverse(dir);
-    } catch (e) {
-
+    for (final fp in discoveredPaths) {
+      filesToProcess.add(File(fp));
+      musicFolders.add(p.dirname(fp));
     }
 
-
-
     if (filesToProcess.isEmpty) {
-      // Clean up any songs in Isar that were in this folder
       await DbService.isar.writeTxn(() async {
         final prefix = path.endsWith('/') ? path : '$path/';
         final toDelete = await DbService.isar.songs
@@ -97,7 +313,8 @@ class LibraryScanner {
       return ScanResult(songsCount: 0, musicFolders: {});
     }
 
-    // Get all existing songs in the database that are located under this scan path
+    // Existing songs scoped to this folder - used below to know what may
+    // need deleting (files under `path` that disappeared).
     final prefix = path.endsWith('/') ? path : '$path/';
     final songsInPathDb = await DbService.isar.songs
         .filter()
@@ -105,91 +322,103 @@ class LibraryScanner {
         .or()
         .pathEqualTo(path)
         .findAll();
-    final Map<String, Song> dbSongsMap = {for (var s in songsInPathDb) s.path: s};
 
-    // Find deleted files (present in DB but no longer on disk)
-    final Set<String> currentFilePaths = filesToProcess.map((f) => f.path).toSet();
+    // "Already known" lookup used to decide which discovered files still
+    // need metadata extraction. This must be built from the WHOLE database,
+    // not just `songsInPathDb`: without All Files Access the MediaStore
+    // merge above intentionally pulls in every indexed audio file regardless
+    // of `path` (scoped filesystem access can't be trusted to see
+    // everything), so a single full-storage-discovery pass calls
+    // scanDirectory() once per candidate folder (Music, Download, DCIM, ...)
+    // with the SAME device-wide file list each time. Scoping this map to
+    // `path` made every song look "new" on every folder pass but the one it
+    // physically lives in, so its metadata (tag parsing, embedded art,
+    // lyrics, even artwork downloads) was re-extracted once per folder -
+    // easily 10x+ redundant work, which is why "Music and audio" scans were
+    // so much slower than "All files" ones (a single-root scan).
+    final allDbSongs = await DbService.isar.songs.where().findAll();
+    final Map<String, Song> dbSongsMap = {};
+    for (final s in allDbSongs) {
+      dbSongsMap[s.path] = s;
+      dbSongsMap[p.canonicalize(s.path)] = s;
+    }
+
+    final Set<String> currentFilePaths = filesToProcess
+        .map((f) => f.path)
+        .toSet();
+    final Set<String> currentCanonicalPaths = filesToProcess
+        .map((f) => p.canonicalize(f.path))
+        .toSet();
+
     final List<int> idsToDelete = [];
-    dbSongsMap.forEach((p, song) {
-      if (!currentFilePaths.contains(p)) {
+    for (final song in songsInPathDb) {
+      if (!currentFilePaths.contains(song.path) &&
+          !currentCanonicalPaths.contains(p.canonicalize(song.path))) {
         idsToDelete.add(song.id);
       }
-    });
+    }
 
     if (idsToDelete.isNotEmpty) {
       await DbService.isar.writeTxn(() async {
         await DbService.isar.songs.deleteAll(idsToDelete);
       });
-
     }
 
-    // Check and update dateAdded of existing songs to match file modification time
-    final List<Song> songsToUpdate = [];
-    for (final file in filesToProcess) {
-      final dbSong = dbSongsMap[file.path];
-      if (dbSong != null) {
-        try {
-          final fileDate = file.lastModifiedSync();
-          // If the difference is more than 5 seconds, update it to the file date
-          if (dbSong.dateAdded.difference(fileDate).inSeconds.abs() > 5) {
-            dbSong.dateAdded = fileDate;
-            songsToUpdate.add(dbSong);
-          }
-        } catch (_) {}
+    final List<File> newFilesToProcess = filesToProcess.where((f) {
+      final dbSong = dbSongsMap[f.path] ?? dbSongsMap[p.canonicalize(f.path)];
+      if (dbSong == null) return true;
+      if (dbSong.artist == 'Unknown Artist' || dbSong.artPath == null) {
+        return true;
       }
-    }
-
-    if (songsToUpdate.isNotEmpty) {
-
-      await DbService.isar.writeTxn(() async {
-        await DbService.isar.songs.putAll(songsToUpdate);
-      });
-    }
-
-    // Find new files to process (on disk but not in DB)
-    final List<File> newFilesToProcess = filesToProcess.where((f) => !dbSongsMap.containsKey(f.path)).toList();
-
-
-    // If requested, add discovered folders to settings
-    if (addFolderToSettings) {
-
-    }
+      return false;
+    }).toList();
 
     if (newFilesToProcess.isNotEmpty) {
+      final downloadIfMissing =
+          (settings?.downloadArtwork ?? false) &&
+          (settings?.enableInternet ?? true);
 
-      
-      final settings = await DbService.isar.appSettings.get(0);
-      final downloadIfMissing = (settings?.downloadArtwork ?? false) && (settings?.enableInternet ?? true);
-      
       final List<Map<String, dynamic>> allResults = [];
-      const int batchSize = 16; // Process in larger batches of 16 for better parallelism
-      
+      const int batchSize = 6;
+
       for (int i = 0; i < newFilesToProcess.length; i += batchSize) {
         final end = (i + batchSize < newFilesToProcess.length)
             ? i + batchSize
             : newFilesToProcess.length;
         final batch = newFilesToProcess.sublist(i, end);
 
-        final results = await Future.wait(batch.map((f) => _extractMetadata(f, downloadArtworkIfMissing: downloadIfMissing)));
+        final results = await Future.wait(
+          batch.map(
+            (f) => _extractMetadata(
+              f,
+              mediaStoreData:
+                  mediaStoreMap[f.path] ??
+                  mediaStoreMap[p.canonicalize(f.path)],
+              downloadArtworkIfMissing: downloadIfMissing,
+            ),
+          ),
+        );
         for (final res in results) {
           if (res != null) {
             allResults.add(res);
           }
         }
-        
-        // Small pause to allow the UI to breathe and process input events
-        await Future.delayed(const Duration(milliseconds: 20));
+        await Future.delayed(const Duration(milliseconds: 5));
       }
 
       if (allResults.isNotEmpty) {
-
         await DbService.isar.writeTxn(() async {
           for (final data in allResults) {
             final song = data['song'] as Song;
             final metadata = data['metadata'] as Metadata;
             final artPath = data['artPath'] as String?;
 
-            // Confirmed new, put it directly
+            final existingDbSong =
+                dbSongsMap[song.path] ?? dbSongsMap[p.canonicalize(song.path)];
+            if (existingDbSong != null) {
+              song.id = existingDbSong.id;
+            }
+
             await DbService.isar.songs.put(song);
 
             if (metadata.album != null) {
@@ -210,80 +439,319 @@ class LibraryScanner {
               }
             }
 
-            if (metadata.artist != null) {
-              final existingArtist = await DbService.isar.artists
-                  .filter()
-                  .nameEqualTo(metadata.artist!)
-                  .findFirst();
-              if (existingArtist == null) {
-                final artist = Artist()..name = metadata.artist!;
-                await DbService.isar.artists.put(artist);
-              }
+            final primaryArtistName = ArtistParser.primaryArtist(
+              metadata.artist,
+            );
+            final existingArtist = await DbService.isar.artists
+                .filter()
+                .nameEqualTo(primaryArtistName)
+                .findFirst();
+            if (existingArtist == null) {
+              final artistObj = Artist()
+                ..name = primaryArtistName
+                ..artPath = artPath;
+              await DbService.isar.artists.put(artistObj);
+            } else if (existingArtist.artPath == null && artPath != null) {
+              existingArtist.artPath = artPath;
+              await DbService.isar.artists.put(existingArtist);
             }
           }
         });
       }
-    } else {
-
     }
 
-    return ScanResult(songsCount: filesToProcess.length, musicFolders: musicFolders);
+    return ScanResult(
+      songsCount: filesToProcess.length,
+      musicFolders: musicFolders,
+    );
   }
 
-  Future<Map<String, dynamic>?> _extractMetadata(File file, {bool downloadArtworkIfMissing = false}) async {
+  /// Removes excluded system/messaging audio after the setting is disabled.
+  /// Short duration alone is not a reason to delete a legitimate track.
+  Future<int> cleanupFilteredAudio({
+    required bool includeSystemAndMessagingAudio,
+  }) async {
+    int removedCount = 0;
+    try {
+      await DbService.isar.writeTxn(() async {
+        final allSongs = await DbService.isar.songs.where().findAll();
+        final idsToDelete = <int>[];
+
+        for (final song in allSongs) {
+          final isIgnoredPath = isIgnoredScanPath(
+            song.path,
+            includeSystemAndMessagingAudio: includeSystemAndMessagingAudio,
+          );
+
+          if (isIgnoredPath) {
+            idsToDelete.add(song.id);
+          }
+        }
+
+        if (idsToDelete.isNotEmpty) {
+          await DbService.isar.songs.deleteAll(idsToDelete);
+          removedCount = idsToDelete.length;
+        }
+
+        // Cleanup orphaned albums
+        final allAlbums = await DbService.isar.albums.where().findAll();
+        for (final album in allAlbums) {
+          final count = await DbService.isar.songs
+              .filter()
+              .albumEqualTo(album.name)
+              .count();
+          if (count == 0) {
+            await DbService.isar.albums.delete(album.id);
+          }
+        }
+
+        // Cleanup orphaned artists
+        final allArtists = await DbService.isar.artists.where().findAll();
+        for (final artist in allArtists) {
+          final count = await DbService.isar.songs
+              .filter()
+              .artistEqualTo(artist.name)
+              .count();
+          if (count == 0) {
+            await DbService.isar.artists.delete(artist.id);
+          }
+        }
+      });
+    } catch (_) {}
+    return removedCount;
+  }
+
+  Future<List<int>?> _fetchNativeEmbeddedPicture(String path) async {
+    if (!Platform.isAndroid) return null;
+    try {
+      final Uint8List? bytes = await _broadcastChannel.invokeMethod<Uint8List>(
+        'getEmbeddedPicture',
+        {'path': path},
+      );
+      return bytes?.toList();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> _findFolderArtwork(String songFilePath) async {
+    try {
+      final dirPath = p.dirname(songFilePath);
+      if (_folderArtCache.containsKey(dirPath)) {
+        return _folderArtCache[dirPath];
+      }
+      final dir = Directory(dirPath);
+      if (!await dir.exists()) {
+        _folderArtCache[dirPath] = null;
+        return null;
+      }
+      final candidates = [
+        'cover.jpg',
+        'cover.png',
+        'cover.jpeg',
+        'cover.webp',
+        'folder.jpg',
+        'folder.png',
+        'folder.jpeg',
+        'folder.webp',
+        'front.jpg',
+        'front.png',
+        'front.jpeg',
+        'front.webp',
+        'album.jpg',
+        'album.png',
+        'album.jpeg',
+        'album.webp',
+        'art.jpg',
+        'art.png',
+        'art.jpeg',
+        'art.webp',
+      ];
+      for (final candidate in candidates) {
+        final f = File(p.join(dirPath, candidate));
+        if (await f.exists()) {
+          _folderArtCache[dirPath] = f.path;
+          return f.path;
+        }
+      }
+      final entities = await dir
+          .list(recursive: false, followLinks: false)
+          .toList();
+      for (final entity in entities) {
+        if (entity is File) {
+          final base = p.basename(entity.path).toLowerCase();
+          if (base.contains('cover') ||
+              base.contains('folder') ||
+              base.contains('front') ||
+              base.contains('album')) {
+            final ext = p.extension(base);
+            if (['.jpg', '.jpeg', '.png', '.webp'].contains(ext)) {
+              _folderArtCache[dirPath] = entity.path;
+              return entity.path;
+            }
+          }
+        }
+      }
+      _folderArtCache[dirPath] = null;
+    } catch (_) {}
+    return null;
+  }
+
+  Future<Map<String, dynamic>?> _extractMetadata(
+    File file, {
+    Map<String, dynamic>? mediaStoreData,
+    bool downloadArtworkIfMissing = false,
+  }) async {
     try {
       Metadata? metadata;
       try {
-        // Enforce strict 800ms timeout on native metadata read to prevent scanning/UI hangs
-        metadata = await MetadataGod.readMetadata(file: file.path)
-            .timeout(const Duration(milliseconds: 800));
-      } catch (e) {
+        metadata = await MetadataGod.readMetadata(
+          file: file.path,
+        ).timeout(const Duration(milliseconds: 1500));
+      } catch (_) {}
 
+      String? title = metadata?.title;
+      String? artist = metadata?.artist;
+      String? album = metadata?.album;
+      String? genre = metadata?.genre;
+      int? durationMs = metadata?.durationMs?.toInt();
+      int? trackNumber = metadata?.trackNumber;
+      int? year = metadata?.year;
+      List<int>? pictureData = metadata?.picture?.data;
+
+      // Use native MediaStore fallbacks if MetadataGod fields are null or empty
+      if (mediaStoreData != null) {
+        if (title == null || title.trim().isEmpty) {
+          title = mediaStoreData['title'] as String?;
+        }
+        if (artist == null || artist.trim().isEmpty) {
+          artist = mediaStoreData['artist'] as String?;
+        }
+        if (album == null || album.trim().isEmpty) {
+          album = mediaStoreData['album'] as String?;
+        }
+        if (durationMs == null || durationMs == 0) {
+          durationMs = (mediaStoreData['duration'] as num?)?.toInt();
+        }
+        if (trackNumber == null || trackNumber == 0) {
+          trackNumber = (mediaStoreData['track'] as num?)?.toInt();
+        }
+        if (year == null || year == 0) {
+          year = (mediaStoreData['year'] as num?)?.toInt();
+        }
+      }
+
+      if (durationMs != null && durationMs < LibraryScanner.minDurationMs) {
+        return null;
+      }
+
+      if (pictureData == null && Platform.isAndroid) {
+        pictureData = await _fetchNativeEmbeddedPicture(file.path);
+      }
+
+      final filename = p.basenameWithoutExtension(file.path);
+
+      if (artist == null ||
+          artist.trim().isEmpty ||
+          artist.trim().toLowerCase() == 'unknown artist') {
+        if (filename.contains(' - ')) {
+          final parts = filename.split(' - ');
+          if (parts.length >= 2) {
+            artist = parts[0].trim();
+            if (title == null || title.trim().isEmpty || title == filename) {
+              title = parts.sublist(1).join(' - ').trim();
+            }
+          }
+        }
       }
 
       String? artPath;
-      if (metadata?.picture != null) {
-        artPath = await saveAlbumArt(
-          metadata?.album ?? 'unknown',
-          metadata!.picture!.data,
-        );
+      if (pictureData != null && pictureData.isNotEmpty) {
+        artPath = await saveAlbumArt(album ?? 'unknown', pictureData);
       }
 
-      final lyrics = await MetadataService.getEmbeddedLyrics(file.path);
+      artPath ??= await _findFolderArtwork(file.path);
+
+      String? lyrics;
+      try {
+        lyrics = await MetadataService.getEmbeddedLyrics(file.path);
+      } catch (_) {}
 
       DateTime fileDate;
       try {
-        fileDate = file.lastModifiedSync();
+        fileDate = await file.lastModified();
       } catch (_) {
         fileDate = DateTime.now();
       }
 
+      final cleanTitle = (title != null && title.trim().isNotEmpty)
+          ? title.trim()
+          : filename;
+      final cleanArtist = (artist != null && artist.trim().isNotEmpty)
+          ? artist.trim()
+          : 'Unknown Artist';
+      final cleanAlbum = (album != null && album.trim().isNotEmpty)
+          ? album.trim()
+          : 'Unknown Album';
+
       final song = Song()
         ..path = file.path
-        ..title = metadata?.title ?? p.basenameWithoutExtension(file.path)
-        ..artist = metadata?.artist ?? 'Unknown Artist'
-        ..album = metadata?.album ?? 'Unknown Album'
-        ..genre = metadata?.genre
-        ..duration = metadata?.durationMs?.toInt()
-        ..trackNumber = metadata?.trackNumber
-        ..year = metadata?.year
+        ..title = cleanTitle
+        ..artist = cleanArtist
+        ..album = cleanAlbum
+        ..genre = genre
+        ..duration = durationMs
+        ..trackNumber = trackNumber
+        ..year = year
         ..artPath = artPath
         ..lyrics = lyrics
         ..dateAdded = fileDate;
 
       if (artPath == null && downloadArtworkIfMissing) {
-        artPath = await ArtworkDownloaderService().downloadArtworkForSong(song);
-        song.artPath = artPath;
+        try {
+          artPath = await ArtworkDownloaderService().downloadArtworkForSong(
+            song,
+          );
+          song.artPath = artPath;
+        } catch (_) {}
       }
 
       return {
         'song': song,
-        'metadata': metadata ?? Metadata(title: song.title, artist: song.artist, album: song.album),
-        'artPath': artPath
+        'metadata':
+            metadata ??
+            Metadata(title: cleanTitle, artist: cleanArtist, album: cleanAlbum),
+        'artPath': artPath,
       };
     } catch (e) {
-
-      return null;
+      try {
+        final filename = p.basenameWithoutExtension(file.path);
+        DateTime fileDate;
+        try {
+          fileDate = file.lastModifiedSync();
+        } catch (_) {
+          fileDate = DateTime.now();
+        }
+        final folderArt = await _findFolderArtwork(file.path);
+        final song = Song()
+          ..path = file.path
+          ..title = filename
+          ..artist = 'Unknown Artist'
+          ..album = 'Unknown Album'
+          ..artPath = folderArt
+          ..dateAdded = fileDate;
+        return {
+          'song': song,
+          'metadata': Metadata(
+            title: filename,
+            artist: 'Unknown Artist',
+            album: 'Unknown Album',
+          ),
+          'artPath': folderArt,
+        };
+      } catch (_) {
+        return null;
+      }
     }
   }
 

@@ -10,6 +10,7 @@ import 'package:looper_player/features/settings/presentation/settings_notifier.d
 import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 class EditSongSheet extends ConsumerStatefulWidget {
   final Song song;
@@ -89,11 +90,12 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
     );
 
     if (mounted) {
+      final l10n = AppLocalizations.of(context)!;
       setState(() => _isSaving = false);
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(success ? 'Song info updated!' : 'Failed to save changes.'),
+          content: Text(success ? l10n.songInfoUpdated : l10n.failedToSaveChanges),
           backgroundColor: success ? Colors.green.shade800 : Colors.red.shade800,
           behavior: SnackBarBehavior.floating,
         ),
@@ -103,6 +105,7 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
     final accentColor = Color(settings.accentColor);
 
@@ -154,12 +157,12 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Edit Song Info',
+                        Text(l10n.editSongInfo,
                             style: AppFonts.jostStyle(
                                 color: Colors.white,
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold)),
-                        Text('Tap a field to edit',
+                        Text(l10n.tapFieldToEdit,
                             style: AppFonts.jostStyle(color: Colors.white38, fontSize: 12)),
                       ],
                     ),
@@ -231,7 +234,7 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
                         onPressed: _clearArtwork,
                         icon: const Icon(LucideIcons.x,
                             size: 14, color: Colors.redAccent),
-                        label: Text('Remove artwork',
+                        label: Text(l10n.removeArtwork,
                             style: AppFonts.jostStyle(
                                 color: Colors.redAccent, fontSize: 12)),
                       ),
@@ -244,7 +247,7 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
                   const SizedBox(height: 12),
                   _EditField(
                     controller: _titleCtrl,
-                    label: 'Title',
+                    label: l10n.title,
                     icon: LucideIcons.music,
                     accentColor: accentColor,
                     required: true,
@@ -252,14 +255,14 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
                   const SizedBox(height: 12),
                   _EditField(
                     controller: _artistCtrl,
-                    label: 'Artist',
+                    label: l10n.artist,
                     icon: LucideIcons.mic2,
                     accentColor: accentColor,
                   ),
                   const SizedBox(height: 12),
                   _EditField(
                     controller: _albumCtrl,
-                    label: 'Album',
+                    label: l10n.album,
                     icon: LucideIcons.disc,
                     accentColor: accentColor,
                   ),
@@ -273,7 +276,7 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
                         flex: 2,
                         child: _EditField(
                           controller: _yearCtrl,
-                          label: 'Year',
+                          label: l10n.year,
                           icon: LucideIcons.calendar,
                           accentColor: accentColor,
                           keyboardType: TextInputType.number,
@@ -285,7 +288,7 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
                         flex: 3,
                         child: _EditField(
                           controller: _genreCtrl,
-                          label: 'Genre',
+                          label: l10n.genre,
                           icon: LucideIcons.tag,
                           accentColor: accentColor,
                         ),
@@ -298,7 +301,7 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
                   const SizedBox(height: 12),
                   _EditField(
                     controller: _lyricsCtrl,
-                    label: 'Lyrics (Plain text or LRC)',
+                    label: l10n.lyricsPlainTextOrLrc,
                     icon: LucideIcons.fileText,
                     accentColor: accentColor,
                     maxLines: 8,
@@ -355,20 +358,19 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
                       ),
                       child: _isSaving
                           ? const AppLoadingIndicator(size: 44)
-                          : const Row(
+                          : Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(LucideIcons.check, size: 20),
-                                SizedBox(width: 8),
-                                Text('Save Changes',
-                                    style: TextStyle(
+                                const Icon(LucideIcons.check, size: 20),
+                                const SizedBox(width: 8),
+                                Text(l10n.saveChangesBtn,
+                                    style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold)),
                               ],
                             ),
                     ),
                   ),
-                  SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 16),
                 ],
               ),
             ),
@@ -379,7 +381,7 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
 
     // Blur wrapper when dynamic theming is on
     if (settings.enableDynamicTheming && !settings.disableBlur) {
-      return ClipRRect(
+      content = ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
@@ -387,7 +389,20 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
         ),
       );
     }
-    return content;
+
+    // The DraggableScrollableSheet above sizes itself as a fraction of
+    // whatever height it's given, which by default is the full screen --
+    // the keyboard just overlaps the bottom of it instead of the sheet
+    // shrinking to sit above it. Padding the whole sheet by the live
+    // keyboard inset shrinks that available height instead, so the sheet
+    // (and whichever field is focused, e.g. Lyrics near the bottom) stays
+    // above the keyboard.
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 100),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: content,
+    );
   }
 
   Widget _artPlaceholder(Color accentColor) => Container(

@@ -401,47 +401,44 @@ class AppLocalizationsJa extends AppLocalizations {
   String get manageLanguageAndFocus => '言語設定と発信者のフォーカス状態を管理する';
 
   @override
-  String get audioFocusGetFocus => 'Get Focus';
+  String get audioFocusGetFocus => 'フォーカスを取得';
 
   @override
-  String get audioFocusGetFocusDesc =>
-      'Request audio focus when playback begins.';
+  String get audioFocusGetFocusDesc => '再生開始時にオーディオフォーカスを要求します。';
 
   @override
-  String get audioFocusReleaseFocus => 'Release Focus';
+  String get audioFocusReleaseFocus => 'フォーカスを解放';
 
   @override
-  String get audioFocusReleaseFocusDesc =>
-      'Release audio focus when playback pauses or stops.';
+  String get audioFocusReleaseFocusDesc => '再生が一時停止または停止したときにオーディオフォーカスを解放します。';
 
   @override
-  String get audioFocusStopOnOtherSession =>
-      'Stop Music on Other Music Session';
+  String get audioFocusStopOnOtherSession => '他の音楽セッションで音楽を停止';
 
   @override
   String get audioFocusStopOnOtherSessionDesc =>
-      'Pause playback when another app starts playing audio.';
+      '他のアプリが音声の再生を開始したときに再生を一時停止します。';
 
   @override
-  String get audioFocusRestartOnGain => 'Restart Music on Focus Gain';
+  String get audioFocusRestartOnGain => 'フォーカス取得時に音楽を再開';
 
   @override
   String get audioFocusRestartOnGainDesc =>
-      'Resume playback automatically when audio focus returns, only if playback was interrupted by focus loss.';
+      'オーディオフォーカスが戻ったとき、フォーカスの喪失によって再生が中断されていた場合のみ自動的に再生を再開します。';
 
   @override
-  String get pauseOnDuckTitle => 'Pause on Duck';
+  String get pauseOnDuckTitle => '音量低下時に一時停止';
 
   @override
   String get pauseOnDuckDesc =>
-      'Pause playback instead of lowering volume when another app plays a transient sound (e.g. notifications, navigation directions).';
+      '他のアプリが一時的な音(通知やナビゲーション案内など)を再生したとき、音量を下げる代わりに再生を一時停止します。';
 
   @override
-  String get resumeOnBluetoothConnectTitle => 'Resume on Bluetooth Connect';
+  String get resumeOnBluetoothConnectTitle => 'Bluetooth接続時に再開';
 
   @override
   String get resumeOnBluetoothConnectDesc =>
-      'Resume playback automatically when a Bluetooth audio device (headphones, car kit) reconnects.';
+      'Bluetoothオーディオ機器(ヘッドフォン、カーキットなど)が再接続したときに自動的に再生を再開します。';
 
   @override
   String get manualCrossfadeDuration => '手動クロスフェード時間';
@@ -478,6 +475,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get newTitle => '新しいタイトル';
+
+  @override
+  String get nextUp => '次の曲';
 
   @override
   String get noAlbumsFound => 'アルバムが見つかりませんでした';
@@ -590,6 +590,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get recentPlayed => '最近のプレイ';
 
   @override
+  String get recentRowDesc => '最近再生した曲の水平棚';
+
+  @override
   String get removedFromPlaylist => 'プレイリストから削除しました';
 
   @override
@@ -599,7 +602,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get removeFromPlaylist => 'プレイリストから削除';
 
   @override
-  String get rename => 'Rename';
+  String get rename => '名前を変更';
 
   @override
   String get renameFile => 'ファイルを名前変更';
@@ -615,6 +618,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get reorderDashboardSectionsDesc => 'ドラッグ アンド ドロップでダッシュボードの優先順序を設定します';
+
+  @override
+  String get includeOtherDeviceAudioTitle => '他のデバイス音声を含める';
+
+  @override
+  String get includeOtherDeviceAudioDesc =>
+      '着信音、通知、アラーム、WhatsAppとTelegramの音声をスキャンします';
 
   @override
   String get rescanLibrary => 'ライブラリを再スキャンする';
@@ -656,6 +666,13 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get persistQueueDesc => 'アプリ再起動時に最後に再生した曲とキューを保存する';
+
+  @override
+  String get keepSongProgressTitle => '曲の再生位置を保持';
+
+  @override
+  String get keepSongProgressDesc =>
+      '各曲の再生位置をそれぞれ個別に記憶します。曲の途中で別の曲に切り替えて、後で戻ってきても — 間に他の曲を再生していても — 最初からではなく、前回の続きから再生を再開します。';
 
   @override
   String get right => '右寄せ';
@@ -757,6 +774,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get showQualityBadgeDesc => '再生中の画面に音質情報バッジを表示します';
 
   @override
+  String get showRecentRow => '最近のプレイ行を表示';
+
+  @override
+  String get showRecentRowDesc => 'ホーム画面に最近再生した曲の水平リストを表示します';
+
+  @override
   String get silenceBetweenTracksDesc => '曲の間に無音のギャップを追加します（ギャップレスは0ms）';
 
   @override
@@ -775,7 +798,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get songDetails => '曲の詳細';
 
   @override
-  String get songDetailsAndFrequency => 'Song Details & Frequency';
+  String get songDetailsAndFrequency => '曲の詳細と周波数';
 
   @override
   String get songRenamedDbOnly => 'アプリ内ライブラリで名前を変更しました（元のファイルは読み取り専用）';
@@ -839,19 +862,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get toggleFavorite => 'お気に入りを切り替え';
 
   @override
-  String get shuffleTitle => 'Shuffle';
+  String get shuffleTitle => 'シャッフル';
 
   @override
   String get shuffleDisabledDesc =>
-      'Play songs in their original queue order. Turning shuffle off keeps the current song playing and restores the remaining queue to its original sequence without affecting playback or playback history.';
+      '曲を元のキュー順に再生します。シャッフルをオフにすると、再生中の曲はそのまま続き、残りのキューは再生や再生履歴に影響を与えることなく元の順序に戻ります。';
 
   @override
   String get shuffleEnabledDesc =>
-      'Randomize the remaining songs while keeping the current song unchanged. The generated shuffle order remains consistent until the queue changes or a new shuffle is requested, preventing repeated or skipped tracks.';
+      '再生中の曲はそのままに、残りの曲の順序をランダム化します。生成されたシャッフル順は、キューが変わるか新しいシャッフルが要求されるまで一定に保たれ、曲の重複や飛ばしを防ぎます。';
 
   @override
   String get shuffleSwitchingDesc =>
-      'Toggling shuffle never restarts the current song. It only changes the order of upcoming tracks—randomized when enabled and restored to the original queue order when disabled.';
+      'シャッフルの切り替えでは再生中の曲が再開されることはありません。変更されるのは次に再生される曲の順序のみで、オンのときはランダムに、オフのときは元のキュー順に戻ります。';
 
   @override
   String get topResult => '上位の結果';
@@ -1040,4 +1063,421 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get sortDuration => '曲の長さ';
+
+  @override
+  String get myAlbums => 'マイアルバム';
+
+  @override
+  String get featuredArtists => '注目のアーティスト';
+
+  @override
+  String get noSongPlaying => '再生中の曲はありません';
+
+  @override
+  String get nextLabel => '次へ';
+
+  @override
+  String get previousLabel => '前へ';
+
+  @override
+  String get resync => '再同期';
+
+  @override
+  String get equalizer => 'イコライザー';
+
+  @override
+  String get presets => 'プリセット';
+
+  @override
+  String get preAmpGain => 'プリアンプゲイン';
+
+  @override
+  String get outputVolume => '出力音量';
+
+  @override
+  String get customFilterHint =>
+      'カスタムのlibavfilterオーディオフィルターパラメータを直接入力します(例: volume=3dB, aecho=0.8:0.88:60:0.4):';
+
+  @override
+  String get flowGlobalActions => 'フローとグローバル操作';
+
+  @override
+  String get equalizerModeLabel => 'イコライザーモード:';
+
+  @override
+  String get currentGainsAppliedGlobal => '現在のゲインをグローバルのデフォルト設定として適用しました。';
+
+  @override
+  String get applyToGlobal => 'グローバルに適用';
+
+  @override
+  String get songSpecificResetGlobal => '曲固有の設定をグローバルのデフォルトにリセットしました。';
+
+  @override
+  String get resetToGlobal => 'グローバルにリセット';
+
+  @override
+  String get resetAllSongsEq => '全曲のEQをリセット';
+
+  @override
+  String get resetAllSongsEqConfirm =>
+      'ライブラリ内のすべての曲のカスタムイコライザー設定を消去してもよろしいですか?';
+
+  @override
+  String get allSongsEqDataReset => 'すべての曲固有のイコライザーデータがリセットされました。';
+
+  @override
+  String get resetAllSongsEqData => '全曲のEQデータをリセット';
+
+  @override
+  String get equalizerTargetMode => 'イコライザー適用モード';
+
+  @override
+  String get equalizerTargetModeDesc => '音楽ライブラリ全体にイコライザー設定をどのように適用するかを選択します。';
+
+  @override
+  String get globalMode => 'グローバルモード';
+
+  @override
+  String get globalModeDesc => 'すべての曲に一律で効果を適用します。曲が変わってもイコライザー設定は同じままです。';
+
+  @override
+  String get songSpecificMode => '曲別モード';
+
+  @override
+  String get songSpecificModeDesc =>
+      '現在の曲だけにカスタム設定を保存します。次の曲は、独自のプロファイルがない限りデフォルトでイコライザーなし(フラット)になります。';
+
+  @override
+  String get viewDeviceAudioCapabilities => 'デバイスのオーディオ機能を表示';
+
+  @override
+  String get deviceAudioCapabilities => 'デバイスのオーディオ機能';
+
+  @override
+  String get noPlaybackActiveCapabilities => '再生中ではないか、機能情報が利用できません。';
+
+  @override
+  String get changeLyricsProvider => '歌詞プロバイダーを変更';
+
+  @override
+  String get autoFallbackProviders => '自動フォールバックプロバイダー';
+
+  @override
+  String get autoFallbackProvidersDesc =>
+      'メインのプロバイダーに歌詞がない場合、自動的に他のプロバイダーを試します';
+
+  @override
+  String get ambientColorBackground => 'アンビエントカラー背景';
+
+  @override
+  String get ambientColorBackgroundDesc =>
+      '曲のアートワークから生成した、滑らかで控えめなアンビエントグラデーション';
+
+  @override
+  String get exportLyricsLrc => '歌詞をエクスポート(.lrcファイル)';
+
+  @override
+  String get saveLyricsToDevice => '現在の歌詞をデバイスのストレージに保存';
+
+  @override
+  String get noLyricsToExport => 'エクスポートできる歌詞がありません';
+
+  @override
+  String get useCustomLyricsLrc => 'カスタム歌詞を使用(LRCファイル)';
+
+  @override
+  String get selectLocalLrcFile => 'この曲用にローカルの.lrcまたは.txtファイルを選択';
+
+  @override
+  String get customLyricsAppliedSuccess => 'カスタム歌詞が正常に適用されました!';
+
+  @override
+  String get noRecentlyPlayedTracks => '最近再生した曲はありません';
+
+  @override
+  String get close => '閉じる';
+
+  @override
+  String get audioQualityAnalysis => '音質分析';
+
+  @override
+  String get audioQualityAnalysisDesc => '詳細なスペクトルおよびオーディオフォーマット分析を実行します';
+
+  @override
+  String get audioStreamDetails => 'オーディオストリームの詳細';
+
+  @override
+  String get perChannelMetrics => 'チャンネル別測定値';
+
+  @override
+  String get sleepTimer => 'スリープタイマー';
+
+  @override
+  String get stopByTime => '時間で停止';
+
+  @override
+  String get start => '開始';
+
+  @override
+  String get stopBySongCount => '曲数で停止';
+
+  @override
+  String get cancelSleepTimer => 'スリープタイマーをキャンセル';
+
+  @override
+  String get nowPlayingAllCaps => '再生中';
+
+  @override
+  String get settingsAndBackups => '設定とバックアップ';
+
+  @override
+  String get managePreferencesLibraryData => '設定とライブラリデータを管理';
+
+  @override
+  String get logsClearedSuccess => 'ログを正常に消去しました';
+
+  @override
+  String get editSongInfo => '曲情報を編集';
+
+  @override
+  String get editAlbumInfo => 'アルバム情報を編集';
+
+  @override
+  String get tapFieldToEdit => '編集するにはフィールドをタップしてください';
+
+  @override
+  String get alwaysBlurSheets => 'シートを常にぼかす';
+
+  @override
+  String get alwaysBlurSheetsDesc => 'ダイナミックテーマがオフの場合でもポップアップシートをぼかします';
+
+  @override
+  String get removeArtwork => 'アートワークを削除';
+
+  @override
+  String get resetArtworkToDefault => 'デフォルトにリセット';
+
+  @override
+  String get artworkResetToDefault => 'アートワークをデフォルトにリセットしました';
+
+  @override
+  String get noEmbeddedArtworkFound => 'このアルバムに埋め込まれたアートワークが見つかりません';
+
+  @override
+  String get saveChangesBtn => '変更を保存';
+
+  @override
+  String get enterFolderPathManually => 'フォルダパスを手動で入力';
+
+  @override
+  String get folderPickerManualHint =>
+      'システムのディレクトリ選択画面が開かない場合は、以下に完全なディレクトリパスを入力または貼り付けてください:';
+
+  @override
+  String get noSupportedSongsFoundFolder => '選択したフォルダに対応する曲が見つかりません';
+
+  @override
+  String get add => '追加';
+
+  @override
+  String get folderPickerClosed => 'フォルダ選択画面が閉じられました';
+
+  @override
+  String get buyMeCoffee => 'コーヒーをおごる';
+
+  @override
+  String get typeToSearchSettings => '設定を検索するには入力してください…';
+
+  @override
+  String get maintainersLabel => 'メンテナー';
+
+  @override
+  String get personBehindLooperPlayer => 'LooperPlayerを開発した人';
+
+  @override
+  String get blurredArtworkForLyrics => '歌詞画面のぼかしアートワーク';
+
+  @override
+  String get blurredArtworkForLyricsDesc =>
+      '動的/静的なグラデーションの代わりに、ぼかしたアルバムアートを背景として表示します';
+
+  @override
+  String get lyricsFontWeight => '歌詞フォントの太さ';
+
+  @override
+  String get openSourceLicenses => 'オープンソースライセンス';
+
+  @override
+  String get openSourceLicensesDesc => 'このアプリで使用しているサードパーティ製ライブラリ';
+
+  @override
+  String get done => '完了';
+
+  @override
+  String get lyricsNotAvailable => '歌詞は利用できません。';
+
+  @override
+  String get lyricsNotAvailableHint =>
+      'この曲の歌詞を追加するには .lrc または .txt ファイルをインポートしてください';
+
+  @override
+  String get importLyricsFile => '歌詞ファイルをインポート';
+
+  @override
+  String get approximatedSyncNoWordTimings => '概算同期(単語単位のタイミングなし)';
+
+  @override
+  String get lyricsSyncHelp => '歌詞同期のヘルプ';
+
+  @override
+  String get simpleModeLabel => 'シンプルモード';
+
+  @override
+  String get advancedModeLabel => '詳細モード';
+
+  @override
+  String get tips => 'ヒント';
+
+  @override
+  String get gotIt => '了解';
+
+  @override
+  String get lyricsSyncStudio => '歌詞同期スタジオ';
+
+  @override
+  String get lyricsTextLabel => '歌詞テキスト';
+
+  @override
+  String get lyricsTextHelperDesc =>
+      '歌詞行ごとに1行で入力してください。下の同期ツールでこれらの行にタイムスタンプを付けられます。';
+
+  @override
+  String get quickSync => 'クイック同期';
+
+  @override
+  String get autoAdvanceAfterStamping => '打刻後に自動的に次へ進む';
+
+  @override
+  String get advancedSync => '詳細な同期';
+
+  @override
+  String get useCurrentTime => '現在の時間を使用';
+
+  @override
+  String get playbackAssist => '再生アシスト';
+
+  @override
+  String get timeShift => 'タイムシフト';
+
+  @override
+  String get timeShiftDesc => '打刻済みの歌詞をすべてまとめて前後に移動します。';
+
+  @override
+  String get lyricsSaveLrcExplain =>
+      '保存すると、可能な場合は曲の音声ファイルのそばに付随する「.lrc」ファイルが作成され、ローカルのプレーヤーデータベースにも保存されます。打刻されていない行は自動的に補間されます。';
+
+  @override
+  String get back => '戻る';
+
+  @override
+  String get appSettingsLabel => 'アプリ設定';
+
+  @override
+  String get backupsAndLogs => 'バックアップとログ';
+
+  @override
+  String get backupsAndLogsDesc => 'アプリデータのエクスポート、インポート、管理';
+
+  @override
+  String get exportBackupJson => 'バックアップをエクスポート(JSON)';
+
+  @override
+  String get exportBackupJsonDesc =>
+      'お気に入りの曲とプレイリストを保存・共有できるJSONファイルに保存します。それ以外は含まれません。';
+
+  @override
+  String get importBackupJson => 'バックアップをインポート(JSON)';
+
+  @override
+  String get importBackupJsonDesc =>
+      'バックアップファイルのお気に入り曲とプレイリストをライブラリにマージします。既存のデータが上書きまたは削除されることはありません。';
+
+  @override
+  String get exportDiagnosticsLogs => '診断ログをエクスポート';
+
+  @override
+  String get exportDiagnosticsLogsDesc =>
+      'トラブルシューティングのために確認できるよう、アプリの診断ログファイルを共有します。';
+
+  @override
+  String get clearDiagnosticsLogs => '診断ログを消去';
+
+  @override
+  String get clearDiagnosticsLogsDesc =>
+      'この端末に保存されている診断ログファイルを完全に消去します。この操作は取り消せません。';
+
+  @override
+  String get lyricsPlainTextOrLrc => '歌詞(プレーンテキストまたはLRC)';
+
+  @override
+  String get syncModeLine => '行';
+
+  @override
+  String get syncModeWord => '単語';
+
+  @override
+  String get syncModeChar => '文字';
+
+  @override
+  String get enterManually => '手動で入力';
+
+  @override
+  String get rawFilterParametersHint => '生のフィルターパラメータ...';
+
+  @override
+  String get searchSettingsHint => '設定を検索...';
+
+  @override
+  String get repeatTooltip => 'リピート';
+
+  @override
+  String get favoriteTooltip => 'お気に入り';
+
+  @override
+  String get instructionsTooltip => '使い方';
+
+  @override
+  String get pasteLyricsHint => 'ここに曲の歌詞を貼り付けるか入力してください';
+
+  @override
+  String get timestampMmSsHint => 'タイムスタンプ(mm:ss.xx)';
+
+  @override
+  String get nowLabel => '現在';
+
+  @override
+  String get playlistNameHint => 'プレイリスト名';
+
+  @override
+  String get songInfoUpdated => '曲情報を更新しました!';
+
+  @override
+  String get albumInfoUpdated => 'アルバム情報を更新しました!';
+
+  @override
+  String get failedToSaveChanges => '変更を保存できませんでした。';
+
+  @override
+  String sleepTimerStoppingIn(String time) {
+    return '有効:あと$timeで停止';
+  }
+
+  @override
+  String sleepTimerStoppingAfter(String time) {
+    return '有効:$time後に停止';
+  }
+
+  @override
+  String get selectWhenToPause => '音楽の再生をいつ一時停止するか選択してください';
 }

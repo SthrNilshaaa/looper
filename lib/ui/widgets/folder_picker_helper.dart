@@ -2,27 +2,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 
 class FolderPickerHelper {
   static void showManualPathDialog(BuildContext context, WidgetRef ref) {
     final TextEditingController controller = TextEditingController();
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           backgroundColor: const Color(0xFF1F1F1F),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text(
-            'Enter Folder Path Manually',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          title: Text(
+            l10n.enterFolderPathManually,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'If the system directory picker is not opening, type or paste the full directory path below:',
-                style: TextStyle(color: Colors.white70, fontSize: 13),
+              Text(
+                l10n.folderPickerManualHint,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
               ),
               const SizedBox(height: 16),
               TextField(
@@ -44,7 +46,7 @@ class FolderPickerHelper {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+              child: Text(l10n.cancel, style: const TextStyle(color: Colors.white54)),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -52,14 +54,23 @@ class FolderPickerHelper {
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              onPressed: () {
+              onPressed: () async {
                 final path = controller.text.trim();
-                if (path.isNotEmpty) {
-                  ref.read(libraryProvider.notifier).scanLibrary(path);
-                }
                 Navigator.of(context).pop();
+                if (path.isNotEmpty) {
+                  final count = await ref.read(libraryProvider.notifier).scanLibrary(path);
+                  if (count == 0 && context.mounted) {
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(l10n.noSupportedSongsFoundFolder),
+                        duration: const Duration(seconds: 3),
+                      ),
+                    );
+                  }
+                }
               },
-              child: const Text('Add'),
+              child: Text(l10n.add),
             ),
           ],
         );
@@ -71,19 +82,30 @@ class FolderPickerHelper {
     try {
       final String? path = await FilePicker.platform.getDirectoryPath();
       if (path != null) {
-        ref.read(libraryProvider.notifier).scanLibrary(path);
+        final count = await ref.read(libraryProvider.notifier).scanLibrary(path);
+        if (count == 0 && context.mounted) {
+          final l10n = AppLocalizations.of(context)!;
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(l10n.noSupportedSongsFoundFolder),
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       } else {
         if (context.mounted) {
+          final l10n = AppLocalizations.of(context)!;
           // Clear any current snackbars to avoid queuing them
           ScaffoldMessenger.of(context).clearSnackBars();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               backgroundColor: const Color(0xFF1E1E1E),
               duration: const Duration(seconds: 4), // Explicit auto-hide duration
-              content: const Text('Folder picker closed', style: TextStyle(color: Colors.white)),
+              content: Text(l10n.folderPickerClosed, style: const TextStyle(color: Colors.white)),
               action: SnackBarAction(
                 textColor: Colors.deepPurpleAccent,
-                label: 'Enter Manually',
+                label: l10n.enterManually,
                 onPressed: () => showManualPathDialog(context, ref),
               ),
             ),

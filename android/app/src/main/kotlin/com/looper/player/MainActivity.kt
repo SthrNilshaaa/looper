@@ -4,13 +4,17 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import android.content.Intent
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
 import android.os.Bundle
+import android.os.Build
 import android.media.AudioManager
 import android.content.Context
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.util.Log
 import android.graphics.Color
+import android.media.MediaMetadataRetriever
 import android.os.PowerManager
 
 
@@ -52,8 +56,17 @@ class MainActivity : FlutterActivity() {
             Log.e("LooperTaskService", "Failed to start LooperTaskService", e)
         }
 
+
+
         val afm = AudioFocusManager(this, MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AUDIO_FOCUS_CHANNEL))
         audioFocusManager = afm
+        // Registered unconditionally (not tied to holding AudioManager focus):
+        // mpv_audio_kit is the sole audio-focus owner, so this class must never
+        // request focus itself (a second concurrent focus request would steal
+        // focus from mpv's own listener and pause playback). These receivers
+        // only need the ordinary broadcasts, not focus, to power "Resume on
+        // Bluetooth Connect" (and a redundant but harmless noisy-pause).
+        afm.registerReceivers()
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, AUDIO_FOCUS_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
@@ -109,6 +122,44 @@ class MainActivity : FlutterActivity() {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
                     startActivity(intent)
                     Runtime.getRuntime().exit(0)
+                }
+            } else if (call.method == "queryMediaStore") {
+                val minDurationMs = (call.argument<Any>("minDurationMs") as? Number)?.toLong() ?: 0L
+                val minSizeBytes = (call.argument<Any>("minSizeBytes") as? Number)?.toLong() ?: 0L
+                val includeSystemAndMessagingAudio =
+                    call.argument<Boolean>("includeSystemAndMessagingAudio") ?: false
+                val songs = queryMediaStoreAudio(
+                    minDurationMs,
+                    minSizeBytes,
+                    includeSystemAndMessagingAudio
+                )
+                result.success(songs)
+            } else if (call.method == "rescanMedia") {
+                try {
+                    val path = call.argument<String>("path") ?: "/storage/emulated/0"
+                    android.media.MediaScannerConnection.scanFile(
+                        applicationContext,
+                        arrayOf(path),
+                        null
+                    ) { _, _ -> }
+                    result.success(true)
+                } catch (e: Exception) {
+                    result.success(false)
+                }
+            } else if (call.method == "getEmbeddedPicture") {
+                val path = call.argument<String>("path")
+                if (path != null) {
+                    try {
+                        val mmr = MediaMetadataRetriever()
+                        mmr.setDataSource(path)
+                        val artBytes = mmr.embeddedPicture
+                        mmr.release()
+                        result.success(artBytes)
+                    } catch (e: Exception) {
+                        result.success(null)
+                    }
+                } else {
+                    result.success(null)
                 }
             } else {
                 result.notImplemented()
@@ -261,5 +312,117 @@ class MainActivity : FlutterActivity() {
         stateIntent.putExtra("playing", isPlaying)
         stateIntent.putExtra("track", title)
         sendBroadcast(stateIntent)
+    }
+
+    private fun queryMediaStoreAudio(
+        minDurationMs: Long,
+        minSizeBytes: Long,
+        includeSystemAndMessagingAudio: Boolean
+    ): List<Map<String, Any?>> {
+        val audioList = mutableListOf<Map<String, Any?>>()
+        try {
+            val collection = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                android.provider.MediaStore.Audio.Media.getContentUri(android.provider.MediaStore.VOLUME_EXTERNAL)
+            } else {
+                android.provider.MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+            }
+
+            val projection = arrayOf(
+                android.provider.MediaStore.Audio.Media._ID,
+                android.provider.MediaStore.Audio.Media.TITLE,
+                android.provider.MediaStore.Audio.Media.ARTIST,
+                android.provider.MediaStore.Audio.Media.ALBUM,
+                android.provider.MediaStore.Audio.Media.DURATION,
+                android.provider.MediaStore.Audio.Media.SIZE,
+                android.provider.MediaStore.Audio.Media.DATA,
+                android.provider.MediaStore.Audio.Media.YEAR,
+                android.provider.MediaStore.Audio.Media.TRACK
+            )
+
+            val categorySelection = if (includeSystemAndMessagingAudio) {
+                "1 = 1"
+            } else {
+                """(${android.provider.MediaStore.Audio.Media.IS_MUSIC} != 0 OR ${android.provider.MediaStore.Audio.Media.IS_MUSIC} IS NULL)
+                    AND ${android.provider.MediaStore.Audio.Media.IS_RINGTONE} = 0
+                    AND ${android.provider.MediaStore.Audio.Media.IS_NOTIFICATION} = 0
+                    AND ${android.provider.MediaStore.Audio.Media.IS_ALARM} = 0""".trimIndent()
+            }
+            val selection = """
+                ($categorySelection)
+                AND (${android.provider.MediaStore.Audio.Media.DURATION} >= ? OR ${android.provider.MediaStore.Audio.Media.DURATION} IS NULL)
+                AND (${android.provider.MediaStore.Audio.Media.SIZE} >= ? OR ${android.provider.MediaStore.Audio.Media.SIZE} IS NULL)
+            """.trimIndent()
+
+            val selectionArgs = arrayOf(
+                minDurationMs.toString(),
+                minSizeBytes.toString()
+            )
+
+            contentResolver.query(
+                collection,
+                projection,
+                selection,
+                selectionArgs,
+                "${android.provider.MediaStore.Audio.Media.TITLE} ASC"
+            )?.use { cursor ->
+                val titleCol = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.TITLE)
+                val artistCol = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.ARTIST)
+                val albumCol = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.ALBUM)
+                val durationCol = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.DURATION)
+                val sizeCol = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.SIZE)
+                val pathCol = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.DATA)
+                val yearCol = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.YEAR)
+                val trackCol = cursor.getColumnIndex(android.provider.MediaStore.Audio.Media.TRACK)
+
+                while (cursor.moveToNext()) {
+                    val path = if (pathCol != -1) cursor.getString(pathCol) else null
+                    if (path.isNullOrEmpty()) continue
+
+                    val lowerPath = path.lowercase()
+                    val fileName = java.io.File(lowerPath).name
+                    val pathSegments = lowerPath.split('/').filter { it.isNotEmpty() }.toSet()
+                    val isAlwaysIgnored = lowerPath.contains("/android/data/") ||
+                        lowerPath.contains("/android/obb/") ||
+                        lowerPath.contains("/.cache/") ||
+                        lowerPath.endsWith("/.nomedia")
+                    val isOptionalAudio = pathSegments.any {
+                        it == "ringtones" || it == "ringtone" ||
+                            it == "notifications" || it == "notification" ||
+                            it == "alarms" || it == "alarm" ||
+                            it == "whatsapp" || it == "whatsapp business" ||
+                            it == "whatsapp voice notes" || it == "whatsapp audio" ||
+                            it == "telegram audio" || it == "telegram voice"
+                    } ||
+                        lowerPath.contains("/system/media/audio/") ||
+                        fileName.startsWith("ptt-") ||
+                        fileName.startsWith("aud-")
+                    if (isAlwaysIgnored || (!includeSystemAndMessagingAudio && isOptionalAudio)) {
+                        continue
+                    }
+
+                    val title = if (titleCol != -1) cursor.getString(titleCol) else null
+                    val artist = if (artistCol != -1) cursor.getString(artistCol) else null
+                    val album = if (albumCol != -1) cursor.getString(albumCol) else null
+                    val duration = if (durationCol != -1) cursor.getLong(durationCol) else 0L
+                    val size = if (sizeCol != -1) cursor.getLong(sizeCol) else 0L
+                    val year = if (yearCol != -1) cursor.getInt(yearCol) else 0
+                    val track = if (trackCol != -1) cursor.getInt(trackCol) else 0
+
+                    audioList.add(mapOf(
+                        "path" to path,
+                        "title" to title,
+                        "artist" to artist,
+                        "album" to album,
+                        "duration" to duration,
+                        "size" to size,
+                        "year" to year,
+                        "track" to track
+                    ))
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("MediaStoreQuery", "Error querying MediaStore", e)
+        }
+        return audioList
     }
 }

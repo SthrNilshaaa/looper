@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:looper_player/core/ui_utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import '../../domain/lyric_models.dart';
@@ -11,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 
 import '../lyrics_notifier.dart';
+import '../lyrics_selection_notifier.dart';
 
 class AdvancedLyricRenderer extends ConsumerStatefulWidget {
   final List<LyricLine> lines;
@@ -34,6 +36,17 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
   int _currentLineIndex = -1;
   double _fontScale = 1.0;
   double _baseScale = 1.0;
+
+  // Pinch-to-zoom is tracked by hand from raw pointer events (via Listener)
+  // instead of a GestureDetector's ScaleGestureRecognizer. A real scale
+  // recognizer also tracks single-finger movement (that's why the old code
+  // needed a `pointerCount >= 2` guard before applying it), and just by
+  // entering the gesture arena it could occasionally out-compete a lyric
+  // line's own tap recognizer for a single-finger touch, silently
+  // swallowing the tap. A Listener never enters the arena at all, so a line
+  // underneath it always gets a clean shot at recognizing its own tap.
+  final Map<int, Offset> _activePointers = {};
+  double? _pinchStartDistance;
 
   bool _transitionFinished = false;
   Animation<double>? _routeAnimation;
@@ -93,6 +106,10 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
     if (oldWidget.lines != widget.lines) {
       _currentLineIndex = -1;
       _lineKeys.clear();
+      // The lines changed (new song, or a different lyrics source/provider
+      // was picked) — any in-progress share selection no longer points at
+      // the right text, so drop it.
+      ref.read(lyricsSelectionProvider.notifier).clear();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ref.read(lyricsManualScrollProvider.notifier).state = false;
@@ -107,21 +124,6 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
     final route = ModalRoute.of(context);
     final isExiting = route != null && route.animation?.status == AnimationStatus.reverse;
     if (isExiting) return;
-
-    final searchQuery = ref.read(lyricsSearchQueryProvider).toLowerCase();
-    
-    // If there's a search query, prioritize showing that match
-    if (searchQuery.isNotEmpty) {
-      final searchIndex = widget.lines.indexWhere(
-        (line) => line.text.toLowerCase().contains(searchQuery),
-      );
-      if (searchIndex != -1 && (searchIndex != _currentLineIndex || forceScroll)) {
-        _currentLineIndex = searchIndex;
-        _scrollToIndex(searchIndex, isSearch: true, animate: _transitionFinished);
-        if (mounted) setState(() {});
-        return;
-      }
-    }
 
     int index = widget.lines.indexWhere(
       (line) =>
@@ -213,6 +215,49 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
     super.dispose();
   }
 
+  /// Distance between whichever two pointers touched down first. Good
+  /// enough for a two-finger pinch; a stray third finger just rides along
+  /// without being part of the distance calculation.
+  double _distanceBetweenFirstTwoPointers() {
+    final positions = _activePointers.values.toList(growable: false);
+    return (positions[0] - positions[1]).distance;
+  }
+
+  void _onPointerDown(PointerDownEvent event) {
+    _activePointers[event.pointer] = event.position;
+    if (_activePointers.length == 2) {
+      _pinchStartDistance = _distanceBetweenFirstTwoPointers();
+      _baseScale = _fontScale;
+    }
+  }
+
+  void _onPointerMove(PointerMoveEvent event) {
+    if (!_activePointers.containsKey(event.pointer)) return;
+    _activePointers[event.pointer] = event.position;
+
+    final startDistance = _pinchStartDistance;
+    if (_activePointers.length < 2 || startDistance == null || startDistance <= 0) return;
+
+    final scale = _distanceBetweenFirstTwoPointers() / startDistance;
+    final newFontScale = (_baseScale * scale).clamp(0.6, 2.5);
+    if (newFontScale != _fontScale) {
+      setState(() => _fontScale = newFontScale);
+    }
+  }
+
+  void _onPointerUpOrCancel(PointerEvent event) {
+    _activePointers.remove(event.pointer);
+    // Re-baseline against whatever's left so a lifted finger (or a third
+    // finger joining/leaving mid-pinch) never causes a sudden jump the next
+    // time a two-finger pinch resumes.
+    if (_activePointers.length >= 2) {
+      _pinchStartDistance = _distanceBetweenFirstTwoPointers();
+    } else {
+      _pinchStartDistance = null;
+    }
+    _baseScale = _fontScale;
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<Duration>(
@@ -229,17 +274,14 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
       }
     });
 
-    return GestureDetector(
-      onScaleStart: (details) {
-        _baseScale = _fontScale;
-      },
-      onScaleUpdate: (details) {
-        if (details.pointerCount >= 2) {
-          setState(() {
-            _fontScale = (_baseScale * details.scale).clamp(0.6, 2.5);
-          });
-        }
-      },
+    final selection = ref.watch(lyricsSelectionProvider);
+
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: _onPointerDown,
+      onPointerMove: _onPointerMove,
+      onPointerUp: _onPointerUpOrCancel,
+      onPointerCancel: _onPointerUpOrCancel,
       child: ListView.builder(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
@@ -299,7 +341,22 @@ class _AdvancedLyricRendererState extends ConsumerState<AdvancedLyricRenderer> {
               relativeIndex: _currentLineIndex == -1
                   ? index
                   : index - _currentLineIndex,
-              onTap: () => widget.onSeek(line.startTime),
+              isSelected: selection.contains(index),
+              selectionActive: selection.isActive,
+              onTap: () {
+                // While picking lines for the share card, tapping extends
+                // (or shrinks) the selection instead of seeking.
+                if (selection.isActive) {
+                  HapticFeedback.selectionClick();
+                  ref.read(lyricsSelectionProvider.notifier).extendTo(index);
+                } else {
+                  widget.onSeek(line.startTime);
+                }
+              },
+              onLongPress: () {
+                HapticFeedback.mediumImpact();
+                ref.read(lyricsSelectionProvider.notifier).startSelection(index);
+              },
             ),
           );
         },

@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'appambit_reporter.dart';
+
 class LoggerHelper {
   static File? _logFile;
   static bool _initialized = false;
@@ -27,22 +29,57 @@ class LoggerHelper {
           _logFile = File('${dir.path}/app_logs.txt');
         }
       }
-      
+
       await write('--- Session Started ---');
     } catch (e) {
       debugPrint('Failed to initialize LoggerHelper: $e');
     }
   }
 
-  static Future<void> write(String message, [dynamic error, StackTrace? stack]) async {
+  static Future<void> write(
+    String message, [
+    dynamic error,
+    StackTrace? stack,
+  ]) async {
+    await _write(message, error, stack, reportRemotely: true);
+  }
+
+  /// Writes an error locally when another crash handler already reports it.
+  static Future<void> writeLocal(
+    String message, [
+    dynamic error,
+    StackTrace? stack,
+  ]) async {
+    await _write(message, error, stack, reportRemotely: false);
+  }
+
+  static Future<void> _write(
+    String message,
+    dynamic error,
+    StackTrace? stack, {
+    required bool reportRemotely,
+  }) async {
     final timestamp = DateTime.now().toIso8601String();
-    final logLine = '[$timestamp] $message${error != null ? '\nError: $error' : ''}${stack != null ? '\nStacktrace:\n$stack' : ''}\n';
-        
+    final logLine =
+        '[$timestamp] $message${error != null ? '\nError: $error' : ''}${stack != null ? '\nStacktrace:\n$stack' : ''}\n';
+
     debugPrint(logLine.trim());
+
+    if (reportRemotely && (error != null || stack != null)) {
+      await AppAmbitReporter.reportError(
+        message: message,
+        exception: error,
+        stackTrace: stack,
+      );
+    }
 
     if (!_initialized || _logFile == null) return;
     try {
-      await _logFile!.writeAsString(logLine, mode: FileMode.append, flush: true);
+      await _logFile!.writeAsString(
+        logLine,
+        mode: FileMode.append,
+        flush: true,
+      );
     } catch (e) {
       debugPrint('LoggerHelper: Failed to write log: $e');
     }
@@ -57,7 +94,9 @@ class LoggerHelper {
     try {
       final file = await getLogFile();
       if (file != null && await file.exists()) {
-        await Share.shareXFiles([XFile(file.path)], text: 'Looper Player Diagnostic Logs');
+        await Share.shareXFiles([
+          XFile(file.path),
+        ], text: 'Looper Player Diagnostic Logs');
       }
     } catch (e) {
       write('Failed to export logs', e);
@@ -78,7 +117,8 @@ class LoggerHelper {
 
   static Future<String> saveCrashLog(String error, StackTrace? stack) async {
     final timestamp = DateTime.now().toIso8601String();
-    final crashContent = '=== LOOPER PLAYER CRASH REPORT ===\n'
+    final crashContent =
+        '=== LOOPER PLAYER CRASH REPORT ===\n'
         'Timestamp: $timestamp\n'
         'OS: ${Platform.operatingSystem} (${Platform.operatingSystemVersion})\n'
         'Error: $error\n'
@@ -99,7 +139,11 @@ class LoggerHelper {
         final downloadDir = Directory(downloadDirPath);
         if (await downloadDir.exists()) {
           final file = File('$downloadDirPath/looper_player_crash-logs.txt');
-          await file.writeAsString(crashContent, mode: FileMode.write, flush: true);
+          await file.writeAsString(
+            crashContent,
+            mode: FileMode.write,
+            flush: true,
+          );
           return file.path;
         }
       }
@@ -113,7 +157,11 @@ class LoggerHelper {
         final dir = await getExternalStorageDirectory();
         if (dir != null) {
           final file = File('${dir.path}/looper_player_crash-logs.txt');
-          await file.writeAsString(crashContent, mode: FileMode.write, flush: true);
+          await file.writeAsString(
+            crashContent,
+            mode: FileMode.write,
+            flush: true,
+          );
           return file.path;
         }
       }
@@ -137,7 +185,9 @@ class LoggerHelper {
     try {
       final file = File(path);
       if (await file.exists()) {
-        await Share.shareXFiles([XFile(file.path)], text: 'Looper Player Crash Log');
+        await Share.shareXFiles([
+          XFile(file.path),
+        ], text: 'Looper Player Crash Log');
       }
     } catch (e) {
       write('Failed to share crash log', e);

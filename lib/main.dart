@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:looper_player/features/settings/presentation/widgets/theme_settings_tiles.dart';
 import 'package:mpv_audio_kit/mpv_audio_kit.dart';
 import 'package:window_manager/window_manager.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -11,16 +11,14 @@ import 'package:looper_player/features/settings/presentation/settings_notifier.d
 import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:looper_player/core/providers.dart';
-import 'package:flutter_performance_optimizer/flutter_performance_optimizer.dart';
-
 import 'core/db_service.dart';
 import 'core/app_fonts.dart';
+import 'core/appambit_reporter.dart';
 import 'ui/screens/home_screen.dart';
 
 import 'package:metadata_god/metadata_god.dart';
 import 'package:looper_player/core/theme_provider.dart';
 import 'package:looper_player/ui/widgets/keyboard_handler.dart';
-import 'package:local_notifier/local_notifier.dart';
 import 'core/logger_helper.dart';
 
 final dbInitializerProvider = FutureProvider<void>((ref) async {
@@ -31,10 +29,12 @@ final dbInitializerProvider = FutureProvider<void>((ref) async {
 });
 
 void main(List<String> args) async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Capture unhandled Flutter framework errors
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
-    LoggerHelper.write(
+    LoggerHelper.writeLocal(
       'Flutter Framework Exception: ${details.exceptionAsString()}',
       details.exception,
       details.stack,
@@ -43,29 +43,33 @@ void main(List<String> args) async {
 
   // Capture unhandled asynchronous errors
   PlatformDispatcher.instance.onError = (error, stack) {
-    LoggerHelper.write('Unhandled Async Exception: $error', error, stack);
+    LoggerHelper.writeLocal('Unhandled Async Exception: $error', error, stack);
     return true;
   };
 
-  WidgetsFlutterBinding.ensureInitialized();
+  // AppAmbit key is never hardcoded - build/run with:
+  //   flutter run --dart-define-from-file=env.json
+  // (see env.json.example / docs/ADS_ANALYTICS_SETUP.md).
+  try {
+    await AppAmbitReporter.start();
+  } catch (e, stack) {
+    LoggerHelper.writeLocal('AppAmbitSdk start error: $e', e, stack);
+  }
 
   // Initialize rolling file logging helper in parallel
-  final Future<void> logsInit = LoggerHelper.init().then((_) {
-    LoggerHelper.write('=======================================');
-    LoggerHelper.write('Application starting...');
-    LoggerHelper.write('Arguments: $args');
-  }).catchError((e, s) {});
+  final Future<void> logsInit = LoggerHelper.init()
+      .then((_) {
+        LoggerHelper.write('=======================================');
+        LoggerHelper.write('Application starting...');
+        LoggerHelper.write('Arguments: $args');
+      })
+      .catchError((e, s) {});
 
   final String? initialFile = args.isNotEmpty ? args.first : null;
 
   // Initialize desktop/window setups in parallel
   final Future<void> desktopInit = () async {
     if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
-      try {
-        await localNotifier.setup(appName: 'Looper Player');
-      } catch (e, s) {
-        LoggerHelper.write('Failed to initialize LocalNotifier', e, s);
-      }
       try {
         await windowManager.ensureInitialized();
         WindowOptions windowOptions = const WindowOptions(
@@ -74,7 +78,7 @@ void main(List<String> args) async {
           skipTaskbar: false,
           titleBarStyle: TitleBarStyle.hidden,
           title: 'Looper Player',
-          backgroundColor: Colors.transparent,
+          backgroundColor: Color(0xFF121214),
         );
         await windowManager.waitUntilReadyToShow(windowOptions, () async {
           await windowManager.show();
@@ -112,7 +116,7 @@ void main(List<String> args) async {
     } catch (_) {}
   }();
 
-  // Check permissions in parallel
+  // Check permissions in parallel (status check only - no automatic permission prompt dialogs on startup)
   bool permissionsGranted = true;
   final Future<void> permissionCheck = () async {
     if (Platform.isAndroid) {
@@ -121,6 +125,7 @@ void main(List<String> args) async {
           Permission.audio.isGranted,
           Permission.storage.isGranted,
           Permission.manageExternalStorage.isGranted,
+          Permission.notification.isGranted,
         ]);
         permissionsGranted = results.any((granted) => granted);
       } catch (e, s) {
@@ -163,13 +168,14 @@ class MyApp extends ConsumerWidget {
 
     Widget buildHome() {
       return dbInit.when(
-        data: (_) => KeyboardHandler(
-          key: ValueKey('${settings!.useNewFont}_${settings.customFontFamily}_${settings.customFontWeightDelta}_${settings.useNewFontLyrics}_${settings.customFontFamilyLyrics}_${settings.customFontWeightLyricsDelta}'),
-          child: const HomeScreen(),
-        ),
+        data: (_) => const KeyboardHandler(child: HomeScreen()),
         loading: () => const PreAppLoadingScreenContent(),
         error: (err, stack) {
-          LoggerHelper.write('Error during dbInitializerProvider execution: $err', err, stack);
+          LoggerHelper.write(
+            'Error during dbInitializerProvider execution: $err',
+            err,
+            stack,
+          );
           return CrashRecoveryScreen(error: err.toString(), stack: stack);
         },
       );
@@ -178,14 +184,19 @@ class MyApp extends ConsumerWidget {
     // Build the MaterialApp using either dynamic/loaded settings or fallback values.
     final ColorScheme colorScheme = (themeState != null)
         ? themeState.colorScheme
-        : ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.dark);
+        : ColorScheme.fromSeed(
+            seedColor: Colors.deepPurple,
+            brightness: Brightness.dark,
+          );
 
     final bool useNewFont = settings?.useNewFont ?? false;
     final String customFontFamily = settings?.customFontFamily ?? '';
     final int customFontWeightDelta = settings?.customFontWeightDelta ?? 0;
     final String language = settings?.language ?? '';
 
-    final String fontFamily = useNewFont ? (customFontFamily.isEmpty ? 'Jost' : customFontFamily) : 'DM Sans';
+    final String fontFamily = useNewFont
+        ? (customFontFamily.isEmpty ? 'Jost' : customFontFamily)
+        : 'DM Sans';
 
     final textTheme = AppFonts.adjustTextTheme(
       ThemeData.dark().textTheme.apply(
@@ -198,6 +209,7 @@ class MyApp extends ConsumerWidget {
 
     Widget buildMaterialApp(ColorScheme colorScheme) {
       return MaterialApp(
+        navigatorObservers: AppAmbitReporter.navigatorObservers,
         scaffoldMessengerKey: scaffoldMessengerKey,
         debugShowCheckedModeBanner: false,
         title: 'Looper Player',
@@ -210,7 +222,9 @@ class MyApp extends ConsumerWidget {
         ),
         themeAnimationDuration: const Duration(milliseconds: 1000),
         themeAnimationCurve: Curves.easeInOut,
-        locale: language.isEmpty || language == 'system' ? null : Locale(language),
+        locale: language.isEmpty || language == 'system'
+            ? null
+            : Locale(language),
         localizationsDelegates: const [
           AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
@@ -218,28 +232,12 @@ class MyApp extends ConsumerWidget {
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        builder: (context, child) {
-          final showPerformanceOptimizer = settings?.showPerformanceOptimizer ?? false;
-          return PerformanceOptimizer(
-            enabled: showPerformanceOptimizer,
-            showDashboard: showPerformanceOptimizer,
-            enableInReleaseMode: true,
-            child: child!,
-          );
-        },
+        builder: (context, child) => child!,
         home: buildHome(),
       );
     }
 
-    if (settings == null || !settings.enableDynamicTheming) {
-      return buildMaterialApp(colorScheme);
-    }
-
-    return DynamicColorBuilder(
-      builder: (lightDynamic, darkDynamic) {
-        return buildMaterialApp(colorScheme);
-      },
-    );
+    return buildMaterialApp(colorScheme);
   }
 }
 
@@ -306,8 +304,8 @@ class _CrashRecoveryScreenState extends State<CrashRecoveryScreen> {
                   color: Colors.black.withValues(alpha: 0.4),
                   blurRadius: 16,
                   offset: const Offset(0, 8),
-                )
-              ]
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -331,10 +329,7 @@ class _CrashRecoveryScreenState extends State<CrashRecoveryScreen> {
                 const Text(
                   'An unexpected initialization error occurred. A diagnostic crash report has been generated.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white54,
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.white54, fontSize: 14),
                 ),
                 const SizedBox(height: 16),
                 Container(
@@ -348,10 +343,7 @@ class _CrashRecoveryScreenState extends State<CrashRecoveryScreen> {
                   child: const SingleChildScrollView(
                     child: Text(
                       'An error occurred during app database or service initialization. This can happen if storage access is restricted or database files are corrupted.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.white70,
-                      ),
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
                     ),
                   ),
                 ),
@@ -377,7 +369,8 @@ class _CrashRecoveryScreenState extends State<CrashRecoveryScreen> {
                     children: [
                       if (_savedPath.isNotEmpty)
                         ElevatedButton.icon(
-                          onPressed: () => LoggerHelper.shareCrashLog(_savedPath),
+                          onPressed: () =>
+                              LoggerHelper.shareCrashLog(_savedPath),
                           icon: const Icon(Icons.share, size: 16),
                           label: const Text('Share Log'),
                           style: ElevatedButton.styleFrom(
@@ -398,7 +391,7 @@ class _CrashRecoveryScreenState extends State<CrashRecoveryScreen> {
                       ),
                     ],
                   ),
-                ]
+                ],
               ],
             ),
           ),

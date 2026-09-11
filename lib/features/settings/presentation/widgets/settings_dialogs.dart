@@ -23,6 +23,7 @@ void showCustomColorPicker(
     builder: (context) {
       return StatefulBuilder(
         builder: (context, setModalState) {
+          final l10n = AppLocalizations.of(context)!;
           final currentAccent = ref.watch(settingsProvider).accentColor;
           return AppBottomSheetContainer(
             height: 650,
@@ -34,7 +35,7 @@ void showCustomColorPicker(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                      Text(
-                      'Custom Accent Color',
+                      l10n.customAccentColor,
                       style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -77,7 +78,7 @@ void showCustomColorPicker(
                         Navigator.pop(context);
                       },
                       child: Text(
-                        'Done',
+                        l10n.done,
                         style: AppFonts.jostStyle(
                           color: Color(currentAccent),
                           fontWeight: FontWeight.bold,
@@ -104,6 +105,7 @@ void showReorderBottomSheet(
   showModalBottomSheet(
     context: context,
     useRootNavigator: true,
+    isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) {
       final l10n = AppLocalizations.of(context)!;
@@ -112,7 +114,7 @@ void showReorderBottomSheet(
           final currentSettings = ref.watch(settingsProvider);
           final currentOrder = List<String>.from(
             currentSettings.homeSectionOrder.isEmpty
-                ? ['quick_picks', 'songs', 'albums', 'artists', 'genres']
+                ? ['quick_picks', 'songs', 'albums', 'artists', 'genres', 'recent']
                 : currentSettings.homeSectionOrder,
           );
 
@@ -141,6 +143,11 @@ void showReorderBottomSheet(
               'title': l10n.genres,
               'description': l10n.genresRowDesc,
               'icon': LucideIcons.library,
+            },
+            'recent': {
+              'title': l10n.recentPlayed,
+              'description': l10n.recentRowDesc,
+              'icon': LucideIcons.history,
             },
           };
 
@@ -270,7 +277,7 @@ void showReorderBottomSheet(
                       Navigator.pop(context);
                     },
                     child: Text(
-                      'Done',
+                      l10n.done,
                       style: AppFonts.jostStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -299,13 +306,13 @@ void showClearDialog(BuildContext context, AppLocalizations l10n) {
         style: AppFonts.jostStyle(color: Colors.white),
       ),
       content: Text(
-        'This will remove all songs from your library. Your music files will not be deleted.',
+        l10n.resetLibraryConfirmNew,
         style: AppFonts.jostStyle(color: Colors.white70),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: Text('Cancel', style: AppFonts.jostStyle(color: Colors.white38)),
+          child: Text(l10n.cancel, style: AppFonts.jostStyle(color: Colors.white38)),
         ),
         TextButton(
           onPressed: () async {
@@ -318,7 +325,7 @@ void showClearDialog(BuildContext context, AppLocalizations l10n) {
               Navigator.pop(context);
             }
           },
-          child: Text('Clear', style: AppFonts.jostStyle(color: Colors.redAccent)),
+          child: Text(l10n.clear, style: AppFonts.jostStyle(color: Colors.redAccent)),
         ),
       ],
     ),

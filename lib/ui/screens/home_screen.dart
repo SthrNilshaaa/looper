@@ -64,15 +64,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       final initialFile = ref.read(startupFileProvider);
       if (initialFile != null) {
         ref.read(playbackProvider.notifier).playFromFile(initialFile);
-        // If playing from file, maybe skip the folder prompt for now
-        if (settings.libraryFolders.isNotEmpty) {
-          ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
-        }
         return;
       }
-
-      // Always trigger background scan for saved/discovered folders on startup
-      ref.read(libraryProvider.notifier).scanSavedFolders(showVisualIndicator: false);
     });
   }
 
@@ -106,9 +99,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     final bool hasBgLayer = settings.enableDynamicTheming || settings.keepBackgroundGradient;
+    final Color scaffoldBg = (Theme.of(context).scaffoldBackgroundColor == Colors.transparent)
+        ? const Color(0xFF121214)
+        : Theme.of(context).scaffoldBackgroundColor;
 
     return Scaffold(
-      backgroundColor: hasBgLayer ? Colors.transparent : Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: hasBgLayer ? Colors.transparent : scaffoldBg,
       drawer: isNarrow
           ? Drawer(
               child: Container(
@@ -136,6 +132,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 File(currentSongArtPath),
                                 key: ValueKey(currentSongArtPath),
                                 fit: BoxFit.cover,
+                                gaplessPlayback: true,
+                                errorBuilder: (_, _, _) => const SizedBox.shrink(),
                               ),
                             ),
                           ),
@@ -173,7 +171,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Column(
               children: [
                 // Custom Title Bar always at the top
-                SizedBox(height: 30, child: CustomTitleBar(showMenu: isNarrow)),
+                SizedBox(height: 36, child: CustomTitleBar(showMenu: isNarrow)),
                 Expanded(
                   child: showWelcome
                       ? const WelcomeScreen()
@@ -253,7 +251,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                               .goBack(),
                                                           icon: LucideIcons
                                                               .arrowLeft,
-                                                          label: 'Back',
+                                                          label: l10n.back,
                                                           isDynamic: isDynamic,
                                                         ),
                                                       ),
@@ -270,7 +268,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                                     FolderPickerHelper.pickFolder(context, ref);
                                                   },
                                                   icon: LucideIcons.plus,
-                                                  label: 'Add Folder',
+                                                  label: l10n.addFolder,
                                                   isDynamic: isDynamic,
                                                 ),
                                               ],
@@ -338,17 +336,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return const AppLoadingIndicator();
     }
 
-    return PageTransitionSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, primaryAnimation, secondaryAnimation) {
-        return FadeThroughTransition(
-          animation: primaryAnimation,
-          secondaryAnimation: secondaryAnimation,
-          fillColor: Colors.transparent,
-          child: child,
-        );
-      },
-      child: _getWidgetForNavItem(nav, library, context, l10n),
+    final childWidget = _getWidgetForNavItem(nav, library, context, l10n);
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      switchInCurve: Curves.easeInOut,
+      switchOutCurve: Curves.easeInOut,
+      transitionBuilder: (child, animation) => FadeTransition(
+        opacity: animation,
+        child: child,
+      ),
+      child: KeyedSubtree(
+        key: ValueKey(nav.activeItem),
+        child: childWidget,
+      ),
     );
   }
 
@@ -360,42 +361,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   ) {
     switch (nav.activeItem) {
       case NavItem.search:
-        return const SearchView(key: ValueKey('search'));
+        return const SearchView();
       case NavItem.albums:
-        return const AlbumsGrid(key: ValueKey('albums'));
+        return const AlbumsGrid();
       case NavItem.artists:
-        return const ArtistsGrid(key: ValueKey('artists'));
+        return const ArtistsGrid();
       case NavItem.playlists:
-        return const PlaylistView(key: ValueKey('playlists'));
+        return const PlaylistView();
       case NavItem.favorites:
-        return const FavoritesView(key: ValueKey('favorites'));
+        return const FavoritesView();
       case NavItem.recentlyPlayed:
       case NavItem.history:
-        return const RecentlyPlayedView(key: ValueKey('recentlyPlayed'));
+        return const RecentlyPlayedView();
       case NavItem.lyrics:
-        return const LyricsView(key: ValueKey('lyrics'));
+        return const LyricsView();
       case NavItem.settings:
-        return const SettingsView(key: ValueKey('settings'));
+        return const SettingsView();
       case NavItem.collectionDetail:
         return CollectionDetailView(
-          key: ValueKey('collection_${nav.collectionTitle}'),
           title: nav.collectionTitle ?? 'Unknown',
           subtitle: nav.collectionSubtitle,
           artPath: nav.collectionArt,
           imageUrl: nav.collectionImageUrl,
           songs: nav.collectionSongs,
+          playlist: nav.activePlaylist,
+          album: nav.activeAlbum,
         );
       case NavItem.queue:
-        return const QueueView(key: ValueKey('queue'));
+        return const QueueView();
       case NavItem.songs:
         return library.songs.isEmpty
             ? _buildEmptyState(context, l10n)
-            : SongsList(songs: library.songs, key: const ValueKey('songs'));
+            : SongsList(songs: library.songs);
       case NavItem.home:
       default:
         return library.songs.isEmpty
             ? _buildEmptyState(context, l10n)
-            : const HomeDashboard(key: ValueKey('home'));
+            : const HomeDashboard();
     }
   }
 
@@ -452,7 +454,9 @@ class Sidebar extends ConsumerWidget {
           return SingleChildScrollView(
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: (constraints.maxHeight - 32).clamp(0.0, double.infinity),
+                minHeight: constraints.maxHeight.isFinite
+                    ? (constraints.maxHeight - 32).clamp(0.0, double.infinity)
+                    : 0.0,
               ), // -32 for padding
               child: IntrinsicHeight(
                 child: Column(
@@ -478,7 +482,7 @@ class Sidebar extends ConsumerWidget {
                     SizedBox(height: 24),
                     _SidebarItem(
                       customIcon: AppIcons.home,
-                      label: 'Home',
+                      label: l10n.home,
                       isSelected: activeItem == NavItem.home,
                       onTap: () => navigateTo(NavItem.home),
                     ),
@@ -509,13 +513,13 @@ class Sidebar extends ConsumerWidget {
                     ),
                     _SidebarItem(
                       icon: LucideIcons.clock,
-                      label: 'Recently Played',
+                      label: l10n.recentlyPlayed,
                       isSelected: activeItem == NavItem.recentlyPlayed,
                       onTap: () => navigateTo(NavItem.recentlyPlayed),
                     ),
                     _SidebarItem(
                       customIcon: AppIcons.heart,
-                      label: 'Favorites',
+                      label: l10n.favorites,
                       isSelected: activeItem == NavItem.favorites,
                       onTap: () => navigateTo(NavItem.favorites),
                     ),

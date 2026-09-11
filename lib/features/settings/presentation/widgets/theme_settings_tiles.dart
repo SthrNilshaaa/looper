@@ -17,14 +17,8 @@ class DynamicThemingTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.palette, color: Colors.white70),
-      title: Text(
-        l10n.dynamicTheming,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.adaptColorsArtwork,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.dynamicTheming, style: _tileTitleStyle()),
+      subtitle: Text(l10n.adaptColorsArtwork, style: _tileSubtitleStyle()),
       activeThumbColor: Color(settings.accentColor),
       value: settings.enableDynamicTheming,
       onChanged: (value) {
@@ -43,18 +37,38 @@ class DisableBlurTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.eyeOff, color: Colors.white70),
-      title: Text(
-        l10n.disableBlurEffects,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.turnOffBlursOptimize,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.disableBlurEffects, style: _tileTitleStyle()),
+      subtitle: Text(l10n.turnOffBlursOptimize, style: _tileSubtitleStyle()),
       activeThumbColor: Color(settings.accentColor),
       value: settings.disableBlur,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateDisableBlur(value);
+      },
+    );
+  }
+}
+
+/// Lets sheets built on AppBottomSheetContainer (the lyrics popup menu,
+/// lyrics share sheet, queue sheet, etc.) show their background blur even
+/// with Dynamic Theming off -- that toggle also changes accent colors and
+/// gradients app-wide, so this gives just the sheet blur without the rest.
+/// Only shown while Dynamic Theming is off; once it's on, blur already
+/// applies everywhere DisableBlurTile controls it directly.
+class AlwaysBlurSheetsTile extends ConsumerWidget {
+  const AlwaysBlurSheetsTile({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    final l10n = AppLocalizations.of(context)!;
+    return SwitchListTile(
+      secondary: const Icon(LucideIcons.droplets, color: Colors.white70),
+      title: Text(l10n.alwaysBlurSheets, style: _tileTitleStyle()),
+      subtitle: Text(l10n.alwaysBlurSheetsDesc, style: _tileSubtitleStyle()),
+      activeThumbColor: Color(settings.accentColor),
+      value: settings.alwaysBlurSheets,
+      onChanged: (value) {
+        ref.read(settingsProvider.notifier).updateAlwaysBlurSheets(value);
       },
     );
   }
@@ -65,17 +79,12 @@ class DynamicAccentColorTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
     return SwitchListTile(
       secondary: const Icon(LucideIcons.paintBucket, color: Colors.white70),
-      title: Text(
-        'Dynamic Accent Color',
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        'Update only the accent color dynamically from the artwork',
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.dynamicAccentColor, style: _tileTitleStyle()),
+      subtitle: Text(l10n.dynamicAccentColorDesc, style: _tileSubtitleStyle()),
       activeThumbColor: Color(settings.accentColor),
       value: settings.dynamicAccentColor,
       onChanged: (value) {
@@ -94,14 +103,8 @@ class PureBlackOledTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.moon, color: Colors.white70),
-      title: Text(
-        l10n.pureBlackOled,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.useAbsoluteBlackBg,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.pureBlackOled, style: _tileTitleStyle()),
+      subtitle: Text(l10n.useAbsoluteBlackBg, style: _tileSubtitleStyle()),
       activeThumbColor: Color(settings.accentColor),
       value: settings.darkTheme,
       onChanged: (value) {
@@ -120,10 +123,7 @@ class AccentColorTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return ListTile(
       leading: const Icon(LucideIcons.droplet, color: Colors.white70),
-      title: Text(
-        l10n.accentColor,
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.accentColor, style: _tileTitleStyle()),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -165,37 +165,25 @@ class CustomAccentColorTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return ListTile(
       leading: const Icon(LucideIcons.palette, color: Colors.white70),
-      title: Text(
-        l10n.customAccentColor,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.selectCustomColor,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.customAccentColor, style: _tileTitleStyle()),
+      subtitle: Text(l10n.selectCustomColor, style: _tileSubtitleStyle()),
       trailing: ColorCircle(
         color: Color(settings.accentColor),
         isSelected:
             settings.accentColor != 0xFF41C25E &&
             settings.accentColor != 0xFFF7EAA6 &&
             settings.accentColor != Colors.blueAccent.value,
-        onTap: () => showCustomColorPicker(
-          context,
-          ref,
-          Color(settings.accentColor),
-        ),
+        onTap: () =>
+            showCustomColorPicker(context, ref, Color(settings.accentColor)),
       ),
-      onTap: () => showCustomColorPicker(
-        context,
-        ref,
-        Color(settings.accentColor),
-      ),
+      onTap: () =>
+          showCustomColorPicker(context, ref, Color(settings.accentColor)),
     );
   }
 }
 
-class DynamicLyricsBgTile extends ConsumerWidget {
-  const DynamicLyricsBgTile({super.key});
+class AmbientLyricsBgTile extends ConsumerWidget {
+  const AmbientLyricsBgTile({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -203,18 +191,15 @@ class DynamicLyricsBgTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.music, color: Colors.white70),
-      title: Text(
-        l10n.dynamicLyricsBg,
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.ambientColorBackground, style: _tileTitleStyle()),
       subtitle: Text(
-        l10n.dynamicBgOnlyLyrics,
+        l10n.ambientColorBackgroundDesc,
         style: _tileSubtitleStyle(),
       ),
       activeThumbColor: Color(settings.accentColor),
-      value: settings.dynamicLyrics,
+      value: settings.ambientColorBackground,
       onChanged: (value) {
-        ref.read(settingsProvider.notifier).updateDynamicLyrics(value);
+        ref.read(settingsProvider.notifier).updateAmbientColorBackground(value);
       },
     );
   }
@@ -225,15 +210,13 @@ class BlurredArtworkLyricsTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
     return SwitchListTile(
       secondary: const Icon(LucideIcons.image, color: Colors.white70),
-      title: Text(
-        'Blurred Artwork for Lyrics',
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.blurredArtworkForLyrics, style: _tileTitleStyle()),
       subtitle: Text(
-        'Show blurred album art as background instead of dynamic/static gradient',
+        l10n.blurredArtworkForLyricsDesc,
         style: _tileSubtitleStyle(),
       ),
       activeThumbColor: Color(settings.accentColor),
@@ -256,10 +239,7 @@ class DynamicColorActiveLyricsTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.palette, color: Colors.white70),
-      title: Text(
-        l10n.dynamicColorActiveLyrics,
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.dynamicColorActiveLyrics, style: _tileTitleStyle()),
       subtitle: Text(
         l10n.dynamicColorActiveLyricsDesc,
         style: _tileSubtitleStyle(),
@@ -315,14 +295,8 @@ class LyricsAlignmentTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return ListTile(
       leading: const Icon(LucideIcons.alignCenter, color: Colors.white70),
-      title: Text(
-        l10n.lyricsAlignment,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.lyricsAlignmentDesc,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.lyricsAlignment, style: _tileTitleStyle()),
+      subtitle: Text(l10n.lyricsAlignmentDesc, style: _tileSubtitleStyle()),
       trailing: Container(
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.05),
@@ -373,10 +347,7 @@ class FlatProgressBarTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.sliders, color: Colors.white70),
-      title: Text(
-        l10n.flatProgressBar,
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.flatProgressBar, style: _tileTitleStyle()),
       subtitle: Text(
         l10n.disableSquigglyProgressBar,
         style: _tileSubtitleStyle(),
@@ -399,18 +370,14 @@ class PlainTimestampsTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.clock, color: Colors.white70),
-      title: Text(
-        l10n.plainTimestamps,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.useStaticTextTimestamps,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.plainTimestamps, style: _tileTitleStyle()),
+      subtitle: Text(l10n.useStaticTextTimestamps, style: _tileSubtitleStyle()),
       activeThumbColor: Color(settings.accentColor),
       value: settings.disableAnimatedDuration,
       onChanged: (value) {
-        ref.read(settingsProvider.notifier).updateDisableAnimatedDuration(value);
+        ref
+            .read(settingsProvider.notifier)
+            .updateDisableAnimatedDuration(value);
       },
     );
   }
@@ -425,14 +392,8 @@ class ShowQualityBadgeTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.info, color: Colors.white70),
-      title: Text(
-        l10n.showQualityBadge,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.showQualityBadgeDesc,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.showQualityBadge, style: _tileTitleStyle()),
+      subtitle: Text(l10n.showQualityBadgeDesc, style: _tileSubtitleStyle()),
       activeThumbColor: Color(settings.accentColor),
       value: settings.showQualityBadge,
       onChanged: (value) {
@@ -451,10 +412,7 @@ class EnablePlayerGradientTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.sparkles, color: Colors.white70),
-      title: Text(
-        l10n.enablePlayerGradient,
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.enablePlayerGradient, style: _tileTitleStyle()),
       subtitle: Text(
         l10n.enablePlayerGradientDesc,
         style: _tileSubtitleStyle(),
@@ -477,10 +435,7 @@ class KeepBackgroundGradientTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.layers, color: Colors.white70),
-      title: Text(
-        l10n.keepBackgroundGradient,
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.keepBackgroundGradient, style: _tileTitleStyle()),
       subtitle: Text(
         l10n.keepBackgroundGradientDesc,
         style: _tileSubtitleStyle(),
@@ -489,33 +444,6 @@ class KeepBackgroundGradientTile extends ConsumerWidget {
       value: settings.keepBackgroundGradient,
       onChanged: (value) {
         ref.read(settingsProvider.notifier).updateKeepBackgroundGradient(value);
-      },
-    );
-  }
-}
-
-class PerformanceOptimizerTile extends ConsumerWidget {
-  const PerformanceOptimizerTile({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(settingsProvider);
-    return SwitchListTile(
-      secondary: const Icon(LucideIcons.activity, color: Colors.white70),
-      title: Text(
-        'Performance Optimizer Dashboard',
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        'Show real-time performance optimizer stats overlay',
-        style: _tileSubtitleStyle(),
-      ),
-      activeThumbColor: Color(settings.accentColor),
-      value: settings.showPerformanceOptimizer,
-      onChanged: (value) {
-        ref
-            .read(settingsProvider.notifier)
-            .updateShowPerformanceOptimizer(value);
       },
     );
   }
@@ -555,7 +483,8 @@ class SongsDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.music,
       title: l10n.songsDarkness,
       subtitle: l10n.songsDarknessDesc,
-      value: (settings.songsDarkness.isNaN ? 0.72 : settings.songsDarkness) * 100,
+      value:
+          (settings.songsDarkness.isNaN ? 0.72 : settings.songsDarkness) * 100,
       min: 0.0,
       max: 100.0,
       divisions: 100,
@@ -578,7 +507,9 @@ class LibraryDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.library,
       title: l10n.libraryDarkness,
       subtitle: l10n.libraryDarknessDesc,
-      value: (settings.libraryDarkness.isNaN ? 0.72 : settings.libraryDarkness) * 100,
+      value:
+          (settings.libraryDarkness.isNaN ? 0.72 : settings.libraryDarkness) *
+          100,
       min: 0.0,
       max: 100.0,
       divisions: 100,
@@ -601,7 +532,8 @@ class MusicDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.playCircle,
       title: l10n.musicDarkness,
       subtitle: l10n.musicDarknessDesc,
-      value: (settings.musicDarkness.isNaN ? 0.62 : settings.musicDarkness) * 100,
+      value:
+          (settings.musicDarkness.isNaN ? 0.62 : settings.musicDarkness) * 100,
       min: 0.0,
       max: 100.0,
       divisions: 100,
@@ -624,7 +556,9 @@ class LyricsDarknessSlider extends ConsumerWidget {
       icon: LucideIcons.alignLeft,
       title: l10n.lyricsDarkness,
       subtitle: l10n.lyricsDarknessDesc,
-      value: (settings.lyricsDarkness.isNaN ? 0.55 : settings.lyricsDarkness) * 100,
+      value:
+          (settings.lyricsDarkness.isNaN ? 0.55 : settings.lyricsDarkness) *
+          100,
       min: 0.0,
       max: 100.0,
       divisions: 100,
@@ -645,14 +579,8 @@ class UseNewFontTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.type, color: Colors.white70),
-      title: Text(
-        l10n.useCustomFont,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.useCustomFontDesc,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.useCustomFont, style: _tileTitleStyle()),
+      subtitle: Text(l10n.useCustomFontDesc, style: _tileSubtitleStyle()),
       activeThumbColor: Color(settings.accentColor),
       value: settings.useNewFont,
       onChanged: (value) {
@@ -681,10 +609,7 @@ class FontFamilySelectionTile extends ConsumerWidget {
 
     return ListTile(
       leading: const Icon(LucideIcons.type, color: Colors.white70),
-      title: Text(
-        l10n.selectFontFamily,
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.selectFontFamily, style: _tileTitleStyle()),
       subtitle: Text(
         l10n.activeFont(settings.customFontFamily ?? 'Jost'),
         style: _tileSubtitleStyle(),
@@ -698,10 +623,7 @@ class FontFamilySelectionTile extends ConsumerWidget {
         items: availableFonts.map((font) {
           return DropdownMenuItem<String>(
             value: font,
-            child: Text(
-              font,
-              style: AppFonts.jostStyle(color: Colors.white),
-            ),
+            child: Text(font, style: AppFonts.jostStyle(color: Colors.white)),
           );
         }).toList(),
         onChanged: (value) {
@@ -731,10 +653,7 @@ class FontWeightSelectionTile extends ConsumerWidget {
       children: [
         ListTile(
           leading: const Icon(LucideIcons.bold, color: Colors.white70),
-          title: Text(
-            l10n.fontWeightAdjustment,
-            style: _tileTitleStyle(),
-          ),
+          title: Text(l10n.fontWeightAdjustment, style: _tileTitleStyle()),
           subtitle: Text(
             '${l10n.currentWeight}: $selectedWeight',
             style: _tileSubtitleStyle(),
@@ -753,20 +672,26 @@ class FontWeightSelectionTile extends ConsumerWidget {
                 final isSelected = w == selectedWeight;
                 final accentColor = Color(settings.accentColor);
                 return GestureDetector(
-                   onTap: () {
+                  onTap: () {
                     HapticFeedback.lightImpact();
                     final newDelta = (w - 400) ~/ 100;
-                    ref.read(settingsProvider.notifier).updateCustomFontWeightDelta(newDelta);
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateCustomFontWeightDelta(newDelta);
                   },
                   child: Container(
                     margin: const EdgeInsets.only(right: 8.0),
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected ? accentColor : Colors.white.withValues(alpha: 0.04),
+                      color: isSelected
+                          ? accentColor
+                          : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? Colors.transparent : Colors.white.withValues(alpha: 0.08),
+                        color: isSelected
+                            ? Colors.transparent
+                            : Colors.white.withValues(alpha: 0.08),
                         width: 1,
                       ),
                     ),
@@ -774,9 +699,12 @@ class FontWeightSelectionTile extends ConsumerWidget {
                       '$w',
                       style: AppFonts.jostStyle(
                         color: isSelected
-                            ? (ThemeData.estimateBrightnessForColor(accentColor) == Brightness.dark
-                                ? Colors.white
-                                : Colors.black)
+                            ? (ThemeData.estimateBrightnessForColor(
+                                        accentColor,
+                                      ) ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black)
                             : Colors.white70,
                         fontWeight: FontWeight.values[index],
                         fontSize: 14,
@@ -802,14 +730,8 @@ class UseNewFontLyricsTile extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     return SwitchListTile(
       secondary: const Icon(LucideIcons.type, color: Colors.white70),
-      title: Text(
-        l10n.useCustomFontLyrics,
-        style: _tileTitleStyle(),
-      ),
-      subtitle: Text(
-        l10n.useCustomFontLyricsDesc,
-        style: _tileSubtitleStyle(),
-      ),
+      title: Text(l10n.useCustomFontLyrics, style: _tileTitleStyle()),
+      subtitle: Text(l10n.useCustomFontLyricsDesc, style: _tileSubtitleStyle()),
       activeThumbColor: Color(settings.accentColor),
       value: settings.useNewFontLyrics,
       onChanged: (value) {
@@ -836,10 +758,7 @@ class LyricsFontFamilySelectionTile extends ConsumerWidget {
 
     return ListTile(
       leading: const Icon(LucideIcons.type, color: Colors.white70),
-      title: Text(
-        l10n.lyricsFontFamily,
-        style: _tileTitleStyle(),
-      ),
+      title: Text(l10n.lyricsFontFamily, style: _tileTitleStyle()),
       subtitle: Text(
         l10n.activeLyricsFont(settings.customFontFamilyLyrics ?? 'Sora'),
         style: _tileSubtitleStyle(),
@@ -853,15 +772,14 @@ class LyricsFontFamilySelectionTile extends ConsumerWidget {
         items: availableFonts.map((font) {
           return DropdownMenuItem<String>(
             value: font,
-            child: Text(
-              font,
-              style: AppFonts.jostStyle(color: Colors.white),
-            ),
+            child: Text(font, style: AppFonts.jostStyle(color: Colors.white)),
           );
         }).toList(),
         onChanged: (value) {
           if (value != null) {
-            ref.read(settingsProvider.notifier).updateCustomFontFamilyLyrics(value);
+            ref
+                .read(settingsProvider.notifier)
+                .updateCustomFontFamilyLyrics(value);
           }
         },
       ),
@@ -874,6 +792,7 @@ class LyricsFontWeightSelectionTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final settings = ref.watch(settingsProvider);
     final delta = settings.activeLyricsFontWeightDelta;
     final selectedWeight = 700 + (delta * 100);
@@ -885,10 +804,7 @@ class LyricsFontWeightSelectionTile extends ConsumerWidget {
       children: [
         ListTile(
           leading: const Icon(LucideIcons.bold, color: Colors.white70),
-          title: Text(
-            'Lyrics Font Weight',
-            style: _tileTitleStyle(),
-          ),
+          title: Text(l10n.lyricsFontWeight, style: _tileTitleStyle()),
           subtitle: Text(
             'Current weight: $selectedWeight',
             style: _tileSubtitleStyle(),
@@ -910,17 +826,23 @@ class LyricsFontWeightSelectionTile extends ConsumerWidget {
                   onTap: () {
                     HapticFeedback.lightImpact();
                     final newDelta = (w - 700) ~/ 100;
-                    ref.read(settingsProvider.notifier).updateActiveLyricsFontWeightDelta(newDelta);
+                    ref
+                        .read(settingsProvider.notifier)
+                        .updateActiveLyricsFontWeightDelta(newDelta);
                   },
                   child: Container(
                     margin: const EdgeInsets.only(right: 8.0),
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: isSelected ? accentColor : Colors.white.withValues(alpha: 0.04),
+                      color: isSelected
+                          ? accentColor
+                          : Colors.white.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: isSelected ? Colors.transparent : Colors.white.withValues(alpha: 0.08),
+                        color: isSelected
+                            ? Colors.transparent
+                            : Colors.white.withValues(alpha: 0.08),
                         width: 1,
                       ),
                     ),
@@ -928,11 +850,15 @@ class LyricsFontWeightSelectionTile extends ConsumerWidget {
                       '$w',
                       style: AppFonts.jostStyle(
                         color: isSelected
-                            ? (ThemeData.estimateBrightnessForColor(accentColor) == Brightness.dark
-                                ? Colors.white
-                                : Colors.black)
+                            ? (ThemeData.estimateBrightnessForColor(
+                                        accentColor,
+                                      ) ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black)
                             : Colors.white70,
-                        fontWeight: FontWeight.values[index + 3], // 400 is w400 (index 3)
+                        fontWeight: FontWeight
+                            .values[index + 3], // 400 is w400 (index 3)
                         fontSize: 14,
                       ),
                     ),
@@ -947,13 +873,8 @@ class LyricsFontWeightSelectionTile extends ConsumerWidget {
   }
 }
 
-TextStyle _tileTitleStyle() => AppFonts.jostStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.w500,
-    );
+TextStyle _tileTitleStyle() =>
+    AppFonts.jostStyle(color: Colors.white, fontWeight: FontWeight.w500);
 
-TextStyle _tileSubtitleStyle() => AppFonts.jostStyle(
-      color: Colors.white54,
-      fontSize: 12,
-    );
-
+TextStyle _tileSubtitleStyle() =>
+    AppFonts.jostStyle(color: Colors.white54, fontSize: 12);

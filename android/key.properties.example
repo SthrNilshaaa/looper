@@ -1,0 +1,8 @@
+# Copy this file to android/key.properties (already gitignored) and fill in
+# real values. Never commit key.properties itself. See docs/ADS_ANALYTICS_SETUP.md.
+
+# --- Release signing (required for a signed release build) ---
+storePassword=
+keyPassword=
+keyAlias=release
+storeFile=app/release.keystore

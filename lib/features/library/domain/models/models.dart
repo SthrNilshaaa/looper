@@ -29,17 +29,23 @@ class Song {
   int playCount = 0;
   @Index()
   DateTime? lastPlayed;
+
+  /// Real, actually-listened-to time accumulated across every play, in
+  /// milliseconds — wall-clock time mpv reported this song as actively
+  /// playing, not `playCount * duration`. A song played for 2 seconds then
+  /// skipped only ever adds ~2000 here, never the full track duration.
+  int totalListenedMs = 0;
+
+  /// The playback position (in milliseconds) this song was last at when the
+  /// user moved on to another track, saved only while "Keep Song Progress"
+  /// is enabled. 0 means "start from the beginning" -- also what a song
+  /// gets reset to once it plays through to its end, so finishing a track
+  /// naturally never leaves it parked at 99%.
+  int lastPositionMs = 0;
   bool isFavorite = false;
   String? lyrics;
   bool hasCustomEqualizer = false;
   List<double>? equalizerGains;
-
-  // SpatialFlow Online Streaming fields
-  bool isOnlineStream = false;
-  String? streamUrl;
-  String? youtubeId;
-  String? onlineArtUrl;
-  int? streamQuality; // 0: low, 1: high
 
   // Metadata for search
   @Index(type: IndexType.value, caseSensitive: false)
@@ -75,6 +81,33 @@ class Artist {
 
   String? artPath;
   String? artistImageUrl;
+}
+
+/// A single timestamped "song started playing" event, logged alongside the
+/// [Song.playCount]/[Song.lastPlayed] aggregate so Looper Analyze can show
+/// time-based insights (trend, streaks, busiest listening times) rather than
+/// just static totals. Fields are denormalized off the song at play time so
+/// history stays meaningful even if the song is later retagged or removed.
+@collection
+class PlayEvent {
+  Id id = Isar.autoIncrement;
+
+  int? songId;
+  late String songPath;
+  late String songTitle;
+  String? artist;
+  String? album;
+  String? genre;
+  int? durationMs; // the song's full track duration, for reference only
+
+  /// Real time actually listened to during this specific play session, in
+  /// milliseconds. Starts at 0 and is topped up incrementally as playback
+  /// continues (see PlaybackNotifier's listen-segment tracking) — it is
+  /// NOT assumed to equal [durationMs].
+  int listenedMs = 0;
+
+  @Index()
+  late DateTime playedAt;
 }
 
 @collection
@@ -116,8 +149,14 @@ class AppSettings {
   bool disableSquiggle = false;
   bool disableAnimatedDuration = false;
   bool disableBlur = true;
+  // Forces the blur behind bottom sheets on regardless of Dynamic Theming --
+  // that toggle changes accent colors/gradients app-wide too, so this gives
+  // sheets their blur without needing all of that. Independent of disableBlur,
+  // which only gates the Dynamic Theming blur path (see app_bottom_sheet.dart).
+  bool alwaysBlurSheets = true;
   bool enableInternet = true;
   bool downloadArtwork = false;
+  bool includeSystemAndMessagingAudio = false;
   bool keepBackgroundGradient = false;
   bool showQualityBadge = true;
   bool enablePlayerGradient = true;
@@ -130,16 +169,25 @@ class AppSettings {
   bool showHomeArtists = true;
   bool showHomeAlbums = false;
   bool showHomeGenres = true;
+  bool showHomeRecent = true;
   List<String> homeSectionOrder = [
     'quick_picks',
     'songs',
     'albums',
     'artists',
     'genres',
+    'recent',
   ];
   bool enableSlideGesture = false;
   bool stopOnTaskRemoved = true;
-  bool persistQueue = true;
+  bool persistQueue = false;
+
+  /// Remembers each song's own playback position (Song.lastPositionMs) so
+  /// resuming it later -- even after playing other songs in between --
+  /// starts back where it was left off, rather than from the beginning.
+  /// Independent of persistQueue/resumeOnStart, which only resume whatever
+  /// single song was playing when the app was last closed.
+  bool keepSongProgress = false;
 
   bool fadePlayPauseStop = true;
   int playPauseStopFadeLength = 150; // ms (10ms-1000ms)
@@ -149,10 +197,11 @@ class AppSettings {
   bool resumeOnStart = false;
   bool permanentAudioFocusChange = false;
   bool dynamicColorActiveLyrics = true;
+  bool ambientColorBackground = false;
   String lyricsAlignment = 'left'; // 'left', 'center', 'right'
   bool dynamicAccentColor = true;
   int sortStrategyIndex = 0;
-  bool sortAscending = true;
+  bool sortAscending = false;
   int albumSortOptionIndex = 0;
   int artistSortOptionIndex = 0;
   int genreSortOptionIndex = 0;
@@ -164,12 +213,12 @@ class AppSettings {
   double musicDarkness = 0.62;
   double lyricsDarkness = 0.55;
 
-  bool useNewFont = false;
-  String customFontFamily = 'Jost';
+  bool useNewFont = true;
+  String customFontFamily = 'Space Grotesk';
   int customFontWeight = 400;
   int customFontWeightDelta = 0;
-  bool useNewFontLyrics = false;
-  String customFontFamilyLyrics = 'Sora';
+  bool useNewFontLyrics = true;
+  String customFontFamilyLyrics = 'Space Grotesk';
   String customFontWeightLyrics = 'Normal';
   int customFontWeightLyricsDelta = 0;
   int activeLyricsFontWeightDelta = 0;
@@ -183,15 +232,10 @@ class AppSettings {
   int audioBackCacheSizeMB = 100;
   bool exclusiveHardwareMode = false;
   String lyricsProvider = 'LRCLIB';
+  bool autoLyricsFallback = true;
 
-  // SpatialFlow Operational Mode & Network Streaming
-  int playbackModeIndex = 0; // 0: hybrid, 1: localOnly, 2: onlineOnly
-  int streamingQuality = 1; // 0: Low (128k), 1: High (256k)
-  bool cacheOnlineStreams = true;
-}
-
-enum PlaybackMode {
-  hybrid,
-  localOnly,
-  onlineOnly,
+  /// Whether the user has already been shown the one-time "hidden gestures"
+  /// tutorial on the Lyrics screen (tap to seek, long-press to select lines
+  /// to share, pinch to resize, swipe down to close).
+  bool lyricsGestureTutorialSeen = false;
 }

@@ -15,6 +15,8 @@ import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/app_fonts.dart';
+import 'package:looper_player/features/library/presentation/library_grids.dart';
+import 'package:looper_player/ui/widgets/edit_album_sheet.dart';
 
 // Persistent collection sorting is stored in settings.collectionSortOptionIndex
 
@@ -36,6 +38,7 @@ class CollectionDetailView extends ConsumerWidget {
   final String? imageUrl;
   final List<Song> songs;
   final Playlist? playlist;
+  final Album? album;
 
   const CollectionDetailView({
     super.key,
@@ -45,6 +48,7 @@ class CollectionDetailView extends ConsumerWidget {
     this.imageUrl,
     required this.songs,
     this.playlist,
+    this.album,
   });
 
   @override
@@ -56,16 +60,39 @@ class CollectionDetailView extends ConsumerWidget {
         ? ref.watch(playlistProvider.select((list) => list.firstWhere((p) => p.id == playlist!.id, orElse: () => playlist!)))
         : null;
 
-    final titleToRender = reactivePlaylist != null ? reactivePlaylist.name : title;
+    // Reactively watch the album object if it is passed, so the header
+    // (name/artist/artwork) updates live when the album is edited.
+    // albumsProvider is a StreamProvider (AsyncValue), unlike playlistProvider
+    // above which is a plain StateNotifierProvider<..., List<Playlist>>.
+    final reactiveAlbum = album != null
+        ? (ref.watch(albumsProvider).value?.firstWhere(
+                (a) => a.id == album!.id,
+                orElse: () => album!,
+              ) ??
+            album)
+        : null;
 
-    // Reactively watch songs of this playlist using playlistSongsProvider
+    final titleToRender = reactivePlaylist?.name ?? reactiveAlbum?.name ?? title;
+    // Fall back to the static nav-args only when there is no reactive album at
+    // all - once one is present its own (possibly now-null) fields are the
+    // source of truth, so clearing the artwork/artist in the edit sheet is
+    // reflected instead of being masked by the stale value passed at nav time.
+    final artToRender = reactiveAlbum != null ? reactiveAlbum.artPath : artPath;
+    final subtitleToRender = reactiveAlbum != null ? reactiveAlbum.artist : subtitle;
+
+    // Reactively watch songs of this playlist/album using their respective providers
     final playlistSongsAsync = playlist != null
         ? ref.watch(playlistSongsProvider(playlist!.id))
+        : null;
+    final albumSongsAsync = reactiveAlbum != null
+        ? ref.watch(songsForAlbumProvider(reactiveAlbum.name))
         : null;
 
     final songsToRender = playlistSongsAsync != null
         ? (playlistSongsAsync.value ?? <Song>[])
-        : songs;
+        : albumSongsAsync != null
+            ? (albumSongsAsync.value ?? <Song>[])
+            : songs;
 
     final sortOptionIndex = ref.watch(settingsProvider.select((s) => s.collectionSortOptionIndex));
     final sortOption = CollectionSortOption.values[sortOptionIndex.clamp(0, CollectionSortOption.values.length - 1)];
@@ -132,17 +159,17 @@ class CollectionDetailView extends ConsumerWidget {
                             ? Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Center(child: _buildArt(context, true)),
+                                  Center(child: _buildArt(context, true, artToRender)),
                                   const SizedBox(height: 20),
-                                  _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, sortedSongs),
+                                  _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, reactiveAlbum, titleToRender, subtitleToRender, sortedSongs),
                                 ],
                               )
                             : Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
-                                  _buildArt(context, true),
+                                  _buildArt(context, true, artToRender),
                                   const SizedBox(width: 20),
-                                  Expanded(child: _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, titleToRender, sortedSongs)),
+                                  Expanded(child: _buildInfo(context, ref, true, activeSong?.artPath, reactivePlaylist, reactiveAlbum, titleToRender, subtitleToRender, sortedSongs)),
                                 ],
                               ),
                       ),
@@ -156,6 +183,7 @@ class CollectionDetailView extends ConsumerWidget {
                         final song = sortedSongs[index];
                         final l10n = AppLocalizations.of(context)!;
                         return SongTile(
+                          key: ValueKey(song.path),
                           song: song,
                           l10n: l10n,
                           songs: sortedSongs,
@@ -176,10 +204,10 @@ class CollectionDetailView extends ConsumerWidget {
     );
   }
 
-  Widget _buildArt(BuildContext context, bool isNarrow) {
+  Widget _buildArt(BuildContext context, bool isNarrow, String? artOverride) {
     final double size = 140; // Unified size for a cleaner Row look
     return OptimizedImage(
-      imagePath: artPath,
+      imagePath: artOverride,
       imageUrl: imageUrl,
       width: size,
       height: size,
@@ -198,7 +226,7 @@ class CollectionDetailView extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfo(BuildContext context, WidgetRef ref, bool isNarrow, String? activeArtworkPath, Playlist? reactivePlaylist, String titleToRender, List<Song> songsToRender) {
+  Widget _buildInfo(BuildContext context, WidgetRef ref, bool isNarrow, String? activeArtworkPath, Playlist? reactivePlaylist, Album? reactiveAlbum, String titleToRender, String? subtitleToRender, List<Song> songsToRender) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -212,10 +240,10 @@ class CollectionDetailView extends ConsumerWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        if (subtitle != null) ...[
+        if (subtitleToRender != null) ...[
           const SizedBox(height: 4),
           Text(
-            subtitle!,
+            subtitleToRender,
             style: AppFonts.jostStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.5),
@@ -287,6 +315,19 @@ class CollectionDetailView extends ConsumerWidget {
                 useExpanded: false,
                 onTap: () => _showPlaylistOptions(context, ref, reactivePlaylist),
                 child: const Icon(LucideIcons.moreHorizontal, size: 18, color: Colors.white),
+              ),
+            ] else if (reactiveAlbum != null) ...[
+              const SizedBox(width: 8),
+              PremiumSection(
+                borderRadius: BorderRadius.circular(12),
+                width: 44,
+                height: 44,
+                useExpanded: false,
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                  _showEditAlbumSheet(context, ref, reactiveAlbum);
+                },
+                child: const Icon(LucideIcons.edit2, size: 18, color: Colors.white),
               ),
             ],
           ],
@@ -399,11 +440,12 @@ class CollectionDetailView extends ConsumerWidget {
       barrierColor: Colors.black54,
       isScrollControlled: true,
       builder: (context) {
+        final l10n = AppLocalizations.of(context)!;
         final settings = ref.watch(settingsProvider);
         final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
         final isPureBlack = settings.darkTheme;
 
-        final sheetBg = isPureBlack 
+        final sheetBg = isPureBlack
             ? Colors.black 
             : (useBlur ? Colors.black.withValues(alpha: 0.6) : const Color(0xFF1E1E1E));
 
@@ -476,7 +518,7 @@ class CollectionDetailView extends ConsumerWidget {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Text(
-                                  'Rename Playlist',
+                                  l10n.renamePlaylist,
                                   style: AppFonts.jostStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
@@ -514,7 +556,7 @@ class CollectionDetailView extends ConsumerWidget {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Text(
-                                  'Delete Playlist',
+                                  l10n.deletePlaylist,
                                   style: AppFonts.jostStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w500,
@@ -554,6 +596,16 @@ class CollectionDetailView extends ConsumerWidget {
 
         return sheetContent;
       },
+    );
+  }
+
+  void _showEditAlbumSheet(BuildContext context, WidgetRef ref, Album album) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => EditAlbumSheet(album: album),
     );
   }
 

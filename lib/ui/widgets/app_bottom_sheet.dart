@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
@@ -8,6 +9,7 @@ class AppBottomSheetContainer extends ConsumerWidget {
   final EdgeInsetsGeometry? padding;
   final double? height;
   final bool showDragHandle;
+  final bool useBlurBG;
 
   const AppBottomSheetContainer({
     super.key,
@@ -15,14 +17,24 @@ class AppBottomSheetContainer extends ConsumerWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
     this.height,
     this.showDragHandle = true,
+    this.useBlurBG = false,
+
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
-    final useBlur = settings.enableDynamicTheming && !settings.disableBlur;
+    // `disableBlur` only exists as a sub-toggle of Dynamic Theming (it's
+    // hidden, and stuck at its default of `true`, whenever Dynamic Theming
+    // is off) -- so it must only gate the Dynamic Theming blur path, never
+    // veto alwaysBlurSheets, or that toggle would be permanently dead for
+    // anyone who hasn't also turned Dynamic Theming on.
+    // alwaysBlurSheets is the standalone opt-in: it lets every sheet built
+    // on this container blur without needing Dynamic Theming at all.
+    final useBlur = settings.alwaysBlurSheets ||
+        (!settings.disableBlur && (useBlurBG || settings.enableDynamicTheming));
 
-    Widget body = Container(
+    final sheetBody = Container(
       height: height,
       decoration: BoxDecoration(
         color: useBlur
@@ -64,6 +76,23 @@ class AppBottomSheetContainer extends ConsumerWidget {
       ),
     );
 
+    // BackdropFilter forces an offscreen saveLayer/composite pass every
+    // frame regardless of the blur sigma, so it must be skipped entirely
+    // (not just given sigma 0) when blur is disabled — otherwise every
+    // bottom sheet in the app pays the full blur cost for no visual effect.
+    Widget content = ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(30),
+        topRight: Radius.circular(30),
+      ),
+      child: useBlur
+          ? BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: sheetBody,
+            )
+          : sheetBody,
+    );
+
     if (useBlur) {
       return PremiumSection(
         borderRadius: const BorderRadius.only(
@@ -74,16 +103,9 @@ class AppBottomSheetContainer extends ConsumerWidget {
         forceBlur: true,
         useExpanded: false,
         useCenter: false,
-        child: body,
+        child: content,
       );
     }
-
-    return ClipRRect(
-      borderRadius: const BorderRadius.only(
-        topLeft: Radius.circular(30),
-        topRight: Radius.circular(30),
-      ),
-      child: body,
-    );
+    return content;
   }
 }
