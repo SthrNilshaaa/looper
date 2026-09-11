@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 

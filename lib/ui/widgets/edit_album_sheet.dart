@@ -1,19 +1,19 @@
 import 'dart:io';
 import 'dart:ui';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
-import 'package:metadata_god/metadata_god.dart';
+import 'package:isar_community/isar.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/library/data/scanner.dart';
-import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:metadata_god/metadata_god.dart';
 
 /// Edits an album's own metadata (name, artist, year, artwork). The name,
 /// artist and year cascade to every song currently tagged with this album
@@ -44,9 +44,8 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
     _nameCtrl = TextEditingController(text: widget.album.name);
     _artistCtrl = TextEditingController(text: widget.album.artist ?? '');
     _yearCtrl = TextEditingController(
-        text: widget.album.year != null && widget.album.year! > 0
-            ? widget.album.year.toString()
-            : '');
+      text: widget.album.year != null && widget.album.year! > 0 ? widget.album.year.toString() : '',
+    );
     _pickedArtPath = null; // unchanged
   }
 
@@ -62,12 +61,9 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
 
   Future<void> _pickArtwork() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
-      if (result != null && result.files.single.path != null) {
-        setState(() => _pickedArtPath = result.files.single.path!);
+      final result = await FilePicker.pickFile(type: FileType.image);
+      if (result != null && result.path != null) {
+        setState(() => _pickedArtPath = result.path!);
       }
     } catch (_) {}
   }
@@ -81,16 +77,14 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
   Future<void> _resetArtworkToDefault() async {
     setState(() => _isResettingArt = true);
     try {
-      final song = await DbService.isar.songs
-          .filter()
-          .albumEqualTo(widget.album.name)
-          .findFirst();
+      final song = await DbService.isar.songs.filter().albumEqualTo(widget.album.name).findFirst();
 
       List<int>? pictureData;
       if (song != null) {
         try {
-          final metadata = await MetadataGod.readMetadata(file: song.path)
-              .timeout(const Duration(milliseconds: 2000));
+          final metadata = await MetadataGod.readMetadata(
+            file: song.path,
+          ).timeout(const Duration(milliseconds: 2000));
           pictureData = metadata.picture?.data;
         } catch (_) {}
       }
@@ -204,13 +198,18 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(l10n.editAlbumInfo,
-                            style: AppFonts.jostStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold)),
-                        Text(l10n.tapFieldToEdit,
-                            style: AppFonts.jostStyle(color: Colors.white38, fontSize: 12)),
+                        Text(
+                          l10n.editAlbumInfo,
+                          style: AppFonts.jostStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          l10n.tapFieldToEdit,
+                          style: AppFonts.jostStyle(color: Colors.white38, fontSize: 12),
+                        ),
                       ],
                     ),
                   ),
@@ -235,7 +234,9 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(24),
                               border: Border.all(
-                                  color: accentColor.withValues(alpha: 0.4), width: 2),
+                                color: accentColor.withValues(alpha: 0.4),
+                                width: 2,
+                              ),
                             ),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(22),
@@ -245,8 +246,7 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
                                       width: 160,
                                       height: 160,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (_, _, _) =>
-                                          _artPlaceholder(accentColor),
+                                      errorBuilder: (_, _, _) => _artPlaceholder(accentColor),
                                     )
                                   : _artPlaceholder(accentColor),
                             ),
@@ -262,12 +262,12 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
                                 shape: BoxShape.circle,
                                 boxShadow: [
                                   BoxShadow(
-                                      color: accentColor.withValues(alpha: 0.5),
-                                      blurRadius: 10)
+                                    color: accentColor.withValues(alpha: 0.5),
+                                    blurRadius: 10,
+                                  ),
                                 ],
                               ),
-                              child: const Icon(LucideIcons.camera,
-                                  color: Colors.black, size: 18),
+                              child: const Icon(LucideIcons.camera, color: Colors.black, size: 18),
                             ),
                           ),
                         ],
@@ -286,22 +286,24 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
                                   width: 14,
                                   height: 14,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: accentColor),
+                                    strokeWidth: 2,
+                                    color: accentColor,
+                                  ),
                                 )
-                              : Icon(LucideIcons.refreshCcw,
-                                  size: 14, color: accentColor),
-                          label: Text(l10n.resetArtworkToDefault,
-                              style: AppFonts.jostStyle(
-                                  color: accentColor, fontSize: 12)),
+                              : Icon(LucideIcons.refreshCcw, size: 14, color: accentColor),
+                          label: Text(
+                            l10n.resetArtworkToDefault,
+                            style: AppFonts.jostStyle(color: accentColor, fontSize: 12),
+                          ),
                         ),
                         if (_currentArtPath.isNotEmpty)
                           TextButton.icon(
                             onPressed: _clearArtwork,
-                            icon: const Icon(LucideIcons.x,
-                                size: 14, color: Colors.redAccent),
-                            label: Text(l10n.removeArtwork,
-                                style: AppFonts.jostStyle(
-                                    color: Colors.redAccent, fontSize: 12)),
+                            icon: const Icon(LucideIcons.x, size: 14, color: Colors.redAccent),
+                            label: Text(
+                              l10n.removeArtwork,
+                              style: AppFonts.jostStyle(color: Colors.redAccent, fontSize: 12),
+                            ),
                           ),
                       ],
                     ),
@@ -344,10 +346,8 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accentColor,
                         foregroundColor: Colors.black,
-                        disabledBackgroundColor:
-                            accentColor.withValues(alpha: 0.4),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18)),
+                        disabledBackgroundColor: accentColor.withValues(alpha: 0.4),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
                         elevation: 4,
                         shadowColor: accentColor.withValues(alpha: 0.4),
                       ),
@@ -358,10 +358,10 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
                               children: [
                                 const Icon(LucideIcons.check, size: 20),
                                 const SizedBox(width: 8),
-                                Text(l10n.saveChangesBtn,
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold)),
+                                Text(
+                                  l10n.saveChangesBtn,
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                ),
                               ],
                             ),
                     ),
@@ -378,10 +378,7 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
     if (settings.enableDynamicTheming && !settings.disableBlur) {
       content = ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-          child: content,
-        ),
+        child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16), child: content),
       );
     }
 
@@ -400,10 +397,9 @@ class _EditAlbumSheetState extends ConsumerState<EditAlbumSheet> {
   }
 
   Widget _artPlaceholder(Color accentColor) => Container(
-        color: Colors.white.withValues(alpha: 0.05),
-        child: Icon(LucideIcons.imageOff,
-            color: accentColor.withValues(alpha: 0.5), size: 48),
-      );
+    color: Colors.white.withValues(alpha: 0.05),
+    child: Icon(LucideIcons.imageOff, color: accentColor.withValues(alpha: 0.5), size: 48),
+  );
 }
 
 class _EditField extends StatelessWidget {
@@ -427,32 +423,28 @@ class _EditField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextField(
-        controller: controller,
-        style: AppFonts.jostStyle(color: Colors.white, fontSize: 15),
-        keyboardType: keyboardType,
-        maxLength: maxLength,
-        buildCounter: maxLength != null
-            ? (ctx, {required currentLength, required isFocused, maxLength}) =>
-                null
-            : null,
-        decoration: InputDecoration(
-          labelText: '$label${required ? ' *' : ''}',
-          labelStyle:
-              AppFonts.jostStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 13),
-          prefixIcon: Icon(icon, color: accentColor, size: 20),
-          filled: true,
-          fillColor: Colors.white.withValues(alpha: 0.05),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide:
-                BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: accentColor, width: 1.5),
-          ),
-        ),
-      );
+    controller: controller,
+    style: AppFonts.jostStyle(color: Colors.white, fontSize: 15),
+    keyboardType: keyboardType,
+    maxLength: maxLength,
+    buildCounter: maxLength != null
+        ? (ctx, {required currentLength, required isFocused, maxLength}) => null
+        : null,
+    decoration: InputDecoration(
+      labelText: '$label${required ? ' *' : ''}',
+      labelStyle: AppFonts.jostStyle(color: Colors.white.withValues(alpha: 0.45), fontSize: 13),
+      prefixIcon: Icon(icon, color: accentColor, size: 20),
+      filled: true,
+      fillColor: Colors.white.withValues(alpha: 0.05),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: accentColor, width: 1.5),
+      ),
+    ),
+  );
 }

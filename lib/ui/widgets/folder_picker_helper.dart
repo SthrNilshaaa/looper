@@ -80,7 +80,7 @@ class FolderPickerHelper {
 
   static Future<void> pickFolder(BuildContext context, WidgetRef ref) async {
     try {
-      final String? path = await FilePicker.platform.getDirectoryPath();
+      final String? path = await FilePicker.getDirectoryPath();
       if (path != null) {
         final count = await ref.read(libraryProvider.notifier).scanLibrary(path);
         if (count == 0 && context.mounted) {

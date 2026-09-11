@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'db_service.dart';
 import 'logger_helper.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
@@ -69,17 +69,17 @@ class ImportExportService {
     final messenger = ScaffoldMessenger.of(context);
     try {
       // 1. Pick file
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['json'],
       );
 
-      if (result == null || result.files.isEmpty || result.files.single.path == null) {
+      if (result == null || result.path == null) {
         LoggerHelper.write('ImportExportService: Import cancelled by user (no file selected).');
         return;
       }
 
-      final filePath = result.files.single.path!;
+      final filePath = result.path!;
       LoggerHelper.write('ImportExportService: User selected file: $filePath');
 
       final file = File(filePath);

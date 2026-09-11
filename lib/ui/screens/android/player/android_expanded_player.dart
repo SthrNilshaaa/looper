@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/l10n/app_localizations.dart';

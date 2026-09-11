@@ -18,7 +18,7 @@ import 'package:looper_player/features/settings/presentation/settings_notifier.d
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
 import 'package:looper_player/features/playback/presentation/equalizer_notifier.dart';
 import 'package:metadata_god/metadata_god.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:share_plus/share_plus.dart';

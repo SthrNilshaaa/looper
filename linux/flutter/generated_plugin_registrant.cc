@@ -6,16 +6,16 @@
 
 #include "generated_plugin_registrant.h"
 
-#include <isar_flutter_libs/isar_flutter_libs_plugin.h>
+#include <isar_community_flutter_libs/isar_flutter_libs_plugin.h>
 #include <mpv_audio_kit/mpv_audio_kit_plugin.h>
 #include <screen_retriever_linux/screen_retriever_linux_plugin.h>
 #include <url_launcher_linux/url_launcher_plugin.h>
 #include <window_manager/window_manager_plugin.h>
 
 void fl_register_plugins(FlPluginRegistry* registry) {
-  g_autoptr(FlPluginRegistrar) isar_flutter_libs_registrar =
+  g_autoptr(FlPluginRegistrar) isar_community_flutter_libs_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "IsarFlutterLibsPlugin");
-  isar_flutter_libs_plugin_register_with_registrar(isar_flutter_libs_registrar);
+  isar_flutter_libs_plugin_register_with_registrar(isar_community_flutter_libs_registrar);
   g_autoptr(FlPluginRegistrar) mpv_audio_kit_registrar =
       fl_plugin_registry_get_registrar_for_plugin(registry, "MpvAudioKitPlugin");
   mpv_audio_kit_plugin_register_with_registrar(mpv_audio_kit_registrar);

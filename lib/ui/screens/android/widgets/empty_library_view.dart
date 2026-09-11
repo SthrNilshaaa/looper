@@ -110,7 +110,7 @@ class EmptyLibraryView extends ConsumerWidget {
                 _EmptyActionButton(
                   onPressed: () async {
                     HapticFeedback.lightImpact();
-                    final String? path = await FilePicker.platform.getDirectoryPath();
+                    final String? path = await FilePicker.getDirectoryPath();
                     if (path != null) {
                       ref.read(libraryProvider.notifier).scanLibrary(path);
                     }

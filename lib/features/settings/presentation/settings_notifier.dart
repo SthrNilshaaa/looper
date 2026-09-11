@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/db_service.dart';
 import '../../library/domain/models/models.dart';

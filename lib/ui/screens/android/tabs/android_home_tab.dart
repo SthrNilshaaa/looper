@@ -16,7 +16,7 @@ import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../widgets/premium_section.dart';
 import '../widgets/empty_library_view.dart';
 import '../widgets/premium_loading_view.dart';

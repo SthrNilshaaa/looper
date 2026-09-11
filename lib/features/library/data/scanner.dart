@@ -8,7 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../core/db_service.dart';
 import '../domain/models/models.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import '../../playback/data/metadata_service.dart';
 import 'artwork_downloader_service.dart';
 

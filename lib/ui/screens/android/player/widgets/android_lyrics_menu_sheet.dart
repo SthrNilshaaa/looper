@@ -1,16 +1,18 @@
 import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
+import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
-import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import 'lyrics_gestures_tutorial_sheet.dart';
 
 void showLyricsMenuBottomSheet(BuildContext context, WidgetRef ref, Song song) {
@@ -20,11 +22,11 @@ void showLyricsMenuBottomSheet(BuildContext context, WidgetRef ref, Song song) {
     isScrollControlled: true,
     backgroundColor: Colors.black12,
     builder: (context) {
-      return 
-     // BackdropFilter(
-       // filter: ImageFilter.blur(sigmaX: 0, sigmaY: 4),
-       // child:
-         _LyricsMenuSheetContent(song: song);
+      return
+      // BackdropFilter(
+      // filter: ImageFilter.blur(sigmaX: 0, sigmaY: 4),
+      // child:
+      _LyricsMenuSheetContent(song: song);
       //);
     },
   );
@@ -114,10 +116,7 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
                         '${song.artist ?? "Unknown Artist"} • ${_formatDuration(song.duration ?? 0)}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: AppFonts.jostStyle(
-                          color: Colors.white54,
-                          fontSize: 13,
-                        ),
+                        style: AppFonts.jostStyle(color: Colors.white54, fontSize: 13),
                       ),
                     ],
                   ),
@@ -137,19 +136,12 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
               decoration: BoxDecoration(
                 color: Color(currentAccent).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Color(currentAccent).withValues(alpha: 0.3),
-                  width: 1,
-                ),
+                border: Border.all(color: Color(currentAccent).withValues(alpha: 0.3), width: 1),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    LucideIcons.disc,
-                    size: 13,
-                    color: Color(currentAccent),
-                  ),
+                  Icon(LucideIcons.disc, size: 13, color: Color(currentAccent)),
                   const SizedBox(width: 6),
                   Text(
                     _formatSourceLabel(lyricsState.source),
@@ -185,8 +177,10 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: availableProviders.map((provider) {
-                  final isLocalSource = lyricsState.source == 'embedded' || lyricsState.source == 'local';
-                  final isSelected = (provider.toLowerCase() == 'local' && isLocalSource) ||
+                  final isLocalSource =
+                      lyricsState.source == 'embedded' || lyricsState.source == 'local';
+                  final isSelected =
+                      (provider.toLowerCase() == 'local' && isLocalSource) ||
                       (lyricsState.source?.toLowerCase() == provider.toLowerCase());
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
@@ -229,14 +223,14 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
                           if (context.mounted) {
                             final resultMsg = provider == 'Local'
                                 ? (success
-                                    ? 'Loaded local/embedded lyrics!'
-                                    : 'No local or embedded lyrics found')
+                                      ? 'Loaded local/embedded lyrics!'
+                                      : 'No local or embedded lyrics found')
                                 : (success
-                                    ? 'Lyrics updated from $provider!'
-                                    : 'No lyrics found on $provider');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(resultMsg)),
-                            );
+                                      ? 'Lyrics updated from $provider!'
+                                      : 'No lyrics found on $provider');
+                            ScaffoldMessenger.of(
+                              context,
+                            ).showSnackBar(SnackBar(content: Text(resultMsg)));
                           }
                         }
                       },
@@ -264,17 +258,12 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
               ),
               subtitle: Text(
                 l10n.autoFallbackProvidersDesc,
-                style: AppFonts.jostStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
+                style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
               ),
               value: settings.autoLyricsFallback,
               onChanged: (val) {
                 HapticFeedback.lightImpact();
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateAutoLyricsFallback(val);
+                ref.read(settingsProvider.notifier).updateAutoLyricsFallback(val);
               },
             ),
 
@@ -294,17 +283,12 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
               ),
               subtitle: Text(
                 l10n.ambientColorBackgroundDesc,
-                style: AppFonts.jostStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
+                style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
               ),
               value: settings.ambientColorBackground,
               onChanged: (val) {
                 HapticFeedback.lightImpact();
-                ref
-                    .read(settingsProvider.notifier)
-                    .updateAmbientColorBackground(val);
+                ref.read(settingsProvider.notifier).updateAmbientColorBackground(val);
               },
             ),
 
@@ -331,10 +315,7 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
               ),
               subtitle: Text(
                 'Tap, long-press, pinch to zoom & more',
-                style: AppFonts.jostStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
+                style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
               ),
               onTap: () {
                 HapticFeedback.mediumImpact();
@@ -367,10 +348,7 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
               ),
               subtitle: Text(
                 l10n.saveLyricsToDevice,
-                style: AppFonts.jostStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
+                style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
               ),
               onTap: () async {
                 HapticFeedback.mediumImpact();
@@ -378,14 +356,17 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
 
                 final rawLrc = lyricsState.rawLrc;
                 if (rawLrc == null || rawLrc.trim().isEmpty) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.noLyricsToExport)),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text(l10n.noLyricsToExport)));
                   return;
                 }
 
                 try {
-                  final safeArtist = (song.artist ?? 'Artist').replaceAll(RegExp(r'[^a-zA-Z0-9_\-]'), '_');
+                  final safeArtist = (song.artist ?? 'Artist').replaceAll(
+                    RegExp(r'[^a-zA-Z0-9_\-]'),
+                    '_',
+                  );
                   final safeTitle = song.title.replaceAll(RegExp(r'[^a-zA-Z0-9_\-]'), '_');
                   final defaultFileName = '$safeArtist - $safeTitle.lrc';
 
@@ -400,22 +381,22 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
                     }
                   }
 
-                  exportPath ??= await FilePicker.platform.saveFile(
+                  exportPath ??= (await FilePicker.saveFile(
                     dialogTitle: 'Export Lyrics',
                     fileName: defaultFileName,
                     bytes: Uint8List.fromList(rawLrc.codeUnits),
-                  );
+                  ))?.path;
 
                   if (context.mounted && exportPath != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Lyrics exported to: $exportPath')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Lyrics exported to: $exportPath')));
                   }
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Failed to export lyrics: $e')),
-                    );
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text('Failed to export lyrics: $e')));
                   }
                 }
               },
@@ -442,33 +423,28 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
               ),
               subtitle: Text(
                 l10n.selectLocalLrcFile,
-                style: AppFonts.jostStyle(
-                  color: Colors.white54,
-                  fontSize: 12,
-                ),
+                style: AppFonts.jostStyle(color: Colors.white54, fontSize: 12),
               ),
               onTap: () async {
                 HapticFeedback.mediumImpact();
                 Navigator.pop(context);
 
-                final result = await FilePicker.platform.pickFiles(
+                final result = await FilePicker.pickFile(
                   type: FileType.custom,
                   allowedExtensions: ['lrc', 'txt'],
                 );
 
-                if (result != null && result.files.single.path != null) {
-                  final file = File(result.files.single.path!);
+                if (result != null && result.path != null) {
+                  final file = File(result.path!);
                   final content = await file.readAsString();
 
                   if (content.trim().isNotEmpty) {
-                    await ref
-                        .read(lyricsProvider.notifier)
-                        .applyCustomLyrics(song, content);
+                    await ref.read(lyricsProvider.notifier).applyCustomLyrics(song, content);
 
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(l10n.customLyricsAppliedSuccess)),
-                      );
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(l10n.customLyricsAppliedSuccess)));
                     }
                   }
                 }

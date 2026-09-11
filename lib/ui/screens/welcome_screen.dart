@@ -962,7 +962,7 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     if (!mounted) return;
     if (Platform.isAndroid && !_permissionGranted) return;
 
-    final String? path = await FilePicker.platform.getDirectoryPath();
+    final String? path = await FilePicker.getDirectoryPath();
     if (!mounted || path == null) return;
 
     setState(() {

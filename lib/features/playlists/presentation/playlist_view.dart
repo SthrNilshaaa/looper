@@ -6,7 +6,7 @@ import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/core/db_service.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 

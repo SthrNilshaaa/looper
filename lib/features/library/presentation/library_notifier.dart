@@ -9,7 +9,7 @@ import 'package:looper_player/features/library/data/scanner.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/library/data/artist_image_service.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/features/playback/data/lyrics_fetcher.dart';
 import 'dart:async';

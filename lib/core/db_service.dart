@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import '../features/library/domain/models/models.dart';
 export '../features/library/domain/models/models.dart';

@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:looper_player/features/library/presentation/songs_list.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 

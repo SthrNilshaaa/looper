@@ -3,7 +3,7 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  isar_flutter_libs
+  isar_community_flutter_libs
   mpv_audio_kit
   screen_retriever_linux
   url_launcher_linux

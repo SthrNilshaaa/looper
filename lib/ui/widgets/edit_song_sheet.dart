@@ -61,12 +61,11 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
 
   Future<void> _pickArtwork() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
+      final result = await FilePicker.pickFile(
+        type: FileType.image
       );
-      if (result != null && result.files.single.path != null) {
-        setState(() => _pickedArtPath = result.files.single.path!);
+      if (result != null && result.path != null) {
+        setState(() => _pickedArtPath = result.path!);
       }
     } catch (_) {}
   }

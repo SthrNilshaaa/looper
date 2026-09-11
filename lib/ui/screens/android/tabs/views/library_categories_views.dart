@@ -13,7 +13,7 @@ import 'package:looper_player/ui/screens/android/widgets/premium_section.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/ui/widgets/app_bottom_sheet.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/app_fonts.dart';
 

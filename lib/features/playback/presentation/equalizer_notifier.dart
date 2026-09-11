@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';

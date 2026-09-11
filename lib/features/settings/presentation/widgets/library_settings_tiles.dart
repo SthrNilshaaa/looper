@@ -25,7 +25,7 @@ class AddFolderTile extends ConsumerWidget {
       ),
       onTap: () async {
         HapticFeedback.lightImpact();
-        final String? path = await FilePicker.platform.getDirectoryPath();
+        final String? path = await FilePicker.getDirectoryPath();
         if (path != null) {
           ref.read(libraryProvider.notifier).scanLibrary(path);
         }

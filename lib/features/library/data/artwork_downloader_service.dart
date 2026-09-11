@@ -6,7 +6,7 @@ import 'package:path/path.dart' as p;
 import 'package:looper_player/core/app_links.dart';
 import '../../../core/db_service.dart';
 import '../domain/models/models.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 class ArtworkDownloaderService {
   static const String iTunesSearchUrl = AppLinks.iTunesSearchUrl;

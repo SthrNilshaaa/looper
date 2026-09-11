@@ -11,7 +11,7 @@ import 'package:looper_player/core/navigation_provider.dart';
 import 'package:looper_player/ui/widgets/optimized_image.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/ui/widgets/global_playing_indicator.dart';
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 // Providers for Albums and Artists
 final albumsProvider = StreamProvider<List<Album>>((ref) {

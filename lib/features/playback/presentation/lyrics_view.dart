@@ -1,17 +1,19 @@
 import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:looper_player/features/library/domain/models/models.dart';
-import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
-import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
-import 'widgets/advanced_lyric_renderer.dart';
 import 'package:looper_player/core/app_fonts.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
+import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/features/playback/presentation/lyrics_notifier.dart';
+import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
+
+import 'widgets/advanced_lyric_renderer.dart';
 
 enum LyricsSyncMode { line, word, char }
 
@@ -40,17 +42,13 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
   Future<void> _enableWakelock() async {
     try {
       await WakelockPlus.enable();
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   Future<void> _disableWakelock() async {
     try {
       await WakelockPlus.disable();
-    } catch (e) {
-
-    }
+    } catch (e) {}
   }
 
   @override
@@ -120,8 +118,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                   : AdvancedLyricRenderer(
                       lines: lyricsState.parsedLines,
                       mode: _syncMode,
-                      onSeek: (pos) =>
-                          ref.read(playbackProvider.notifier).seek(pos),
+                      onSeek: (pos) => ref.read(playbackProvider.notifier).seek(pos),
                     ),
             ),
           ],
@@ -132,11 +129,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
 
   /// Illustrated empty state shown when no lyrics could be found, with a
   /// button to import a local .lrc/.txt file for the currently playing song.
-  Widget _buildNoLyricsState(
-    BuildContext context,
-    AppLocalizations l10n,
-    Color primaryColor,
-  ) {
+  Widget _buildNoLyricsState(BuildContext context, AppLocalizations l10n, Color primaryColor) {
     final song = ref.watch(playbackProvider.select((s) => s.currentSong));
 
     return Center(
@@ -172,9 +165,7 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.white.withValues(alpha: 0.05),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08),
-                      ),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                     ),
                     child: Icon(
                       LucideIcons.fileMusic,
@@ -191,16 +182,9 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         color: const Color(0xFF1E1E1E),
-                        border: Border.all(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          width: 2,
-                        ),
+                        border: Border.all(color: Colors.black.withValues(alpha: 0.4), width: 2),
                       ),
-                      child: const Icon(
-                        LucideIcons.searchX,
-                        size: 16,
-                        color: Colors.white54,
-                      ),
+                      child: const Icon(LucideIcons.searchX, size: 16, color: Colors.white54),
                     ),
                   ),
                 ],
@@ -220,16 +204,10 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
             Text(
               l10n.lyricsNotAvailableHint,
               textAlign: TextAlign.center,
-              style: AppFonts.jostStyle(
-                color: Colors.white.withValues(alpha: 0.4),
-                fontSize: 13,
-              ),
+              style: AppFonts.jostStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 13),
             ),
             const SizedBox(height: 28),
-            if (song != null)
-              _ImportLyricsButton(
-                onTap: () => _importLyricsFile(context, song),
-              ),
+            if (song != null) _ImportLyricsButton(onTap: () => _importLyricsFile(context, song)),
           ],
         ),
       ),
@@ -240,28 +218,28 @@ class _LyricsViewState extends ConsumerState<LyricsView> {
     final l10n = AppLocalizations.of(context)!;
     HapticFeedback.mediumImpact();
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFile(
         type: FileType.custom,
         allowedExtensions: ['lrc', 'txt'],
       );
-      if (result == null || result.files.single.path == null) return;
+      if (result == null || result.path == null) return;
 
-      final file = File(result.files.single.path!);
+      final file = File(result.path!);
       final content = await file.readAsString();
       if (content.trim().isEmpty) return;
 
       await ref.read(lyricsProvider.notifier).applyCustomLyrics(song, content);
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.customLyricsAppliedSuccess)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.customLyricsAppliedSuccess)));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to import lyrics: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to import lyrics: $e')));
       }
     }
   }
@@ -394,14 +372,9 @@ class _ModeButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isShort ? 12 : 20,
-          vertical: isShort ? 6 : 10,
-        ),
+        padding: EdgeInsets.symmetric(horizontal: isShort ? 12 : 20, vertical: isShort ? 6 : 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? Theme.of(context).colorScheme.primary
-              : Colors.transparent,
+          color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(28),
         ),
         child: Text(
@@ -409,9 +382,7 @@ class _ModeButton extends StatelessWidget {
           style: AppFonts.jostStyle(
             fontSize: isShort ? 10 : 11,
             fontWeight: FontWeight.normal,
-            color: isSelected
-                ? Theme.of(context).colorScheme.onPrimary
-                : Colors.grey[400],
+            color: isSelected ? Theme.of(context).colorScheme.onPrimary : Colors.grey[400],
             letterSpacing: 1.2,
           ),
         ),

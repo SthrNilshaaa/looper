@@ -1,4 +1,4 @@
-import 'package:isar/isar.dart';
+import 'package:isar_community/isar.dart';
 
 part 'models.g.dart';
 
@@ -49,12 +49,7 @@ class Song {
 
   // Metadata for search
   @Index(type: IndexType.value, caseSensitive: false)
-  List<String> get searchTerms => [
-    title,
-    artist ?? '',
-    album ?? '',
-    lyrics ?? '',
-  ];
+  List<String> get searchTerms => [title, artist ?? '', album ?? '', lyrics ?? ''];
 }
 
 @collection
@@ -170,14 +165,7 @@ class AppSettings {
   bool showHomeAlbums = false;
   bool showHomeGenres = true;
   bool showHomeRecent = true;
-  List<String> homeSectionOrder = [
-    'quick_picks',
-    'songs',
-    'albums',
-    'artists',
-    'genres',
-    'recent',
-  ];
+  List<String> homeSectionOrder = ['quick_picks', 'songs', 'albums', 'artists', 'genres', 'recent'];
   bool enableSlideGesture = false;
   bool stopOnTaskRemoved = true;
   bool persistQueue = false;
