@@ -1600,12 +1600,9 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
 
       final audioStatusBefore = await Permission.audio.status;
       final storageStatusBefore = await Permission.storage.status;
-      final manageStatusBefore = await Permission.manageExternalStorage.status;
 
       // Check if we already have permissions
-      if (audioStatusBefore.isGranted ||
-          storageStatusBefore.isGranted ||
-          manageStatusBefore.isGranted) {
+      if (audioStatusBefore.isGranted || storageStatusBefore.isGranted) {
         return true;
       }
 
@@ -1620,19 +1617,7 @@ class PlaybackNotifier extends StateNotifier<PlaybackState> {
       final storageStatusAfter =
           statuses[Permission.storage] ?? PermissionStatus.denied;
 
-      bool isGranted =
-          audioStatusAfter.isGranted || storageStatusAfter.isGranted;
-
-      if (!isGranted) {
-        final manageStatusAfter = await Permission.manageExternalStorage
-            .request();
-
-        if (manageStatusAfter.isGranted) {
-          isGranted = true;
-        }
-      }
-
-      return isGranted;
+      return audioStatusAfter.isGranted || storageStatusAfter.isGranted;
     } catch (e) {
       return true; // Fallback to let the app try physical operations
     }

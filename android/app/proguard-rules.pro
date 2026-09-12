@@ -33,3 +33,8 @@
 # Keep all Android media classes
 -keep class android.support.v4.media.** { *; }
 -keep class androidx.media.** { *; }
+
+# jaudiotagger: format readers are picked reflectively (AudioFileIO's format
+# registry), so R8 can't trace usage from call sites - keep the library whole.
+-keep class org.jaudiotagger.** { *; }
+-dontwarn org.jaudiotagger.**

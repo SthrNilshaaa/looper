@@ -11,6 +11,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as p;
 import 'package:looper_player/l10n/app_localizations.dart';
 import 'package:looper_player/core/providers.dart';
+import '../../features/library/data/saf_folder_service.dart';
 import '../../features/library/presentation/library_notifier.dart';
 import '../../features/settings/presentation/settings_notifier.dart';
 import '../../features/playback/presentation/playback_notifier.dart';
@@ -58,11 +59,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   WelcomeState _currentState = WelcomeState.initial;
   String _scanStatusMessage = "Initializing scanner...";
 
-  bool _permissionGranted =
-      false; // true if standard audio/storage OR all files is granted
+  bool _permissionGranted = false; // true if standard audio/storage is granted
   bool _notificationGranted = false;
   bool _audioGranted = false;
-  bool _allFilesGranted = false;
   bool _autoScanTriggered = false;
 
   @override
@@ -88,32 +87,27 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   Future<void> _checkPermissionStatus() async {
     bool notif = false;
     bool aud = false;
-    bool all = false;
 
     if (Platform.isAndroid) {
       try {
         notif = await Permission.notification.isGranted;
-        all = await Permission.manageExternalStorage.isGranted;
         aud =
             (await Permission.audio.isGranted) ||
             (await Permission.storage.isGranted);
       } catch (_) {
         aud = true;
-        all = true;
         notif = true;
       }
     } else {
       notif = true;
       aud = true;
-      all = true;
     }
 
     if (mounted) {
       setState(() {
         _notificationGranted = notif;
         _audioGranted = aud;
-        _allFilesGranted = all;
-        _permissionGranted = aud || all; // Sufficient to scan
+        _permissionGranted = aud;
       });
     }
   }
@@ -134,15 +128,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     try {
       await Permission.audio.request();
       await Permission.storage.request();
-    } catch (_) {}
-    await _checkPermissionStatus();
-  }
-
-  Future<void> _requestAllFilesPermission() async {
-    HapticFeedback.lightImpact();
-    if (!Platform.isAndroid) return;
-    try {
-      await Permission.manageExternalStorage.request();
     } catch (_) {}
     await _checkPermissionStatus();
   }
@@ -390,21 +375,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                   description: l10n.welcomeMusicAudioDesc,
                   isGranted: _audioGranted,
                   onGrant: _requestAudioPermission,
-                  colorScheme: colorScheme,
-                  accentColor: Color(settings.accentColor),
-                  l10n: l10n,
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12.0),
-                  child: Divider(height: 1, color: Colors.white10),
-                ),
-
-                // 3. All Files Permission Row (Highly recommended)
-                _buildPermissionRow(
-                  title: l10n.allFilesAccess.toUpperCase(),
-                  description: l10n.welcomeAllFilesDesc,
-                  isGranted: _allFilesGranted,
-                  onGrant: _requestAllFilesPermission,
                   colorScheme: colorScheme,
                   accentColor: Color(settings.accentColor),
                   l10n: l10n,
@@ -850,6 +820,13 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
       } catch (_) {}
       scanRoots.add(defaultPath);
     } else if (Platform.isAndroid) {
+      // Raw traversal can no longer reach an arbitrary/whole-storage root or
+      // SD cards without MANAGE_EXTERNAL_STORAGE (removed for Play Store
+      // compliance - see AndroidManifest.xml). These specific top-level
+      // public directories are still listable with just
+      // READ_MEDIA_AUDIO/READ_EXTERNAL_STORAGE; everything else (custom
+      // folders, SD cards, formats MediaStore doesn't index) is covered by
+      // the MediaStore + SAF merges inside LibraryScanner.scanDirectory().
       final List<String> commonPaths = [
         '/storage/emulated/0/Music',
         '/storage/emulated/0/Download',
@@ -864,53 +841,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
         '/storage/emulated/0/Pictures',
         '/storage/emulated/0/Movies',
       ];
-      int sdkInt = 0;
-      try {
-        final sdkMatch = RegExp(
-          r'API\s+(\d+)',
-        ).firstMatch(Platform.operatingSystemVersion);
-        if (sdkMatch != null) {
-          sdkInt = int.parse(sdkMatch.group(1)!);
-        }
-      } catch (_) {}
-
-      final isAllFilesGranted =
-          await Permission.manageExternalStorage.isGranted;
-      final isLegacyStorageGranted =
-          sdkInt < 30 && await Permission.storage.isGranted;
-      final canScanRoot = isAllFilesGranted || isLegacyStorageGranted;
-
-      if (canScanRoot) {
-        scanRoots.add('/storage/emulated/0');
-        coarseRoots.add('/storage/emulated/0');
-      }
       for (final cp in commonPaths) {
         if (!scanRoots.contains(cp)) scanRoots.add(cp);
       }
-      // Check for SD Card mount points
-      try {
-        final storageDir = Directory('/storage');
-        if (await storageDir.exists()) {
-          final List<FileSystemEntity> entities = await storageDir
-              .list()
-              .toList();
-          for (final entity in entities) {
-            final name = p.context.basename(entity.path);
-            if (entity is Directory &&
-                name != 'emulated' &&
-                name != 'self' &&
-                name != 'knox-emulated') {
-              if (canScanRoot) {
-                scanRoots.add(entity.path);
-                coarseRoots.add(entity.path);
-              } else {
-                scanRoots.add('${entity.path}/Music');
-                scanRoots.add('${entity.path}/Download');
-              }
-            }
-          }
-        }
-      } catch (_) {}
     }
 
     int totalSongsDiscovered = 0;
@@ -962,7 +895,26 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
     if (!mounted) return;
     if (Platform.isAndroid && !_permissionGranted) return;
 
-    final String? path = await FilePicker.getDirectoryPath();
+    String? path;
+    if (Platform.isAndroid) {
+      try {
+        path = await SafFolderService.pickFolder();
+      } on PlatformException catch (e) {
+        if (mounted && e.code == 'UNSUPPORTED_PROVIDER') {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                e.message ??
+                    "Please choose a folder on this device's internal storage or SD card.",
+              ),
+            ),
+          );
+        }
+        return;
+      }
+    } else {
+      path = await FilePicker.getDirectoryPath();
+    }
     if (!mounted || path == null) return;
 
     setState(() {

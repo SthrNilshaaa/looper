@@ -175,7 +175,14 @@ class CategoryDetailWrapper extends ConsumerWidget {
     final showSortButton = title == 'Albums' || title == 'Artists' || title == 'Genres';
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // Not Colors.transparent: this screen is reached via a non-opaque
+      // PageRoute (_createPremiumRoute) meant to let the black root screen
+      // underneath show through, but that compositing isn't reliable on
+      // every device/renderer combo (seen as a white/native-window-
+      // background flash on some devices, e.g. Albums/Artists/Genres).
+      // Painting an explicit opaque background removes the dependency on
+      // that compositing entirely.
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

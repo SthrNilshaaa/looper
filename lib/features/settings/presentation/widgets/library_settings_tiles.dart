@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/widgets/folder_picker_helper.dart';
 import 'settings_dialogs.dart';
 
 class AddFolderTile extends ConsumerWidget {
@@ -25,10 +25,7 @@ class AddFolderTile extends ConsumerWidget {
       ),
       onTap: () async {
         HapticFeedback.lightImpact();
-        final String? path = await FilePicker.getDirectoryPath();
-        if (path != null) {
-          ref.read(libraryProvider.notifier).scanLibrary(path);
-        }
+        await FolderPickerHelper.pickFolder(context, ref);
       },
     );
   }

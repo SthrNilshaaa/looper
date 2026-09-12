@@ -89,9 +89,8 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
       } catch (_) {}
 
       final hasAudio = await Permission.audio.isGranted;
-      final hasManage = await Permission.manageExternalStorage.isGranted;
       final hasStorage = sdkInt < 33 && await Permission.storage.isGranted;
-      final isGranted = hasAudio || hasStorage || hasManage;
+      final isGranted = hasAudio || hasStorage;
       if (mounted && _permissionsGranted != isGranted) {
         setState(() {
           _permissionsGranted = isGranted;
@@ -637,16 +636,57 @@ class _AndroidMainScreenState extends ConsumerState<AndroidMainScreen> with Widg
 
   Route _createPremiumRoute(Widget page) {
     return PageRouteBuilder(
-      opaque: false,
-      transitionDuration: const Duration(milliseconds: 500),
-      reverseTransitionDuration: const Duration(milliseconds: 400),
+      // Every page pushed through here paints its own opaque background
+      // (see the Scaffold backgroundColor comments in e.g.
+      // CategoryDetailWrapper/SettingsView), so this doesn't need to stay
+      // non-opaque for a screen below to show through - letting Flutter skip
+      // painting/compositing the route underneath while this one is active.
+      opaque: true,
+      transitionDuration: const Duration(milliseconds: 320),
+      reverseTransitionDuration: const Duration(milliseconds: 280),
       pageBuilder: (context, animation, secondaryAnimation) => page,
       transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return SharedAxisTransition(
-          animation: animation,
-          secondaryAnimation: secondaryAnimation,
-          transitionType: SharedAxisTransitionType.horizontal,
-          child: child,
+        // Hand-built slide+fade, not SharedAxisTransition. That package
+        // widget paints its OWN opaque fill behind the exiting page during
+        // the transition (its `fillColor` parameter, defaulting to
+        // Theme.canvasColor when left unset, as it was here) - and that
+        // internal fill sits on top of anything we put behind it in our own
+        // Stack, so our own backdrop couldn't actually override it. That's
+        // what kept flashing (white, then black once we widened our own
+        // backdrop) regardless of what color we painted behind it.
+        // Building the slide and fade explicitly means there is no hidden
+        // internal fill left to fight - only what's written below actually
+        // paints. The slide offset is kept small (6% of the screen width)
+        // so even the moment the two pages don't fully overlap is brief and
+        // subtle, with the ColoredBox as a static, always-black, never-
+        // animated backdrop under both for that moment regardless.
+        final enter = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+        final exit = CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeInCubic);
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: ColoredBox(color: Theme.of(context).colorScheme.surface),
+            ),
+            SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0.06, 0),
+                end: Offset.zero,
+              ).animate(enter),
+              child: FadeTransition(
+                opacity: enter,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: Offset.zero,
+                    end: const Offset(-0.06, 0),
+                  ).animate(exit),
+                  child: FadeTransition(
+                    opacity: Tween<double>(begin: 1, end: 0).animate(exit),
+                    child: child,
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );

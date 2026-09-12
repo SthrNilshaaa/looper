@@ -185,10 +185,17 @@ class _SettingsViewState extends ConsumerState<SettingsView> {
           }
         }
       },
+      // Not Colors.transparent on either widget below - this subtree is
+      // reached via a non-opaque PageRoute (_createPremiumRoute) meant to
+      // let the black root screen underneath show through, but that
+      // compositing isn't reliable on every device/renderer combo (seen as
+      // a white/native-window-background flash on some devices). Painting
+      // an explicit opaque background here removes the dependency on that
+      // compositing entirely.
       child: Material(
-        color: Colors.transparent,
+        color: Theme.of(context).colorScheme.surface,
         child: Scaffold(
-          backgroundColor: Colors.transparent,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           body: SafeArea(
             child: Column(
               children: [
@@ -1283,7 +1290,9 @@ class SettingsCategoryScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // See the comment on the main SettingsView's Scaffold above - same
+      // reasoning applies here.
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [

@@ -23,25 +23,62 @@ class LyricsFetcher {
     final artist = (song.artist ?? 'Unknown Artist').trim();
     final title = song.title.trim();
 
+    // Whether a previous run already cached "nothing found anywhere" for
+    // this song. That's still worth honoring for the online step below (the
+    // slow, rate-limited one) but NOT for skipping the embedded-metadata/
+    // sidecar-file checks (steps 3-4): those are fast, local, no-network
+    // re-checks, and a stale not-found here would otherwise be permanent -
+    // e.g. Android's embedded-lyrics reader was added after some libraries
+    // were already scanned and cached as not-found under the old code path.
+    bool cachedAsNotFound = false;
+
     // 1. Try Song Database (Previously cached) - INSTANT, ZERO DELAY
     if (song.lyrics != null && song.lyrics!.isNotEmpty) {
-      if (song.lyrics == '[source:not_found]') return null;
-      return song.lyrics;
+      if (song.lyrics == '[source:not_found]') {
+        cachedAsNotFound = true;
+      } else if (!song.lyrics!.startsWith('[source:')) {
+        // Self-heal legacy data: scanner.dart used to write embedded lyrics
+        // into song.lyrics without a [source:embedded] tag (fixed above,
+        // but that fix only applies going forward - a song scanned before
+        // it doesn't get retroactively rescanned just because the app
+        // updated). scanner.dart is the only place that ever wrote lyrics
+        // here untagged, so any untagged value found now is exactly that:
+        // real embedded lyrics with a missing tag, which otherwise shows
+        // the lyrics correctly but permanently displays "No Lyrics Source"
+        // for this song. Tag and persist it once, here, rather than
+        // requiring a full library reset just to fix the label.
+        final tagged = '[source:embedded]\n${song.lyrics}';
+        await DbService.isar.writeTxn(() async {
+          final dbSong = await DbService.isar.songs.get(song.id);
+          if (dbSong != null) {
+            dbSong.lyrics = tagged;
+            await DbService.isar.songs.put(dbSong);
+          }
+        });
+        return tagged;
+      } else {
+        return song.lyrics;
+      }
     }
 
     // 2. Try Local Cache
-    lrc = await LyricsCache.get(artist, title);
-    if (lrc != null && lrc.isNotEmpty) {
-      if (lrc == '[source:not_found]') return null;
-      // Save to database for faster next-time loading
-      await DbService.isar.writeTxn(() async {
-        final dbSong = await DbService.isar.songs.get(song.id);
-        if (dbSong != null) {
-          dbSong.lyrics = lrc;
-          await DbService.isar.songs.put(dbSong);
+    if (!cachedAsNotFound) {
+      lrc = await LyricsCache.get(artist, title);
+      if (lrc != null && lrc.isNotEmpty) {
+        if (lrc == '[source:not_found]') {
+          cachedAsNotFound = true;
+        } else {
+          // Save to database for faster next-time loading
+          await DbService.isar.writeTxn(() async {
+            final dbSong = await DbService.isar.songs.get(song.id);
+            if (dbSong != null) {
+              dbSong.lyrics = lrc;
+              await DbService.isar.songs.put(dbSong);
+            }
+          });
+          return lrc;
         }
-      });
-      return lrc;
+      }
     }
 
     // 3. Try Embedded Metadata (Live check inside FLAC/MP3 etc.)
@@ -96,7 +133,14 @@ class LyricsFetcher {
       return lrc;
     }
 
-    // 5. Online service search - LAST FALLBACK
+    // 5. Online service search - LAST FALLBACK. Skipped if a previous run
+    // already checked online and found nothing (cachedAsNotFound): unlike
+    // steps 3-4 this one is slow and rate-limited, so it's worth trusting
+    // that cache rather than re-hitting it on every fetch.
+    if (cachedAsNotFound) {
+      return null;
+    }
+
     final settings = await DbService.isar.appSettings.get(0);
     if (settings != null && !settings.enableInternet) {
       return lrc;

@@ -47,6 +47,13 @@ Future<void> showLyricsGesturesTutorial(BuildContext context, WidgetRef ref) {
   return showModalBottomSheet(
     context: context,
     useRootNavigator: true,
+    // Without this, showModalBottomSheet caps the sheet to ~9/16 of screen
+    // height regardless of content - this tutorial's header + 4 tips +
+    // button is just tall enough to exceed that on some devices, causing a
+    // small "RenderFlex overflowed... on the bottom" (visible as the
+    // debug-mode overflow banner). Matches the isScrollControlled: true +
+    // SingleChildScrollView pattern the other sheets here already use.
+    isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black54,
     builder: (context) => const _LyricsGesturesTutorialSheet(),
@@ -61,52 +68,54 @@ class _LyricsGesturesTutorialSheet extends StatelessWidget {
     final accentColor = Theme.of(context).colorScheme.primary;
 
     return AppBottomSheetContainer(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(LucideIcons.sparkles, color: accentColor, size: 22),
-              const SizedBox(width: 12),
-              Text(
-                'Lyrics Gestures',
-                style: AppFonts.jostStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Icon(LucideIcons.sparkles, color: accentColor, size: 22),
+                const SizedBox(width: 12),
+                Text(
+                  'Lyrics Gestures',
+                  style: AppFonts.jostStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "A few things this screen can do that aren't always obvious:",
+              style: AppFonts.jostStyle(fontSize: 14, color: Colors.white70),
+            ),
+            const SizedBox(height: 20),
+            for (final tip in _lyricsGestureTips) ...[
+              _TipRow(tip: tip, accentColor: accentColor),
+              const SizedBox(height: 14),
+            ],
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                ),
+                child: Text(
+                  'Got it',
+                  style: AppFonts.jostStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "A few things this screen can do that aren't always obvious:",
-            style: AppFonts.jostStyle(fontSize: 14, color: Colors.white70),
-          ),
-          const SizedBox(height: 20),
-          for (final tip in _lyricsGestureTips) ...[
-            _TipRow(tip: tip, accentColor: accentColor),
-            const SizedBox(height: 14),
-          ],
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: accentColor,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: Text(
-                'Got it',
-                style: AppFonts.jostStyle(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

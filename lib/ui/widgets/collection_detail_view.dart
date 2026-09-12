@@ -124,7 +124,9 @@ class CollectionDetailView extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // Not Colors.transparent - see the comment on CategoryDetailWrapper's
+      // Scaffold in library_categories_views.dart for why.
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

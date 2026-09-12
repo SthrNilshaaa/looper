@@ -26,8 +26,15 @@ class ScrollingText extends StatelessWidget {
         )..layout();
 
         if (textPainter.width > constraints.maxWidth) {
+          // Not a guessed fontSize * 1.5 - that under-measures scripts like
+          // Devanagari, which need more vertical room than Latin text at the
+          // same font size (ascent/descent plus vowel signs above and below
+          // the baseline), so the Marqueer child ended up taller than this
+          // SizedBox allowed and overflowed by a few pixels on non-Latin
+          // lyrics/titles. textPainter is already laid out for this exact
+          // text+style above, so its measured height is exact.
           return SizedBox(
-            height: height ?? (style.fontSize! * 1.5),
+            height: height ?? textPainter.height,
             child: Marqueer(
               pps: 30.0,
               infinity: true,

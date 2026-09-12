@@ -3,11 +3,11 @@ import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
+import 'package:looper_player/ui/widgets/folder_picker_helper.dart';
 import 'premium_section.dart';
 
 class EmptyLibraryView extends ConsumerWidget {
@@ -110,10 +110,7 @@ class EmptyLibraryView extends ConsumerWidget {
                 _EmptyActionButton(
                   onPressed: () async {
                     HapticFeedback.lightImpact();
-                    final String? path = await FilePicker.getDirectoryPath();
-                    if (path != null) {
-                      ref.read(libraryProvider.notifier).scanLibrary(path);
-                    }
+                    await FolderPickerHelper.pickFolder(context, ref);
                   },
                   label: l10n.selectCustomFolder,
                   icon: LucideIcons.folderPlus,

@@ -30,6 +30,17 @@ class LrcLine {
 class LrcParser {
   static final RegExp _lrcRegex = RegExp(r'\[(\d+):(\d+[\.:]\d+)\](.*)');
   static final RegExp _wordRegex = RegExp(r'<(\d+):(\d+[\.:]\d+)>(.*)');
+  static final RegExp _sourceTagRegex = RegExp(r'^\[source:.*\]\n?');
+
+  /// Strips the leading `[source:xxx]` tag LyricsFetcher/scanner.dart write
+  /// into a song's stored lyrics to track where they came from. Use this
+  /// wherever raw song.lyrics is shown/edited as plain text (the normal
+  /// playback path already does this via LyricsNotifier._applyLrcToState) -
+  /// otherwise the tag itself shows up as a literal line of "lyrics".
+  static String? stripSourceTag(String? raw) {
+    if (raw == null) return null;
+    return raw.replaceFirst(_sourceTagRegex, '');
+  }
 
   static List<LrcLine> parse(String lrcContent) {
     final List<LrcLine> lines = [];

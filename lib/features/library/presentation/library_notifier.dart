@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/logger_helper.dart';
-import 'package:path/path.dart' as p;
 import 'package:permission_handler/permission_handler.dart';
 import 'package:looper_player/features/library/data/scanner.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
@@ -264,8 +263,19 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
 
   Future<void> prefetchLibraryLyrics() async {
     final songs = await DbService.isar.songs.where().findAll();
+    // Also retries songs previously cached as "not found": LyricsFetcher
+    // itself skips the slow/rate-limited online re-check for those (see its
+    // cachedAsNotFound handling) but still re-tries the fast, local,
+    // no-network embedded-metadata/sidecar-file checks - worth doing here
+    // too, since e.g. Android's embedded-lyrics reader didn't exist when
+    // some libraries were first scanned.
     final songsToFetch = songs
-        .where((s) => s.lyrics == null || s.lyrics!.isEmpty)
+        .where(
+          (s) =>
+              s.lyrics == null ||
+              s.lyrics!.isEmpty ||
+              s.lyrics == '[source:not_found]',
+        )
         .toList();
 
     if (songsToFetch.isEmpty) return;
@@ -299,29 +309,20 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
       }
     } catch (_) {}
 
-    // Check if standard or manage external storage permissions are already granted
-    // to bypass slow OS request dialogues.
+    // Check if the standard media/storage permission is already granted to
+    // bypass a slow OS request dialogue.
     final bool hasAudio = await Permission.audio.isGranted;
-    final bool hasManage = await Permission.manageExternalStorage.isGranted;
     final bool hasStorage = sdkInt < 33 && await Permission.storage.isGranted;
 
-    if (hasAudio || hasManage || hasStorage) {
+    if (hasAudio || hasStorage) {
       return true;
     }
 
-    bool isGranted = false;
     if (sdkInt >= 33) {
-      isGranted = await Permission.audio.request().isGranted;
+      return await Permission.audio.request().isGranted;
     } else {
-      isGranted = await Permission.storage.request().isGranted;
+      return await Permission.storage.request().isGranted;
     }
-
-    // If still not granted, try requesting manageExternalStorage explicitly
-    if (!isGranted) {
-      isGranted = await Permission.manageExternalStorage.request().isGranted;
-    }
-
-    return isGranted;
   }
 
   Future<void> scanSavedFolders({
@@ -354,40 +355,29 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
               'com.looper.player/broadcast',
             ).invokeMethod('rescanMedia', {'path': '/storage/emulated/0'});
           } catch (_) {}
-          int sdkInt = 0;
-          try {
-            final sdkMatch = RegExp(
-              r'API\s+(\d+)',
-            ).firstMatch(Platform.operatingSystemVersion);
-            if (sdkMatch != null) {
-              sdkInt = int.parse(sdkMatch.group(1)!);
-            }
-          } catch (_) {}
 
-          final isAllFilesGranted =
-              await Permission.manageExternalStorage.isGranted;
-          final isLegacyStorageGranted =
-              sdkInt < 30 && await Permission.storage.isGranted;
-          final canScanRoot = isAllFilesGranted || isLegacyStorageGranted;
-
-          if (canScanRoot) {
-            scanRoots.add('/storage/emulated/0');
-            await _addSdCardRoots(scanRoots);
-          } else {
-            final List<String> commonPaths = [
-              '/storage/emulated/0/Music',
-              '/storage/emulated/0/Download',
-              '/storage/emulated/0/Documents',
-              '/storage/emulated/0/Audiobooks',
-              '/storage/emulated/0/Podcasts',
-              '/storage/emulated/0/DCIM',
-              '/storage/emulated/0/Recordings',
-              '/storage/emulated/0/Bluetooth',
-            ];
-            for (final cp in commonPaths) {
-              if (Directory(cp).existsSync() && !scanRoots.contains(cp)) {
-                scanRoots.add(cp);
-              }
+          // Raw traversal can no longer reach an arbitrary/whole-storage
+          // root or SD cards without MANAGE_EXTERNAL_STORAGE (removed for
+          // Play Store compliance - see AndroidManifest.xml). Scoped storage
+          // still allows raw listing of these specific top-level public
+          // directories with just READ_MEDIA_AUDIO/READ_EXTERNAL_STORAGE;
+          // everything else (custom folders, SD cards, formats MediaStore
+          // doesn't index) is covered by the MediaStore + SAF merges inside
+          // LibraryScanner.scanDirectory() instead, not by walking more
+          // scanRoots here.
+          final List<String> commonPaths = [
+            '/storage/emulated/0/Music',
+            '/storage/emulated/0/Download',
+            '/storage/emulated/0/Documents',
+            '/storage/emulated/0/Audiobooks',
+            '/storage/emulated/0/Podcasts',
+            '/storage/emulated/0/DCIM',
+            '/storage/emulated/0/Recordings',
+            '/storage/emulated/0/Bluetooth',
+          ];
+          for (final cp in commonPaths) {
+            if (Directory(cp).existsSync() && !scanRoots.contains(cp)) {
+              scanRoots.add(cp);
             }
           }
         } else if (Platform.isLinux) {
@@ -478,7 +468,14 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
                   .pathEqualTo(folder)
                   .count() >
               0;
-          if (Directory(folder).existsSync() && hasSongs) {
+          // Not gated on Directory(folder).existsSync(): a folder added via
+          // the SAF picker is a real path, but scoped storage's raw stat()
+          // can still deny it even with a valid persisted SAF grant (that
+          // grant is only honored through the ContentResolver/DocumentsContract
+          // door, not dart:io's). hasSongs alone is sufficient - it already
+          // naturally drops to 0 once a folder's songs stop being discovered
+          // on a later scan pass.
+          if (hasSongs) {
             validFolders.add(folder);
           }
         }
@@ -516,28 +513,6 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     } finally {
       _isScanRunning = false;
     }
-  }
-
-  Future<void> _addSdCardRoots(List<String> scanRoots) async {
-    try {
-      final storageDir = Directory('/storage');
-      if (await storageDir.exists()) {
-        final List<FileSystemEntity> entities = await storageDir
-            .list()
-            .toList();
-        for (final entity in entities) {
-          final name = p.basename(entity.path);
-          if (entity is Directory &&
-              name != 'emulated' &&
-              name != 'self' &&
-              name != 'knox-emulated') {
-            if (!scanRoots.contains(entity.path)) {
-              scanRoots.add(entity.path);
-            }
-          }
-        }
-      }
-    } catch (_) {}
   }
 
   Future<void> clearAllData() async {
@@ -585,25 +560,29 @@ class LibraryNotifier extends StateNotifier<LibraryState> {
     int totalSongsFound = 0;
 
     try {
-      final dir = Directory(path);
-      if (dir.existsSync()) {
-        final result = await LibraryScanner().scanDirectory(path);
-        totalSongsFound = result.songsCount;
+      // Not gated on Directory(path).existsSync(): a folder added via the
+      // SAF picker is a real path, but scoped storage's raw stat() can deny
+      // it even with a valid persisted SAF grant (dart:io never goes through
+      // the ContentResolver/DocumentsContract door that grant is honored
+      // through). scanDirectory() already degrades gracefully for a path it
+      // can't list directly - the MediaStore + SAF merges inside it still
+      // find the folder's songs regardless.
+      final result = await LibraryScanner().scanDirectory(path);
+      totalSongsFound = result.songsCount;
 
-        if (totalSongsFound > 0) {
-          final settings = _ref.read(settingsProvider);
-          final newFolders = Set<String>.from(settings.libraryFolders);
-          if (recordFolder) {
-            newFolders.add(path);
-          } else {
-            // Store actual song folders immediately for a broad root scan so
-            // an interrupted discovery cannot leave this list empty.
-            newFolders.addAll(result.musicFolders);
-          }
-          await _ref
-              .read(settingsProvider.notifier)
-              .updateLibraryFolders(newFolders.toList());
+      if (totalSongsFound > 0) {
+        final settings = _ref.read(settingsProvider);
+        final newFolders = Set<String>.from(settings.libraryFolders);
+        if (recordFolder) {
+          newFolders.add(path);
+        } else {
+          // Store actual song folders immediately for a broad root scan so
+          // an interrupted discovery cannot leave this list empty.
+          newFolders.addAll(result.musicFolders);
         }
+        await _ref
+            .read(settingsProvider.notifier)
+            .updateLibraryFolders(newFolders.toList());
       }
     } catch (e) {
       LoggerHelper.write(

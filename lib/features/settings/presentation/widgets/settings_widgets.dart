@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:looper_player/features/library/data/saf_folder_service.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/core/app_fonts.dart';
 
@@ -152,6 +154,9 @@ class LibraryFoldersList extends ConsumerWidget {
                   color: Colors.white60,
                 ),
                 onPressed: () {
+                  if (Platform.isAndroid) {
+                    SafFolderService.releaseFolder(path);
+                  }
                   final newFolders = List<String>.from(folders)..remove(path);
                   ref
                       .read(settingsProvider.notifier)

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:looper_player/core/app_fonts.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
+import 'package:looper_player/features/playback/data/lrc_parser.dart';
 import 'package:looper_player/features/playback/presentation/playback_notifier.dart';
 import 'package:looper_player/features/settings/presentation/settings_notifier.dart';
 import 'package:looper_player/ui/widgets/app_loading_indicator.dart';
@@ -42,7 +43,9 @@ class _EditSongSheetState extends ConsumerState<EditSongSheet> {
             ? widget.song.year.toString()
             : '');
     _genreCtrl = TextEditingController(text: widget.song.genre ?? '');
-    _lyricsCtrl = TextEditingController(text: widget.song.lyrics ?? '');
+    _lyricsCtrl = TextEditingController(
+      text: LrcParser.stripSourceTag(widget.song.lyrics) ?? '',
+    );
     _pickedArtPath = null; // unchanged
   }
 

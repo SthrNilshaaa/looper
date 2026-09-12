@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:looper_player/features/library/data/saf_folder_service.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/l10n/app_localizations.dart';
 
@@ -80,7 +83,28 @@ class FolderPickerHelper {
 
   static Future<void> pickFolder(BuildContext context, WidgetRef ref) async {
     try {
-      final String? path = await FilePicker.getDirectoryPath();
+      String? path;
+      if (Platform.isAndroid) {
+        try {
+          path = await SafFolderService.pickFolder();
+        } on PlatformException catch (e) {
+          if (e.code == 'UNSUPPORTED_PROVIDER' && context.mounted) {
+            ScaffoldMessenger.of(context).clearSnackBars();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  e.message ??
+                      "Please choose a folder on this device's internal storage or SD card.",
+                ),
+                duration: const Duration(seconds: 4),
+              ),
+            );
+          }
+          return;
+        }
+      } else {
+        path = await FilePicker.getDirectoryPath();
+      }
       if (path != null) {
         final count = await ref.read(libraryProvider.notifier).scanLibrary(path);
         if (count == 0 && context.mounted) {

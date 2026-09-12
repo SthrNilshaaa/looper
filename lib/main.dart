@@ -124,7 +124,6 @@ void main(List<String> args) async {
         final results = await Future.wait([
           Permission.audio.isGranted,
           Permission.storage.isGranted,
-          Permission.manageExternalStorage.isGranted,
           Permission.notification.isGranted,
         ]);
         permissionsGranted = results.any((granted) => granted);

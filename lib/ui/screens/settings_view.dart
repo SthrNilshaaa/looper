@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:looper_player/features/library/data/saf_folder_service.dart';
 import 'package:looper_player/features/library/presentation/library_notifier.dart';
 import 'package:looper_player/features/library/domain/models/models.dart';
 import 'package:looper_player/core/db_service.dart';
@@ -928,6 +929,9 @@ class _PremiumLibraryFoldersList extends ConsumerWidget {
                 ),
                 onPressed: () {
                   HapticFeedback.lightImpact();
+                  if (Platform.isAndroid) {
+                    SafFolderService.releaseFolder(path);
+                  }
                   final newFolders = List<String>.from(folders)..remove(path);
                   ref
                       .read(settingsProvider.notifier)

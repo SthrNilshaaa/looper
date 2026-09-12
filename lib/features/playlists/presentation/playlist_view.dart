@@ -74,7 +74,9 @@ class PlaylistView extends ConsumerWidget {
     final hasActiveSong = ref.watch(playbackProvider.select((s) => s.currentSong != null));
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // Not Colors.transparent - see the comment on CategoryDetailWrapper's
+      // Scaffold in library_categories_views.dart for why.
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: playlists.isEmpty
           ? Center(
               child: Column(

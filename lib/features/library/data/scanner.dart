@@ -5,12 +5,12 @@ import 'package:flutter/services.dart';
 import 'package:metadata_god/metadata_god.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../../core/db_service.dart';
 import '../domain/models/models.dart';
 import 'package:isar_community/isar.dart';
 import '../../playback/data/metadata_service.dart';
 import 'artwork_downloader_service.dart';
+import 'saf_folder_service.dart';
 
 class ScanResult {
   final int songsCount;
@@ -236,6 +236,30 @@ class LibraryScanner {
     }
   }
 
+  // Same memoization idea as the MediaStore cache above, for the SAF
+  // (Storage Access Framework) folder listing: it's also device-wide (every
+  // currently-granted "Add folder" folder, not just the one being scanned),
+  // so without this it would get re-walked once per candidate folder during
+  // a full scan.
+  static List<String>? _cachedSafFiles;
+  static DateTime? _cachedSafFilesAt;
+  static const Duration _safFilesCacheTtl = Duration(seconds: 15);
+
+  Future<List<String>> _querySafFiles() async {
+    if (!Platform.isAndroid) return const [];
+
+    final cachedAt = _cachedSafFilesAt;
+    if (cachedAt != null &&
+        DateTime.now().difference(cachedAt) < _safFilesCacheTtl) {
+      return _cachedSafFiles ?? const [];
+    }
+
+    final files = await SafFolderService.listAudioFiles(supportedExtensions);
+    _cachedSafFiles = files;
+    _cachedSafFilesAt = DateTime.now();
+    return files;
+  }
+
   Future<ScanResult> scanDirectory(
     String path, {
     bool addFolderToSettings = false,
@@ -262,15 +286,17 @@ class LibraryScanner {
       discoveredPaths.addAll(filePaths);
     }
 
-    // 2. Native Android MediaStore Query to complement filesystem traversal
+    // 2. Native Android MediaStore Query - the primary discovery source.
+    // Without MANAGE_EXTERNAL_STORAGE (removed for Play Store compliance,
+    // see AndroidManifest.xml) raw filesystem traversal can no longer reach
+    // arbitrary folders on its own, so every MediaStore-indexed track is
+    // always merged in here regardless of which root this particular scan
+    // pass is scoped to.
     if (Platform.isAndroid) {
       final mediaStoreItems = await _queryMediaStoreNative(
         includeSystemAndMessagingAudio: includeSystemAndMessagingAudio,
       );
       if (mediaStoreItems != null && mediaStoreItems.isNotEmpty) {
-        final normalizedPath = p.canonicalize(path);
-        final isAllFilesGranted =
-            await Permission.manageExternalStorage.isGranted;
         for (final item in mediaStoreItems) {
           final filePath = item['path'] as String?;
           if (filePath != null && filePath.isNotEmpty) {
@@ -278,15 +304,24 @@ class LibraryScanner {
             mediaStoreMap[p.canonicalize(filePath)] = item;
             final ext = p.extension(filePath).toLowerCase();
             if (supportedExtensions.contains(ext)) {
-              final canonicalFilePath = p.canonicalize(filePath);
-              if (normalizedPath == '/storage/emulated/0' ||
-                  normalizedPath == '/storage/emulated/0/' ||
-                  canonicalFilePath.startsWith(normalizedPath) ||
-                  !isAllFilesGranted) {
-                discoveredPaths.add(filePath);
-              }
+              discoveredPaths.add(filePath);
             }
           }
+        }
+      }
+    }
+
+    // 3. Native SAF (Storage Access Framework) query - covers files inside
+    // manually-added folders ("Add folder") that raw traversal can no longer
+    // reach without MANAGE_EXTERNAL_STORAGE, and formats MediaStore doesn't
+    // index (e.g. .ape, .wv, .tta, .dsf, .dff), for as long as they live
+    // inside a folder the user explicitly granted access to.
+    if (Platform.isAndroid) {
+      final safFiles = await _querySafFiles();
+      for (final filePath in safFiles) {
+        final ext = p.extension(filePath).toLowerCase();
+        if (supportedExtensions.contains(ext)) {
+          discoveredPaths.add(filePath);
         }
       }
     }
@@ -674,7 +709,16 @@ class LibraryScanner {
 
       String? lyrics;
       try {
-        lyrics = await MetadataService.getEmbeddedLyrics(file.path);
+        final embeddedLyrics = await MetadataService.getEmbeddedLyrics(file.path);
+        // Tag with the same [source:embedded] prefix LyricsFetcher/
+        // LyricsNotifier use for an embedded-metadata hit, so the lyrics
+        // screen's source pill can identify it - untagged text here read
+        // back as a null source later ("No Lyrics Source" shown even though
+        // lyrics were actually displayed, since scanning is usually what
+        // populates song.lyrics first).
+        if (embeddedLyrics != null && embeddedLyrics.isNotEmpty) {
+          lyrics = '[source:embedded]\n$embeddedLyrics';
+        }
       } catch (_) {}
 
       DateTime fileDate;

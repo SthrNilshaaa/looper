@@ -1,13 +1,33 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:metadata_god/metadata_god.dart';
 
 class MetadataService {
+  static const MethodChannel _broadcastChannel = MethodChannel(
+    'com.looper.player/broadcast',
+  );
+
   static Future<String?> getEmbeddedLyrics(String path) async {
+    if (Platform.isAndroid) {
+      return await _getLyricsAndroid(path);
+    }
     if (Platform.isLinux) {
       return await _getLyricsLinux(path);
     }
     return null;
+  }
+
+  static Future<String?> _getLyricsAndroid(String path) async {
+    try {
+      final lyrics = await _broadcastChannel.invokeMethod<String>(
+        'getEmbeddedLyrics',
+        {'path': path},
+      );
+      return (lyrics != null && lyrics.isNotEmpty) ? lyrics : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   static Future<String?> _getLyricsLinux(String path) async {

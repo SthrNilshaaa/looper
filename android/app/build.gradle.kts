@@ -89,4 +89,9 @@ dependencies {
     implementation("androidx.media3:media3-session:$media3Version")
     implementation("androidx.media3:media3-common:$media3Version")
     implementation("androidx.media:media:1.7.0")
+    // Reads embedded lyrics tags (ID3 USLT, Vorbis Comment LYRICS/UNSYNCEDLYRICS,
+    // MP4 ©lyr) across mp3/flac/ogg/m4a/wav/wma - metadata_god doesn't expose a
+    // lyrics field, and hand-rolling binary tag parsing for untrusted files
+    // isn't worth the risk when a mature library already does it correctly.
+    implementation("net.jthink:jaudiotagger:3.0.1")
 }

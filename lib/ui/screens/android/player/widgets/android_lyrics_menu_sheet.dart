@@ -207,11 +207,26 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
                       onSelected: (selected) async {
                         if (selected) {
                           HapticFeedback.mediumImpact();
+                          // Captured BEFORE popping: context belongs to this
+                          // bottom sheet, which Navigator.pop starts tearing
+                          // down immediately below. Calling
+                          // ScaffoldMessenger.of(context) with that same
+                          // context afterwards is unreliable (it's the
+                          // "loading" snackbar showing nothing sometimes),
+                          // and the later `if (context.mounted)` guard was
+                          // always false after a real pop - it's the sheet's
+                          // own context, permanently unmounted the instant
+                          // it closes - so the result snackbar (the one that
+                          // actually says what happened) could never fire.
+                          // The messenger itself belongs to the screen
+                          // behind the sheet, not the sheet, so it stays
+                          // valid regardless.
+                          final messenger = ScaffoldMessenger.of(context);
                           Navigator.pop(context);
                           final loadingMsg = provider == 'Local'
                               ? 'Checking local/embedded lyrics...'
                               : 'Fetching lyrics from $provider...';
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          messenger.showSnackBar(
                             SnackBar(
                               content: Text(loadingMsg),
                               duration: const Duration(seconds: 2),
@@ -220,18 +235,14 @@ class _LyricsMenuSheetContent extends ConsumerWidget {
                           final success = await ref
                               .read(lyricsProvider.notifier)
                               .fetchWithProvider(song, provider);
-                          if (context.mounted) {
-                            final resultMsg = provider == 'Local'
-                                ? (success
-                                      ? 'Loaded local/embedded lyrics!'
-                                      : 'No local or embedded lyrics found')
-                                : (success
-                                      ? 'Lyrics updated from $provider!'
-                                      : 'No lyrics found on $provider');
-                            ScaffoldMessenger.of(
-                              context,
-                            ).showSnackBar(SnackBar(content: Text(resultMsg)));
-                          }
+                          final resultMsg = provider == 'Local'
+                              ? (success
+                                    ? 'Loaded local/embedded lyrics!'
+                                    : 'No local or embedded lyrics found')
+                              : (success
+                                    ? 'Lyrics updated from $provider!'
+                                    : 'No lyrics found on $provider');
+                          messenger.showSnackBar(SnackBar(content: Text(resultMsg)));
                         }
                       },
                     ),

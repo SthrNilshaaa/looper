@@ -10,32 +10,40 @@ class AndroidSearchTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Text(
-              l10n.search,
-              style: AppFonts.jostStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+    // Scaffold with an explicit opaque background, not a bare SafeArea:
+    // this screen is reached via a non-opaque PageRoute (_createPremiumRoute)
+    // meant to let the black root screen underneath show through, but that
+    // compositing isn't reliable on every device/renderer combo (seen as a
+    // white/native-window-background flash on some devices).
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Text(
+                l10n.search,
+                style: AppFonts.jostStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0),
-            child: GlobalSearchBar(autofocus: true),
-          ),
-           Expanded(
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal:4.0),
-              child: SearchView(),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: GlobalSearchBar(autofocus: true),
             ),
-          ),
-        ],
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4.0),
+                child: SearchView(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
